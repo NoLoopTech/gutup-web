@@ -1,0 +1,18 @@
+{
+  "extends": [
+    "plugin:react/recommended",
+    "standard-with-typescript",
+    "next/core-web-vitals"
+  ],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
+  "plugins": ["react"],
+  "ignorePatterns": [
+    "tsconfig.json"
+  ],
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "@typescript-eslint/quotes": "off"
+  }
+}
