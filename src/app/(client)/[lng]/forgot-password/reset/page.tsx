@@ -15,6 +15,7 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 // Reset Password password validations schema
 const ResetPasswordschema = z
@@ -37,6 +38,8 @@ const ResetPasswordschema = z
 type ResetPasswordFormData = z.infer<typeof ResetPasswordschema>
 
 export default function ResetPasswordForm(): React.ReactNode {
+  const router = useRouter()
+
   // validate form
   const form = useForm<ResetPasswordFormData>({
     resolver: zodResolver(ResetPasswordschema),
@@ -53,6 +56,8 @@ export default function ResetPasswordForm(): React.ReactNode {
     formData.append("password", data.confirmPassword)
 
     console.log("verify password Submitted:", data)
+
+    router.push(`/login`)
   }
 
   return (
@@ -102,7 +107,11 @@ export default function ResetPasswordForm(): React.ReactNode {
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <Input placeholder="Confirm Password" {...field} />
+                    <Input
+                      type="password"
+                      placeholder="Confirm Password"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
