@@ -1,0 +1,7 @@
+.primary {
+  @apply bg-primary hover:bg-primary/90;
+}
+
+.secondary {
+  @apply bg-secondary;
+}
