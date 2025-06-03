@@ -20,9 +20,17 @@ import {
 import { POST } from "../actions/route"
 import Link from "next/link"
 
+// login form validations schema
 const LoginSchema = z.object({
-  email: z.string().email("Please enter a valid email."),
-  password: z.string().min(6, "Password must be at least 6 characters.")
+  email: z.string().nonempty("Required").email("Please enter a valid email."),
+  password: z
+    .string()
+    .nonempty("Required")
+    .min(6, "Password must be at least 6 characters.")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/\d/, "Password must contain at least one number")
+    .regex(/[\W_]/, "Password must contain at least one special character")
 })
 
 type LoginFormData = z.infer<typeof LoginSchema>
