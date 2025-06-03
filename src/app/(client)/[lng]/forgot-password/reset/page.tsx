@@ -112,7 +112,7 @@ export default function ResetPasswordForm(): React.ReactNode {
             />
           </div>
 
-          {/* login button  */}
+          {/* login button */}
           <Button className="w-[100%]" type="submit">
             Reset Password
           </Button>

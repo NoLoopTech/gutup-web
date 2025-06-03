@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useCurrentLocale } from "@/hooks/useCurrentLocale"
 
 // Forgot Password email validations schema
 const ForgotPasswordschema = z.object({
@@ -26,6 +27,7 @@ type ForgotPasswordFormData = z.infer<typeof ForgotPasswordschema>
 
 export default function ForgotPasswordForm(): React.ReactNode {
   const router = useRouter()
+  const locale = useCurrentLocale()
 
   // validate form
   const form = useForm<ForgotPasswordFormData>({
@@ -42,7 +44,9 @@ export default function ForgotPasswordForm(): React.ReactNode {
 
     console.log("verify email Submitted:", data)
 
-    router.push(`/forgot-password/otp?email=${data.email}`)
+    router.push(
+      `/${locale}/forgot-password/otp?email=${encodeURIComponent(data.email)}`
+    )
   }
 
   return (

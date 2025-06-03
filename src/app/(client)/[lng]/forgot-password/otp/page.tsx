@@ -48,7 +48,7 @@ export default function OtpForm(): React.ReactNode {
 
     console.log("verify otp Submitted:", data)
 
-    router.push(`/forgot-password/reset?otp=${String(data.otp)}`)
+    router.push(`/forgot-password/reset`)
   }
 
   return (
