@@ -17,24 +17,22 @@ import {
 import Link from "next/link"
 
 // Reset Password password validations schema
-const ResetPasswordschema = z.object({
-  newPassword: z
-    .string()
-    .nonempty("Required")
-    .min(6, "Password must be at least 6 characters.")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/\d/, "Password must contain at least one number")
-    .regex(/[\W_]/, "Password must contain at least one special character"),
-  confirmPassword: z
-    .string()
-    .nonempty("Required")
-    .min(6, "Password must be at least 6 characters.")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/\d/, "Password must contain at least one number")
-    .regex(/[\W_]/, "Password must contain at least one special character")
-})
+const ResetPasswordschema = z
+  .object({
+    newPassword: z
+      .string()
+      .nonempty("Required")
+      .min(6, "Password must be at least 6 characters.")
+      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+      .regex(/\d/, "Password must contain at least one number")
+      .regex(/[\W_]/, "Password must contain at least one special character"),
+    confirmPassword: z.string().nonempty("Required")
+  })
+  .refine(data => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"]
+  })
 
 type ResetPasswordFormData = z.infer<typeof ResetPasswordschema>
 
