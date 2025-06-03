@@ -19,6 +19,7 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
+import { POST } from "../login/actions/route"
 
 const LoginSchema = z.object({
   email: z.string().email("Please enter a valid email."),
@@ -30,6 +31,7 @@ type LoginFormData = z.infer<typeof LoginSchema>
 export default function LoginForm(): React.ReactNode {
   const router = useRouter()
 
+  // validate form
   const form = useForm<LoginFormData>({
     resolver: zodResolver(LoginSchema),
     defaultValues: {
@@ -38,8 +40,22 @@ export default function LoginForm(): React.ReactNode {
     }
   })
 
-  const onSubmit = (data: LoginFormData): void => {
+  // form Submit function
+  const onSubmit = async (data: LoginFormData): Promise<void> => {
     console.log("Login Submitted:", data)
+
+    const formData = new FormData()
+    formData.append("email", data.email)
+    formData.append("password", data.password)
+
+    const req = new Request("/api/login", {
+      method: "POST",
+      body: formData
+    })
+
+    console.log(req)
+
+    await POST(req)
   }
 
   return (
