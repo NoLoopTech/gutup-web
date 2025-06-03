@@ -10,7 +10,18 @@ body {
   margin: 0;
 }
 
+/* Chrome, Edge, Safari */
+input:-webkit-autofill {
+  -webkit-text-fill-color: #000 !important;
+  box-shadow: 0 0 0 1000px white inset !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
 
+/* Firefox */
+input:-moz-autofill {
+  color: #000 !important;
+  box-shadow: 0 0 0 1000px white inset !important;
+}
 
 @layer base {
   :root {
@@ -67,8 +78,6 @@ body {
     --chart-5: 340 75% 55%;
   }
 }
-
-
 
 @layer base {
   * {
