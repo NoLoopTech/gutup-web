@@ -4,6 +4,7 @@ import Logo from "@/../public/logo/logo.png"
 import "@/app/globals.css"
 import NextAuthProvider from "@/components/layout/NextAuthProvider"
 import Image from "next/image"
+import "@/styles/typography.css"
 
 const montserrat = Montserrat({ subsets: ["latin"] })
 

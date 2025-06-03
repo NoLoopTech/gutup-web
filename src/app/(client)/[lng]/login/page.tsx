@@ -1,4 +1,4 @@
-import LoginForm from "../components/LoginForm"
+import LoginForm from "./partials/LoginForm"
 
 export default function Login({
   searchParams

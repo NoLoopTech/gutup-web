@@ -1,12 +1,10 @@
 "use client"
 
-import { Title } from "@/components/Shared"
 import { FcGoogle } from "react-icons/fc"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { useRouter } from "next/navigation"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -19,7 +17,8 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
-import { POST } from "../login/actions/route"
+import { POST } from "../actions/route"
+import Link from "next/link"
 
 const LoginSchema = z.object({
   email: z.string().email("Please enter a valid email."),
@@ -29,8 +28,6 @@ const LoginSchema = z.object({
 type LoginFormData = z.infer<typeof LoginSchema>
 
 export default function LoginForm(): React.ReactNode {
-  const router = useRouter()
-
   // validate form
   const form = useForm<LoginFormData>({
     resolver: zodResolver(LoginSchema),
@@ -67,11 +64,9 @@ export default function LoginForm(): React.ReactNode {
         {/* second column */}
         <div className="flex flex-col items-center justify-center max-w-[450px] mx-auto px-5 space-y-3 md:space-y-4 py-5">
           <div className="space-y-2">
-            <Title
-              title={"Login to you Account"}
-              textSize="text-xl md:text-2xl"
-              align="text-center"
-            />
+            {/* title  */}
+            <h1 className="font-semibold text-center ">Login to you Account</h1>
+
             <div className="px-5 text-center">
               <Label className=" text-Primary-300">
                 Enter credentials to login to your admin account
@@ -117,16 +112,15 @@ export default function LoginForm(): React.ReactNode {
 
           {/* forget password link */}
           <div className="w-[100%] flex justify-end">
-            <Button
-              className="px-0 py-0 text-blue-600"
-              type="button"
-              variant={"link"}
-              onClick={() => {
-                router.push("/forgot-password")
-              }}
-            >
-              Forgot password?
-            </Button>
+            <Link href={"/forgot-password"}>
+              <Button
+                className="px-0 py-0 text-blue-600"
+                type="button"
+                variant={"link"}
+              >
+                Forgot password?
+              </Button>
+            </Link>
           </div>
 
           {/* login button  */}

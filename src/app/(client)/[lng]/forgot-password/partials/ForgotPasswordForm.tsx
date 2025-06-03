@@ -1,6 +1,5 @@
 "use client"
 
-import { Title } from "@/components/Shared"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -14,11 +13,10 @@ export default function ForgotPasswordForm(): React.ReactNode {
       {/* second column */}
       <div className="flex flex-col items-center justify-center max-w-[450px] mx-auto px-5 space-y-3 md:space-y-4 py-5">
         <div className="space-y-2">
-          <Title
-            title={"Forgot Password"}
-            textSize="text-xl md:text-2xl"
-            align="text-center"
-          />
+          {/* title  */}
+          <h1 className="text-xl font-semibold text-center md:text-2xl">
+            Forgot Password
+          </h1>
           <div className="px-5 text-center">
             <Label className=" text-Primary-300">
               Please enter your email address to receive a verification code.
