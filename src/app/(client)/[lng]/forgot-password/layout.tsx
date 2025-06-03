@@ -1,9 +1,9 @@
 import type { ReactNode } from "react"
 
-export default function ForgetPasswordLayout({
+export default function ForgotPasswordLayout({
   children
 }: {
   children: ReactNode
 }): React.ReactNode {
-  return <div id="forget-password-layout">{children}</div>
+  return <div id="forgot-password-layout">{children}</div>
 }
