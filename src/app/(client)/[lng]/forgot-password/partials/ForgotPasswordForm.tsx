@@ -17,6 +17,8 @@ import {
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCurrentLocale } from "@/hooks/useCurrentLocale"
+import { Loader2Icon } from "lucide-react"
+import { useState } from "react"
 
 // Forgot Password email validations schema
 const ForgotPasswordschema = z.object({
@@ -28,6 +30,7 @@ type ForgotPasswordFormData = z.infer<typeof ForgotPasswordschema>
 export default function ForgotPasswordForm(): React.ReactNode {
   const router = useRouter()
   const locale = useCurrentLocale()
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   // validate form
   const form = useForm<ForgotPasswordFormData>({
@@ -39,6 +42,8 @@ export default function ForgotPasswordForm(): React.ReactNode {
 
   // form Submit function
   const onSubmit = async (data: ForgotPasswordFormData): Promise<void> => {
+    setIsLoading(true)
+
     const formData = new FormData()
     formData.append("email", data.email)
 
@@ -47,6 +52,8 @@ export default function ForgotPasswordForm(): React.ReactNode {
     router.push(
       `/${locale}/forgot-password/otp?email=${encodeURIComponent(data.email)}`
     )
+
+    setIsLoading(false)
   }
 
   return (
@@ -87,8 +94,9 @@ export default function ForgotPasswordForm(): React.ReactNode {
           </div>
 
           {/* login button  */}
-          <Button className="w-[100%]" type="submit">
-            Send OTP
+          <Button className="w-[100%]" type="submit" disabled={isLoading}>
+            {isLoading && <Loader2Icon className="animate-spin" />}
+            {isLoading ? "Please Wait" : "  Send OTP"}
           </Button>
 
           {/* back button  */}

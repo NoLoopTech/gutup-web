@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/form"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { Loader2Icon } from "lucide-react"
+import { useState } from "react"
 
 // Reset Password password validations schema
 const ResetPasswordschema = z
@@ -39,6 +41,7 @@ type ResetPasswordFormData = z.infer<typeof ResetPasswordschema>
 
 export default function ResetPasswordForm(): React.ReactNode {
   const router = useRouter()
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   // validate form
   const form = useForm<ResetPasswordFormData>({
@@ -51,6 +54,8 @@ export default function ResetPasswordForm(): React.ReactNode {
 
   // form Submit function
   const onSubmit = async (data: ResetPasswordFormData): Promise<void> => {
+    setIsLoading(true)
+
     const formData = new FormData()
     formData.append("newPassword", data.newPassword)
     formData.append("password", data.confirmPassword)
@@ -58,6 +63,8 @@ export default function ResetPasswordForm(): React.ReactNode {
     console.log("verify password Submitted:", data)
 
     router.push(`/login`)
+
+    setIsLoading(false)
   }
 
   return (
@@ -121,7 +128,8 @@ export default function ResetPasswordForm(): React.ReactNode {
 
           {/* login button */}
           <Button className="w-[100%]" type="submit">
-            Reset Password
+            {isLoading && <Loader2Icon className="animate-spin" />}
+            {isLoading ? "Please Wait" : " Reset Password"}
           </Button>
 
           {/* back button  */}

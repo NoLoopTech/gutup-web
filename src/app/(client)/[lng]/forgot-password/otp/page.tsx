@@ -19,6 +19,8 @@ import {
   InputOTPGroup,
   InputOTPSlot
 } from "@/components/ui/input-otp"
+import { useState } from "react"
+import { Loader2Icon } from "lucide-react"
 
 // Forgot Password otp validations schema
 const OtpSchema = z.object({
@@ -32,6 +34,7 @@ type OtpFormData = z.infer<typeof OtpSchema>
 
 export default function OtpForm(): React.ReactNode {
   const router = useRouter()
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   // validate form
   const form = useForm<OtpFormData>({
@@ -43,12 +46,16 @@ export default function OtpForm(): React.ReactNode {
 
   // form Submit function
   const onSubmit = async (data: OtpFormData): Promise<void> => {
+    setIsLoading(true)
+
     const formData = new FormData()
     formData.append("otp", String(data.otp))
 
     console.log("verify otp Submitted:", data)
 
     router.push(`/forgot-password/reset`)
+
+    setIsLoading(false)
   }
 
   return (
@@ -98,8 +105,9 @@ export default function OtpForm(): React.ReactNode {
           </div>
 
           {/* login button  */}
-          <Button className="w-[100%]" type="submit">
-            Submit
+          <Button className="w-[100%]" type="submit" disabled={isLoading}>
+            {isLoading && <Loader2Icon className="animate-spin" />}
+            {isLoading ? "Please Wait" : " Submit"}
           </Button>
 
           {/* back button  */}

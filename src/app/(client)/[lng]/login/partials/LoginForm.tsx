@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/form"
 import { POST } from "../actions/route"
 import Link from "next/link"
+import { useState } from "react"
+import { Loader2Icon } from "lucide-react"
 
 // login form validations schema
 const LoginSchema = z.object({
@@ -36,6 +38,8 @@ const LoginSchema = z.object({
 type LoginFormData = z.infer<typeof LoginSchema>
 
 export default function LoginForm(): React.ReactNode {
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+
   // validate form
   const form = useForm<LoginFormData>({
     resolver: zodResolver(LoginSchema),
@@ -48,6 +52,7 @@ export default function LoginForm(): React.ReactNode {
   // form Submit function
   const onSubmit = async (data: LoginFormData): Promise<void> => {
     console.log("Login Submitted:", data)
+    setIsLoading(true)
 
     const formData = new FormData()
     formData.append("email", data.email)
@@ -61,6 +66,8 @@ export default function LoginForm(): React.ReactNode {
     console.log(req)
 
     await POST(req)
+
+    setIsLoading(false)
   }
 
   return (
@@ -132,8 +139,9 @@ export default function LoginForm(): React.ReactNode {
           </div>
 
           {/* login button  */}
-          <Button className="w-[100%]" type="submit">
-            Login
+          <Button className="w-[100%]" type="submit" disabled={isLoading}>
+            {isLoading && <Loader2Icon className="animate-spin" />}
+            {isLoading ? "Please Wait" : " Login"}
           </Button>
 
           {/* OR CONTINUE WITH */}
