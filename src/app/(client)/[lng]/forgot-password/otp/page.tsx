@@ -1,6 +1,5 @@
 "use client"
 
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { z } from "zod"
@@ -11,48 +10,50 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage
 } from "@/components/ui/form"
 import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
-import { Loader2Icon } from "lucide-react"
+import { useRouter } from "next/navigation"
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot
+} from "@/components/ui/input-otp"
 import { useState } from "react"
+import { Loader2Icon } from "lucide-react"
 
-// Forgot Password email validations schema
-const ForgotPasswordschema = z.object({
-  email: z.string().nonempty("Required").email("Please enter a valid email.")
+// Forgot Password otp validations schema
+const OtpSchema = z.object({
+  otp: z
+    .string()
+    .nonempty("Required")
+    .regex(/^\d{6}$/, "OTP must be exactly 6 digits")
 })
 
-type ForgotPasswordFormData = z.infer<typeof ForgotPasswordschema>
+type OtpFormData = z.infer<typeof OtpSchema>
 
-export default function ForgotPasswordForm(): React.ReactNode {
+export default function OtpForm(): React.ReactNode {
   const router = useRouter()
-  const params = useParams()
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
-  const lng = params?.lng as string
-
   // validate form
-  const form = useForm<ForgotPasswordFormData>({
-    resolver: zodResolver(ForgotPasswordschema),
+  const form = useForm<OtpFormData>({
+    resolver: zodResolver(OtpSchema),
     defaultValues: {
-      email: ""
+      otp: ""
     }
   })
 
   // form Submit function
-  const onSubmit = async (data: ForgotPasswordFormData): Promise<void> => {
+  const onSubmit = async (data: OtpFormData): Promise<void> => {
     setIsLoading(true)
 
     const formData = new FormData()
-    formData.append("email", data.email)
+    formData.append("otp", String(data.otp))
 
-    console.log("verify email Submitted:", data)
+    console.log("verify otp Submitted:", data)
 
-    router.push(
-      `/${lng}/forgot-password/otp?email=${encodeURIComponent(data.email)}`
-    )
+    router.push(`/forgot-password/reset`)
 
     setIsLoading(false)
   }
@@ -67,26 +68,35 @@ export default function ForgotPasswordForm(): React.ReactNode {
         <div className="flex flex-col items-center justify-center max-w-[450px] mx-auto px-5 space-y-3 md:space-y-4 py-5">
           <div className="space-y-2">
             {/* title  */}
-            <h1 className="font-semibold text-center ">Forgot Password</h1>
+            <h1 className="font-semibold text-center ">Enter OTP</h1>
 
             <div className="px-5 text-center">
               <Label className=" text-Primary-300">
-                Please enter your email address to receive a verification code.
+                Enter the 6 digit code sent to your email
               </Label>
             </div>
           </div>
 
-          {/* email */}
-          <div className="w-[100%]">
-            {/* Email Field */}
+          {/* otp */}
+          <div>
+            {/* otp Field */}
             <FormField
               control={form.control}
-              name="email"
+              name="otp"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="Email" {...field} />
+                    <InputOTP maxLength={6} {...field}>
+                      <InputOTPGroup className="gap-2">
+                        {Array.from({ length: 6 }).map((_, index) => (
+                          <InputOTPSlot
+                            key={index}
+                            index={index}
+                            className="w-10 h-10 text-lg text-center border border-gray-300 rounded-md"
+                          />
+                        ))}
+                      </InputOTPGroup>
+                    </InputOTP>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -97,11 +107,11 @@ export default function ForgotPasswordForm(): React.ReactNode {
           {/* login button  */}
           <Button className="w-[100%]" type="submit" disabled={isLoading}>
             {isLoading && <Loader2Icon className="animate-spin" />}
-            {isLoading ? "Please Wait" : "  Send OTP"}
+            {isLoading ? "Please Wait" : " Submit"}
           </Button>
 
           {/* back button  */}
-          <Link href={"/login"}>
+          <Link href={"/forgot-password"}>
             <Button className="px-0 py-0" type="button" variant={"link"}>
               Back
             </Button>
