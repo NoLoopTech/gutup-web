@@ -15,8 +15,7 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useCurrentLocale } from "@/hooks/useCurrentLocale"
+import { useParams, useRouter } from "next/navigation"
 import { Loader2Icon } from "lucide-react"
 import { useState } from "react"
 
@@ -29,8 +28,10 @@ type ForgotPasswordFormData = z.infer<typeof ForgotPasswordschema>
 
 export default function ForgotPasswordForm(): React.ReactNode {
   const router = useRouter()
-  const locale = useCurrentLocale()
+  const params = useParams()
   const [isLoading, setIsLoading] = useState<boolean>(false)
+
+  const lng = params?.lng as string
 
   // validate form
   const form = useForm<ForgotPasswordFormData>({
@@ -50,7 +51,7 @@ export default function ForgotPasswordForm(): React.ReactNode {
     console.log("verify email Submitted:", data)
 
     router.push(
-      `/${locale}/forgot-password/otp?email=${encodeURIComponent(data.email)}`
+      `/${lng}/forgot-password/otp?email=${encodeURIComponent(data.email)}`
     )
 
     setIsLoading(false)
