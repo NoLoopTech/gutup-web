@@ -5,13 +5,9 @@ import { redirect } from "next/navigation"
 export default async function Home(): Promise<any> {
   const session = await getServerSession(authOptions)
 
-  if (!session) {
-    redirect("/login")
-  }
-
   return (
     <main>
-      <h1>Welcome, {session.user?.email}</h1>
+      <h1>Welcome, </h1>
       <p>Sample content that only logged-in users can see.</p>
     </main>
   )
