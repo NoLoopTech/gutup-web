@@ -11,8 +11,7 @@ import {
   Ham,
   HandPlatter,
   ShoppingBasket,
-  ClipboardPenLine,
-  Globe
+  ClipboardPenLine
 } from "lucide-react"
 import { useState } from "react"
 import {
@@ -27,7 +26,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
-  SidebarMenuSubItem
+  SidebarMenuSubItem,
+  SidebarTrigger
 } from "@/components/ui/sidebar"
 import {
   Collapsible,
@@ -46,35 +46,31 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Label } from "../ui/label"
-import { usePathname, useRouter } from "next/navigation"
 
-export function AppSidebar({ lng }: { lng: string }): JSX.Element {
+export function AppSidebar(): JSX.Element {
   const [isOpen, setIsOpen] = useState(false)
-  const pathname = usePathname()
-  const router = useRouter()
-
-  const currentLang = lng
-  const otherLang = currentLang === "en" ? "de" : "en"
-
-  // Remove the current lang prefix from path (e.g., /en/dashboard → /dashboard)
-  const newPath = pathname.replace(`/${currentLang}`, "")
-
-  // Navigate to the new path with other language prefix
-  const switchLanguage = (): void => {
-    router.push(`/${otherLang}${newPath}`)
-  }
 
   return (
     <Sidebar>
       {/* Sidebar header  */}
       <SidebarHeader className="p-4 ">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 text-white bg-black rounded-lg">
-            <GalleryVerticalEnd className="w-5 h-5" />
+        <div className="flex justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 text-white bg-black rounded-lg">
+              <GalleryVerticalEnd className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col ">
+              <Label className="text-sm font-semibold leading-tight">
+                GutUp
+              </Label>{" "}
+              <Label className="text-xs text-muted-foreground">
+                Admin Panel
+              </Label>
+            </div>
           </div>
-          <div className="flex flex-col ">
-            <Label className="text-sm font-semibold leading-tight">GutUp</Label>{" "}
-            <Label className="text-xs text-muted-foreground">Admin Panel</Label>
+
+          <div className="md:hidden">
+            <SidebarTrigger className="w-10 h-10 " closeIcon />
           </div>
         </div>
       </SidebarHeader>
@@ -205,14 +201,6 @@ export function AppSidebar({ lng }: { lng: string }): JSX.Element {
             <DropdownMenuItem>
               <Bell className="w-4 h-4" />
               Notifications
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={switchLanguage}>
-              <Globe className="w-4 h-4" />
-              <span>
-                {currentLang === "en"
-                  ? "Switch to German"
-                  : "Switch to English"}
-              </span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>

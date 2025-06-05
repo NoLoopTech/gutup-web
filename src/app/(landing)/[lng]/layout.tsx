@@ -35,7 +35,7 @@ export default async function RootLayout({
     <html lang={lng} dir={dir(lng)}>
       <body className={inter.className}>
         <SidebarProvider>
-          <AppSidebar lng={lng} />
+          <AppSidebar />
           <main className="w-full">
             {/* Top Navigation Bar */}
             <NavBase />
