@@ -131,12 +131,16 @@ export function AppSidebar(): JSX.Element {
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
                         <SidebarMenuButton asChild>
-                          <a href="#">Food Overview</a>
+                          <a href="/food-management/food-overview">
+                            Food Overview
+                          </a>
                         </SidebarMenuButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
                         <SidebarMenuButton asChild>
-                          <a href="#">Tag Configuration</a>
+                          <a href="/food-management/tag-overview">
+                            Tag Overview
+                          </a>
                         </SidebarMenuButton>
                       </SidebarMenuSubItem>
                     </SidebarMenuSub>

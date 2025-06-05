@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/nextAuthOptions"
 import { redirect } from "next/navigation"
 
-export default async function UserManagement(): Promise<any> {
+export default async function TagOverview(): Promise<any> {
   const session = await getServerSession(authOptions)
 
   if (!session) {
@@ -13,7 +13,7 @@ export default async function UserManagement(): Promise<any> {
     <main>
       <h1>Welcome, {session?.user?.name}</h1>
       <p>{session?.user?.role}</p>
-      <p>User Management Sample content that only logged-in users can see.</p>
+      <p>Tag Overview Sample content that only logged-in users can see.</p>
     </main>
   )
 }
