@@ -60,7 +60,7 @@ export default function LoginForm(): React.ReactNode {
       password: data.password
     })
 
-    if (res?.ok) {
+    if (res?.ok && !res.error) {
       // Redirect manually (optional: use router.push)
       window.location.href = "/"
     } else {

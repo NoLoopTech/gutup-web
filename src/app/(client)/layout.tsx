@@ -8,6 +8,7 @@ import { Inter } from "next/font/google"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/nextAuthOptions"
 import { redirect } from "next/navigation"
+import { Toaster } from "@/components/ui/sonner"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -41,7 +42,8 @@ export default async function RootLayout({
             <div className="flex flex-col items-center justify-center max-w-[450px] mx-auto px-5 space-y-3 md:space-y-4 py-5">
               {children}
             </div>
-          </div>
+          </div>{" "}
+          <Toaster />
         </NextAuthProvider>
       </body>
     </html>
