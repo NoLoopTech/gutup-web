@@ -46,6 +46,7 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Label } from "../ui/label"
+import { signOut } from "next-auth/react"
 
 export function AppSidebar(): JSX.Element {
   const [isOpen, setIsOpen] = useState(false)
@@ -203,8 +204,11 @@ export function AppSidebar(): JSX.Element {
               Notifications
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut className="w-4 h-4" />
+            <DropdownMenuItem
+              onClick={() => signOut()}
+              className="cursor-pointer"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
