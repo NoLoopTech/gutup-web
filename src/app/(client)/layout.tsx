@@ -42,8 +42,8 @@ export default async function RootLayout({
             <div className="flex flex-col items-center justify-center max-w-[450px] mx-auto px-5 space-y-3 md:space-y-4 py-5">
               {children}
             </div>
-          </div>{" "}
-          <Toaster />
+          </div>
+          <Toaster closeButton className="h-20" theme="light" />
         </NextAuthProvider>
       </body>
     </html>
