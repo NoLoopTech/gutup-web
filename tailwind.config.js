@@ -12,7 +12,7 @@ module.exports = {
       colors: {
         White: "##FFFFFF",
         Black: "#000000",
-        'Primary-50': '#F4F4F5',
+        "Primary-50": "#F4F4F5",
         "Primary-100": "#E0E0E0",
         "Primary-200": "#BDBDBD",
         "Primary-300": "#828282",
@@ -64,6 +64,16 @@ module.exports = {
           3: "hsl(var(--chart-3))",
           4: "hsl(var(--chart-4))",
           5: "hsl(var(--chart-5))"
+        },
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar-background))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: "hsl(var(--sidebar-primary))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))"
         }
       },
       fontSize: {

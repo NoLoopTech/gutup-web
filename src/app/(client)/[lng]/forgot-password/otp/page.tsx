@@ -92,7 +92,7 @@ export default function OtpForm(): React.ReactNode {
                           <InputOTPSlot
                             key={index}
                             index={index}
-                            className="w-10 h-10 text-lg text-center border border-gray-300 rounded-md"
+                            className="text-lg text-center border border-gray-300 rounded-md w-9 h-9"
                           />
                         ))}
                       </InputOTPGroup>
