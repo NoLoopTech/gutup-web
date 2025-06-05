@@ -64,7 +64,9 @@ export default function LoginForm(): React.ReactNode {
       // Redirect manually (optional: use router.push)
       window.location.href = "/"
     } else {
-      toast("Invalid credentials")
+      toast.error("Login failed!", {
+        description: res?.error
+      })
     }
 
     setIsLoading(false)

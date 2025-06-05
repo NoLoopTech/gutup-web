@@ -43,7 +43,7 @@ export default async function RootLayout({
               {children}
             </div>
           </div>
-          <Toaster closeButton className="h-20" theme="light" />
+          <Toaster closeButton className="h-20 " theme="light" />
         </NextAuthProvider>
       </body>
     </html>

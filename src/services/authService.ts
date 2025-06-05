@@ -23,6 +23,9 @@ export async function authenticate(
     // auth success
     return await res.json()
   } else {
-    return undefined
+    const errorBody = await res.json().catch(() => ({}))
+    const message =
+      errorBody?.message || "Server error. Please try again later."
+    throw new Error(message)
   }
 }

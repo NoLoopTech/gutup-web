@@ -12,16 +12,47 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       position="top-right"
-      className="toaster group"
+      className="toaster group z-[9999]" // Add a high z-index to ensure it appears above modals
       toastOptions={{
         classNames: {
-          toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
-          actionButton:
-            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton:
-            "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground"
+          toast: `
+            group 
+            border 
+            border-border 
+            bg-background 
+            text-foreground 
+            shadow-lg 
+            rounded-xl 
+            px-4 
+            py-3 
+            transition-all 
+            duration-300 
+            ease-in-out
+            hover:shadow-xl
+          `,
+          description: `
+            text-sm 
+            text-muted-foreground 
+            mt-1
+          `,
+          actionButton: `
+            bg-primary 
+            text-primary-foreground 
+            px-3 
+            py-1.5 
+            rounded-md 
+            hover:bg-primary/90 
+            transition
+          `,
+          cancelButton: `
+            bg-muted 
+            text-muted-foreground 
+            px-3 
+            py-1.5 
+            rounded-md 
+            hover:bg-muted/80 
+            transition
+          `
         }
       }}
       {...props}
