@@ -17,10 +17,11 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
-import { POST } from "../actions/route"
 import Link from "next/link"
 import { useState } from "react"
 import { Loader2Icon } from "lucide-react"
+import { signIn } from "next-auth/react"
+import { toast } from "sonner"
 
 // login form validations schema
 const LoginSchema = z.object({
@@ -51,21 +52,20 @@ export default function LoginForm(): React.ReactNode {
 
   // form Submit function
   const onSubmit = async (data: LoginFormData): Promise<void> => {
-    console.log("Login Submitted:", data)
     setIsLoading(true)
 
-    const formData = new FormData()
-    formData.append("email", data.email)
-    formData.append("password", data.password)
-
-    const req = new Request("/api/login", {
-      method: "POST",
-      body: formData
+    const res = await signIn("credentials", {
+      redirect: false,
+      email: data.email,
+      password: data.password
     })
 
-    console.log(req)
-
-    await POST(req)
+    if (res?.ok) {
+      // Redirect manually (optional: use router.push)
+      window.location.href = "/"
+    } else {
+      toast("Invalid credentials")
+    }
 
     setIsLoading(false)
   }

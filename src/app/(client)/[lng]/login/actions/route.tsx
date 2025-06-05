@@ -3,7 +3,7 @@ import Cookie from "@/services/cookieService"
 import { NextResponse } from "next/server"
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const redirectUrl = new URL("/login", req.url)
+  const redirectUrl = new URL("/", req.url)
 
   const formData = await req.formData()
   const email = formData.get("email") as string | null

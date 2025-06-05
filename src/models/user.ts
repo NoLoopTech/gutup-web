@@ -2,7 +2,7 @@ export interface User {
   id: string
   activated: boolean
   email: string
-  fullname: string
+  name: string
   role: string
   apiToken: string
   createdAt: string
