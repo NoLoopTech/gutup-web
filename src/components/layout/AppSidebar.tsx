@@ -51,6 +51,10 @@ import { signOut } from "next-auth/react"
 export function AppSidebar(): JSX.Element {
   const [isOpen, setIsOpen] = useState(false)
 
+  const handleSignOut = async (): Promise<void> => {
+    await signOut()
+  }
+
   return (
     <Sidebar>
       {/* Sidebar header  */}
@@ -205,7 +209,7 @@ export function AppSidebar(): JSX.Element {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => signOut()}
+              onClick={handleSignOut}
               className="cursor-pointer"
             >
               <LogOut className="w-4 h-4 mr-2" />
