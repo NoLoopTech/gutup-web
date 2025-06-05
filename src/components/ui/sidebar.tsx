@@ -120,17 +120,21 @@ const SidebarProvider = React.forwardRef<
       [state, open, setOpen, toggleSidebar]
     )
 
+    const customProps: Record<string, string> = {
+      "--sidebar-width": SIDEBAR_WIDTH,
+      "--sidebar-width-icon": SIDEBAR_WIDTH_ICON
+    }
+
+    const sidebarStyle: React.CSSProperties = {
+      ...customProps,
+      ...style
+    }
+
     return (
       <SidebarContext.Provider value={contextValue}>
         <TooltipProvider delayDuration={0}>
           <div
-            style={
-              {
-                "--sidebar-width": SIDEBAR_WIDTH,
-                "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-                ...style
-              } as React.CSSProperties
-            }
+            style={sidebarStyle}
             className={cn(
               "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
               className
