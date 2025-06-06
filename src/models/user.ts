@@ -4,6 +4,7 @@ export interface User {
   email: string
   name: string
   role: string
+  image: string
   apiToken: string
   createdAt: string
   updatedAt: string
