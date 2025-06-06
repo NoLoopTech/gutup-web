@@ -13,8 +13,11 @@ import { Toaster } from "@/components/ui/sonner"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "Sign in to GutUp",
-  description: "Sign in to GutUp"
+  title: {
+    default: "GutUp Admin Panel",
+    template: "%s | GutUp Admin Panel"
+  },
+  description: "Welcome to GutUp Admin Panel!"
 }
 
 export default async function RootLayout({
