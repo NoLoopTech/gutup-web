@@ -9,7 +9,7 @@ export default function NavBase(): JSX.Element {
   const pathname = usePathname()
 
   const routeLabels: Record<string, string> = {
-    "/": "Dashboard",
+    "/dashboard/": "Dashboard",
     "/user-management/": "User Management",
     "/food-management/food-overview/": "Food Management > Food Overview",
     "/food-management/tag-overview/": "Food Management > Tag Overview",

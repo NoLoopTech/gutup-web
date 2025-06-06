@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/nextAuthOptions"
 import { redirect } from "next/navigation"
-import Dashboard from "./dashboard/page"
 
 export default async function Home(): Promise<any> {
   const session = await getServerSession(authOptions)
@@ -10,5 +9,6 @@ export default async function Home(): Promise<any> {
     redirect("/login")
   }
 
-  return <Dashboard />
+  // Redirect to /dashboard if session exists
+  redirect("/dashboard")
 }
