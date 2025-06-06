@@ -145,22 +145,6 @@ export default function LoginForm(): React.ReactNode {
             {isLoading && <Loader2Icon className="animate-spin" />}
             {isLoading ? "Please Wait" : " Login"}
           </Button>
-
-          {/* OR CONTINUE WITH */}
-          <div className="flex items-center w-full gap-4 py-2">
-            <Separator className="flex-1 bg-Primary-100" />
-
-            <Label className=" text-muted-foreground whitespace-nowrap">
-              OR CONTINUE WITH
-            </Label>
-            <Separator className="flex-1 bg-Primary-100" />
-          </div>
-
-          {/* sign in with google icon */}
-          <Button className="w-[100%]" type="button" variant={"outline"}>
-            <FcGoogle className="text-lg" />
-            Sign in with Google
-          </Button>
         </div>
       </form>
     </Form>
