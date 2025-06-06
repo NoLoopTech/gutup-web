@@ -8,7 +8,6 @@ import { X } from "lucide-react";
 interface Props {
   title: string;
   placeholder: string;
-  /** optional initial values; you can omit this prop */
   benefits?: string[];
 }
 
@@ -18,7 +17,7 @@ export default function LableInput({
   benefits = [],
 }: Props): React.ReactElement {
   const [value, setValue] = useState("");
-  const [items, setItems] = useState<string[]>(benefits); // starts empty unless you pass an initial list
+  const [items, setItems] = useState<string[]>(benefits);
 
   /* add a benefit */
   const addItem = (): void => {
