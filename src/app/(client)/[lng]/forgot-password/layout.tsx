@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 
 export const metadata = {
-  title: "Forget Password",
+  title: "Forgot Password",
   description: "Reset your password!"
 }
 
