@@ -12,3 +12,11 @@ export default withAuth(stackMiddlewares([withLocaleRedirection]), {
     }
   }
 })
+
+export const config = {
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico).*)"
+    // OR more specific like:
+    // "/protected/:path*"
+  ]
+}

@@ -5,10 +5,10 @@ export async function authenticate(
   password: string
 ): Promise<AuthResponse | undefined> {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL as string}auth/login`,
+    `${process.env.NEXT_PUBLIC_API_URL as string}v1/auth/login`,
     {
       cache: "no-store",
-      method: "post",
+      method: "POST",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json"
@@ -23,6 +23,9 @@ export async function authenticate(
     // auth success
     return await res.json()
   } else {
-    return undefined
+    const errorBody = await res.json().catch(() => ({}))
+    const message =
+      errorBody?.message || "Server error. Please try again later."
+    throw new Error(message)
   }
 }

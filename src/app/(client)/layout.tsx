@@ -5,12 +5,19 @@ import NextAuthProvider from "@/components/layout/NextAuthProvider"
 import Image from "next/image"
 import "@/styles/typography.css"
 import { Inter } from "next/font/google"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/nextAuthOptions"
+import { redirect } from "next/navigation"
+import { Toaster } from "@/components/ui/sonner"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "Sign in to GutUp",
-  description: "Sign in to GutUp"
+  title: {
+    default: "GutUp Admin Panel",
+    template: "%s | GutUp Admin Panel"
+  },
+  description: "Welcome to GutUp Admin Panel!"
 }
 
 export default async function RootLayout({
@@ -18,6 +25,12 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }): Promise<JSX.Element> {
+  const session = await getServerSession(authOptions)
+
+  if (session) {
+    redirect("/")
+  }
+
   return (
     <html lang="en">
       <body className={inter.className}>
@@ -33,6 +46,7 @@ export default async function RootLayout({
               {children}
             </div>
           </div>
+          <Toaster closeButton className="h-20 " theme="light" />
         </NextAuthProvider>
       </body>
     </html>

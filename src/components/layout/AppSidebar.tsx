@@ -46,9 +46,15 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Label } from "../ui/label"
+import { signOut, useSession } from "next-auth/react"
 
 export function AppSidebar(): JSX.Element {
   const [isOpen, setIsOpen] = useState(false)
+  const { data: session } = useSession()
+
+  const handleSignOut = async (): Promise<void> => {
+    await signOut()
+  }
 
   return (
     <Sidebar>
@@ -84,7 +90,7 @@ export function AppSidebar(): JSX.Element {
               {/* Dashboard */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a href="#" className="flex items-center gap-2">
+                  <a href="/" className="flex items-center gap-2">
                     <Inbox className="w-4 h-4" />
                     <span>Dashboard</span>
                   </a>
@@ -94,7 +100,10 @@ export function AppSidebar(): JSX.Element {
               {/* User Management */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a href="#" className="flex items-center gap-2">
+                  <a
+                    href="/user-management"
+                    className="flex items-center gap-2"
+                  >
                     <UserRound className="w-4 h-4" />
                     <span>User Management</span>
                   </a>
@@ -122,12 +131,16 @@ export function AppSidebar(): JSX.Element {
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
                         <SidebarMenuButton asChild>
-                          <a href="#">Food Overview</a>
+                          <a href="/food-management/food-overview">
+                            Food Overview
+                          </a>
                         </SidebarMenuButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
                         <SidebarMenuButton asChild>
-                          <a href="#">Tag Configuration</a>
+                          <a href="/food-management/tag-overview">
+                            Tag Overview
+                          </a>
                         </SidebarMenuButton>
                       </SidebarMenuSubItem>
                     </SidebarMenuSub>
@@ -179,14 +192,16 @@ export function AppSidebar(): JSX.Element {
             >
               <Avatar className="w-8 h-8 rounded-lg">
                 <AvatarImage
-                  src="https://github.com/shadcn.png"
+                  src={session?.user?.image || "https://github.com/shadcn.png"}
                   alt="@shadcn"
                 />
                 <AvatarFallback>SC</AvatarFallback>
               </Avatar>
               <div className="text-sm leading-tight text-left">
-                <p className="font-medium">shadcn</p>
-                <p className="text-xs text-muted-foreground">m@example.com</p>
+                <p className="font-medium">{session?.user?.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {session?.user?.email}
+                </p>
               </div>
             </Button>
           </DropdownMenuTrigger>
@@ -203,8 +218,11 @@ export function AppSidebar(): JSX.Element {
               Notifications
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut className="w-4 h-4" />
+            <DropdownMenuItem
+              onClick={handleSignOut}
+              className="cursor-pointer"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

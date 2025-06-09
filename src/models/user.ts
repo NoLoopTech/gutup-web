@@ -2,8 +2,9 @@ export interface User {
   id: string
   activated: boolean
   email: string
-  fullname: string
+  name: string
   role: string
+  image: string
   apiToken: string
   createdAt: string
   updatedAt: string

@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import NavBase from "@/components/layout/NavBase"
 import { AppSidebar } from "@/components/layout/AppSidebar"
+import NextAuthProvider from "@/components/layout/NextAuthProvider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -34,17 +35,19 @@ export default async function RootLayout({
   return (
     <html lang={lng} dir={dir(lng)}>
       <body className={inter.className}>
-        <SidebarProvider>
-          <AppSidebar />
-          <main className="w-full">
-            {/* Top Navigation Bar */}
-            <NavBase />
+        <NextAuthProvider>
+          <SidebarProvider>
+            <AppSidebar />
+            <main className="w-full">
+              {/* Top Navigation Bar */}
+              <NavBase />
 
-            {/* contents */}
-            <div className="p-4">{children}</div>
-          </main>
-          <Toaster />
-        </SidebarProvider>
+              {/* contents */}
+              <div className="p-4">{children}</div>
+            </main>
+            <Toaster closeButton className="h-20 " theme="light" />
+          </SidebarProvider>
+        </NextAuthProvider>
       </body>
     </html>
   )
