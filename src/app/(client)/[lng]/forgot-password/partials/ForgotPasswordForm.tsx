@@ -18,6 +18,14 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Loader2Icon } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
+import { verifyEmail } from "@/app/api/auth/auth"
+import type { AxiosResponse } from "axios"
+
+interface VerifyEmailResponse {
+  message: string
+  success: boolean
+}
 
 // Forgot Password email validations schema
 const ForgotPasswordschema = z.object({
@@ -45,11 +53,27 @@ export default function ForgotPasswordForm(): React.ReactNode {
     const formData = new FormData()
     formData.append("email", data.email)
 
-    console.log("verify email Submitted:", data)
+    try {
+      const response = (await verifyEmail(
+        data.email
+      )) as AxiosResponse<VerifyEmailResponse>
 
-    router.push(
-      `/en/forgot-password/otp?email=${encodeURIComponent(data.email)}`
-    )
+      if (response.status === 200 || response.status === 201) {
+        router.push(
+          `/en/forgot-password/otp?email=${encodeURIComponent(data.email)}`
+        )
+        toast.success(response.data.message)
+      } else {
+        toast.error("OTP request failed!", {
+          description: response.data.message
+        })
+      }
+    } catch (error) {
+      toast.error("System Error!", {
+        description: "Please try again later"
+      })
+      console.log("error", error)
+    }
 
     setIsLoading(false)
   }
