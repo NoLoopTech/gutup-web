@@ -57,7 +57,6 @@ export default function ForgotPasswordForm(): React.ReactNode {
       const response = (await verifyEmail(
         data.email
       )) as AxiosResponse<VerifyEmailResponse>
-      console.log("response", response)
 
       if (response.status === 200 || response.status === 201) {
         router.push(
@@ -70,6 +69,9 @@ export default function ForgotPasswordForm(): React.ReactNode {
         })
       }
     } catch (error) {
+      toast.error("System Error!", {
+        description: "Please try again later"
+      })
       console.log("error", error)
     }
 

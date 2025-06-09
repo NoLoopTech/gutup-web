@@ -28,6 +28,7 @@ import { AxiosResponse } from "axios"
 interface VerifyOtpResponse {
   message: string
   success: boolean
+  valid: boolean
 }
 
 // Forgot Password otp validations schema
@@ -74,9 +75,8 @@ export default function OtpForm(): React.ReactNode {
         email,
         data.otp
       )) as AxiosResponse<VerifyOtpResponse>
-      console.log("response", response)
 
-      if (response.status === 200 || response.status === 201) {
+      if (response.data.valid) {
         router.push(
           `/en/forgot-password/reset?email=${encodeURIComponent(
             email
@@ -89,8 +89,10 @@ export default function OtpForm(): React.ReactNode {
         })
       }
     } catch (error) {
+      toast.error("System Error!", {
+        description: "Please try again later"
+      })
       console.log("error", error)
-      toast.error("Something went wrong!")
     }
 
     setIsLoading(false)

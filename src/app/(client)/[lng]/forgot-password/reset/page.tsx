@@ -77,7 +77,6 @@ export default function ResetPasswordForm(): React.ReactNode {
         otp,
         data.newPassword
       )) as AxiosResponse<ResetPasswordResponse>
-      console.log("response", response)
 
       if (response.status === 200 || response.status === 201) {
         toast.success(response.data.message)
@@ -88,6 +87,9 @@ export default function ResetPasswordForm(): React.ReactNode {
         })
       }
     } catch (error) {
+      toast.error("System Error!", {
+        description: "Please try again later"
+      })
       console.log("error", error)
     }
 
@@ -161,9 +163,7 @@ export default function ResetPasswordForm(): React.ReactNode {
 
           {/* back button  */}
           <Link
-            href={`/en/forgot-password/otp?email=${encodeURIComponent(
-              email
-            )}`}
+            href={`/en/forgot-password/otp?email=${encodeURIComponent(email)}`}
           >
             <Button className="px-0 py-0" type="button" variant={"link"}>
               Back
