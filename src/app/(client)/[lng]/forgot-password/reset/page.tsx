@@ -15,9 +15,17 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Loader2Icon } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
+import { resetPassword } from "@/app/api/auth/auth"
+import { AxiosResponse } from "axios"
+
+interface ResetPasswordResponse {
+  message: string
+  success: boolean
+}
 
 // Reset Password password validations schema
 const ResetPasswordschema = z
@@ -41,7 +49,11 @@ type ResetPasswordFormData = z.infer<typeof ResetPasswordschema>
 
 export default function ResetPasswordForm(): React.ReactNode {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState<boolean>(false)
+
+  const email = searchParams.get("email") || ""
+  const otp = searchParams.get("otp") || ""
 
   // validate form
   const form = useForm<ResetPasswordFormData>({
@@ -57,12 +69,27 @@ export default function ResetPasswordForm(): React.ReactNode {
     setIsLoading(true)
 
     const formData = new FormData()
-    formData.append("newPassword", data.newPassword)
-    formData.append("password", data.confirmPassword)
+    formData.append("email", data.newPassword)
 
-    console.log("verify password Submitted:", data)
+    try {
+      const response = (await resetPassword(
+        email,
+        otp,
+        data.newPassword
+      )) as AxiosResponse<ResetPasswordResponse>
+      console.log("response", response)
 
-    router.push(`/login`)
+      if (response.status === 200 || response.status === 201) {
+        toast.success(response.data.message)
+        router.push(`/login`)
+      } else {
+        toast.error("Reset password failed!", {
+          description: response.data.message
+        })
+      }
+    } catch (error) {
+      console.log("error", error)
+    }
 
     setIsLoading(false)
   }
@@ -133,7 +160,11 @@ export default function ResetPasswordForm(): React.ReactNode {
           </Button>
 
           {/* back button  */}
-          <Link href={"/forgot-password/otp"}>
+          <Link
+            href={`/en/forgot-password/otp?email=${encodeURIComponent(
+              email
+            )}`}
+          >
             <Button className="px-0 py-0" type="button" variant={"link"}>
               Back
             </Button>

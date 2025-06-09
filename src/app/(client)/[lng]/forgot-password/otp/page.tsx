@@ -13,7 +13,7 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   InputOTP,
   InputOTPGroup,
@@ -21,6 +21,14 @@ import {
 } from "@/components/ui/input-otp"
 import { useState } from "react"
 import { Loader2Icon } from "lucide-react"
+import { verifyOtp } from "@/app/api/auth/auth"
+import { toast } from "sonner"
+import { AxiosResponse } from "axios"
+
+interface VerifyOtpResponse {
+  message: string
+  success: boolean
+}
 
 // Forgot Password otp validations schema
 const OtpSchema = z.object({
@@ -34,6 +42,7 @@ type OtpFormData = z.infer<typeof OtpSchema>
 
 export default function OtpForm(): React.ReactNode {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
   // validate form
@@ -48,12 +57,41 @@ export default function OtpForm(): React.ReactNode {
   const onSubmit = async (data: OtpFormData): Promise<void> => {
     setIsLoading(true)
 
+    // Make sure to handle the email correctly from searchParams
+    const email = searchParams.get("email")
+
+    if (!email) {
+      toast.error("Email not found!")
+      setIsLoading(false)
+      return
+    }
+
     const formData = new FormData()
-    formData.append("otp", String(data.otp))
+    formData.append("otp", data.otp)
 
-    console.log("verify otp Submitted:", data)
+    try {
+      const response = (await verifyOtp(
+        email,
+        data.otp
+      )) as AxiosResponse<VerifyOtpResponse>
+      console.log("response", response)
 
-    router.push(`/forgot-password/reset`)
+      if (response.status === 200 || response.status === 201) {
+        router.push(
+          `/en/forgot-password/reset?email=${encodeURIComponent(
+            email
+          )}&otp=${encodeURIComponent(data.otp)}`
+        )
+        toast.success(response.data.message)
+      } else {
+        toast.error("OTP verification failed!", {
+          description: response.data.message
+        })
+      }
+    } catch (error) {
+      console.log("error", error)
+      toast.error("Something went wrong!")
+    }
 
     setIsLoading(false)
   }
@@ -111,7 +149,7 @@ export default function OtpForm(): React.ReactNode {
           </Button>
 
           {/* back button  */}
-          <Link href={"/forgot-password"}>
+          <Link href={"/forgot-password/"}>
             <Button className="px-0 py-0" type="button" variant={"link"}>
               Back
             </Button>
