@@ -78,9 +78,9 @@ export default function ResetPasswordForm(): React.ReactNode {
         data.newPassword
       )) as AxiosResponse<ResetPasswordResponse>
 
-      if (response.status === 200 || response.status === 201) {
+      if (response.data.success) {
         toast.success(response.data.message)
-        router.push(`/login`)
+        router.replace(`/login`)
       } else {
         toast.error("Reset password failed!", {
           description: response.data.message
