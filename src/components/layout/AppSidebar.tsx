@@ -47,6 +47,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Label } from "../ui/label"
 import { signOut, useSession } from "next-auth/react"
+import Link from "next/link"
 
 export function AppSidebar(): JSX.Element {
   const [isOpen, setIsOpen] = useState(false)
@@ -68,7 +69,7 @@ export function AppSidebar(): JSX.Element {
             <div className="flex flex-col ">
               <Label className="text-sm font-semibold leading-tight">
                 GutUp
-              </Label>{" "}
+              </Label>
               <Label className="text-xs text-muted-foreground">
                 Admin Panel
               </Label>
@@ -90,23 +91,23 @@ export function AppSidebar(): JSX.Element {
               {/* Dashboard */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a href="/" className="flex items-center gap-2">
+                  <Link href="/" className="flex items-center gap-2">
                     <Inbox className="w-4 h-4" />
                     <span>Dashboard</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               {/* User Management */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a
+                  <Link
                     href="/user-management"
                     className="flex items-center gap-2"
                   >
                     <UserRound className="w-4 h-4" />
                     <span>User Management</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
@@ -131,16 +132,16 @@ export function AppSidebar(): JSX.Element {
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
                         <SidebarMenuButton asChild>
-                          <a href="/food-management/food-overview">
+                          <Link href="/food-management/food-overview">
                             Food Overview
-                          </a>
+                          </Link>
                         </SidebarMenuButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
                         <SidebarMenuButton asChild>
-                          <a href="/food-management/tag-overview">
+                          <Link href="/food-management/tag-overview">
                             Tag Overview
-                          </a>
+                          </Link>
                         </SidebarMenuButton>
                       </SidebarMenuSubItem>
                     </SidebarMenuSub>
@@ -151,30 +152,39 @@ export function AppSidebar(): JSX.Element {
               {/* Recipe Management */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a href="#" className="flex items-center gap-2">
+                  <Link
+                    href="/recipe-management"
+                    className="flex items-center gap-2"
+                  >
                     <HandPlatter className="w-4 h-4" />
                     <span>Recipe Management</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               {/* Store Management */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a href="#" className="flex items-center gap-2">
+                  <Link
+                    href="/store-management"
+                    className="flex items-center gap-2"
+                  >
                     <ShoppingBasket className="w-4 h-4" />
                     <span>Store Management</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               {/* Content Management */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a href="#" className="flex items-center gap-2">
+                  <Link
+                    href="/content-management"
+                    className="flex items-center gap-2"
+                  >
                     <ClipboardPenLine className="w-4 h-4" />
                     <span>Content Management</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

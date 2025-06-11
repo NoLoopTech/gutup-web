@@ -8,6 +8,9 @@ import { SidebarProvider } from "@/components/ui/sidebar"
 import NavBase from "@/components/layout/NavBase"
 import { AppSidebar } from "@/components/layout/AppSidebar"
 import NextAuthProvider from "@/components/layout/NextAuthProvider"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/nextAuthOptions"
+import { redirect } from "next/navigation"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -32,18 +35,24 @@ export default async function RootLayout({
   children: React.ReactNode
   params: { lng: string }
 }): Promise<JSX.Element> {
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    redirect("/login")
+  }
+
   return (
     <html lang={lng} dir={dir(lng)}>
       <body className={inter.className}>
         <NextAuthProvider>
           <SidebarProvider>
             <AppSidebar />
-            <main className="w-full">
+            <main className="w-full h-screen">
               {/* Top Navigation Bar */}
               <NavBase />
 
               {/* contents */}
-              <div className="p-4">{children}</div>
+              <div className="p-4 overflow-y-auto h-[88%]">{children}</div>
             </main>
             <Toaster closeButton className="h-20 " theme="light" />
           </SidebarProvider>
