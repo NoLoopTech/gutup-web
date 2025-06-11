@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/nextAuthOptions"
 import { redirect } from "next/navigation"
-import MoodsPage from "../partials/MoodsPage"
+import MoodsPage from "./partials/MoodsPage"
 import { Button } from "@/components/ui/button"
 
 export default async function Moods(): Promise<any> {
