@@ -5,39 +5,39 @@ import {
   TableBody,
   TableRow,
   TableHead,
-  TableCell,
-} from "@/components/ui/table";
-import { CustomPagination } from "@/components/ui/pagination";
+  TableCell
+} from "@/components/ui/table"
+import { CustomPagination } from "@/components/ui/pagination"
 
 interface Column<T> {
-  header: string;
-  accessor: keyof T | ((row: T) => React.ReactNode);
-  className?: string;
+  accessor?: keyof T | ((row: T) => React.ReactNode)
+  header?: string
+  id?: string
+  cell?: (row: T) => React.ReactNode
+  className?: string
 }
 
 interface CustomTableProps<T> {
   columns: Array<Column<T>>
-  data: T[];
-  page: number;
-  pageSize: number;
-  totalItems: number;
-  pageSizeOptions: number[];
-  onPageChange: (page: number) => void;
-  onPageSizeChange: (size: number) => void;
+  data: T[]
+  page: number
+  pageSize: number
+  totalItems: number
+  pageSizeOptions: number[]
+  onPageChange: (page: number) => void
+  onPageSizeChange: (size: number) => void
 }
 
-export function CustomTable<T extends Record<string, any>>(
-  {
-    columns,
-    data,
-    page,
-    pageSize,
-    totalItems,
-    pageSizeOptions,
-    onPageChange,
-    onPageSizeChange
-  }: CustomTableProps<T>
-): JSX.Element {
+export function CustomTable<T extends Record<string, any>>({
+  columns,
+  data,
+  page,
+  pageSize,
+  totalItems,
+  pageSizeOptions,
+  onPageChange,
+  onPageSizeChange
+}: CustomTableProps<T>): JSX.Element {
   return (
     <div className="w-full space-y-2">
       <Table>
@@ -62,9 +62,13 @@ export function CustomTable<T extends Record<string, any>>(
               <TableRow key={rowIndex}>
                 {columns.map((col, colIndex) => (
                   <TableCell key={colIndex} className={col.className}>
-                    {typeof col.accessor === "function"
+                    {col.cell
+                      ? col.cell(row)
+                      : typeof col.accessor === "function"
                       ? col.accessor(row)
-                      : row[col.accessor]}
+                      : col.accessor
+                      ? row[col.accessor]
+                      : null}
                   </TableCell>
                 ))}
               </TableRow>
@@ -81,5 +85,5 @@ export function CustomTable<T extends Record<string, any>>(
         onPageSizeChange={onPageSizeChange}
       />
     </div>
-  );
+  )
 }

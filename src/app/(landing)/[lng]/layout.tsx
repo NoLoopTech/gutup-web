@@ -38,12 +38,12 @@ export default async function RootLayout({
         <NextAuthProvider>
           <SidebarProvider>
             <AppSidebar />
-            <main className="w-full">
+            <main className="w-full h-screen">
               {/* Top Navigation Bar */}
               <NavBase />
 
               {/* contents */}
-              <div className="p-4">{children}</div>
+              <div className="p-4 overflow-y-auto h-[88%]">{children}</div>
             </main>
             <Toaster closeButton className="h-20 " theme="light" />
           </SidebarProvider>

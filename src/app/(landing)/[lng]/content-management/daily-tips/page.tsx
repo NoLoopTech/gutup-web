@@ -1,18 +1,14 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/nextAuthOptions"
 import { redirect } from "next/navigation"
-import UserManagementPage from "./partials/UserManagementPage"
+import DailyTipsPage from "../partials/DailyTipsPage"
 
-export const metadata = {
-  title: "User Management"
-}
-
-export default async function UserManagement(): Promise<any> {
+export default async function DailyTips(): Promise<any> {
   const session = await getServerSession(authOptions)
 
   if (!session) {
     redirect("/login")
   }
 
-  return <UserManagementPage />
+  return <DailyTipsPage />
 }

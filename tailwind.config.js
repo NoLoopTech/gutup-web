@@ -7,6 +7,9 @@ module.exports = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./node_modules/@shadcn/ui/**/*.{js,ts,jsx,tsx}"
   ],
+  compilerOptions: {
+    typeRoots: ["./src/types", "./node_modules/@types"]
+  },
   theme: {
     extend: {
       colors: {
