@@ -136,7 +136,7 @@ export default function MoodsPage() {
   }
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-4">
       {/* user management table */}
       <CustomTable
         columns={columns}
