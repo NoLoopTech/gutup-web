@@ -20,9 +20,24 @@ const RichTextEditor = dynamic(
 );
 
 interface Option {
-  value: string;
-  label: string;
+    value: string;
+    label: string;
 }
+interface Props {
+    open: boolean;
+    onClose: () => void;
+}
+interface AvailableItem {
+    id: number;
+    name: string;
+    type: string;
+    status: 'Active' | 'Inactive';
+    display: boolean;
+    tags: string[];
+    quantity: string;
+    isMain: boolean;
+}
+
 const categories: Option[] = [
     { value: 'Breakfast', label: 'Breakfast' },
     { value: 'Dinner', label: 'Dinner' },
@@ -34,26 +49,11 @@ const shopStatus: Option[] = [
     { value: 'Online', label: 'Online' },
 ];
 
-interface Props {
-    open: boolean;
-    onClose: () => void;
-}
-
 export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
     const aboutRef = useRef<any>(null);
     const [page, setPage] = React.useState<number>(1);
     const [pageSize, setPageSize] = React.useState<number>(5);
 
-    interface AvailableItem {
-  id: number;
-  name: string;
-  type: string;
-  status: 'Active' | 'Inactive';
-  display: boolean;
-  tags: string[];
-  quantity: string;
-  isMain: boolean;
-}
     // Dummy table data
     const availData: AvailableItem[] = [
         {

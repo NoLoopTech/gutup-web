@@ -27,11 +27,19 @@ const imageList = [
 ];
 
 interface Ingredient {
-  id: number;
-  name: string;
-  quantity: string;
-  isMain: boolean;
-  tags: string[];
+    id: number;
+    name: string;
+    quantity: string;
+    isMain: boolean;
+    tags: string[];
+}
+interface Option {
+    value: string;
+    label: string;
+}
+interface Props {
+    open: boolean;
+    onClose: () => void;
 }
 
 // Dummy data
@@ -108,20 +116,10 @@ const RichTextEditor = dynamic(
     { ssr: false }
 );
 
-interface Props {
-    open: boolean;
-    onClose: () => void;
-}
-
 export default function AddRecipePopup({ open, onClose }: Props): JSX.Element {
     const selectionRef = useRef<RichTextEditorHandle>(null);
     const [page, setPage] = useState<number>(1);
     const [pageSize, setPageSize] = useState<number>(5);
-
-    interface Option {
-  value: string;
-  label: string;
-}
 
     const categories: Option[] = [
         { value: "fruits", label: "Fruits" },
@@ -231,7 +229,7 @@ export default function AddRecipePopup({ open, onClose }: Props): JSX.Element {
                     </div>
                     <CustomTable
                         columns={ingredientColumns}
-                        data={ingredientData.slice((page - 1) * pageSize, page * pageSize)} 
+                        data={ingredientData.slice((page - 1) * pageSize, page * pageSize)}
                         page={page}
                         pageSize={pageSize}
                         totalItems={ingredientData.length}
@@ -239,7 +237,7 @@ export default function AddRecipePopup({ open, onClose }: Props): JSX.Element {
                         onPageChange={(newPage) => { setPage(newPage); }}
                         onPageSizeChange={(newSize) => {
                             setPageSize(newSize);
-                            setPage(1); 
+                            setPage(1);
                         }}
                     />
 

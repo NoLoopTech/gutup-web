@@ -14,6 +14,10 @@ interface Props {
   open: boolean;
   onClose: () => void;
 }
+interface Option {
+  value: string;
+  label: string;
+}
 
 export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
   const [allowMultiLang, setAllowMultiLang] = useState(false);
@@ -24,10 +28,6 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
   const preparationRef = useRef<RichTextEditorHandle>(null);
   const conservationRef = useRef<RichTextEditorHandle>(null);
 
-  interface Option {
-  value: string;
-  label: string;
-}
   // Shared data arrays
   const categories: Option[] = [
     { value: "fruits", label: "Fruits" },
