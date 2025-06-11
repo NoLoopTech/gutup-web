@@ -24,20 +24,24 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
   const preparationRef = useRef<RichTextEditorHandle>(null);
   const conservationRef = useRef<RichTextEditorHandle>(null);
 
+  interface Option {
+  value: string;
+  label: string;
+}
   // Shared data arrays
-  const categories = [
+  const categories: Option[] = [
     { value: "fruits", label: "Fruits" },
     { value: "vegetables", label: "Vegetables" },
     { value: "dairy", label: "Dairy" },
     { value: "grains", label: "Grains" },
   ];
-  const seasons = [
+  const seasons: Option[] = [
     { value: "spring", label: "Spring" },
     { value: "summer", label: "Summer" },
     { value: "autumn", label: "Autumn" },
     { value: "winter", label: "Winter" },
   ];
-  const countries = [
+  const countries: Option[] = [
     { value: "switzerland", label: "Switzerland" },
     { value: "france", label: "France" },
     { value: "germany", label: "Germany" },

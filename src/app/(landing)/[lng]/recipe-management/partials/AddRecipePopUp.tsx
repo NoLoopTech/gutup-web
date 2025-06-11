@@ -25,8 +25,17 @@ const imageList = [
     "/images/5.jpg",
     "/images/6.jpg",
 ];
+
+interface Ingredient {
+  id: number;
+  name: string;
+  quantity: string;
+  isMain: boolean;
+  tags: string[];
+}
+
 // Dummy data
-const ingredientData = [
+const ingredientData: Ingredient[] = [
     {
         id: 1,
         name: "Tomato",
@@ -106,15 +115,21 @@ interface Props {
 
 export default function AddRecipePopup({ open, onClose }: Props): JSX.Element {
     const selectionRef = useRef<RichTextEditorHandle>(null);
-    const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(5);
-    const categories = [
+    const [page, setPage] = useState<number>(1);
+    const [pageSize, setPageSize] = useState<number>(5);
+
+    interface Option {
+  value: string;
+  label: string;
+}
+
+    const categories: Option[] = [
         { value: "fruits", label: "Fruits" },
         { value: "vegetables", label: "Vegetables" },
         { value: "dairy", label: "Dairy" },
         { value: "grains", label: "Grains" },
     ];
-    const seasons = [
+    const seasons: Option[] = [
         { value: "spring", label: "Spring" },
         { value: "summer", label: "Summer" },
         { value: "autumn", label: "Autumn" },
