@@ -13,6 +13,7 @@ import { MoreVertical, ThumbsDown, ThumbsUp } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 import sampleImage from "@/../../public/images/sample-image.png"
+import AddDailyTipPopUp from "./AddDailyTipPopUp"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -34,6 +35,15 @@ interface DailyTipsDataType {
 }
 
 export default function DailyTipsPage() {
+  const [isOpenAddTip, setIsOpenAddTip] = useState<boolean>(false)
+
+  const handleOpenAddTip = () => {
+    setIsOpenAddTip(true)
+  }
+  const handleCloseAddTip = () => {
+    setIsOpenAddTip(false)
+  }
+
   const columns: Column<DailyTipsDataType>[] = [
     {
       accessor: "media",
@@ -167,6 +177,9 @@ export default function DailyTipsPage() {
 
   return (
     <div className="space-y-4 ">
+      <div className="flex justify-end mb-5 -mt-14">
+        <Button onClick={handleOpenAddTip}>Add New</Button>
+      </div>
       {/* user management table */}
       <CustomTable
         columns={columns}
@@ -178,6 +191,8 @@ export default function DailyTipsPage() {
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
       />
+
+      <AddDailyTipPopUp open={isOpenAddTip} onClose={handleCloseAddTip} />
     </div>
   )
 }
