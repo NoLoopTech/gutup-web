@@ -99,7 +99,6 @@ export default function UserManagementPage() {
             <DropdownMenuItem onClick={handleViewUserOverview}>
               View
             </DropdownMenuItem>
-            <DropdownMenuItem>Make a copy</DropdownMenuItem>
             <DropdownMenuItem>Favorite</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -231,7 +230,7 @@ export default function UserManagementPage() {
   ]
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-4">
       <div className="flex flex-wrap justify-between gap-2">
         <div className="flex gap-2">
           {/* search by user name */}
