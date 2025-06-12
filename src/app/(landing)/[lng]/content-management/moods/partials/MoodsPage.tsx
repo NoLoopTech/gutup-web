@@ -100,7 +100,7 @@ export default function MoodsPage() {
 
   const data: MoodsDataType[] = [
     {
-      mood: "Very Happy", // public/images/carrot.jpg
+      mood: "Very Happy",
       title: "Stay Hydrated",
       content: "Main content of the tip",
       dateCreated: "2025-05-16",

@@ -40,6 +40,9 @@ interface UserManagementDataType {
 }
 
 export default function UserManagementPage() {
+  const [page, setPage] = useState<number>(1)
+  const [pageSize, setPageSize] = useState<number>(10)
+
   const columns: Column<UserManagementDataType>[] = [
     {
       accessor: "id" as const,
@@ -182,14 +185,16 @@ export default function UserManagementPage() {
       dailyScorePoints: 100
     }
   ]
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
-  const pageSizeOptions = [5, 10, 20]
 
-  const totalItems = data.length
-  const startIndex = (page - 1) * pageSize
-  const endIndex = startIndex + pageSize
-  const paginatedData = data.slice(startIndex, endIndex)
+  const pageSizeOptions: number[] = [5, 10, 20]
+
+  const totalItems: number = data.length
+  const startIndex: number = (page - 1) * pageSize
+  const endIndex: number = startIndex + pageSize
+  const paginatedData: UserManagementDataType[] = data.slice(
+    startIndex,
+    endIndex
+  )
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage)
