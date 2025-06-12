@@ -65,8 +65,6 @@ export default function UserManagementPage({
     endDate: null
   })
 
-  console.log(selectedDateRange)
-
   const handleViewUserOverview = () => {
     setUserOverviewPopupOpen(true)
   }
@@ -146,8 +144,6 @@ export default function UserManagementPage({
   ]
 
   const pageSizeOptions: number[] = [5, 10, 20]
-
-  const now = dayjs()
 
   // filter users
   const filteredUsers = users.filter(user => {
