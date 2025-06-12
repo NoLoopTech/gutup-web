@@ -141,7 +141,9 @@ export default function UserOverviewPopup({
               <Label>Concerns</Label>
               <div className="flex flex-wrap gap-2">
                 {badges.map(badge => (
-                  <Badge variant={"outline"}>{badge.label}</Badge>
+                  <Badge key={badge.value} variant={"outline"}>
+                    {badge.label}
+                  </Badge>
                 ))}
               </div>
             </div>

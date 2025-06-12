@@ -19,9 +19,11 @@ import {
   SelectValue
 } from "@/components/ui/select"
 import { MoreVertical } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { RangeKeyDict } from "react-date-range"
 import UserOverviewPopup from "./UserOverviewPopup"
+import { getAllUsers } from "@/app/api/user"
+import dayjs from "dayjs"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -35,14 +37,19 @@ interface UserManagementDataType {
   id: number
   name: string
   email: string
-  registeredDate: string
-  lastActivity: string
-  dailyScorePoints: number
+  createdAt: string
+  updatedAt: string
+  dailyScore: number
 }
 
-export default function UserManagementPage() {
+export default function UserManagementPage({
+  token
+}: {
+  token: string
+}): JSX.Element {
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(10)
+  const [users, setUsers] = useState<UserManagementDataType[]>([])
   const [userOverviewPopupOpen, setUserOverviewPopupOpen] =
     useState<boolean>(false)
 
@@ -52,6 +59,24 @@ export default function UserManagementPage() {
   const handleCloseUserOverview = () => {
     setUserOverviewPopupOpen(false)
   }
+
+  // handle get users
+  const getUsers = async () => {
+    try {
+      const response = await getAllUsers(token)
+      if (response.status === 200) {
+        setUsers(response.data.users)
+      } else {
+        console.log(response)
+      }
+    } catch (error) {
+      console.error("Failed to fetch users:", error)
+    }
+  }
+
+  useEffect(() => {
+    getUsers()
+  }, [])
 
   const columns: Column<UserManagementDataType>[] = [
     {
@@ -67,15 +92,17 @@ export default function UserManagementPage() {
       header: "Email"
     },
     {
-      accessor: "registeredDate" as const,
-      header: "Registration date"
+      accessor: "createdAt" as const,
+      header: "Registration date",
+      cell: (row: any) => dayjs(row.createdAt).format("DD/MM/YYYY")
     },
     {
-      accessor: "lastActivity" as const,
-      header: "Last Activity"
+      accessor: "updatedAt" as const,
+      header: "Last Activity",
+      cell: (row: any) => dayjs(row.updatedAt).format("DD/MM/YYYY")
     },
     {
-      accessor: "dailyScorePoints" as const,
+      accessor: "dailyScore" as const,
       header: "Daily Score Points",
       className: "w-40"
     },
@@ -92,117 +119,24 @@ export default function UserManagementPage() {
               size="icon"
             >
               <MoreVertical className="w-5 h-5" />
-              <span className="sr-only">Open menu</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
             <DropdownMenuItem onClick={handleViewUserOverview}>
               View
             </DropdownMenuItem>
-            <DropdownMenuItem>Favorite</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
     }
   ]
 
-  const data: UserManagementDataType[] = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 2,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 3,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 4,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 5,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 6,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 7,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 8,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 9,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 10,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 11,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    }
-  ]
-
   const pageSizeOptions: number[] = [5, 10, 20]
 
-  const totalItems: number = data.length
+  const totalItems: number = users.length
   const startIndex: number = (page - 1) * pageSize
   const endIndex: number = startIndex + pageSize
-  const paginatedData: UserManagementDataType[] = data.slice(
+  const paginatedData: UserManagementDataType[] = users.slice(
     startIndex,
     endIndex
   )
@@ -244,7 +178,7 @@ export default function UserManagementPage() {
             <SelectContent className="max-h-40">
               <SelectGroup>
                 {scorePoints.map(item => (
-                  <SelectItem value={item.value.toString()}>
+                  <SelectItem key={item.value} value={item.value.toString()}>
                     {item.label}
                   </SelectItem>
                 ))}
