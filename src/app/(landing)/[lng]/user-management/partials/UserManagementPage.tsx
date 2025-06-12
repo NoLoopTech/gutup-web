@@ -24,6 +24,7 @@ import UserOverviewPopup from "./UserOverviewPopup"
 import { getAllUsers } from "@/app/api/user"
 import dayjs from "dayjs"
 import isBetween from "dayjs/plugin/isBetween"
+import { boolean } from "zod"
 
 dayjs.extend(isBetween)
 
@@ -267,17 +268,23 @@ export default function UserManagementPage({
         </div>
 
         {/* clear filters button */}
-        <Button
-          variant="outline"
-          onClick={() => {
-            setSearchText("")
-            setSelectedScore("")
-            setSelectedDateFilter("All")
-            setSelectedDateRange({ startDate: null, endDate: null })
-          }}
-        >
-          Clear Filters
-        </Button>
+        {(Boolean(searchText) ||
+          Boolean(selectedScore) ||
+          Boolean(selectedDateFilter !== "All") ||
+          Boolean(selectedDateRange.startDate) ||
+          Boolean(selectedDateRange.endDate)) && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSearchText("")
+              setSelectedScore("")
+              setSelectedDateFilter("All")
+              setSelectedDateRange({ startDate: null, endDate: null })
+            }}
+          >
+            Clear Filters
+          </Button>
+        )}
       </div>
 
       {/* user management table */}
