@@ -15,7 +15,8 @@ export default function NavBase(): JSX.Element {
     "/food-management/tag-overview/": "Food Management > Tag Overview",
     "/recipe-management/": "Recipe Management",
     "/store-management/": "Store Management",
-    "/content-management/": "Content Management"
+    "/content-management/daily-tips/": "Content Management > Daily Tips",
+    "/content-management/moods/": "Content Management > Moods"
   }
 
   const pathWithoutLang = pathname.replace(/^\/(en|de)\b/, "") || "/"

@@ -1,25 +1,26 @@
+"use client"
 // components/ui/Input.tsx
 
-import * as React from "react";
-import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { cn } from "@/lib/utils"
+import { ChevronDown, ChevronUp } from "lucide-react"
+import React, { useState } from "react"
 
 interface Option {
-  value: string;
-  label: string;
+  value: string
+  label: string
 }
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  options?: Option[];
-  placeholder?: string; // Supports placeholder as a prop
+  options?: Option[]
+  placeholder?: string // Supports placeholder as a prop
 }
 
 const Input = React.forwardRef<
   HTMLInputElement | HTMLSelectElement,
   InputProps
 >(({ className, type = "text", options, placeholder, ...props }, ref) => {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [selected, setSelected] = React.useState("");
+  const [isOpen, setIsOpen] = useState(false)
+  const [selected, setSelected] = useState("")
 
   if (options && options.length > 0) {
     return (
@@ -31,9 +32,15 @@ const Input = React.forwardRef<
             className
           )}
           value={selected}
-          onChange={e => { setSelected(e.target.value); }}
-          onFocus={() => { setIsOpen(true); }}
-          onBlur={() => { setIsOpen(false); }}
+          onChange={e => {
+            setSelected(e.target.value)
+          }}
+          onFocus={() => {
+            setIsOpen(true)
+          }}
+          onBlur={() => {
+            setIsOpen(false)
+          }}
           {...(props as React.SelectHTMLAttributes<HTMLSelectElement>)}
         >
           {/*  Placeholder Option */}
@@ -41,7 +48,7 @@ const Input = React.forwardRef<
             {placeholder ?? "Select an option"}
           </option>
 
-          {options.map((opt) => (
+          {options.map(opt => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
@@ -49,11 +56,11 @@ const Input = React.forwardRef<
         </select>
 
         {/* Chevron Icon */}
-        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+        <div className="absolute -translate-y-1/2 pointer-events-none right-3 top-1/2 text-muted-foreground">
           {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </div>
       </div>
-    );
+    )
   }
 
   // Fallback to regular input
@@ -68,8 +75,8 @@ const Input = React.forwardRef<
       )}
       {...props}
     />
-  );
-});
+  )
+})
 
-Input.displayName = "Input";
-export { Input };
+Input.displayName = "Input"
+export { Input }

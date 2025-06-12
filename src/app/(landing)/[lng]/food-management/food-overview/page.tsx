@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/nextAuthOptions"
 import { redirect } from "next/navigation"
+import FoodOverviewPage from "../partials/FoodOverviewPage"
 
 export const metadata = {
   title: "Food Management"
@@ -13,11 +14,5 @@ export default async function FoodOverview(): Promise<any> {
     redirect("/login")
   }
 
-  return (
-    <main>
-      <h1>Welcome, {session?.user?.name}</h1>
-      <p>{session?.user?.role}</p>
-      <p>Food Overview Sample content that only logged-in users can see.</p>
-    </main>
-  )
+  return <FoodOverviewPage />
 }

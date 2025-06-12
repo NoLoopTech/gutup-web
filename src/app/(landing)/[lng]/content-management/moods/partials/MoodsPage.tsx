@@ -137,7 +137,6 @@ export default function MoodsPage() {
 
   return (
     <div className="space-y-4">
-      {" "}
       <div className="flex justify-end mb-5 -mt-14">
         <Button>Add New</Button>
       </div>
