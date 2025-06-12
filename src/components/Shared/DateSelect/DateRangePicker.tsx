@@ -36,9 +36,15 @@ export function DateRangePicker({
   React.useEffect(() => {
     if (value?.startDate && value?.endDate) {
       setDate({
-        ...date,
         startDate: value.startDate,
-        endDate: value.endDate
+        endDate: value.endDate,
+        key: "selection"
+      })
+    } else {
+      setDate({
+        startDate: null,
+        endDate: null,
+        key: "selection"
       })
     }
   }, [value?.startDate, value?.endDate])
