@@ -52,6 +52,7 @@ export default function UserManagementPage({
   const [users, setUsers] = useState<UserManagementDataType[]>([])
   const [userOverviewPopupOpen, setUserOverviewPopupOpen] =
     useState<boolean>(false)
+  const [searchText, setSearchText] = useState<string>("")
 
   const handleViewUserOverview = () => {
     setUserOverviewPopupOpen(true)
@@ -133,13 +134,14 @@ export default function UserManagementPage({
 
   const pageSizeOptions: number[] = [5, 10, 20]
 
-  const totalItems: number = users.length
-  const startIndex: number = (page - 1) * pageSize
-  const endIndex: number = startIndex + pageSize
-  const paginatedData: UserManagementDataType[] = users.slice(
-    startIndex,
-    endIndex
+  const filteredUsers = users.filter(user =>
+    user.name.toLowerCase().includes(searchText.toLowerCase())
   )
+
+  const totalItems = filteredUsers.length
+  const startIndex = (page - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const paginatedData = filteredUsers.slice(startIndex, endIndex)
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage)
@@ -168,7 +170,12 @@ export default function UserManagementPage({
       <div className="flex flex-wrap justify-between gap-2">
         <div className="flex gap-2">
           {/* search by user name */}
-          <Input className="max-w-xs" placeholder="Search by user name..." />
+          <Input
+            className="max-w-xs"
+            placeholder="Search by user name..."
+            value={searchText}
+            onChange={e => setSearchText(e.target.value)}
+          />
 
           {/* select score points */}
           <Select>
