@@ -12,7 +12,9 @@ export default function NavBase(): JSX.Element {
     "/dashboard/": "Dashboard",
     "/user-management/": "User Management",
     "/food-management/food-overview/": "Food Management > Food Overview",
-    "/food-management/tag-overview/": "Food Management > Tag Overview",
+    "/food-management/tag-overview/food-types/":
+      "Food Management > Tag Overview",
+    "/food-management/tag-overview/benefits/": "Food Management > Tag Overview",
     "/recipe-management/": "Recipe Management",
     "/store-management/": "Store Management",
     "/content-management/daily-tips/": "Content Management > Daily Tips",
