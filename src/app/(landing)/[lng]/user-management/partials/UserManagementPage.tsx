@@ -21,6 +21,7 @@ import {
 import { MoreVertical } from "lucide-react"
 import { useState } from "react"
 import { RangeKeyDict } from "react-date-range"
+import UserOverviewPopup from "./UserOverviewPopup"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -42,6 +43,15 @@ interface UserManagementDataType {
 export default function UserManagementPage() {
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(10)
+  const [userOverviewPopupOpen, setUserOverviewPopupOpen] =
+    useState<boolean>(false)
+
+  const handleViewUserOverview = () => {
+    setUserOverviewPopupOpen(true)
+  }
+  const handleCloseUserOverview = () => {
+    setUserOverviewPopupOpen(false)
+  }
 
   const columns: Column<UserManagementDataType>[] = [
     {
@@ -86,7 +96,9 @@ export default function UserManagementPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleViewUserOverview}>
+              View
+            </DropdownMenuItem>
             <DropdownMenuItem>Make a copy</DropdownMenuItem>
             <DropdownMenuItem>Favorite</DropdownMenuItem>
           </DropdownMenuContent>
@@ -275,6 +287,11 @@ export default function UserManagementPage() {
         pageSizeOptions={pageSizeOptions}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
+      />
+
+      <UserOverviewPopup
+        open={userOverviewPopupOpen}
+        onClose={handleCloseUserOverview}
       />
     </div>
   )
