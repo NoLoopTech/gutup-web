@@ -13,19 +13,43 @@ import {
 } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 
-export function DateRangePicker({ onChange }: { onChange?: Function }) {
+export function DateRangePicker({
+  onChange,
+  value
+}: {
+  onChange?: (range: any) => void
+  value?: {
+    startDate: Date | null
+    endDate: Date | null
+  }
+}) {
+  const [open, setOpen] = React.useState(false)
+
   const [date, setDate] = React.useState<any>({
-    startDate: new Date(),
-    endDate: new Date(),
+    startDate: value?.startDate || null,
+    endDate: value?.endDate || null,
     key: "selection"
   })
 
-  const [open, setOpen] = React.useState(false)
+  const prevStartRef = React.useRef<Date | null>(null)
 
-  const formattedRange = `${format(date.startDate, "MMM dd, yyyy")} - ${format(
-    date.endDate,
-    "MMM dd, yyyy"
-  )}`
+  React.useEffect(() => {
+    if (value?.startDate && value?.endDate) {
+      setDate({
+        ...date,
+        startDate: value.startDate,
+        endDate: value.endDate
+      })
+    }
+  }, [value?.startDate, value?.endDate])
+
+  const formattedRange =
+    date.startDate && date.endDate
+      ? `${format(date.startDate, "MMM dd, yyyy")} - ${format(
+          date.endDate,
+          "MMM dd, yyyy"
+        )}`
+      : "Select date range"
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -41,9 +65,28 @@ export function DateRangePicker({ onChange }: { onChange?: Function }) {
       <PopoverContent className="p-0 mr-10">
         <DateRange
           ranges={[date]}
-          onChange={(item: any) => {
-            setDate(item.selection)
-            onChange?.(item.selection)
+          onChange={(range: any) => {
+            const selection = range.selection
+            setDate(selection)
+
+            // Fire parent's onChange
+            onChange?.({
+              startDate: selection.startDate,
+              endDate: selection.endDate
+            })
+
+            // Only close if a new endDate is selected after the startDate
+            if (
+              selection.startDate &&
+              selection.endDate &&
+              prevStartRef.current &&
+              selection.startDate.getTime() === prevStartRef.current.getTime()
+            ) {
+              setOpen(false)
+            }
+
+            // Save latest startDate for comparison on next change
+            prevStartRef.current = selection.startDate
           }}
           moveRangeOnFirstSelection={false}
           months={1}

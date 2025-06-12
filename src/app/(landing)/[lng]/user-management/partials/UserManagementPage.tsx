@@ -20,10 +20,12 @@ import {
 } from "@/components/ui/select"
 import { MoreVertical } from "lucide-react"
 import { useEffect, useState } from "react"
-import { RangeKeyDict } from "react-date-range"
 import UserOverviewPopup from "./UserOverviewPopup"
 import { getAllUsers } from "@/app/api/user"
 import dayjs from "dayjs"
+import isBetween from "dayjs/plugin/isBetween"
+
+dayjs.extend(isBetween)
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -53,6 +55,17 @@ export default function UserManagementPage({
   const [userOverviewPopupOpen, setUserOverviewPopupOpen] =
     useState<boolean>(false)
   const [searchText, setSearchText] = useState<string>("")
+  const [selectedScore, setSelectedScore] = useState<string>("")
+  const [selectedDateFilter, setSelectedDateFilter] = useState<string>("All")
+  const [selectedDateRange, setSelectedDateRange] = useState<{
+    startDate: Date | null
+    endDate: Date | null
+  }>({
+    startDate: null,
+    endDate: null
+  })
+
+  console.log(selectedDateRange)
 
   const handleViewUserOverview = () => {
     setUserOverviewPopupOpen(true)
@@ -134,9 +147,50 @@ export default function UserManagementPage({
 
   const pageSizeOptions: number[] = [5, 10, 20]
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchText.toLowerCase())
-  )
+  const now = dayjs()
+
+  // filter users
+  const filteredUsers = users.filter(user => {
+    const nameMatch = user.name.toLowerCase().includes(searchText.toLowerCase())
+    const scoreMatch =
+      selectedScore === "" || user.dailyScore === Number(selectedScore)
+
+    const createdAt = dayjs(user.createdAt)
+    const now = dayjs()
+
+    // Predefined filter
+    let predefinedDateMatch = true
+    if (
+      selectedDateFilter !== "All" &&
+      !selectedDateRange.startDate &&
+      !selectedDateRange.endDate
+    ) {
+      switch (selectedDateFilter) {
+        case "Last 7 Days":
+          predefinedDateMatch = createdAt.isAfter(now.subtract(7, "day"))
+          break
+        case "Last Month":
+          predefinedDateMatch = createdAt.isAfter(now.subtract(1, "month"))
+          break
+        case "Last 3 Months":
+          predefinedDateMatch = createdAt.isAfter(now.subtract(3, "month"))
+          break
+      }
+    }
+
+    // Custom range takes priority if selected
+    let rangeMatch = true
+    if (selectedDateRange.startDate && selectedDateRange.endDate) {
+      const start = dayjs(selectedDateRange.startDate).startOf("day")
+      const end = dayjs(selectedDateRange.endDate).endOf("day")
+      rangeMatch = createdAt.isBetween(start, end, null, "[]")
+
+      // override predefined match if range is used
+      predefinedDateMatch = rangeMatch
+    }
+
+    return nameMatch && scoreMatch && predefinedDateMatch && rangeMatch
+  })
 
   const totalItems = filteredUsers.length
   const startIndex = (page - 1) * pageSize
@@ -152,69 +206,82 @@ export default function UserManagementPage({
     setPage(1)
   }
 
-  const scorePoints = [
-    { value: 10, label: "10" },
-    { value: 20, label: "20" },
-    { value: 30, label: "30" },
-    { value: 40, label: "40" },
-    { value: 50, label: "50" },
-    { value: 60, label: "60" },
-    { value: 70, label: "70" },
-    { value: 80, label: "80" },
-    { value: 90, label: "90" },
-    { value: 100, label: "100" }
-  ]
+  // genarate score points
+  const scorePoints = Array.from({ length: 100 }, (_, i) => ({
+    value: i + 1,
+    label: (i + 1).toString()
+  }))
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap justify-between gap-2">
-        <div className="flex gap-2">
-          {/* search by user name */}
-          <Input
-            className="max-w-xs"
-            placeholder="Search by user name..."
-            value={searchText}
-            onChange={e => setSearchText(e.target.value)}
+      <div className="flex flex-wrap gap-2 ">
+        {/* search by user name */}
+        <Input
+          className="max-w-xs"
+          placeholder="Search by user name..."
+          value={searchText}
+          onChange={e => setSearchText(e.target.value)}
+        />
+        {/* select score points */}
+        <Select
+          value={selectedScore}
+          onValueChange={value => setSelectedScore(value)}
+        >
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Score Points" />
+          </SelectTrigger>
+          <SelectContent className="max-h-40">
+            <SelectGroup>
+              {scorePoints.map(item => (
+                <SelectItem key={item.value} value={item.value.toString()}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        {/* select dates */}
+        <Select
+          value={selectedDateFilter}
+          onValueChange={value => setSelectedDateFilter(value)}
+        >
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="All" />
+          </SelectTrigger>
+          <SelectContent className="max-h-40">
+            <SelectGroup>
+              <SelectItem value="All">All</SelectItem>
+              <SelectItem value="Last 7 Days">Last 7 Days</SelectItem>
+              <SelectItem value="Last Month">Last Month</SelectItem>
+              <SelectItem value="Last 3 Months">Last 3 Months</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        {/* select date range */}
+        <div>
+          <DateRangePicker
+            value={selectedDateRange}
+            onChange={range => {
+              if (!range.startDate || !range.endDate) return
+              setSelectedDateRange(range)
+            }}
           />
-
-          {/* select score points */}
-          <Select>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Score Points" />
-            </SelectTrigger>
-            <SelectContent className="max-h-40">
-              <SelectGroup>
-                {scorePoints.map(item => (
-                  <SelectItem key={item.value} value={item.value.toString()}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
         </div>
 
-        <div className="flex gap-2">
-          <Select>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Last 7 Days" />
-            </SelectTrigger>
-            <SelectContent className="max-h-40">
-              <SelectGroup>
-                <SelectItem value="Last 7 Days">Last 7 Days</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
-          {/* select date range */}
-          <div>
-            <DateRangePicker
-              onChange={(range: RangeKeyDict) => {
-                console.log("Selected range:", range)
-              }}
-            />
-          </div>
-        </div>
+        {/* clear filters button */}
+        <Button
+          variant="outline"
+          onClick={() => {
+            setSearchText("")
+            setSelectedScore("")
+            setSelectedDateFilter("All")
+            setSelectedDateRange({ startDate: null, endDate: null })
+          }}
+        >
+          Clear Filters
+        </Button>
       </div>
 
       {/* user management table */}
