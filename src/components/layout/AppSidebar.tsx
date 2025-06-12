@@ -76,7 +76,7 @@ export function AppSidebar(): JSX.Element {
             </div>
           </div>
 
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <SidebarTrigger className="w-10 h-10 " closeIcon />
           </div>
         </div>
