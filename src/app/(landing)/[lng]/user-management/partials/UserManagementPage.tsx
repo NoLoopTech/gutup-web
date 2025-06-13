@@ -19,12 +19,11 @@ import {
   SelectValue
 } from "@/components/ui/select"
 import { MoreVertical } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import UserOverviewPopup from "./UserOverviewPopup"
 import { getAllUsers } from "@/app/api/user"
 import dayjs from "dayjs"
 import isBetween from "dayjs/plugin/isBetween"
-import { boolean } from "zod"
 
 dayjs.extend(isBetween)
 
@@ -91,113 +90,122 @@ export default function UserManagementPage({
     getUsers()
   }, [])
 
-  const columns: Column<UserManagementDataType>[] = [
-    {
-      accessor: "id" as const,
-      header: "ID"
-    },
-    {
-      accessor: "name" as const,
-      header: "User Name"
-    },
-    {
-      accessor: "email" as const,
-      header: "Email"
-    },
-    {
-      accessor: "createdAt" as const,
-      header: "Registration date",
-      cell: (row: any) => dayjs(row.createdAt).format("DD/MM/YYYY")
-    },
-    {
-      accessor: "updatedAt" as const,
-      header: "Last Activity",
-      cell: (row: any) => dayjs(row.updatedAt).format("DD/MM/YYYY")
-    },
-    {
-      accessor: "dailyScore" as const,
-      header: "Daily Score Points",
-      className: "w-40"
-    },
-    {
-      id: "actions",
-      header: "",
-      className: "w-12",
-      cell: (row: UserManagementDataType) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="data-[state=open]:bg-muted text-muted-foreground flex size-6"
-              size="icon"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem onClick={handleViewUserOverview}>
-              View
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    }
-  ]
+  const columns: Column<UserManagementDataType>[] = useMemo(
+    () => [
+      {
+        accessor: "id" as const,
+        header: "ID"
+      },
+      {
+        accessor: "name" as const,
+        header: "User Name"
+      },
+      {
+        accessor: "email" as const,
+        header: "Email"
+      },
+      {
+        accessor: "createdAt" as const,
+        header: "Registration date",
+        cell: (row: any) => dayjs(row.createdAt).format("DD/MM/YYYY")
+      },
+      {
+        accessor: "updatedAt" as const,
+        header: "Last Activity",
+        cell: (row: any) => dayjs(row.updatedAt).format("DD/MM/YYYY")
+      },
+      {
+        accessor: "dailyScore" as const,
+        header: "Daily Score Points",
+        className: "w-40"
+      },
+      {
+        id: "actions",
+        header: "",
+        className: "w-12",
+        cell: (row: UserManagementDataType) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="data-[state=open]:bg-muted text-muted-foreground flex size-6"
+                size="icon"
+              >
+                <MoreVertical className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-32">
+              <DropdownMenuItem onClick={handleViewUserOverview}>
+                View
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      }
+    ],
+    []
+  )
 
   const pageSizeOptions: number[] = [5, 10, 20]
 
-  // filter users
-  const filteredUsers = users.filter(user => {
-    const nameMatch = user.name.toLowerCase().includes(searchText.toLowerCase())
-    const scoreMatch =
-      selectedScore === "" || user.dailyScore === Number(selectedScore)
+  // filter users (for table)
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      const nameMatch = user.name
+        .toLowerCase()
+        .includes(searchText.toLowerCase())
+      const scoreMatch =
+        selectedScore === "" || user.dailyScore === Number(selectedScore)
 
-    const createdAt = dayjs(user.createdAt)
-    const now = dayjs()
+      const createdAt = dayjs(user.createdAt)
+      const now = dayjs()
 
-    // Predefined filter
-    let predefinedDateMatch = true
-    if (
-      selectedDateFilter !== "All" &&
-      !selectedDateRange.startDate &&
-      !selectedDateRange.endDate
-    ) {
-      switch (selectedDateFilter) {
-        case "Last 7 Days":
-          predefinedDateMatch = createdAt.isAfter(now.subtract(7, "day"))
-          break
-        case "Last Month":
-          predefinedDateMatch = createdAt.isAfter(now.subtract(1, "month"))
-          break
-        case "Last 3 Months":
-          predefinedDateMatch = createdAt.isAfter(now.subtract(3, "month"))
-          break
+      let predefinedDateMatch = true
+      if (
+        selectedDateFilter !== "All" &&
+        !selectedDateRange.startDate &&
+        !selectedDateRange.endDate
+      ) {
+        switch (selectedDateFilter) {
+          case "Last 7 Days":
+            predefinedDateMatch = createdAt.isAfter(now.subtract(7, "day"))
+            break
+          case "Last Month":
+            predefinedDateMatch = createdAt.isAfter(now.subtract(1, "month"))
+            break
+          case "Last 3 Months":
+            predefinedDateMatch = createdAt.isAfter(now.subtract(3, "month"))
+            break
+        }
       }
-    }
 
-    // Custom range takes priority if selected
-    let rangeMatch = true
-    if (selectedDateRange.startDate && selectedDateRange.endDate) {
-      const start = dayjs(selectedDateRange.startDate).startOf("day")
-      const end = dayjs(selectedDateRange.endDate).endOf("day")
-      rangeMatch = createdAt.isBetween(start, end, null, "[]")
+      let rangeMatch = true
+      if (selectedDateRange.startDate && selectedDateRange.endDate) {
+        const start = dayjs(selectedDateRange.startDate).startOf("day")
+        const end = dayjs(selectedDateRange.endDate).endOf("day")
+        rangeMatch = createdAt.isBetween(start, end, null, "[]")
+        predefinedDateMatch = rangeMatch
+      }
 
-      // override predefined match if range is used
-      predefinedDateMatch = rangeMatch
-    }
-
-    return nameMatch && scoreMatch && predefinedDateMatch && rangeMatch
-  })
+      return nameMatch && scoreMatch && predefinedDateMatch && rangeMatch
+    })
+  }, [users, searchText, selectedScore, selectedDateFilter, selectedDateRange])
 
   const totalItems = filteredUsers.length
-  const startIndex = (page - 1) * pageSize
-  const endIndex = startIndex + pageSize
-  const paginatedData = filteredUsers.slice(startIndex, endIndex)
 
+  // paginate data (for table)
+  const paginatedData = useMemo(() => {
+    const startIndex = (page - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    return filteredUsers.slice(startIndex, endIndex)
+  }, [filteredUsers, page, pageSize])
+
+  // handle page change
   const handlePageChange = (newPage: number) => {
     setPage(newPage)
   }
 
+  // handle page size change
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize)
     setPage(1)
