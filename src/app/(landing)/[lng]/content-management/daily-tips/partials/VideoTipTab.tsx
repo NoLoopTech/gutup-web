@@ -10,7 +10,7 @@ export default function VideoTipTab(): JSX.Element {
   return (
     <>
       <div className="space-y-4 text-black">
-        <div className="flex items-start justify-end w-[-4.4rem]">
+        <div className="flex items-start lg:justify-end lg:-mt-[4.4rem]">
           <div className="w-[25.5rem]">
             <Label className="block mb-1 text-black">Title</Label>
             <Input placeholder="Enter shop name" />
