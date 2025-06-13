@@ -9,6 +9,7 @@ import ImageUploader from '@/components/Shared/ImageUploder/ImageUploader';
 import dynamic from 'next/dynamic';
 import type { RichTextEditorHandle } from '@/components/Shared/TextEditor/RichTextEditor';
 import LableInput from '@/components/Shared/LableInput/LableInput';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const RichTextEditor = dynamic(
   async () => await import('@/components/Shared/TextEditor/RichTextEditor'),
@@ -41,38 +42,53 @@ export default function AddFoodFrench({
           <Input placeholder="Entrez le nom de l'aliment" />
         </div>
         <div>
-          <Label className="text-black mb-1 block">Catégorie</Label>
-          <Input
-            id="categorySelect"
-            name="categorySelect"
-            options={categories}
-            placeholder="Sélectionner une catégorie"
-            className="mt-1"
-          />
+          <Label className="block mb-1 text-black">Catégorie</Label>
+          <Select>
+            <SelectTrigger id="categorySelect" name="categorySelect" className="w-full mt-1">
+              <SelectValue placeholder="Sélectionner une catégorie" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
-          <Label className="text-black mb-1 block">Saison</Label>
-          <Input
-            id="seasonSelect"
-            name="seasonSelect"
-            options={seasons}
-            placeholder="Sélectionner une saison"
-            className="mt-1"
-          />
+          <Label className="block mb-1 text-black">Saison</Label>
+          <Select>
+            <SelectTrigger id="seasonSelect" name="seasonSelect" className="w-full mt-1">
+              <SelectValue placeholder="Sélectionner une saison" />
+            </SelectTrigger>
+            <SelectContent>
+              {seasons.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
-          <Label className="text-black mb-1 block">Pays</Label>
-          <Input
-            id="countrySelect"
-            name="vSelect"
-            options={countries}
-            placeholder="Sélectionner un comptoir"
-            className="mt-1"
-          />
+          <Label className="block mb-1 text-black">Pays</Label>
+          <Select>
+            <SelectTrigger id="countrySelect" name="countrySelect" className="w-full mt-1">
+              <SelectValue placeholder="Sélectionner un comptoir" />
+            </SelectTrigger>
+            <SelectContent>
+              {countries.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      <Separator className="my-4" />
+      <Separator className="my-2" />
 
       <h3 className="text-lg font-semibold mb-4 text-black">
         Attributs alimentaires
@@ -114,7 +130,7 @@ export default function AddFoodFrench({
         </div>
       </div>
 
-      <Separator className="my-4" />
+      <Separator className="my-2"/>
 
       <h3 className="text-lg font-semibold mb-4 text-black">
         Décrire l'aliment
@@ -134,7 +150,7 @@ export default function AddFoodFrench({
         </div>
       </div>
 
-      <div className="mt-6 w-full sm:w-2/5">
+      <div className="mt-6 w-full sm:w-2/5 pb-6">
         <h3 className="text-lg font-semibold mb-4 text-black">
           Télécharger des images
         </h3>

@@ -9,6 +9,7 @@ import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import dynamic from "next/dynamic"
 import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
 import LableInput from "@/components/Shared/LableInput/LableInput"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -42,37 +43,52 @@ export default function AddFoodEnglish({
         </div>
         <div>
           <Label className="block mb-1 text-black">Category</Label>
-          <Input
-            id="categorySelect"
-            name="categorySelect"
-            options={categories}
-            placeholder="Select category"
-            className="mt-1"
-          />
+          <Select>
+            <SelectTrigger id="categorySelect" name="categorySelect" className="w-full mt-1">
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label className="block mb-1 text-black">Season</Label>
-          <Input
-            id="seasonSelect"
-            name="seasonSelect"
-            options={seasons}
-            placeholder="Select season"
-            className="mt-1"
-          />
+          <Select>
+            <SelectTrigger id="seasonSelect" name="seasonSelect" className="w-full mt-1">
+              <SelectValue placeholder="Select season" />
+            </SelectTrigger>
+            <SelectContent>
+              {seasons.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label className="block mb-1 text-black">Country</Label>
-          <Input
-            id="countrySelect"
-            name="vSelect"
-            options={countries}
-            placeholder="Select Country"
-            className="mt-1"
-          />
+          <Select>
+            <SelectTrigger id="countrySelect" name="countrySelect" className="w-full mt-1">
+              <SelectValue placeholder="Select Country" />
+            </SelectTrigger>
+            <SelectContent>
+              {countries.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      <Separator className="my-4" />
+      <Separator className="my-2" />
 
       <h3 className="mb-4 text-lg font-semibold text-black">Food Attributes</h3>
       <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
@@ -112,7 +128,7 @@ export default function AddFoodEnglish({
         </div>
       </div>
 
-      <Separator className="my-4" />
+      <Separator className="my-2" />
 
       <h3 className="mb-4 text-lg font-semibold text-black">
         Describe the Food
@@ -132,7 +148,7 @@ export default function AddFoodEnglish({
         </div>
       </div>
 
-      <div className="w-full mt-6 sm:w-2/5">
+      <div className="w-full mt-6 sm:w-2/5 pb-6">
         <h3 className="mb-4 text-lg font-semibold text-black">Upload Images</h3>
         <ImageUploader title="Select Images for your food item" />
       </div>
