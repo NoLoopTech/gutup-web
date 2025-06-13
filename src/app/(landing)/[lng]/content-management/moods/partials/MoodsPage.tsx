@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
 import { useState } from "react"
+import AddMoodPopUp from "./AddMoodPopUp"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -30,6 +31,14 @@ interface MoodsDataType {
 }
 
 export default function MoodsPage() {
+    const [isOpenAddMood, setIsOpenAddMood] = useState<boolean>(false)
+
+  const handleOpenAddMood = () => {
+    setIsOpenAddMood(true)
+  }
+  const handleCloseAddMood = () => {
+    setIsOpenAddMood(false)
+  }
   const columns: Column<MoodsDataType>[] = [
     {
       accessor: "mood",
@@ -139,7 +148,7 @@ export default function MoodsPage() {
     <div className="space-y-4">
       {" "}
       <div className="flex justify-end mb-5 -mt-14">
-        <Button>Add New</Button>
+        <Button onClick={handleOpenAddMood}>Add New</Button>
       </div>
       {/* user management table */}
       <CustomTable
@@ -152,6 +161,7 @@ export default function MoodsPage() {
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
       />
+      <AddMoodPopUp open={isOpenAddMood} onClose={handleCloseAddMood} />
     </div>
   )
 }
