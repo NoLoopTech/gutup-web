@@ -10,5 +10,5 @@ export default async function Home(): Promise<any> {
   }
 
   // Redirect to /dashboard if session exists
-  redirect("/dashboard")
+  redirect("/user-management")
 }
