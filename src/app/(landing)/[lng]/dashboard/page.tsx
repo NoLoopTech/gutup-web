@@ -14,9 +14,7 @@ export default async function Dashboard(): Promise<any> {
     redirect("/login")
   }
 
-  return (
-    <main>
-      <DashboardPage />
-    </main>
-  )
+  redirect("/user-management")
 }
+
+// The dashboard is currently unavailable.

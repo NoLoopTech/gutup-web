@@ -19,8 +19,13 @@ import {
   SelectValue
 } from "@/components/ui/select"
 import { MoreVertical } from "lucide-react"
-import { useState } from "react"
-import { RangeKeyDict } from "react-date-range"
+import { useEffect, useMemo, useState } from "react"
+import UserOverviewPopup from "./UserOverviewPopup"
+import { getAllUsers } from "@/app/api/user"
+import dayjs from "dayjs"
+import isBetween from "dayjs/plugin/isBetween"
+
+dayjs.extend(isBetween)
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -34,230 +39,265 @@ interface UserManagementDataType {
   id: number
   name: string
   email: string
-  registeredDate: string
-  lastActivity: string
-  dailyScorePoints: number
+  createdAt: string
+  updatedAt: string
+  dailyScore: number
 }
 
-export default function UserManagementPage() {
-  const columns: Column<UserManagementDataType>[] = [
-    {
-      accessor: "id" as const,
-      header: "ID"
-    },
-    {
-      accessor: "name" as const,
-      header: "User Name"
-    },
-    {
-      accessor: "email" as const,
-      header: "Email"
-    },
-    {
-      accessor: "registeredDate" as const,
-      header: "Registration date"
-    },
-    {
-      accessor: "lastActivity" as const,
-      header: "Last Activity"
-    },
-    {
-      accessor: "dailyScorePoints" as const,
-      header: "Daily Score Points",
-      className: "w-40"
-    },
-    {
-      id: "actions",
-      header: "",
-      className: "w-12",
-      cell: (row: UserManagementDataType) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="data-[state=open]:bg-muted text-muted-foreground flex size-6"
-              size="icon"
-            >
-              <MoreVertical className="w-5 h-5" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem>Make a copy</DropdownMenuItem>
-            <DropdownMenuItem>Favorite</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
+export default function UserManagementPage({
+  token
+}: {
+  token: string
+}): JSX.Element {
+  const [page, setPage] = useState<number>(1)
+  const [pageSize, setPageSize] = useState<number>(10)
+  const [users, setUsers] = useState<UserManagementDataType[]>([])
+  const [userOverviewPopupOpen, setUserOverviewPopupOpen] =
+    useState<boolean>(false)
+  const [searchText, setSearchText] = useState<string>("")
+  const [selectedScore, setSelectedScore] = useState<string>("")
+  const [selectedDateFilter, setSelectedDateFilter] = useState<string>("All")
+  const [selectedDateRange, setSelectedDateRange] = useState<{
+    startDate: Date | null
+    endDate: Date | null
+  }>({
+    startDate: null,
+    endDate: null
+  })
+  const [userId, setUserId] = useState<number>(0)
+
+  // handle view user overview
+  const handleViewUserOverview = (userId: number) => {
+    setUserOverviewPopupOpen(true)
+    setUserId(userId)
+  }
+
+  // handle close user overview
+  const handleCloseUserOverview = () => {
+    setUserOverviewPopupOpen(false)
+  }
+
+  // handle get users
+  const getUsers = async () => {
+    try {
+      const response = await getAllUsers(token)
+      if (response.status === 200) {
+        setUsers(response.data.users)
+      } else {
+        console.log(response)
+      }
+    } catch (error) {
+      console.error("Failed to fetch users:", error)
     }
-  ]
+  }
 
-  const data: UserManagementDataType[] = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 2,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 3,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 4,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 5,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 6,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 7,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 8,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 9,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 10,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    },
-    {
-      id: 11,
-      name: "John Doe",
-      email: "john@example.com",
-      registeredDate: "2021-01-01",
-      lastActivity: "2021-01-01",
-      dailyScorePoints: 100
-    }
-  ]
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
-  const pageSizeOptions = [5, 10, 20]
+  useEffect(() => {
+    getUsers()
+  }, [])
 
-  const totalItems = data.length
-  const startIndex = (page - 1) * pageSize
-  const endIndex = startIndex + pageSize
-  const paginatedData = data.slice(startIndex, endIndex)
+  const columns: Column<UserManagementDataType>[] = useMemo(
+    () => [
+      {
+        accessor: "id" as const,
+        header: "ID"
+      },
+      {
+        accessor: "name" as const,
+        header: "User Name"
+      },
+      {
+        accessor: "email" as const,
+        header: "Email"
+      },
+      {
+        accessor: "createdAt" as const,
+        header: "Registration date",
+        cell: (row: any) => dayjs(row.createdAt).format("DD/MM/YYYY")
+      },
+      {
+        accessor: "updatedAt" as const,
+        header: "Last Activity",
+        cell: (row: any) => dayjs(row.updatedAt).format("DD/MM/YYYY")
+      },
+      {
+        accessor: "dailyScore" as const,
+        header: "Daily Score Points",
+        className: "w-40"
+      },
+      {
+        id: "actions",
+        header: "",
+        className: "w-12",
+        cell: (row: UserManagementDataType) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="data-[state=open]:bg-muted text-muted-foreground flex size-6"
+                size="icon"
+              >
+                <MoreVertical className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-32">
+              <DropdownMenuItem onClick={() => handleViewUserOverview(row.id)}>
+                View
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      }
+    ],
+    []
+  )
 
+  const pageSizeOptions: number[] = [5, 10, 20]
+
+  // filter users (for table)
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      const nameMatch = user.name
+        .toLowerCase()
+        .includes(searchText.toLowerCase())
+      const scoreMatch =
+        selectedScore === "" || user.dailyScore === Number(selectedScore)
+
+      const createdAt = dayjs(user.createdAt)
+      const now = dayjs()
+
+      let predefinedDateMatch = true
+      if (
+        selectedDateFilter !== "All" &&
+        !selectedDateRange.startDate &&
+        !selectedDateRange.endDate
+      ) {
+        switch (selectedDateFilter) {
+          case "Last 7 Days":
+            predefinedDateMatch = createdAt.isAfter(now.subtract(7, "day"))
+            break
+          case "Last Month":
+            predefinedDateMatch = createdAt.isAfter(now.subtract(1, "month"))
+            break
+          case "Last 3 Months":
+            predefinedDateMatch = createdAt.isAfter(now.subtract(3, "month"))
+            break
+        }
+      }
+
+      let rangeMatch = true
+      if (selectedDateRange.startDate && selectedDateRange.endDate) {
+        const start = dayjs(selectedDateRange.startDate).startOf("day")
+        const end = dayjs(selectedDateRange.endDate).endOf("day")
+        rangeMatch = createdAt.isBetween(start, end, null, "[]")
+        predefinedDateMatch = rangeMatch
+      }
+
+      return nameMatch && scoreMatch && predefinedDateMatch && rangeMatch
+    })
+  }, [users, searchText, selectedScore, selectedDateFilter, selectedDateRange])
+
+  const totalItems = filteredUsers.length
+
+  // paginate data (for table)
+  const paginatedData = useMemo(() => {
+    const startIndex = (page - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    return filteredUsers.slice(startIndex, endIndex)
+  }, [filteredUsers, page, pageSize])
+
+  // handle page change
   const handlePageChange = (newPage: number) => {
     setPage(newPage)
   }
 
+  // handle page size change
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize)
     setPage(1)
   }
 
-  const scorePoints = [
-    { value: 10, label: "10" },
-    { value: 20, label: "20" },
-    { value: 30, label: "30" },
-    { value: 40, label: "40" },
-    { value: 50, label: "50" },
-    { value: 60, label: "60" },
-    { value: 70, label: "70" },
-    { value: 80, label: "80" },
-    { value: 90, label: "90" },
-    { value: 100, label: "100" }
-  ]
+  // genarate score points
+  const scorePoints = Array.from({ length: 100 }, (_, i) => ({
+    value: i + 1,
+    label: (i + 1).toString()
+  }))
 
   return (
-    <div className="p-4 space-y-4">
-      <div className="flex flex-wrap justify-between gap-2">
-        <div className="flex gap-2">
-          {/* search by user name */}
-          <Input className="max-w-xs" placeholder="Search by user name..." />
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2 ">
+        {/* search by user name */}
+        <Input
+          className="max-w-xs"
+          placeholder="Search by user name..."
+          value={searchText}
+          onChange={e => setSearchText(e.target.value)}
+        />
+        {/* select score points */}
+        <Select
+          value={selectedScore}
+          onValueChange={value => setSelectedScore(value)}
+        >
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Score Points" />
+          </SelectTrigger>
+          <SelectContent className="max-h-40">
+            <SelectGroup>
+              {scorePoints.map(item => (
+                <SelectItem key={item.value} value={item.value.toString()}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
 
-          {/* select score points */}
-          <Select>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Score Points" />
-            </SelectTrigger>
-            <SelectContent className="max-h-40">
-              <SelectGroup>
-                {scorePoints.map(item => (
-                  <SelectItem value={item.value.toString()}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+        {/* select dates */}
+        <Select
+          value={selectedDateFilter}
+          onValueChange={value => setSelectedDateFilter(value)}
+        >
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="All" />
+          </SelectTrigger>
+          <SelectContent className="max-h-40">
+            <SelectGroup>
+              <SelectItem value="All">All</SelectItem>
+              <SelectItem value="Last 7 Days">Last 7 Days</SelectItem>
+              <SelectItem value="Last Month">Last Month</SelectItem>
+              <SelectItem value="Last 3 Months">Last 3 Months</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        {/* select date range */}
+        <div>
+          <DateRangePicker
+            value={selectedDateRange}
+            onChange={range => {
+              if (!range.startDate || !range.endDate) return
+              setSelectedDateRange(range)
+            }}
+          />
         </div>
 
-        <div className="flex gap-2">
-          <Select>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Last 7 Days" />
-            </SelectTrigger>
-            <SelectContent className="max-h-40">
-              <SelectGroup>
-                <SelectItem value="Last 7 Days">Last 7 Days</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
-          {/* select date range */}
-          <div>
-            <DateRangePicker
-              onChange={(range: RangeKeyDict) => {
-                console.log("Selected range:", range)
-              }}
-            />
-          </div>
-        </div>
+        {/* clear filters button */}
+        {(Boolean(searchText) ||
+          Boolean(selectedScore) ||
+          Boolean(selectedDateFilter !== "All") ||
+          Boolean(selectedDateRange.startDate) ||
+          Boolean(selectedDateRange.endDate)) && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSearchText("")
+              setSelectedScore("")
+              setSelectedDateFilter("All")
+              setSelectedDateRange({ startDate: null, endDate: null })
+            }}
+          >
+            Clear Filters
+          </Button>
+        )}
       </div>
 
       {/* user management table */}
@@ -270,6 +310,14 @@ export default function UserManagementPage() {
         pageSizeOptions={pageSizeOptions}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
+      />
+
+      <UserOverviewPopup
+        open={userOverviewPopupOpen}
+        onClose={handleCloseUserOverview}
+        token={token}
+        userId={userId}
+        getUsers={getUsers}
       />
     </div>
   )

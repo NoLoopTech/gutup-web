@@ -1,7 +1,6 @@
 "use client"
 
 import { CustomTable } from "@/components/Shared/Table/CustomTable"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -11,7 +10,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
 import { useState } from "react"
-import AddMoodPopUp from "./AddMoodPopUp"
+import { Badge } from "@/components/ui/badge"
+import AddNewTagPopUp from "../../partials/AddNewTagPopUp"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -21,61 +21,57 @@ interface Column<T> {
   className?: string
 }
 
-interface MoodsDataType {
-  mood: string
-  title: string
-  content: string
-  dateCreated: string
-  datePublished: string
+interface FoodsBenefitsDataType {
+  tag: string
+  activeOn: string
+  createdOn: string
   status: string
 }
 
-export default function MoodsPage() {
-    const [isOpenAddMood, setIsOpenAddMood] = useState<boolean>(false)
+export default function FoodsBenefitsPage() {
+  const [page, setPage] = useState<number>(1)
+  const [pageSize, setPageSize] = useState<number>(10)
+  const [openAddNewTagPopUp, setOpenAddNewTagPopUp] = useState<boolean>(false)
 
-  const handleOpenAddMood = () => {
-    setIsOpenAddMood(true)
+  // handle open add food popup
+  const handleOpenAddNewTagPopUp = () => {
+    setOpenAddNewTagPopUp(true)
   }
-  const handleCloseAddMood = () => {
-    setIsOpenAddMood(false)
+
+  // handle close add food popup
+  const handleCloseAddNewTagPopUp = () => {
+    setOpenAddNewTagPopUp(false)
   }
-  const columns: Column<MoodsDataType>[] = [
+
+  const columns: Column<FoodsBenefitsDataType>[] = [
     {
-      accessor: "mood",
-      header: "Mood",
+      accessor: "tag",
+      header: "Tag",
       className: "w-40",
-      cell: (row: MoodsDataType) => (
-        <Badge variant={"outline"}>{row.mood}</Badge>
+      cell: (row: FoodsBenefitsDataType) => (
+        <Badge variant={"outline"}>{row.tag}</Badge>
       )
     },
     {
-      accessor: "title",
-      header: "Title"
+      accessor: "activeOn",
+      header: "Active On"
     },
     {
-      accessor: "content",
-      header: "Content"
-    },
-    {
-      accessor: "dateCreated",
-      header: "Date Created"
-    },
-    {
-      accessor: "datePublished",
-      header: "Date Published"
+      accessor: "createdOn",
+      header: "Created On"
     },
     {
       accessor: "status",
       header: "Status",
-      className: "w-40",
-      cell: (row: MoodsDataType) => (
+      className: "w-28",
+      cell: (row: FoodsBenefitsDataType) => (
         <Badge
           className={
             row.status === "Active"
               ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700"
-              : row.status === "Pending"
+              : row.status === "In Active"
               ? "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
-              : "bg-red-100 text-red-700 hover:bg-red-200 border border-red-700"
+              : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700"
           }
         >
           {row.status}
@@ -85,7 +81,7 @@ export default function MoodsPage() {
     {
       id: "actions",
       className: "w-12",
-      cell: (row: MoodsDataType) => (
+      cell: (row: FoodsBenefitsDataType) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -107,33 +103,30 @@ export default function MoodsPage() {
     }
   ]
 
-  const data: MoodsDataType[] = [
+  const data: FoodsBenefitsDataType[] = [
     {
-      mood: "Very Happy",
-      title: "Stay Hydrated",
-      content: "Main content of the tip",
-      dateCreated: "2025-05-16",
-      datePublished: "2025-05-16",
+      tag: "Carrot",
+      activeOn: "2025-05-16",
+      createdOn: "2025-05-16",
       status: "Active"
     },
     {
-      mood: "Very Sad",
-      title: "Stay Cool",
-      content: "Another tip",
-      dateCreated: "2025-05-16",
-      datePublished: "2025-05-16",
-      status: "Pending"
+      tag: "Carrot",
+      activeOn: "2025-05-16",
+      createdOn: "2025-05-16",
+      status: "In Active"
     }
   ]
 
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
-  const pageSizeOptions = [5, 10, 20]
+  const pageSizeOptions: number[] = [5, 10, 20]
 
-  const totalItems = data.length
-  const startIndex = (page - 1) * pageSize
-  const endIndex = startIndex + pageSize
-  const paginatedData = data.slice(startIndex, endIndex)
+  const totalItems: number = data.length
+  const startIndex: number = (page - 1) * pageSize
+  const endIndex: number = startIndex + pageSize
+  const paginatedData: FoodsBenefitsDataType[] = data.slice(
+    startIndex,
+    endIndex
+  )
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage)
@@ -146,10 +139,12 @@ export default function MoodsPage() {
 
   return (
     <div className="space-y-4">
+      {/* add new food button */}
       <div className="flex justify-end mb-5 -mt-14">
-        <Button onClick={handleOpenAddMood}>Add New</Button>
+        <Button onClick={handleOpenAddNewTagPopUp}>Add New</Button>
       </div>
-      {/* user management table */}
+
+      {/* foods management table */}
       <CustomTable
         columns={columns}
         data={paginatedData}
@@ -160,7 +155,12 @@ export default function MoodsPage() {
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
       />
-      <AddMoodPopUp open={isOpenAddMood} onClose={handleCloseAddMood} />
+
+      {/* add food popup */}
+      <AddNewTagPopUp
+        open={openAddNewTagPopUp}
+        onClose={handleCloseAddNewTagPopUp}
+      />
     </div>
   )
 }

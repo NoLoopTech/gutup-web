@@ -1,23 +1,6 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/nextAuthOptions"
+// app/content-management/page.tsx
 import { redirect } from "next/navigation"
 
-export const metadata = {
-  title: "Food Management"
-}
-
-export default async function TagOverview(): Promise<any> {
-  const session = await getServerSession(authOptions)
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  return (
-    <main>
-      <h1>Welcome, {session?.user?.name}</h1>
-      <p>{session?.user?.role}</p>
-      <p>Tag Overview Sample content that only logged-in users can see.</p>
-    </main>
-  )
+export default function ContentManagementRootPage() {
+  redirect("/food-management/tag-overview/food-types")
 }

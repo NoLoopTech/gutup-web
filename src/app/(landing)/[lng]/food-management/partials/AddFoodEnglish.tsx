@@ -1,27 +1,27 @@
-'use client';
+"use client"
 
-import React from 'react';
-import { TabsContent } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import ImageUploader from '@/components/Shared/ImageUploder/ImageUploader';
-import dynamic from 'next/dynamic';
-import type { RichTextEditorHandle } from '@/components/Shared/TextEditor/RichTextEditor';
-import LableInput from '@/components/Shared/LableInput/LableInput';
+import React from "react"
+import { TabsContent } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
+import dynamic from "next/dynamic"
+import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
+import LableInput from "@/components/Shared/LableInput/LableInput"
 
 const RichTextEditor = dynamic(
-  async () => await import('@/components/Shared/TextEditor/RichTextEditor'),
+  async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
   { ssr: false }
-);
+)
 
 interface AddFoodEnglishProps {
-  selectionRef: React.Ref<RichTextEditorHandle>;
-  preparationRef: React.Ref<RichTextEditorHandle>;
-  conservationRef: React.Ref<RichTextEditorHandle>;
-  categories: Array<{ value: string; label: string }>;
-  seasons: Array<{ value: string; label: string }>;
-  countries: Array<{ value: string; label: string }>;
+  selectionRef: React.Ref<RichTextEditorHandle>
+  preparationRef: React.Ref<RichTextEditorHandle>
+  conservationRef: React.Ref<RichTextEditorHandle>
+  categories: Array<{ value: string; label: string }>
+  seasons: Array<{ value: string; label: string }>
+  countries: Array<{ value: string; label: string }>
 }
 
 export default function AddFoodEnglish({
@@ -35,13 +35,13 @@ export default function AddFoodEnglish({
   return (
     <TabsContent value="english">
       {/* English Tab Content */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
         <div>
-          <Label className="text-black mb-1 block">Name</Label>
+          <Label className="block mb-1 text-black">Name</Label>
           <Input placeholder="Enter food name" />
         </div>
         <div>
-          <Label className="text-black mb-1 block">Category</Label>
+          <Label className="block mb-1 text-black">Category</Label>
           <Input
             id="categorySelect"
             name="categorySelect"
@@ -51,7 +51,7 @@ export default function AddFoodEnglish({
           />
         </div>
         <div>
-          <Label className="text-black mb-1 block">Season</Label>
+          <Label className="block mb-1 text-black">Season</Label>
           <Input
             id="seasonSelect"
             name="seasonSelect"
@@ -61,7 +61,7 @@ export default function AddFoodEnglish({
           />
         </div>
         <div>
-          <Label className="text-black mb-1 block">Country</Label>
+          <Label className="block mb-1 text-black">Country</Label>
           <Input
             id="countrySelect"
             name="vSelect"
@@ -74,37 +74,35 @@ export default function AddFoodEnglish({
 
       <Separator className="my-4" />
 
-      <h3 className="text-lg font-semibold mb-4 text-black">
-        Food Attributes
-      </h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+      <h3 className="mb-4 text-lg font-semibold text-black">Food Attributes</h3>
+      <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
         <div>
-          <Label className="text-black mb-1 block">Fiber</Label>
+          <Label className="block mb-1 text-black">Fiber</Label>
           <Input placeholder="Provider details if applicable" />
         </div>
         <div>
-          <Label className="text-black mb-1 block">Proteins</Label>
+          <Label className="block mb-1 text-black">Proteins</Label>
           <Input placeholder="Provider details if applicable" />
         </div>
         <div>
-          <Label className="text-black mb-1 block">Vitamins</Label>
+          <Label className="block mb-1 text-black">Vitamins</Label>
           <Input placeholder="Provider details if applicable" />
         </div>
         <div>
-          <Label className="text-black mb-1 block">Minerals</Label>
+          <Label className="block mb-1 text-black">Minerals</Label>
           <Input placeholder="Provider details if applicable" />
         </div>
         <div>
-          <Label className="text-black mb-1 block">Fat</Label>
+          <Label className="block mb-1 text-black">Fat</Label>
           <Input placeholder="Provider details if applicable" />
         </div>
         <div>
-          <Label className="text-black mb-1 block">Sugar</Label>
+          <Label className="block mb-1 text-black">Sugar</Label>
           <Input placeholder="Provider details if applicable" />
         </div>
         <div
           className="col-span-1 sm:col-span-2 md:col-span-1"
-          style={{ width: '100%' }}
+          style={{ width: "100%" }}
         >
           <LableInput
             title="Health Benefits"
@@ -116,36 +114,28 @@ export default function AddFoodEnglish({
 
       <Separator className="my-4" />
 
-      <h3 className="text-lg font-semibold mb-4 text-black">
+      <h3 className="mb-4 text-lg font-semibold text-black">
         Describe the Food
       </h3>
       <div className="flex flex-col gap-6">
         <div>
-          <span className="text-black text-sm mb-2 block">
-            Selection
-          </span>
+          <span className="block mb-2 text-sm text-black">Selection</span>
           <RichTextEditor ref={selectionRef} />
         </div>
         <div>
-          <span className="text-black text-sm mb-2 block">
-            Preparation
-          </span>
+          <span className="block mb-2 text-sm text-black">Preparation</span>
           <RichTextEditor ref={preparationRef} />
         </div>
         <div>
-          <span className="text-black text-sm mb-2 block">
-            Conservation
-          </span>
+          <span className="block mb-2 text-sm text-black">Conservation</span>
           <RichTextEditor ref={conservationRef} />
         </div>
       </div>
 
-      <div className="mt-6 w-full sm:w-2/5">
-        <h3 className="text-lg font-semibold mb-4 text-black">
-          Upload Images
-        </h3>
+      <div className="w-full mt-6 sm:w-2/5">
+        <h3 className="mb-4 text-lg font-semibold text-black">Upload Images</h3>
         <ImageUploader title="Select Images for your food item" />
       </div>
     </TabsContent>
-  );
+  )
 }

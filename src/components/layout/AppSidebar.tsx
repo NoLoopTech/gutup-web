@@ -76,7 +76,7 @@ export function AppSidebar(): JSX.Element {
             </div>
           </div>
 
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <SidebarTrigger className="w-10 h-10 " closeIcon />
           </div>
         </div>
@@ -88,15 +88,16 @@ export function AppSidebar(): JSX.Element {
           <SidebarGroupLabel>Workspace</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              {/* not available for now */}
               {/* Dashboard */}
-              <SidebarMenuItem>
+              {/* <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link href="/" className="flex items-center gap-2">
                     <Inbox className="w-4 h-4" />
                     <span>Dashboard</span>
                   </Link>
                 </SidebarMenuButton>
-              </SidebarMenuItem>
+              </SidebarMenuItem> */}
 
               {/* User Management */}
               <SidebarMenuItem>

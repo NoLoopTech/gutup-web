@@ -61,7 +61,7 @@ export function CustomTable<T extends Record<string, any>>({
             data.map((row, rowIndex) => (
               <TableRow key={rowIndex}>
                 {columns.map((col, colIndex) => (
-                  <TableCell key={colIndex} className={col.className}>
+                  <TableCell key={colIndex} className={`py-4 ${col.className}`}>
                     {col.cell
                       ? col.cell(row)
                       : typeof col.accessor === "function"
