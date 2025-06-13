@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { CircleFadingPlus } from "lucide-react";
 import CustomImage from "@/components/Shared/CustomImage/CustomImage";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const imageList = [
     "/images/1.jpg",
@@ -133,6 +134,11 @@ export default function AddRecipePopup({ open, onClose }: Props): JSX.Element {
         { value: "autumn", label: "Autumn" },
         { value: "winter", label: "Winter" },
     ];
+    const authorSpeality: Option[] = [
+        { value: "spring", label: "Spring" },
+        { value: "summer", label: "Summer" },
+        { value: "autumn", label: "Autumn" },
+    ];
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
@@ -153,41 +159,49 @@ export default function AddRecipePopup({ open, onClose }: Props): JSX.Element {
             `}
                     </style>
 
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-bold text-black">Add New Recipe</h2>
-                    </div>
+                    <DialogTitle>Add New Recipe</DialogTitle>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 pb-6">
                         <div>
                             <Label className="text-black mb-1 block">Name</Label>
                             <Input placeholder="Enter recipe name" />
                         </div>
                         <div>
-                            <Label className="text-black mb-1 block">Category</Label>
-                            <Input
-                                id="categorySelect"
-                                name="categorySelect"
-                                options={categories}
-                                placeholder="Select category"
-                                className="mt-1"
-                            />
+                            <Label className="block mb-1 text-black">Category</Label>
+                            <Select>
+                                <SelectTrigger id="categorySelect" name="categorySelect" className="w-full mt-1">
+                                    <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {categories.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div>
-                            <Label className="text-black mb-1 block">Season</Label>
-                            <Input
-                                id="seasonSelect"
-                                name="seasonSelect"
-                                options={seasons}
-                                placeholder="Select season"
-                                className="mt-1"
-                            />
+                            <Label className="block mb-1 text-black">Season</Label>
+                            <Select>
+                                <SelectTrigger id="seasonSelect" name="seasonSelect" className="w-full mt-1">
+                                    <SelectValue placeholder="Select season" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {seasons.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
 
-                    <Separator className="my-4" />
+                    <Separator />
 
-                    <h3 className="text-lg font-semibold mb-4 text-black">Recipe Attributes</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                    <DialogTitle className="pt-4">Recipe Attributes</DialogTitle>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 mb-4">
                         <div>
                             <Label className="text-black mb-1 block">Preparation</Label>
                             <Input placeholder="How long does it take to make?" />
@@ -215,11 +229,9 @@ export default function AddRecipePopup({ open, onClose }: Props): JSX.Element {
 
                     <Separator className="my-4" />
 
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-bold text-black">Ingredients Selection</h2>
-                    </div>
+                    <DialogTitle>Ingredients Selection</DialogTitle>
 
-                    <div className="flex flex-row gap-2 items-center mb-4">
+                    <div className="flex flex-row gap-2 items-center pt-4 mb-4">
                         <div className="flex-1">
                             <SearchBar title="Select Your Ingredients" placeholder="Search for ingredient" />
                         </div>
@@ -243,8 +255,8 @@ export default function AddRecipePopup({ open, onClose }: Props): JSX.Element {
 
                     <Separator className="my-4" />
 
-                    <h3 className="text-lg font-semibold mb-4 text-black">Describe the Recipe</h3>
-                    <div className="flex flex-col gap-6">
+                    <DialogTitle>Describe the Recipe</DialogTitle>
+                    <div className="flex flex-col gap-6 pt-4 pb-2">
                         <div>
                             <span className="text-black text-sm mb-2 block">Recipe</span>
                             <RichTextEditor ref={selectionRef} />
@@ -253,11 +265,9 @@ export default function AddRecipePopup({ open, onClose }: Props): JSX.Element {
 
                     <Separator className="my-4" />
 
-                    <div className="flex justify-between items-center mt-4 mb-4">
-                        <h2 className="text-lg font-bold text-black">Add Author</h2>
-                    </div>
+                    <DialogTitle>Add Author</DialogTitle>
 
-                    <div className="flex flex-col sm:flex-row gap-8 mb-4 items-start">
+                    <div className="flex flex-col sm:flex-row gap-8 mb-4 pt-4 items-start">
                         {/* Left: Author Inputs */}
                         <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="w-full">
@@ -265,8 +275,19 @@ export default function AddRecipePopup({ open, onClose }: Props): JSX.Element {
                                 <Input placeholder="Enter author name" className="w-full" />
                             </div>
                             <div className="w-full">
-                                <Label className="text-black mb-2 block">Category</Label>
-                                <Input placeholder="Enter author specialty " className="w-full" />
+                                <Label className="block mb-1 text-black">Category</Label>
+                                <Select>
+                                    <SelectTrigger id="categorySelect" name="categorySelect" className="w-full mt-1">
+                                        <SelectValue placeholder="Enter author specialty " />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {authorSpeality.map((option) => (
+                                            <SelectItem key={option.value} value={option.value}>
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="w-full">
                                 <Label className="text-black mb-2 block">Phone</Label>
@@ -287,15 +308,15 @@ export default function AddRecipePopup({ open, onClose }: Props): JSX.Element {
                         </div>
                     </div>
 
-                    <div className="mt-6 w-full sm:w-2/5">
-                        <h3 className="text-lg font-semibold mb-4 text-black">Upload Images</h3>
+                    <DialogTitle>Upload Images</DialogTitle>
+                    
+                    <div className="mt-6 pb-2 w-full sm:w-2/5">
                         <ImageUploader title="Select Images for your food item" />
                     </div>
                     <Separator className="my-4" />
 
-                    <div className="flex justify-between items-center mt-4 mb-4">
-                        <h2 className="text-lg font-bold text-black">Linked Food </h2>
-                    </div>
+                    <DialogTitle className="pb-4">Linked Food </DialogTitle>
+
                     <CustomImage
                         srcList={imageList}
                         count={5}
@@ -304,8 +325,17 @@ export default function AddRecipePopup({ open, onClose }: Props): JSX.Element {
                         width={80}
                         height={80}
                     />
-
                 </div>
+                <DialogFooter>
+                    <div className="flex justify-between w-full gap-2">
+                        <Button
+                            variant="outline"
+                        >
+                            Cancel
+                        </Button>
+                        <Button>Save</Button>
+                    </div>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

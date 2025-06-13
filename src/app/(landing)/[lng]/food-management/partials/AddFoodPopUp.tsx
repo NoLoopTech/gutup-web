@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useRef } from "react"
-import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -66,9 +66,7 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
             }
           `}</style>
 
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-bold text-black">Add New Food Item</h2>
-          </div>
+          <DialogTitle>Add New Food Item</DialogTitle>
 
           <Tabs
             value={activeTab}
@@ -77,7 +75,7 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
             }}
             className="w-full"
           >
-            <div className="flex flex-col items-start justify-between gap-4 mb-6 sm:flex-row sm:items-center">
+            <div className="flex flex-col items-start justify-between gap-4 mt-4 mb-6 sm:flex-row sm:items-center">
               <TabsList>
                 <TabsTrigger value="english">English</TabsTrigger>
                 {allowMultiLang && (
@@ -122,10 +120,11 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
             )}
           </Tabs>
         </div>
-
         <DialogFooter>
           <div className="flex justify-between w-full gap-2">
-            <Button variant={"outline"} onClick={onClose}>
+            <Button
+              variant="outline"
+            >
               Cancel
             </Button>
             <Button>Save</Button>

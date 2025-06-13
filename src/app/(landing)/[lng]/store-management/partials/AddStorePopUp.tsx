@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useRef } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import SearchBar from '@/components/Shared/SearchBar/SearchBar';
 import { CustomTable } from '@/components/Shared/Table/CustomTable';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const RichTextEditor = dynamic(
     async () => await import('@/components/Shared/TextEditor/RichTextEditor'),
@@ -123,25 +124,28 @@ export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
                     </style>
 
                     {/* Header */}
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-bold text-black">Add New Store</h2>
-                    </div>
+                    <DialogTitle>Add New Store</DialogTitle>
 
                     {/* Store info */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 mb-6">
                         <div>
                             <Label className="text-black mb-1 block">Store Name</Label>
                             <Input placeholder="Enter store name" />
                         </div>
                         <div>
-                            <Label className="text-black mb-1 block">Category</Label>
-                            <Input
-                                id="categorySelect"
-                                name="categorySelect"
-                                options={categories}
-                                placeholder="Select category"
-                                className="mt-1"
-                            />
+                            <Label className="block mb-1 text-black">Category</Label>
+                            <Select>
+                                <SelectTrigger id="categorySelect" name="categorySelect" className="w-full mt-1">
+                                    <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {categories.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div>
                             <Label className="text-black mb-1 block">Store Location</Label>
@@ -149,13 +153,18 @@ export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
                         </div>
                         <div>
                             <Label className="text-black mb-1 block">Shop Status</Label>
-                            <Input
-                                id="StatusSelect"
-                                name="StatusSelect"
-                                options={shopStatus}
-                                placeholder="Select shop status"
-                                className="mt-1"
-                            />
+                            <Select>
+                                <SelectTrigger id="shopStatusSelect" name="shopStatusSelect" className="w-full mt-1">
+                                    <SelectValue placeholder="Select Shop Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {shopStatus.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div>
                             <Label className="text-black mb-1 block">Store Map Location</Label>
@@ -196,11 +205,11 @@ export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
                         </div>
                     </div>
 
-                    <Separator className="my-6" />
+                    <Separator />
 
                     {/* Contact info */}
-                    <h3 className="text-lg font-semibold mb-4 text-black">Store Contact</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                    <DialogTitle className='pt-4'>Store Contact</DialogTitle>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 mb-6">
                         <div>
                             <Label className="text-black mb-1 block">Mobile Number</Label>
                             <Input placeholder="Enter store number" />
@@ -227,11 +236,11 @@ export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
                         </div>
                     </div>
 
-                    <Separator className="my-6" />
+                    <Separator />
 
                     {/* Available Products */}
-                    <h3 className="text-lg font-semibold mb-4 text-black">Available Products</h3>
-                    <div className="flex flex-col gap-4 ">
+                    <DialogTitle className='pt-4'>Available Products</DialogTitle>
+                    <div className="flex flex-col gap-4 pt-4">
                         <div className="flex flex-col sm:flex-row gap-2 items-center w-full">
                             <div className="flex flex-row gap-2 items-center mb-2 flex-1">
                                 <div className="flex-1">
@@ -265,25 +274,35 @@ export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
                         />
                     </div>
 
-                    <Separator className="my-4" />
+                    <Separator />
 
                     {/* About The Shop */}
-                    <h3 className="text-lg font-semibold mb-4 text-black">About The Shop</h3>
-                    <div className="flex flex-col gap-6">
+                    <DialogTitle className='pt-4'>About The Shop</DialogTitle>
+                    <div className="flex flex-col gap-6 pt-4 pb-6">
                         <div>
                             <span className="text-black text-sm mb-2 block">About Us</span>
                             <RichTextEditor ref={aboutRef} />
                         </div>
                     </div>
 
-                    <Separator className="my-4" />
+                    <Separator />
 
                     {/* Upload Images */}
-                    <div className="mt-6 w-full sm:w-2/5">
-                        <h3 className="text-lg font-semibold mb-4 text-black">Upload Images</h3>
+                    <DialogTitle className='pt-4'>Upload Images</DialogTitle>
+                    <div className="pt-4 w-full sm:w-2/5">
                         <ImageUploader title="Select Images for your store" />
                     </div>
                 </div>
+                <DialogFooter>
+                    <div className="flex justify-between w-full gap-2">
+                        <Button
+                            variant="outline"
+                        >
+                            Cancel
+                        </Button>
+                        <Button>Save</Button>
+                    </div>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
