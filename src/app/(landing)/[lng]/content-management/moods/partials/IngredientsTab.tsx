@@ -7,74 +7,80 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import RichTextEditor from "@/components/Shared/TextEditor/RichTextEditor"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select"
 
 interface Option {
-    value: string;
-    label: string;
+  value: string
+  label: string
 }
 
 const seasons: Option[] = [
-    { value: "happy", label: "Happy" },
-    { value: "angry", label: "Angry" },
-    { value: "sad", label: "Sad" },
-];
+  { value: "happy", label: "Happy" },
+  { value: "angry", label: "Angry" },
+  { value: "sad", label: "Sad" }
+]
 
 export default function IngredientsTab(): JSX.Element {
-    const selectionRef = React.useRef<any>(null);
-    return (
-        <>
-            <div className="text-black space-y-4">
-                <div>
-                    <Label className="text-black mb-1 block">Select Mood</Label>
-                    <Select>
-                        <SelectTrigger id="moodSelect" name="moodSelect" className="w-full mt-1">
-                            <SelectValue placeholder="Select Mood" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {seasons.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+  const selectionRef = React.useRef<any>(null)
+  return (
+    <>
+      <div className="space-y-4 text-black">
+        <div>
+          <Label className="block mb-1 text-black">Select Mood</Label>
+          <Select>
+            <SelectTrigger
+              id="moodSelect"
+              name="moodSelect"
+              className="w-full mt-1"
+            >
+              <SelectValue placeholder="Select Mood" />
+            </SelectTrigger>
+            <SelectContent>
+              {seasons.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-                <Separator />
+        <Separator />
 
-                <div className="flex-1 mb-4 pt-2">
-                    <Label className="text-black mb-1 block">Recipie name</Label>
-                    <Input placeholder="Enter quote author" />
-                </div>
+        <div className="flex-1 pt-2 mb-4">
+          <Label className="block mb-1 text-black">Recipie name</Label>
+          <Input placeholder="Enter quote author" />
+        </div>
 
-                <div className="flex-1 mb-6">
-                    <Label className="text-black mb-1 block">Description</Label>
-                    <Input
-                        placeholder="Add the quote here in detail"
-                        className="h-14"
-                    />
-                </div>
-            </div>
-            <div className="flex flex-col gap-6 pt-4">
-                <div>
-                    <Label className="text-black mb-1 block">Instructions</Label>
-                    <RichTextEditor ref={selectionRef} />
-                </div>
-            </div>
-            {/* Image Uploader */}
-            <div className="w-100 pt-4 pb-8 ">
-                <h3 className="text-lg font-semibold mb-2 pt-2 text-black">Upload Images</h3>
-                <ImageUploader title="Select Images for your food item" />
-            </div>
-            {/* Buttons */}
-            <div
-                className="fixed left-0 bottom-0 w-full bg-white border-t border-gray-200 flex justify-between px-8 py-2 z-50">
-                <Button variant="secondary">
-                    Cancel
-                </Button>
-                <Button>Save</Button>
-            </div>
-        </>
-    )
+        <div className="flex-1 mb-6">
+          <Label className="block mb-1 text-black">Description</Label>
+          <Input placeholder="Add the quote here in detail" className="h-14" />
+        </div>
+      </div>
+      <div className="flex flex-col gap-6 pt-4">
+        <div>
+          <Label className="block mb-1 text-black">Instructions</Label>
+          <RichTextEditor ref={selectionRef} />
+        </div>
+      </div>
+      {/* Image Uploader */}
+      <div className="pt-4 pb-8 w-100 ">
+        <h3 className="pt-2 mb-2 text-lg font-semibold text-black">
+          Upload Images
+        </h3>
+        <ImageUploader title="Select Images for your food item" />
+      </div>
+      {/* Buttons */}
+      <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
+        <Button variant="secondary">Cancel</Button>
+        <Button>Save</Button>
+      </div>
+    </>
+  )
 }

@@ -6,7 +6,13 @@ import VideoTipTab from "./VideoTipTab"
 import BasicLayoutTab from "./BasicLayoutTab"
 import ShopPromotionTab from "./ShopPromotionTab"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select"
 
 interface Props {
   open: boolean
@@ -15,8 +21,8 @@ interface Props {
 
 // Tab option
 interface TabOption {
-  value: LayoutOption;
-  label: string;
+  value: LayoutOption
+  label: string
 }
 
 type LayoutOption = "BasicLayout" | "ShopPromotion" | "VideoTip"
@@ -24,10 +30,13 @@ type LayoutOption = "BasicLayout" | "ShopPromotion" | "VideoTip"
 const tabOptions: TabOption[] = [
   { value: "BasicLayout", label: "Basic Layout" },
   { value: "ShopPromotion", label: "Shop Promotion" },
-  { value: "VideoTip", label: "Video Tip" },
+  { value: "VideoTip", label: "Video Tip" }
 ]
 
-export default function AddDailyTipPopUp({ open, onClose }: Props): JSX.Element {
+export default function AddDailyTipPopUp({
+  open,
+  onClose
+}: Props): JSX.Element {
   const [activeTab, setActiveTab] = useState<LayoutOption>("BasicLayout")
 
   return (
@@ -48,13 +57,18 @@ export default function AddDailyTipPopUp({ open, onClose }: Props): JSX.Element 
 
           {/* Tab Selector using Input */}
           <div className="mb-4" style={{ width: "25.4rem" }}>
-            <Label className="text-black mb-2 block">Layout Selection</Label>
-            <Select value={activeTab} onValueChange={(val) => { setActiveTab(val as LayoutOption); }}>
+            <Label className="block mb-2 text-black">Layout Selection</Label>
+            <Select
+              value={activeTab}
+              onValueChange={val => {
+                setActiveTab(val as LayoutOption)
+              }}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Layout Type" />
               </SelectTrigger>
               <SelectContent>
-                {tabOptions.map((opt) => (
+                {tabOptions.map(opt => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
                   </SelectItem>

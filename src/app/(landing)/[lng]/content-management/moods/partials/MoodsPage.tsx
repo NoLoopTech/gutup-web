@@ -31,7 +31,7 @@ interface MoodsDataType {
 }
 
 export default function MoodsPage() {
-    const [isOpenAddMood, setIsOpenAddMood] = useState<boolean>(false)
+  const [isOpenAddMood, setIsOpenAddMood] = useState<boolean>(false)
 
   const handleOpenAddMood = () => {
     setIsOpenAddMood(true)

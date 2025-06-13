@@ -6,7 +6,13 @@ import { Label } from "@/components/ui/label"
 import QuoteTab from "./QuoteTab"
 import IngredientsTab from "./IngredientsTab"
 import RecipeTab from "./RecipeTab"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select"
 
 interface Props {
   open: boolean
@@ -15,8 +21,8 @@ interface Props {
 
 // Tab option
 interface TabOption {
-  value: LayoutOption;
-  label: string;
+  value: LayoutOption
+  label: string
 }
 
 type LayoutOption = "Quote" | "Ingredients" | "Recipe"
@@ -24,7 +30,7 @@ type LayoutOption = "Quote" | "Ingredients" | "Recipe"
 const tabOptions: TabOption[] = [
   { value: "Quote", label: "Quote" },
   { value: "Ingredients", label: "Ingredients" },
-  { value: "Recipe", label: "Recipe" },
+  { value: "Recipe", label: "Recipe" }
 ]
 
 export default function AddMoodPopUp({ open, onClose }: Props): JSX.Element {
@@ -48,13 +54,18 @@ export default function AddMoodPopUp({ open, onClose }: Props): JSX.Element {
 
           {/* Tab Selector using Input */}
           <div className="mb-4 w-100">
-            <Label className="text-black mb-2 block">Select Layout</Label>
-            <Select value={activeTab} onValueChange={(val) => { setActiveTab(val as LayoutOption); }}>
+            <Label className="block mb-2 text-black">Select Layout</Label>
+            <Select
+              value={activeTab}
+              onValueChange={val => {
+                setActiveTab(val as LayoutOption)
+              }}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Layout Type" />
               </SelectTrigger>
               <SelectContent>
-                {tabOptions.map((opt) => (
+                {tabOptions.map(opt => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
                   </SelectItem>
