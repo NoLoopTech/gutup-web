@@ -1,8 +1,13 @@
 // UserOverviewPopup.tsx
 "use client"
 
-import React from "react"
-import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog"
+import React, { useEffect, useState } from "react"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogTitle
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
@@ -10,16 +15,89 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import Sample from "@/../../public/images/sample-image.png"
+import { deleteUserById, getUserById } from "@/app/api/user"
+import dayjs from "dayjs"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
 
 interface Props {
   open: boolean
   onClose: () => void
+  userId: number
+  token: string
+}
+
+export interface UserDetails {
+  id: number
+  name: string
+  email: string
+  gender: string | null
+  dob: string | null
+  currentDiet: string | null
+  rhythmOfLife: string | null
+  dailyScore: number
+  createdAt: string
+  updatedAt: string
 }
 
 export default function UserOverviewPopup({
   open,
-  onClose
+  onClose,
+  token,
+  userId
 }: Props): JSX.Element {
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
+
+  useEffect(() => {
+    if (token && userId) {
+      const getUserDetailsByUserId = async () => {
+        const response = await getUserById(token, userId)
+        if (response.status === 200) {
+          setUserDetails(response.data)
+        } else {
+          console.error("Failed to get user details")
+        }
+      }
+      getUserDetailsByUserId()
+    }
+  }, [token, userId])
+
+  // handle delete user by id
+  const handleDeleteUserById = async () => {
+    const response = await deleteUserById(token, userId)
+    console.log(response)
+    if (response.status === 200 && response.data.success) {
+      toast.success(response.data.message)
+      onClose()
+      setConfirmDeleteOpen(false)
+    } else {
+      toast.error("Failed to delete user", {
+        description: response.data.message
+      })
+      setConfirmDeleteOpen(false)
+    }
+  }
+
+  // handle open delete confirmation popup
+  const handleOpenDeleteConfirmationPopup = () => {
+    setConfirmDeleteOpen(true)
+  }
+
+  // handle close delete confirmation popup
+  const handleCloseDeleteConfirmationPopup = () => {
+    setConfirmDeleteOpen(false)
+  }
+
   const badges: { label: string; value: string }[] = [
     {
       label: "Stress",
@@ -37,50 +115,46 @@ export default function UserOverviewPopup({
 
   const food: { name: string; image: string }[] = [
     {
-      name: "Pizza",
+      name: "Pizza1",
       image: Sample.src
     },
     {
-      name: "Pizza",
+      name: "Pizza2",
       image: Sample.src
     },
     {
-      name: "Pizza",
+      name: "Pizza3",
       image: Sample.src
     },
     {
-      name: "Pizza",
+      name: "Pizza4",
       image: Sample.src
     },
     {
-      name: "Pizza",
+      name: "Pizza5",
       image: Sample.src
     },
     {
-      name: "Pizza",
-      image: Sample.src
-    },
-    {
-      name: "Pizza",
+      name: "Pizza6",
       image: Sample.src
     }
   ]
 
   const recipes: { name: string; image: string }[] = [
     {
-      name: "Pizza",
+      name: "Pizza1 ",
       image: Sample.src
     },
     {
-      name: "Pizza",
+      name: "Pizza2",
       image: Sample.src
     },
     {
-      name: "Pizza",
+      name: "Pizza3",
       image: Sample.src
     },
     {
-      name: "Pizza",
+      name: "Pizza4",
       image: Sample.src
     }
   ]
@@ -93,49 +167,79 @@ export default function UserOverviewPopup({
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {/* User Details */}
-          <h3 className="text-lg font-semibold text-black">User Details</h3>
+          <DialogTitle>User Details</DialogTitle>
+
           <div className="grid grid-cols-2 gap-4 mt-4">
             <div className="flex flex-col gap-2">
               <Label>Name</Label>
-              <Input placeholder="Name" disabled />
+              <Input
+                placeholder="Name"
+                disabled
+                value={userDetails?.name ?? ""}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Label>Email</Label>
-              <Input placeholder="Email" disabled />
+              <Input
+                placeholder="Email"
+                disabled
+                value={userDetails?.email ?? ""}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Label>Gender</Label>
-              <Input placeholder="Gender" disabled />
+              <Input
+                placeholder="Gender"
+                disabled
+                value={userDetails?.gender ?? ""}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Label>Birthday</Label>
-              <Input placeholder="Birthday" disabled />
+              <Input
+                placeholder="Birthday"
+                disabled
+                value={dayjs(userDetails?.dob).format("DD/MM/YYYY") || ""}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Label>Registration Date</Label>
-              <Input placeholder="Registration Date" disabled />
+              <Input
+                placeholder="Registration Date"
+                disabled
+                value={dayjs(userDetails?.createdAt).format("DD/MM/YYYY") || ""}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Label>Daily Score Points</Label>
-              <Input placeholder="Daily Score Points" disabled />
+              <Input
+                placeholder="Daily Score Points"
+                disabled
+                value={userDetails?.dailyScore.toString() || ""}
+              />
             </div>
           </div>
 
           <Separator className="my-6" />
 
           {/* Health Data */}
-          <h3 className="text-lg font-semibold text-black">Health Data</h3>
+          <DialogTitle>Health Data</DialogTitle>
           <div className="grid grid-cols-2 gap-4 mt-4">
             <div className="flex flex-col gap-2">
               <Label>How would you describe your current diet?</Label>
               <Input
                 placeholder="How would you describe your current diet?"
                 disabled
+                value={userDetails?.currentDiet || ""}
               />
             </div>
             <div className="flex flex-col gap-2">
               <Label>What is your rhythm of life?</Label>
-              <Input placeholder="What is your rhythm of life?" disabled />
+              <Input
+                placeholder="What is your rhythm of life?"
+                disabled
+                value={userDetails?.rhythmOfLife || ""}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Label>Concerns</Label>
@@ -154,9 +258,7 @@ export default function UserOverviewPopup({
           {/* Favorite Food */}
           <div>
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-black ">
-                Favorite Food
-              </h3>
+              <DialogTitle>Favorite Food</DialogTitle>
               <h3 className="text-base text-gray-500 ">{food.length} Items</h3>
             </div>
             <div className="flex flex-wrap gap-2 text-center">
@@ -174,9 +276,7 @@ export default function UserOverviewPopup({
           {/* Favorite Recipes */}
           <div>
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-black ">
-                Favorite Recipes
-              </h3>
+              <DialogTitle>Favorite Recipes</DialogTitle>
               <h3 className="text-base text-gray-500 ">
                 {recipes.length} Items
               </h3>
@@ -194,11 +294,39 @@ export default function UserOverviewPopup({
 
         <DialogFooter>
           <div className="flex justify-between w-full gap-2">
-            <Button variant={"outline"}>Delete User</Button>
+            <Button
+              variant="outline"
+              onClick={handleOpenDeleteConfirmationPopup}
+            >
+              Delete User
+            </Button>
             <Button>Reset Password</Button>
           </div>
         </DialogFooter>
       </DialogContent>
+
+      {/* delete confirmation popup  */}
+      <AlertDialog
+        open={confirmDeleteOpen}
+        onOpenChange={handleCloseDeleteConfirmationPopup}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this user?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCloseDeleteConfirmationPopup}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUserById}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   )
 }

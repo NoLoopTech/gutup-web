@@ -64,10 +64,15 @@ export default function UserManagementPage({
     startDate: null,
     endDate: null
   })
+  const [userId, setUserId] = useState<number>(0)
 
-  const handleViewUserOverview = () => {
+  // handle view user overview
+  const handleViewUserOverview = (userId: number) => {
     setUserOverviewPopupOpen(true)
+    setUserId(userId)
   }
+
+  // handle close user overview
   const handleCloseUserOverview = () => {
     setUserOverviewPopupOpen(false)
   }
@@ -135,7 +140,7 @@ export default function UserManagementPage({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-32">
-              <DropdownMenuItem onClick={handleViewUserOverview}>
+              <DropdownMenuItem onClick={() => handleViewUserOverview(row.id)}>
                 View
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -310,6 +315,8 @@ export default function UserManagementPage({
       <UserOverviewPopup
         open={userOverviewPopupOpen}
         onClose={handleCloseUserOverview}
+        token={token}
+        userId={userId}
       />
     </div>
   )
