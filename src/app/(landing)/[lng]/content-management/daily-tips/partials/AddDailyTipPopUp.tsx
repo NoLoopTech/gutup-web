@@ -2,11 +2,11 @@
 
 import React, { useState } from "react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import VideoTipTab from "./VideoTipTab"
 import BasicLayoutTab from "./BasicLayoutTab"
 import ShopPromotionTab from "./ShopPromotionTab"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Props {
   open: boolean
@@ -47,15 +47,20 @@ export default function AddDailyTipPopUp({ open, onClose }: Props): JSX.Element 
           </div>
 
           {/* Tab Selector using Input */}
-          <div className="mb-4" style={{ width: "25.1rem" }}>
+          <div className="mb-4" style={{ width: "25.4rem" }}>
             <Label className="text-black mb-2 block">Layout Selection</Label>
-            <Input
-              className="w-full"
-              options={tabOptions}
-              placeholder="Select Layout Type"
-              value={activeTab}
-              onChange={(e) => { setActiveTab(e.target.value as LayoutOption); }}
-            />
+            <Select value={activeTab} onValueChange={(val) => { setActiveTab(val as LayoutOption); }}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select Layout Type" />
+              </SelectTrigger>
+              <SelectContent>
+                {tabOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Tab Content */}

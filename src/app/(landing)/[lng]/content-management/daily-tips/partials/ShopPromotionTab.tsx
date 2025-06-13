@@ -57,12 +57,12 @@ export default function ShopPromotionTab(): JSX.Element {
         <>
             <div className="text-black space-y-4">
                 <div className="flex justify-end items-start" style={{ marginTop: "-4.4rem" }}>
-                    <div className="w-80" style={{ width: "25.2rem" }}>
+                    <div className="w-80" style={{ width: "25.5rem" }}>
                         <Label className="text-black mb-1 block">Shop Name</Label>
                         <Input placeholder="Enter shop name" />
                     </div>
                 </div>
-                <div className="flex gap-6">
+                <div className="flex gap-4">
                     <div className="flex-1 mb-1">
                         <Label className="text-black mb-1 block">Sub Title</Label>
                         <Input placeholder="Give a tip title" />

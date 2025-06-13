@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Option {
     value: string;
@@ -23,13 +24,18 @@ export default function QuoteTab(): JSX.Element {
             <div className="text-black space-y-4">
                 <div>
                     <Label className="text-black mb-1 block">Select Mood</Label>
-                    <Input
-                        id="moodSelect"
-                        name="moodSelect"
-                        options={seasons}
-                        placeholder="Select Mood"
-                        className="mt-1"
-                    />
+                    <Select>
+                        <SelectTrigger id="moodSelect" name="moodSelect" className="w-full mt-1">
+                            <SelectValue placeholder="Select Mood" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {seasons.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <Separator />

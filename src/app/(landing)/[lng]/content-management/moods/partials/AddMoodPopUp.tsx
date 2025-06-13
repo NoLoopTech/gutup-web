@@ -2,11 +2,11 @@
 
 import React, { useState } from "react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import QuoteTab from "./QuoteTab"
 import IngredientsTab from "./IngredientsTab"
 import RecipeTab from "./RecipeTab"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Props {
   open: boolean
@@ -49,13 +49,18 @@ export default function AddMoodPopUp({ open, onClose }: Props): JSX.Element {
           {/* Tab Selector using Input */}
           <div className="mb-4 w-100">
             <Label className="text-black mb-2 block">Select Layout</Label>
-            <Input
-              className="w-full"
-              options={tabOptions}
-              placeholder="Select Layout Type"
-              value={activeTab}
-              onChange={(e) => { setActiveTab(e.target.value as LayoutOption); }}
-            />
+            <Select value={activeTab} onValueChange={(val) => { setActiveTab(val as LayoutOption); }}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select Layout Type" />
+              </SelectTrigger>
+              <SelectContent>
+                {tabOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Tab Content */}

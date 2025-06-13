@@ -11,7 +11,7 @@ export default function VideoTipTab(): JSX.Element {
         <>
             <div className="text-black space-y-4">
                 <div className="flex justify-end items-start" style={{ marginTop: "-4.4rem" }}>
-                    <div className="w-80" style={{ width: "25.2rem" }}>
+                    <div className="w-80" style={{ width: "25.5rem" }}>
                         <Label className="text-black mb-1 block">Title</Label>
                         <Input placeholder="Enter shop name" />
                     </div>
