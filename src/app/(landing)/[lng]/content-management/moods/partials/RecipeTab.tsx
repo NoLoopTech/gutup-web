@@ -20,7 +20,7 @@ interface Option {
   label: string
 }
 
-const seasons: Option[] = [
+const moods: Option[] = [
   { value: "happy", label: "Happy" },
   { value: "angry", label: "Angry" },
   { value: "sad", label: "Sad" }
@@ -42,7 +42,7 @@ export default function RecipeTab(): JSX.Element {
               <SelectValue placeholder="Select Mood" />
             </SelectTrigger>
             <SelectContent>
-              {seasons.map(option => (
+              {moods.map(option => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -74,8 +74,9 @@ export default function RecipeTab(): JSX.Element {
           <RichTextEditor ref={selectionRef} />
         </div>
       </div>
+
       {/* Image Uploader */}
-      <div className="pt-4 pb-8 w-100 ">
+      <div className="pt-4 pb-8 ">
         <h3 className="pt-2 mb-2 text-lg font-semibold text-black">
           Upload Images
         </h3>
@@ -84,7 +85,7 @@ export default function RecipeTab(): JSX.Element {
 
       {/* Buttons */}
       <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
-        <Button variant="secondary">Cancel</Button>
+        <Button variant="outline">Cancel</Button>
         <Button>Save</Button>
       </div>
     </>

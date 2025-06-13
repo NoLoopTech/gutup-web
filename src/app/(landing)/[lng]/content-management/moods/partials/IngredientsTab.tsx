@@ -14,13 +14,14 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 
 interface Option {
   value: string
   label: string
 }
 
-const seasons: Option[] = [
+const moods: Option[] = [
   { value: "happy", label: "Happy" },
   { value: "angry", label: "Angry" },
   { value: "sad", label: "Sad" }
@@ -28,6 +29,7 @@ const seasons: Option[] = [
 
 export default function IngredientsTab(): JSX.Element {
   const selectionRef = React.useRef<any>(null)
+
   return (
     <>
       <div className="space-y-4 text-black">
@@ -42,7 +44,7 @@ export default function IngredientsTab(): JSX.Element {
               <SelectValue placeholder="Select Mood" />
             </SelectTrigger>
             <SelectContent>
-              {seasons.map(option => (
+              {moods.map(option => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -60,7 +62,7 @@ export default function IngredientsTab(): JSX.Element {
 
         <div className="flex-1 mb-6">
           <Label className="block mb-1 text-black">Description</Label>
-          <Input placeholder="Add the quote here in detail" className="h-14" />
+          <Textarea placeholder="Add the quote here in detail." />
         </div>
       </div>
       <div className="flex flex-col gap-6 pt-4">
@@ -70,15 +72,16 @@ export default function IngredientsTab(): JSX.Element {
         </div>
       </div>
       {/* Image Uploader */}
-      <div className="pt-4 pb-8 w-100 ">
+      <div className="pt-4 pb-8 ">
         <h3 className="pt-2 mb-2 text-lg font-semibold text-black">
           Upload Images
         </h3>
         <ImageUploader title="Select Images for your food item" />
       </div>
+
       {/* Buttons */}
       <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
-        <Button variant="secondary">Cancel</Button>
+        <Button variant="outline">Cancel</Button>
         <Button>Save</Button>
       </div>
     </>

@@ -12,13 +12,14 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 
 interface Option {
   value: string
   label: string
 }
 
-const seasons: Option[] = [
+const moods: Option[] = [
   { value: "happy", label: "Happy" },
   { value: "angry", label: "Angry" },
   { value: "sad", label: "Sad" }
@@ -39,7 +40,7 @@ export default function QuoteTab(): JSX.Element {
               <SelectValue placeholder="Select Mood" />
             </SelectTrigger>
             <SelectContent>
-              {seasons.map(option => (
+              {moods.map(option => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -50,19 +51,20 @@ export default function QuoteTab(): JSX.Element {
 
         <Separator />
 
-        <div className="flex-1 pt-4 mb-4">
+        <div className="flex-1 mb-4">
           <Label className="block mb-1 text-black">Quote Author</Label>
           <Input placeholder="Enter quote author" />
         </div>
 
         <div className="flex-1 mb-6">
           <Label className="block mb-1 text-black">Quote</Label>
-          <Input placeholder="Add the quote here in detail" className="h-14" />
+          <Textarea placeholder="Add the quote here in detail." />
         </div>
       </div>
+
       {/* Buttons */}
       <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
-        <Button variant="secondary">Cancel</Button>
+        <Button variant="outline">Cancel</Button>
         <Button>Save</Button>
       </div>
     </>

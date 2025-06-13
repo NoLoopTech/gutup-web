@@ -10,11 +10,8 @@ export default function VideoTipTab(): JSX.Element {
   return (
     <>
       <div className="space-y-4 text-black">
-        <div
-          className="flex items-start justify-end"
-          style={{ marginTop: "-4.4rem" }}
-        >
-          <div className="w-80" style={{ width: "25.5rem" }}>
+        <div className="flex items-start justify-end w-[-4.4rem]">
+          <div className="w-[25.5rem]">
             <Label className="block mb-1 text-black">Title</Label>
             <Input placeholder="Enter shop name" />
           </div>
@@ -39,9 +36,10 @@ export default function VideoTipTab(): JSX.Element {
           <Input placeholder="Enter the video link eg: Youtube & Vimeo" />
         </div>
       </div>
+
       {/* Buttons */}
       <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
-        <Button variant="secondary">Cancel</Button>
+        <Button variant="outline">Cancel</Button>
         <Button>Save</Button>
       </div>
     </>

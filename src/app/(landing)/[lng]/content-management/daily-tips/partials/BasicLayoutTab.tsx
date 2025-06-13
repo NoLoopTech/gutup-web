@@ -6,17 +6,15 @@ import { Separator } from "@/components/ui/separator"
 import { Label } from "@/components/ui/label"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 
 export default function BasicLayoutTab(): JSX.Element {
   return (
     <>
       <div className="space-y-4 text-black">
         {/* Header */}
-        <div
-          className="flex items-start justify-end"
-          style={{ marginTop: "-4.4rem" }}
-        >
-          <div className="w-80" style={{ width: "25.5rem" }}>
+        <div className="flex items-start lg:justify-end lg:-mt-[4.4rem]">
+          <div className="w-[25.5rem]">
             <Label className="block mb-1 text-black">Main Title</Label>
             <Input placeholder="Give a tip title" />
           </div>
@@ -33,7 +31,7 @@ export default function BasicLayoutTab(): JSX.Element {
 
           <div className="flex-1 mb-1">
             <Label className="block mb-1 text-black">Sub Description</Label>
-            <Input placeholder="Describe in detail" className="h-14" />
+            <Textarea placeholder="Describe in detail." />
           </div>
         </div>
 
@@ -47,7 +45,7 @@ export default function BasicLayoutTab(): JSX.Element {
 
           <div className="flex-1 mb-1">
             <Label className="block mb-1 text-black">Sub Description</Label>
-            <Input placeholder="Describe in detail" className="h-14" />
+            <Textarea placeholder="Describe in detail." />
           </div>
         </div>
 
@@ -57,13 +55,14 @@ export default function BasicLayoutTab(): JSX.Element {
           <h2 className="text-lg font-bold text-black">Upload Images</h2>
         </div>
         {/* Image Uploader */}
-        <div className="pb-12 w-100">
+        <div className="pb-12">
           <ImageUploader title="Select Images for your food item" />
         </div>
       </div>
+
       {/* Buttons */}
       <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
-        <Button variant="secondary">Cancel</Button>
+        <Button variant="outline">Cancel</Button>
         <Button>Save</Button>
       </div>
     </>

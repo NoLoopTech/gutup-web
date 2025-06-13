@@ -48,6 +48,9 @@ const ingredientColumns: Array<Column<Ingredient>> = [
 ]
 
 export default function ShopPromotionTab(): JSX.Element {
+  const [page, setPage] = React.useState(1)
+  const [pageSize, setPageSize] = React.useState(2)
+
   // Sample data for ingredients
   const [ingredientData] = React.useState<Ingredient[]>([
     { id: 1, name: "Tomato", quantity: "2", isMain: true, tags: ["fresh"] },
@@ -74,8 +77,6 @@ export default function ShopPromotionTab(): JSX.Element {
       tags: ["oil"]
     }
   ])
-  const [page, setPage] = React.useState(1)
-  const [pageSize, setPageSize] = React.useState(2)
 
   return (
     <>
@@ -100,7 +101,7 @@ export default function ShopPromotionTab(): JSX.Element {
             <Input placeholder="Describe in detail" />
           </div>
         </div>
-        <div className="flex-1 mb-2 w-100">
+        <div className="flex-1 mb-2 ">
           <Label className="block mb-1 text-black">Sub Description</Label>
           <Input placeholder="Describe in detail" className="h-14" />
         </div>
@@ -186,14 +187,16 @@ export default function ShopPromotionTab(): JSX.Element {
         <div className="flex items-center justify-between mt-4 mb-4">
           <h2 className="text-lg font-bold text-black">Upload Images</h2>
         </div>
+
         {/* Image Uploader */}
         <div className="w-full pb-8 sm:w-2/5">
           <ImageUploader title="Select Images for your food item" />
         </div>
       </div>
+
       {/* Buttons */}
       <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
-        <Button variant="secondary">Cancel</Button>
+        <Button variant="outline">Cancel</Button>
         <Button>Save</Button>
       </div>
     </>
