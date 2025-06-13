@@ -34,6 +34,7 @@ interface Props {
   onClose: () => void
   userId: number
   token: string
+  getUsers: () => void
 }
 
 export interface UserDetails {
@@ -53,7 +54,8 @@ export default function UserOverviewPopup({
   open,
   onClose,
   token,
-  userId
+  userId,
+  getUsers
 }: Props): JSX.Element {
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
@@ -75,11 +77,11 @@ export default function UserOverviewPopup({
   // handle delete user by id
   const handleDeleteUserById = async () => {
     const response = await deleteUserById(token, userId)
-    console.log(response)
     if (response.status === 200 && response.data.success) {
       toast.success(response.data.message)
       onClose()
       setConfirmDeleteOpen(false)
+      getUsers()
     } else {
       toast.error("Failed to delete user", {
         description: response.data.message
@@ -113,32 +115,7 @@ export default function UserOverviewPopup({
     }
   ]
 
-  const food: { name: string; image: string }[] = [
-    {
-      name: "Pizza1",
-      image: Sample.src
-    },
-    {
-      name: "Pizza2",
-      image: Sample.src
-    },
-    {
-      name: "Pizza3",
-      image: Sample.src
-    },
-    {
-      name: "Pizza4",
-      image: Sample.src
-    },
-    {
-      name: "Pizza5",
-      image: Sample.src
-    },
-    {
-      name: "Pizza6",
-      image: Sample.src
-    }
-  ]
+  const food: { name: string; image: string }[] = []
 
   const recipes: { name: string; image: string }[] = [
     {
@@ -249,6 +226,11 @@ export default function UserOverviewPopup({
                     {badge.label}
                   </Badge>
                 ))}
+                {badges.length === 0 && (
+                  <Label className="mt-4 text-gray-500">
+                    No concerns added yet
+                  </Label>
+                )}
               </div>
             </div>
           </div>
@@ -268,6 +250,12 @@ export default function UserOverviewPopup({
                   <Label>{f.name}</Label>
                 </div>
               ))}
+
+              {food.length === 0 && (
+                <Label className="mt-4 text-gray-500">
+                  No favorite foods added yet
+                </Label>
+              )}
             </div>
           </div>
 
@@ -288,6 +276,12 @@ export default function UserOverviewPopup({
                   <Label>{f.name}</Label>
                 </div>
               ))}
+
+              {recipes.length === 0 && (
+                <Label className="mt-4 text-gray-500">
+                  No favorite recipes added yet
+                </Label>
+              )}
             </div>
           </div>
         </div>

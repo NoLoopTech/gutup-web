@@ -317,6 +317,7 @@ export default function UserManagementPage({
         onClose={handleCloseUserOverview}
         token={token}
         userId={userId}
+        getUsers={getUsers}
       />
     </div>
   )
