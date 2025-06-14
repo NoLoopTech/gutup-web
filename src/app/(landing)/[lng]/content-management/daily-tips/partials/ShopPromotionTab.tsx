@@ -9,6 +9,12 @@ import { Button } from "@/components/ui/button"
 import { CustomTable } from "@/components/Shared/Table/CustomTable"
 import SearchBar from "@/components/Shared/SearchBar/SearchBar"
 import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+interface Option {
+  value: string
+  label: string
+}
 
 interface Ingredient {
   id: number
@@ -22,7 +28,11 @@ interface Column<T> {
   header: string
   accessor: keyof T | ((row: T) => React.ReactNode)
 }
-
+const concerns: Option[] = [
+  { value: "Stress", label: "Stress" },
+  { value: "Anxiety", label: "Anxiety" },
+  { value: "Depression", label: "Depression" },
+]
 // Table columns
 const ingredientColumns: Array<Column<Ingredient>> = [
   {
@@ -88,14 +98,56 @@ export default function ShopPromotionTab(): JSX.Element {
           </div>
         </div>
         <div className="flex gap-4">
+          <div className="flex-1 flex flex-col gap-1">
+            <Label>When to be Displayed</Label>
+            <div className="flex gap-7 items-center">
+              <div className="flex flex-col">
+                <Label htmlFor="time-from" className="text-xs text-gray-400">From</Label>
+                <Input
+                  type="time"
+                  id="time-from"
+                  step="1"
+                  defaultValue="10:30:00"
+                  className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                />
+              </div>
+              <div className="flex flex-col">
+                <Label htmlFor="time-to" className="text-xs text-gray-400">To</Label>
+                <Input
+                  type="time"
+                  id="time-to"
+                  step="1"
+                  defaultValue="18:30:00"
+                  className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 w-[25.5rem] flex flex-col justify-end">
+            <Label className="block mb-1 text-black">Reason to Display</Label>
+            <Select>
+              <SelectTrigger id="countrySelect" name="countrySelect" className="w-full mt-1">
+                <SelectValue placeholder="Select Concern" />
+              </SelectTrigger>
+              <SelectContent>
+                {concerns.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="flex gap-4">
           <div className="flex-1 mb-1">
-            <Label className="block mb-1 text-black">Sub Title</Label>
-            <Input placeholder="Give a tip title" />
+            <Label className="block mb-1 text-black">Shop Location</Label>
+            <Input placeholder="Enter shop location" />
           </div>
 
           <div className="flex-1 mb-1">
-            <Label className="block mb-1 text-black">Sub Description</Label>
-            <Input placeholder="Describe in detail" />
+            <Label className="block mb-1 text-black">Shop Category </Label>
+            <Input placeholder="Enter shop category" />
           </div>
         </div>
         <div className="flex-1 mb-2 ">
@@ -156,7 +208,7 @@ export default function ShopPromotionTab(): JSX.Element {
             />
           </div>
           <div className="flex items-end h-full mt-7">
-            <Button onClick={() => {}}>Add</Button>
+            <Button onClick={() => { }}>Add</Button>
           </div>
         </div>
         <Label className="block text-gray-500">
