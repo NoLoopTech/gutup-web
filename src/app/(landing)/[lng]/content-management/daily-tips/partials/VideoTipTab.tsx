@@ -12,6 +12,10 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { toast } from "sonner"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { CalendarIcon } from "lucide-react"
+import { Calendar } from "@/components/ui/calendar"
+import { format } from "date-fns"
 
 interface Option {
   value: string
@@ -26,23 +30,26 @@ const concerns: Option[] = [
 
 // Validation schema for this page
 const FormSchema = z.object({
-  concern: z.string().nonempty("Please select a concern."),
+  concern: z.string().nonempty("Please select a concern"),
   title: z
     .string()
-    .nonempty("Title is required.")
-    .min(2, { message: "Title must be at least 2 characters." }),
+    .nonempty("Required")
+    .min(2, { message: "Title must be at least 2 characters" }),
   subTitle: z
     .string()
-    .nonempty("Sub Title is required.")
-    .min(2, { message: "Sub Title must be at least 2 characters." }),
+    .nonempty("Required")
+    .min(2, { message: "Sub Title must be at least 2 characters" }),
   subDescription: z
     .string()
-    .nonempty("Sub Description is required.")
-    .min(10, { message: "Sub Description must be at least 10 characters." }),
+    .nonempty("Required")
+    .min(10, { message: "Sub Description must be at least 10 characters" }),
   videoLink: z
     .string()
-    .nonempty("Video Link is required.")
-    .url({ message: "Invalid URL format." }),
+    .nonempty("Required")
+    .url({ message: "Invalid URL format" }),
+  dateselect: z.date({
+    required_error: "Required",
+  }),
 })
 
 export default function VideoTipTab(): JSX.Element {
@@ -54,6 +61,7 @@ export default function VideoTipTab(): JSX.Element {
       subTitle: "",
       subDescription: "",
       videoLink: "",
+      dateselect: undefined,
     },
   })
 
@@ -71,10 +79,43 @@ export default function VideoTipTab(): JSX.Element {
             <div className="w-[25.5rem]">
               <FormField
                 control={form.control}
+                name="dateselect"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>When to be Displayed</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          data-empty={!field}
+                          className="data-[empty=true]:text-muted-foreground w-[25.5rem] justify-between text-left font-normal"
+                        >
+                          {field.value
+                            ? format(field.value, "PPP")
+                            : <span>Pick a date</span>
+                          }
+                          <CalendarIcon className="ml-2 h-4 w-4 text-gray-500" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1 pt-1">
+            <Label>Concerns</Label>
+            <div className="w-full">
+              <FormField
+                control={form.control}
                 name="concern"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Concerns</FormLabel>
                     <FormControl>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <SelectTrigger className="w-full mt-1">
@@ -93,32 +134,6 @@ export default function VideoTipTab(): JSX.Element {
                   </FormItem>
                 )}
               />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <Label>When to be Displayed</Label>
-            <div className="flex gap-7 items-center">
-              <div className="flex flex-col">
-                <Label htmlFor="time-from" className="text-xs text-gray-400">From</Label>
-                <Input
-                  type="time"
-                  id="time-from"
-                  step="1"
-                  defaultValue="10:30:00"
-                  className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
-                />
-              </div>
-              <div className="flex flex-col">
-                <Label htmlFor="time-to" className="text-xs text-gray-400">To</Label>
-                <Input
-                  type="time"
-                  id="time-to"
-                  step="1"
-                  defaultValue="18:30:00"
-                  className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
-                />
-              </div>
             </div>
           </div>
         </div>
@@ -169,7 +184,7 @@ export default function VideoTipTab(): JSX.Element {
 
         <Separator />
 
-        <div className="flex-1 mt-6 mb-6">
+        <div className="flex-1 mt-6 mb-8">
           <FormField
             control={form.control}
             name="videoLink"

@@ -5,10 +5,12 @@ import { UploadCloud, X } from "lucide-react"
 
 interface ImageUploaderProps {
   title: string
+  onChange?: (file: File | null) => void
 }
 
 export default function ImageUploader({
-  title
+  title,
+  onChange
 }: ImageUploaderProps): JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -25,14 +27,18 @@ export default function ImageUploader({
         setPreviewUrl(reader.result as string)
       }
       reader.readAsDataURL(file)
+
+      onChange?.(file)
     }
   }
 
   const handleRemoveImage = (): void => {
     setPreviewUrl(null)
     if (inputRef.current) {
-      inputRef.current.value = "" // clear input
+      inputRef.current.value = ""
     }
+
+    onChange?.(null)
   }
 
   return (
@@ -42,11 +48,11 @@ export default function ImageUploader({
 
       {/* Upload Area */}
       {previewUrl ? (
-        <div className="relative w-full h-48 overflow-hidden border border-gray-300 rounded-lg">
+        <div className="relative flex items-center justify-center w-full h-48 overflow-hidden border border-gray-300 rounded-lg bg-gray-50">
           <img
             src={previewUrl}
             alt="Uploaded preview"
-            className="object-cover w-full h-full"
+            className="max-h-full max-w-full object-contain"
           />
           <button
             onClick={handleRemoveImage}

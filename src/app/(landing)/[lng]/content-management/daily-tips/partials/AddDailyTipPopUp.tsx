@@ -51,7 +51,7 @@ export default function AddDailyTipPopUp({
 
           {/* Tab Selector using Input */}
           <div className="mb-4 w-[25.4rem] relative">
-            <Label className="block mb-2 text-black">Layout Selection</Label>
+            <Label className="block mb-1 text-black">Layout Selection</Label>
             <Select
               value={activeTab}
               onValueChange={val => {

@@ -36,25 +36,33 @@ const moods: Option[] = [
   { value: "sad", label: "Sad" }
 ]
 
-// Validation schema
+const shopcategory: Option[] = [
+  { value: "bakery", label: "Bakery" },
+  { value: "dairy", label: "Dairy" },
+  { value: "produce", label: "Produce" }
+]
+
+// Zod Validation Schema
 const FormSchema = z.object({
   mood: z.string().nonempty("Please select a mood"),
-  recipe: z.string().nonempty("Required").min(2, "Recipe name must be at least 2 characters"),
+  foodName: z.string().nonempty("Required").min(2, "Food name must be at least 2 characters"),
   description: z.string().nonempty("Required").min(10, "Description must be at least 10 characters"),
+  shopCategory: z.string().nonempty("Please select a shop category")
 })
 
-export default function RecipeTab(): JSX.Element {
+export default function FoodTab(): JSX.Element {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       mood: "",
-      recipe: "",
-      description: ""
+      foodName: "",
+      description: "",
+      shopCategory: ""
     },
   })
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
-    toast("Recipe Submitted", {
+    toast("Form submitted", {
       description: JSON.stringify(data, null, 2),
     })
   }
@@ -90,15 +98,15 @@ export default function RecipeTab(): JSX.Element {
 
         <Separator />
 
-        {/* Recipe Name */}
+        {/* Food Name */}
         <FormField
           control={form.control}
-          name="recipe"
+          name="foodName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Recipe</FormLabel>
+              <FormLabel>Food Name</FormLabel>
               <FormControl>
-                <Input placeholder="Search for recipe" {...field} />
+                <Input placeholder="Search for food" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -114,6 +122,34 @@ export default function RecipeTab(): JSX.Element {
               <FormLabel>Description</FormLabel>
               <FormControl>
                 <Textarea placeholder="Add details in here" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Separator />
+
+        {/* Shop Category */}
+        <FormField
+          control={form.control}
+          name="shopCategory"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Shop - Category</FormLabel>
+              <FormControl>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger className="w-full mt-1">
+                    <SelectValue placeholder="Select Shop - Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {shopcategory.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </FormControl>
               <FormMessage />
             </FormItem>

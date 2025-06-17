@@ -27,6 +27,10 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { toast } from "sonner"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { CalendarIcon } from "lucide-react"
+import { Calendar } from "@/components/ui/calendar"
+import { format } from "date-fns"
 
 interface Option {
   value: string
@@ -42,27 +46,34 @@ const concerns: Option[] = [
 // Validation schema including inputs & textareas
 const FormSchema = z.object({
   title: z.string()
-    .nonempty("Title is required.")
-    .min(2, { message: "Title must be at least 2 characters." }),
+    .nonempty("Required")
+    .min(2, { message: "Title must be at least 2 characters" }),
   subTitleOne: z.string()
-    .nonempty("Sub Title One is required.")
-    .min(2, { message: "Sub Title One must be at least 2 characters." }),
+    .nonempty("Required")
+    .min(2, { message: "Sub Title One must be at least 2 characters" }),
   subDescriptionOne: z
     .string()
-    .nonempty("Sub Description One is required.")
-    .min(10, { message: "Sub Description One must be at least 10 characters." })
-    .max(500, { message: "Sub Description One must not exceed 500 characters." }),
+    .nonempty("Required")
+    .min(10, { message: "Sub Description One must be at least 10 characters" })
+    .max(500, { message: "Sub Description One must not exceed 500 characters" }),
   subTitleTwo: z.string()
-    .nonempty("Sub Title Two is required.")
-    .min(2, { message: "Sub Title Two must be at least 2 characters." }),
+    .nonempty("Required")
+    .min(2, { message: "Sub Title Two must be at least 2 characters" }),
   subDescriptionTwo: z
     .string()
-    .nonempty("Sub Description Two is required.")
-    .min(10, { message: "Sub Description Two must be at least 10 characters." })
-    .max(500, { message: "Sub Description Two must not exceed 500 characters." }),
+    .nonempty("Required")
+    .min(10, { message: "Sub Description Two must be at least 10 characters" })
+    .max(500, { message: "Sub Description Two must not exceed 500 characters" }),
   concern: z
-    .string({ required_error: "Please select a concern." })
-    .nonempty("Please select a concern."),
+    .string({ required_error: "Please select a concern" })
+    .nonempty("Please select a concern"),
+  image: z
+    .custom<File | null>((val) => val instanceof File, {
+      message: "Required",
+    }),
+  dateselect: z.date({
+    required_error: "Required",
+  }),
 })
 
 export default function BasicLayoutTab(): JSX.Element {
@@ -75,6 +86,8 @@ export default function BasicLayoutTab(): JSX.Element {
       subTitleTwo: "",
       subDescriptionTwo: "",
       concern: "",
+      image: null,
+      dateselect: undefined,
     },
   })
 
@@ -95,12 +108,45 @@ export default function BasicLayoutTab(): JSX.Element {
           {/* Header */}
           <div className="flex items-start lg:justify-end lg:-mt-[4.4rem]">
             <div className="w-[25.5rem]">
-              <Label className="block mb-1 text-black">Concerns</Label>
+              <FormField
+                control={form.control}
+                name="dateselect"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>When to be Displayed</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          data-empty={!field}
+                          className="data-[empty=true]:text-muted-foreground w-[25.5rem] justify-between text-left font-normal"
+                        >
+                          {field.value
+                            ? format(field.value, "PPP")
+                            : <span>Pick a date</span>
+                          }
+                          <CalendarIcon className="ml-2 h-4 w-4 text-gray-500" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1 pb-2">
+            <Label>Concerns</Label>
+            <div className="w-full">
               <FormField
                 control={form.control}
                 name="concern"
                 render={({ field }) => (
-                  <FormItem className="w-[25.5rem]">
+                  <FormItem>
                     <FormControl>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <SelectTrigger className="w-full mt-1">
@@ -119,32 +165,6 @@ export default function BasicLayoutTab(): JSX.Element {
                   </FormItem>
                 )}
               />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <Label>When to be Displayed</Label>
-            <div className="flex gap-7 items-center">
-              <div className="flex flex-col">
-                <Label htmlFor="time-from" className="text-xs text-gray-400">From</Label>
-                <Input
-                  type="time"
-                  id="time-from"
-                  step="1"
-                  defaultValue="10:30:00"
-                  className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                />
-              </div>
-              <div className="flex flex-col">
-                <Label htmlFor="time-to" className="text-xs text-gray-400">To</Label>
-                <Input
-                  type="time"
-                  id="time-to"
-                  step="1"
-                  defaultValue="18:30:00"
-                  className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                />
-              </div>
             </div>
           </div>
 
@@ -231,7 +251,24 @@ export default function BasicLayoutTab(): JSX.Element {
           </div>
           {/* Image Uploader */}
           <div className="pb-12">
-            <ImageUploader title="Select Images for your food item" />
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <ImageUploader
+                      title="Select Images for your food item"
+                      onChange={(file) => {
+                        field.onChange(file)
+                        form.clearErrors("image")
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
         </div>
 

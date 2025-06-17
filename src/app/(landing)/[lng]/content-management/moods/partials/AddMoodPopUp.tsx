@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import QuoteTab from "./QuoteTab"
-import IngredientsTab from "./IngredientsTab"
+import FoodTab from "./FoodTab"
 import RecipeTab from "./RecipeTab"
 import {
   Select,
@@ -25,11 +25,11 @@ interface TabOption {
   label: string
 }
 
-type LayoutOption = "Quote" | "Ingredients" | "Recipe"
+type LayoutOption = "Quote" | "Food" | "Recipe"
 
 const tabOptions: TabOption[] = [
   { value: "Quote", label: "Quote" },
-  { value: "Ingredients", label: "Ingredients" },
+  { value: "Food", label: "Food" },
   { value: "Recipe", label: "Recipe" }
 ]
 
@@ -71,7 +71,7 @@ export default function AddMoodPopUp({ open, onClose }: Props): JSX.Element {
           {/* Tab Content */}
           <div>
             {activeTab === "Quote" && <QuoteTab />}
-            {activeTab === "Ingredients" && <IngredientsTab />}
+            {activeTab === "Food" && <FoodTab />}
             {activeTab === "Recipe" && <RecipeTab />}
           </div>
         </div>

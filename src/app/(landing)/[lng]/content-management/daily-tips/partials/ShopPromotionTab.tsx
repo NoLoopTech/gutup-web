@@ -16,6 +16,10 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { toast } from "sonner"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { CalendarIcon } from "lucide-react"
+import { Calendar } from "@/components/ui/calendar"
+import { format } from "date-fns"
 
 interface Option { value: string; label: string }
 interface Ingredient { id: number; name: string; quantity: string; isMain: boolean; tags: string[] }
@@ -39,31 +43,38 @@ const ingredientColumns: Array<Column<Ingredient>> = [
 
 // Validate only inputs and select
 const FormSchema = z.object({
-  shopName: z.string().min(1, { message: "Shop Name is required." }),
-  reason: z.string().nonempty("Please select a reason to display."),
-  shopLocation: z.string().min(2, { message: "Shop Location is required." }),
-  shopCategory: z.string().min(2, { message: "Shop Category is required." }),
+  shopName: z.string().min(1, { message: "Required" }),
+  reason: z.string().nonempty("Please select a reason to display"),
+  shopLocation: z.string().min(2, { message: "Required" }),
+  shopCategory: z.string().min(2, { message: "Required" }),
   subDescription: z
     .string()
-    .nonempty("Sub Description is required.")
-    .min(10, { message: "Sub Description must be at least 10 characters long." }),
+    .nonempty("Required")
+    .min(10, { message: "Sub Description must be at least 10 characters long" }),
   mobileNumber: z
     .string()
-    .nonempty("Mobile Number is required.")
-    .regex(/^(\+\d{11}|\d{10})$/, "Invalid mobile number format. Use +94712345678 or 0712345678."),
+    .nonempty("Required")
+    .regex(/^(\+\d{11}|\d{10})$/, "Invalid mobile number format. Use +94712345678 or 0712345678"),
   email: z.string()
-    .nonempty("Email is required.")
-    .email({ message: "Invalid email address." }),
-  mapsPin: z.string().min(1, { message: "Maps Pin is required." }),
+    .nonempty("Required")
+    .email({ message: "Invalid email address" }),
+  mapsPin: z.string().min(1, { message: "Required" }),
   facebook: z.string()
-    .nonempty("Facebook URL is required.")
-    .url({ message: "Invalid Facebook URL." }),
+    .nonempty("Required")
+    .url({ message: "Invalid Facebook URL" }),
   instagram: z.string()
-    .nonempty("Instagram URL is required.")
-    .url({ message: "Invalid Instagram URL." }),
+    .nonempty("Required")
+    .url({ message: "Invalid Instagram URL" }),
   website: z.string()
-    .nonempty("Website URL is required.")
-    .url({ message: "Invalid Website URL." }),
+    .nonempty("Required")
+    .url({ message: "Invalid Website URL" }),
+  image: z
+    .custom<File | null>((val) => val instanceof File, {
+      message: "Required",
+    }),
+  dateselect: z.date({
+    required_error: "Required",
+  }),
 })
 
 export default function ShopPromotionTab(): JSX.Element {
@@ -91,6 +102,8 @@ export default function ShopPromotionTab(): JSX.Element {
       facebook: "",
       instagram: "",
       website: "",
+      image: null,
+      dateselect: undefined,
     },
   })
 
@@ -103,9 +116,9 @@ export default function ShopPromotionTab(): JSX.Element {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="space-y-4 text-black">
+        <div className="space-y-3 text-black">
           {/* Shop Name */}
-          <div className="flex items-start lg:justify-end lg:-mt-[4.4rem]">
+          <div className="flex items-start lg:justify-end lg:-mt-[4.8rem]">
             <div className="w-[25.5rem]">
               <FormField control={form.control} name="shopName" render={({ field }) => (
                 <FormItem>
@@ -119,52 +132,66 @@ export default function ShopPromotionTab(): JSX.Element {
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <div className="flex-1 flex flex-col gap-1">
-              <Label>When to be Displayed</Label>
-              <div className="flex gap-7 items-center">
-                <div className="flex flex-col">
-                  <Label htmlFor="time-from" className="text-xs text-gray-400">From</Label>
-                  <Input
-                    type="time"
-                    id="time-from"
-                    step="1"
-                    defaultValue="10:30:00"
-                    className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <Label htmlFor="time-to" className="text-xs text-gray-400">To</Label>
-                  <Input
-                    type="time"
-                    id="time-to"
-                    step="1"
-                    defaultValue="18:30:00"
-                    className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                  />
-                </div>
-              </div>
+          <div className="flex flex-col gap-4 md:flex-row pt-2">
+            <div className="w-full md:w-[25.5rem]">
+              <FormField
+                control={form.control}
+                name="dateselect"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>When to be Displayed</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          data-empty={!field}
+                          className="data-[empty=true]:text-muted-foreground w-[25.5rem] justify-between text-left font-normal"
+                        >
+                          {field.value
+                            ? format(field.value, "PPP")
+                            : <span>Pick a date</span>
+                          }
+                          <CalendarIcon className="ml-2 h-4 w-4 text-gray-500" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             {/* Reason */}
-            <div className="flex-1 w-[25.5rem] flex flex-col justify-end">
-              <FormField control={form.control} name="reason" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Reason to Display</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="w-full mt-1">
-                        <SelectValue placeholder="Select Reason" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {concerns.map(opt => (
-                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
+            <div className="w-full md:w-[25.5rem] mt-[-0.4rem]">
+              <FormField
+                control={form.control}
+                name="reason"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Reason to Display</FormLabel>
+                    <FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Reason" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {concerns.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
 
@@ -192,15 +219,17 @@ export default function ShopPromotionTab(): JSX.Element {
           </div>
 
           {/* Sub Description */}
-          <FormField control={form.control} name="subDescription" render={({ field }) => (
-            <FormItem className="flex-1 mb-2">
-              <FormLabel>Sub Description</FormLabel>
-              <FormControl>
-                <Input placeholder="Describe in detail" className="h-14" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )} />
+          <div className="pb-1">
+            <FormField control={form.control} name="subDescription" render={({ field }) => (
+              <FormItem className="flex-1 mb-2">
+                <FormLabel>Sub Description</FormLabel>
+                <FormControl>
+                  <Input placeholder="Describe in detail" className="h-14" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+          </div>
 
           <Separator />
 
@@ -235,7 +264,7 @@ export default function ShopPromotionTab(): JSX.Element {
             )} />
           </div>
 
-          <div className="flex gap-6">
+          <div className="flex gap-6 pb-1">
             <FormField control={form.control} name="facebook" render={({ field }) => (
               <FormItem className="flex-1 mb-1">
                 <FormLabel>Facebook</FormLabel>
@@ -270,7 +299,7 @@ export default function ShopPromotionTab(): JSX.Element {
           {/* Star Products */}
           <div className="flex flex-row items-center gap-2 mb-4">
             <SearchBar title="Select Featured Ingredients" placeholder="Search for ingredient" />
-            <Button onClick={() => { }}>Add</Button>
+            <Button className="mt-7" onClick={() => { }}>Add</Button>
           </div>
           <Label className="block text-gray-500">
             Cant find the ingredient you want? Please add the food item first to select the ingredient
@@ -288,9 +317,32 @@ export default function ShopPromotionTab(): JSX.Element {
 
           <Separator />
 
+          <div className="flex items-center justify-between mt-4 mb-4">
+            <h2 className="text-lg font-bold text-black">Upload Images</h2>
+          </div>
+
           {/* Image Uploader */}
           <div className="w-full pb-8 sm:w-2/5">
-            <ImageUploader title="Select Images for your food item" />
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <ImageUploader
+                      title="Select Images for your food item"
+                      onChange={(file) => {
+                        field.onChange(file)
+                        form.clearErrors("image")
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+
           </div>
         </div>
 
