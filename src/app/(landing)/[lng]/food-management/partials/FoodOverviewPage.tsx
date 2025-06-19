@@ -24,6 +24,7 @@ import Image from "next/image"
 import AddFoodPopUp from "./AddFoodPopUp"
 import { getAllFoods } from "@/app/api/foods"
 import dayjs from "dayjs"
+import ViewFoodPopUp from "./ViewFoodPopUp"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -58,6 +59,8 @@ export default function FoodOverviewPage({ token }: { token: string }) {
   const [category, setCategory] = useState<string>("")
   const [nutritional, setNutritional] = useState<string>("")
   const [season, setSeason] = useState<string>("")
+  const [viewFood, setViewFood] = useState<boolean>(false)
+  const [foodId, setFoodId] = useState<number>(0)
 
   // handle get users
   const getFoods = async () => {
@@ -85,6 +88,17 @@ export default function FoodOverviewPage({ token }: { token: string }) {
   // handle close add food popup
   const handleCloseAddFoodPopUp = () => {
     setOpenAddFoodPopUp(false)
+  }
+  // handle close view food popup
+  const handleCloseViewFoodPopUp = () => {
+    setViewFood(false)
+  }
+
+  // handle view user overview
+  const handleViewFoodOverview = (foodId: number) => {
+    setViewFood(true)
+    setFoodId(foodId)
+    console.log("foodId", foodId)
   }
 
   const columns: Column<FoodOverviewDataType>[] = [
@@ -118,8 +132,10 @@ export default function FoodOverviewPage({ token }: { token: string }) {
       header: "Health Benefits",
       cell: (row: FoodOverviewDataType) => (
         <div className="flex flex-wrap gap-2">
-          {row.healthBenefits.map(benefit => (
-            <Badge variant={"outline"}>{benefit}</Badge>
+          {row.healthBenefits.map((benefit, index) => (
+            <Badge key={index} variant={"outline"}>
+              {benefit}
+            </Badge>
           ))}
         </div>
       )
@@ -174,7 +190,9 @@ export default function FoodOverviewPage({ token }: { token: string }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem>View</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleViewFoodOverview(row.id)}>
+              View
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -283,7 +301,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
             <SelectContent className="max-h-40">
               <SelectGroup>
                 {categories.map(item => (
-                  <SelectItem value={item.value.toString()}>
+                  <SelectItem key={item.value} value={item.value.toString()}>
                     {item.label}
                   </SelectItem>
                 ))}
@@ -299,7 +317,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
             <SelectContent className="max-h-40">
               <SelectGroup>
                 {nutritionals.map(item => (
-                  <SelectItem value={item.value.toString()}>
+                  <SelectItem key={item.value} value={item.value.toString()}>
                     {item.label}
                   </SelectItem>
                 ))}
@@ -315,7 +333,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
             <SelectContent className="max-h-40">
               <SelectGroup>
                 {seasons.map(item => (
-                  <SelectItem value={item.value.toString()}>
+                  <SelectItem key={item.value} value={item.value.toString()}>
                     {item.label}
                   </SelectItem>
                 ))}
@@ -352,6 +370,8 @@ export default function FoodOverviewPage({ token }: { token: string }) {
 
       {/* add food popup */}
       <AddFoodPopUp open={openAddFoodPopUp} onClose={handleCloseAddFoodPopUp} />
+
+      <ViewFoodPopUp open={viewFood} onClose={handleCloseViewFoodPopUp} />
     </div>
   )
 }
