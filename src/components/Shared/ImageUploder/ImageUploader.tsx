@@ -1,67 +1,95 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { UploadCloud, X } from "lucide-react"
 
 interface ImageUploaderProps {
   title: string
-  onChange?: (file: File | null) => void
-  imageUrls?: string[]
+  onChange?: (files: File[] | null) => void
+  previewUrls?: string[]
+  disabled?: boolean // Add the disabled prop
 }
 
 export default function ImageUploader({
   title,
   onChange,
-  imageUrl
+  previewUrls = [],
+  disabled = false // Default to false if not provided
 }: ImageUploaderProps): JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(imageUrl || null)
+  const [imageList, setImageList] = useState<string[]>([])
 
+  // Initialize imageList with previewUrls when component first mounts
+  useEffect(() => {
+    if (previewUrls.length > 0) {
+      setImageList(previewUrls)
+    }
+  }, [previewUrls])
+
+  // Handle clicking the upload area to trigger file input
   const handleClick = (): void => {
+    if (disabled) return // Prevent file selection if disabled
     inputRef.current?.click()
   }
 
+  // Handle when a file is selected
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+    const files = e.target.files
+    if (files) {
+      const newFiles = Array.from(files)
+      const newImageList = [...imageList]
 
-      onChange?.(file)
+      // Convert files to data URLs and update the state
+      newFiles.forEach(file => {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          newImageList.push(reader.result as string) // Add the new image to the list
+          setImageList(newImageList) // Update the image list in state
+        }
+        reader.readAsDataURL(file)
+      })
+
+      onChange?.(newFiles) // Pass the new files back to parent component (if needed)
     }
   }
 
-  const handleRemoveImage = (): void => {
-    setPreviewUrl(null)
-    if (inputRef.current) {
-      inputRef.current.value = ""
-    }
-
-    onChange?.(null)
+  // Remove selected image from the list
+  const handleRemoveImage = (imageUrl: string): void => {
+    const updatedImageList = imageList.filter(image => image !== imageUrl)
+    setImageList(updatedImageList) // Update the state with the new list
+    onChange?.(updatedImageList) // Pass the updated list of images back to parent component (if needed)
   }
 
   return (
-    <div className="w-full">
+    <div className="">
       {/* Title */}
       <h3 className="mb-1 text-sm text-black">{title}</h3>
 
       {/* Upload Area */}
-      {previewUrl ? (
-        <div className="relative flex items-center justify-center w-full h-48 overflow-hidden border border-gray-300 rounded-lg bg-gray-50">
-          <img
-            src={previewUrl}
-            alt="Uploaded preview"
-            className="object-contain max-w-full max-h-full"
-          />
-          <button
-            onClick={handleRemoveImage}
-            className="absolute p-1 transition bg-white rounded-full shadow top-2 right-2 hover:bg-gray-100"
-          >
-            <X className="w-4 h-4 text-gray-600" />
-          </button>
+      {imageList.length > 0 ? (
+        <div className="">
+          {/* Loop through all preview images and display them */}
+          {imageList.map((image, index) => (
+            <div
+              key={index}
+              className="relative w-[100%] flex items-center justify-center h-48 overflow-hidden border border-gray-300 rounded-lg bg-gray-50"
+            >
+              <img
+                src={image}
+                alt={`Uploaded preview ${index}`}
+                className="object-contain max-w-full max-h-full"
+              />
+              {/* Remove button */}
+              {!disabled && (
+                <button
+                  onClick={() => handleRemoveImage(image)}
+                  className="absolute p-1 transition bg-white rounded-full shadow top-2 right-2 hover:bg-gray-100"
+                >
+                  <X className="w-4 h-4 text-gray-600" />
+                </button>
+              )}
+            </div>
+          ))}
         </div>
       ) : (
         <div
@@ -81,6 +109,7 @@ export default function ImageUploader({
             className="hidden"
             ref={inputRef}
             onChange={handleFileChange}
+            disabled={disabled} // Disable the input if the disabled prop is true
           />
         </div>
       )}

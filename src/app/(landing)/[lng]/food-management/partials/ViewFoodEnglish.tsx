@@ -172,11 +172,13 @@ export default function ViewFoodEnglish({
         </div>
       </div>
 
-      <div className="w-full pb-6 mt-6 sm:w-2/5">
+      <div className="w-full pb-6 mt-6 ">
         <h3 className="mb-4 text-lg font-semibold text-black">Upload Images</h3>
         <ImageUploader
           title="Select Images for your food item"
-          imageUrls={foodDetails?.images?.map(item => item.image) || []}
+          previewUrls={foodDetails?.images?.map(item => item.image) || []}
+          disabled={false}
+          onChange={files => console.log(files)}
         />
       </div>
     </TabsContent>
