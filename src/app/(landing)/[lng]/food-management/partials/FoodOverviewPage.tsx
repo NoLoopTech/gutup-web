@@ -18,11 +18,12 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import sampleImage from "@/../../public/images/sample-image.png"
 import AddFoodPopUp from "./AddFoodPopUp"
+import { getAllFoods } from "@/app/api/foods"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -32,26 +33,45 @@ interface Column<T> {
   className?: string
 }
 
-interface FoodOverviewDataType {
-  media: string
-  name: string
-  category: string
-  healthBenefits: string[]
-  season: string
-  recipes: string
-  dateAdded: string
-  status: string
-}
-
 interface dataListTypes {
   value: string
   label: string
 }
 
-export default function FoodOverviewPage() {
+interface FoodOverviewDataType {
+  id: number
+  name: string
+  category: string
+  healthBenefits: string[]
+  season: string
+  image: string
+  status: string
+  createdAt: string
+}
+
+export default function FoodOverviewPage({ token }: { token: string }) {
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(10)
   const [openAddFoodPopUp, setOpenAddFoodPopUp] = useState<boolean>(false)
+  const [foods, setFoods] = useState<FoodOverviewDataType[]>([])
+
+  // handle get users
+  const getFoods = async () => {
+    try {
+      const response = await getAllFoods(token)
+      if (response.status === 200) {
+        setFoods(response.data.foods)
+      } else {
+        console.log(response)
+      }
+    } catch (error) {
+      console.error("Failed to fetch users:", error)
+    }
+  }
+
+  useEffect(() => {
+    getFoods()
+  }, [])
 
   // handle open add food popup
   const handleOpenAddFoodPopUp = () => {
@@ -65,11 +85,11 @@ export default function FoodOverviewPage() {
 
   const columns: Column<FoodOverviewDataType>[] = [
     {
-      accessor: "media",
+      accessor: "image",
       header: "Media",
       cell: (row: FoodOverviewDataType) => (
         <Image
-          src={sampleImage}
+          src={row.image}
           alt={row.name}
           width={40}
           height={40}
@@ -109,11 +129,11 @@ export default function FoodOverviewPage() {
       )
     },
     {
-      accessor: "recipes",
+      accessor: "category",
       header: "Recipes"
     },
     {
-      accessor: "dateAdded",
+      accessor: "createdAt",
       header: "Date Added"
     },
     {
@@ -159,35 +179,15 @@ export default function FoodOverviewPage() {
     }
   ]
 
-  const data: FoodOverviewDataType[] = [
-    {
-      media: "/images/carrot.jpg", // public/images/carrot.jpg
-      name: "Carrot",
-      category: "Vegetable",
-      healthBenefits: ["Immune Support", "Skin Health", "Eye Health"],
-      season: "Spring",
-      recipes: "1 Available",
-      dateAdded: "2025-05-16",
-      status: "Active"
-    },
-    {
-      media: "/images/carrot.jpg",
-      name: "Carrot",
-      category: "Vegetable",
-      healthBenefits: ["Immune Support", "Skin Health", "Eye Health"],
-      season: "Spring",
-      recipes: "1 Available",
-      dateAdded: "2025-05-16",
-      status: "Incomplete"
-    }
-  ]
-
   const pageSizeOptions: number[] = [5, 10, 20]
 
-  const totalItems: number = data.length
+  const totalItems: number = foods.length
   const startIndex: number = (page - 1) * pageSize
   const endIndex: number = startIndex + pageSize
-  const paginatedData: FoodOverviewDataType[] = data.slice(startIndex, endIndex)
+  const paginatedData: FoodOverviewDataType[] = foods.slice(
+    startIndex,
+    endIndex
+  )
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage)
