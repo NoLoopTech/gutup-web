@@ -1,7 +1,12 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from "react"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogTitle
+} from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -9,13 +14,26 @@ import ViewFoodEnglish from "./ViewFoodEnglish"
 
 import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
 import ViewFoodFranch from "./ViewFoodFranch"
-import { getFoodsById } from "@/app/api/foods"
+import { deleteFoodById, getFoodsById } from "@/app/api/foods"
+import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
 
 interface Props {
   open: boolean
   onClose: () => void
   token: string
   foodId: number
+  getFoods: () => void
 }
 interface Option {
   value: string
@@ -60,11 +78,13 @@ export default function ViewFoodPopUp({
   open,
   onClose,
   token,
-  foodId
+  foodId,
+  getFoods
 }: Props): JSX.Element {
   const [allowMultiLang, setAllowMultiLang] = useState(false)
   const [activeTab, setActiveTab] = useState<"english" | "french">("english")
   const [foodDetails, setFoodDetails] = useState<FoodDetailsTypes | null>(null)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
 
   useEffect(() => {
     if (token && foodId) {
@@ -79,6 +99,22 @@ export default function ViewFoodPopUp({
       getfoodsDetailsByFoodId()
     }
   }, [token, foodId])
+
+  // handle delete user by id
+  const handleDeleteFoodById = async () => {
+    const response = await deleteFoodById(token, foodId)
+    if (response.status === 200 && response.data.success) {
+      toast.success(response.data.message)
+      onClose()
+      setConfirmDeleteOpen(false)
+      getFoods()
+    } else {
+      toast.error("Failed to delete user", {
+        description: response.data.message
+      })
+      setConfirmDeleteOpen(false)
+    }
+  }
 
   // Refs for each RichTextEditor
   const selectionRef = useRef<RichTextEditorHandle>(null)
@@ -104,6 +140,15 @@ export default function ViewFoodPopUp({
     { value: "germany", label: "Germany" },
     { value: "italy", label: "Italy" }
   ]
+
+  // handle open delete confirmation popup
+  const handleOpenDeleteConfirmationPopup = () => {
+    setConfirmDeleteOpen(true)
+  }
+  // handle close delete confirmation popup
+  const handleCloseDeleteConfirmationPopup = () => {
+    setConfirmDeleteOpen(false)
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -167,7 +212,41 @@ export default function ViewFoodPopUp({
             )}
           </Tabs>
         </div>
+
+        <DialogFooter>
+          <div className="flex justify-between w-full gap-2">
+            <Button
+              variant="outline"
+              onClick={handleOpenDeleteConfirmationPopup}
+            >
+              Delete Food
+            </Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
+
+      {/* delete confirmation popup  */}
+      <AlertDialog
+        open={confirmDeleteOpen}
+        onOpenChange={handleCloseDeleteConfirmationPopup}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Food</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this food?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCloseDeleteConfirmationPopup}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteFoodById}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   )
 }

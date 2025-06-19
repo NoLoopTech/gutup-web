@@ -406,6 +406,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
         onClose={handleCloseViewFoodPopUp}
         token={token}
         foodId={foodId}
+        getFoods={getFoods}
       />
     </div>
   )
