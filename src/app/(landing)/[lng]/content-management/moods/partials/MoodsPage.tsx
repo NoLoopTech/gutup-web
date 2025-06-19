@@ -32,6 +32,8 @@ interface MoodsDataType {
 
 export default function MoodsPage() {
   const [isOpenAddMood, setIsOpenAddMood] = useState<boolean>(false)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
   const handleOpenAddMood = () => {
     setIsOpenAddMood(true)
@@ -126,8 +128,6 @@ export default function MoodsPage() {
     }
   ]
 
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
   const pageSizeOptions = [5, 10, 20]
 
   const totalItems = data.length
@@ -149,6 +149,7 @@ export default function MoodsPage() {
       <div className="flex justify-end mb-5 -mt-14">
         <Button onClick={handleOpenAddMood}>Add New</Button>
       </div>
+
       {/* user management table */}
       <CustomTable
         columns={columns}
@@ -160,6 +161,7 @@ export default function MoodsPage() {
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
       />
+
       <AddMoodPopUp open={isOpenAddMood} onClose={handleCloseAddMood} />
     </div>
   )

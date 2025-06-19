@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import VideoTipTab from "./VideoTipTab"
 import BasicLayoutTab from "./BasicLayoutTab"
 import ShopPromotionTab from "./ShopPromotionTab"
@@ -43,21 +43,15 @@ export default function AddDailyTipPopUp({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
         <div
-          className="h-full p-2 overflow-y-auto"
+          className="h-full p-2 space-y-4 overflow-y-auto"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          <style>
-            {`div::-webkit-scrollbar { width: 0px; background: transparent; }`}
-          </style>
-
           {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-black">Add New Daily Tip</h2>
-          </div>
+          <DialogTitle>Add New Daily Tip</DialogTitle>
 
           {/* Tab Selector using Input */}
-          <div className="mb-4" style={{ width: "25.4rem" }}>
-            <Label className="block mb-2 text-black">Layout Selection</Label>
+          <div className="mb-4 w-[25.4rem] relative">
+            <Label className="block mb-1 text-black">Layout Selection</Label>
             <Select
               value={activeTab}
               onValueChange={val => {

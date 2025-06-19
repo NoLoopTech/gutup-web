@@ -36,6 +36,8 @@ interface DailyTipsDataType {
 
 export default function DailyTipsPage() {
   const [isOpenAddTip, setIsOpenAddTip] = useState<boolean>(false)
+  const [page, setPage] = useState<number>(1)
+  const [pageSize, setPageSize] = useState<number>(10)
 
   const handleOpenAddTip = () => {
     setIsOpenAddTip(true)
@@ -157,8 +159,6 @@ export default function DailyTipsPage() {
     }
   ]
 
-  const [page, setPage] = useState<number>(1)
-  const [pageSize, setPageSize] = useState<number>(10)
   const pageSizeOptions: number[] = [5, 10, 20]
 
   const totalItems: number = data.length
