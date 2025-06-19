@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import AddFoodPopUp from "./AddFoodPopUp"
 import { getAllFoods } from "@/app/api/foods"
+import dayjs from "dayjs"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -54,6 +55,9 @@ export default function FoodOverviewPage({ token }: { token: string }) {
   const [openAddFoodPopUp, setOpenAddFoodPopUp] = useState<boolean>(false)
   const [foods, setFoods] = useState<FoodOverviewDataType[]>([])
   const [searchText, setSearchText] = useState<string>("")
+  const [category, setCategory] = useState<string>("")
+  const [nutritional, setNutritional] = useState<string>("")
+  const [season, setSeason] = useState<string>("")
 
   // handle get users
   const getFoods = async () => {
@@ -81,16 +85,6 @@ export default function FoodOverviewPage({ token }: { token: string }) {
   // handle close add food popup
   const handleCloseAddFoodPopUp = () => {
     setOpenAddFoodPopUp(false)
-  }
-
-  // handle search text change
-  const handleSearchTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchText(e.target.value)
-  }
-
-  // handle category change
-  const handleCategoryChange = (value: string) => {
-    setCategory(value)
   }
 
   const columns: Column<FoodOverviewDataType>[] = [
@@ -122,7 +116,6 @@ export default function FoodOverviewPage({ token }: { token: string }) {
     {
       accessor: "healthBenefits",
       header: "Health Benefits",
-
       cell: (row: FoodOverviewDataType) => (
         <div className="flex flex-wrap gap-2">
           {row.healthBenefits.map(benefit => (
@@ -144,7 +137,8 @@ export default function FoodOverviewPage({ token }: { token: string }) {
     },
     {
       accessor: "createdAt",
-      header: "Date Added"
+      header: "Date Added",
+      cell: (row: any) => dayjs(row.createdAt).format("DD/MM/YYYY")
     },
     {
       accessor: "status",
@@ -189,12 +183,39 @@ export default function FoodOverviewPage({ token }: { token: string }) {
 
   const pageSizeOptions: number[] = [5, 10, 20]
 
+  // handle page change
   const handlePageChange = (newPage: number) => {
     setPage(newPage)
   }
+  // handle page size change
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize)
     setPage(1)
+  }
+
+  // handle search text change
+  const handleSearchTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchText(e.target.value)
+  }
+  // handle category change
+  const handleCategoryChange = (value: string) => {
+    setCategory(value)
+  }
+  // handle category change
+  const handleNutritionalChange = (value: string) => {
+    setNutritional(value)
+  }
+  // handle category change
+  const handleSeasonChange = (value: string) => {
+    setSeason(value)
+  }
+
+  // handle clear search values
+  const handleClearSearchValues = () => {
+    setSearchText("")
+    setCategory("")
+    setNutritional("")
+    setSeason("")
   }
 
   const categories: dataListTypes[] = [
@@ -204,7 +225,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
     { value: "Dairy", label: "Dairy" }
   ]
 
-  const nutritional: dataListTypes[] = [
+  const nutritionals: dataListTypes[] = [
     { value: "Low Calories", label: "Low Calories" },
     { value: "High Calories", label: "High Calories" },
     { value: "Low Fat", label: "Low Fat" },
@@ -212,13 +233,13 @@ export default function FoodOverviewPage({ token }: { token: string }) {
   ]
 
   const seasons: dataListTypes[] = [
+    { value: "Available year-round", label: "Available year-round" },
+    { value: "Fall", label: "Fall" },
     { value: "Spring", label: "Spring" },
     { value: "Summer", label: "Summer" },
     { value: "Autumn", label: "Autumn" },
     { value: "Winter", label: "Winter" }
   ]
-
-  const [Category, setCategory] = useState<string>("")
 
   // filter foods (for table)
   const filteredFoods = useMemo(() => {
@@ -226,11 +247,13 @@ export default function FoodOverviewPage({ token }: { token: string }) {
       const nameMatch = food.name
         .toLowerCase()
         .includes(searchText.toLowerCase())
-      const categoryMatch = Category === "" || food.category === Category
+      const categoryMatch = category === "" || food.category === category
+      const nutritionalMatch = nutritional === "" || food.name === nutritional
+      const seasonMatch = season === "" || food.season === season
 
-      return nameMatch && categoryMatch
+      return nameMatch && categoryMatch && nutritionalMatch && seasonMatch
     })
-  }, [foods, searchText, Category])
+  }, [foods, searchText, category, nutritional, season])
 
   const totalItems = filteredFoods.length
 
@@ -253,7 +276,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
             onChange={handleSearchTextChange}
           />
           {/* select category */}
-          <Select value={Category} onValueChange={handleCategoryChange}>
+          <Select value={category} onValueChange={handleCategoryChange}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
@@ -269,13 +292,13 @@ export default function FoodOverviewPage({ token }: { token: string }) {
           </Select>
 
           {/* select Nutritional */}
-          <Select>
+          <Select value={nutritional} onValueChange={handleNutritionalChange}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Nutritional" />
             </SelectTrigger>
             <SelectContent className="max-h-40">
               <SelectGroup>
-                {nutritional.map(item => (
+                {nutritionals.map(item => (
                   <SelectItem value={item.value.toString()}>
                     {item.label}
                   </SelectItem>
@@ -285,7 +308,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
           </Select>
 
           {/* select Season */}
-          <Select>
+          <Select value={season} onValueChange={handleSeasonChange}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Season" />
             </SelectTrigger>
@@ -301,14 +324,11 @@ export default function FoodOverviewPage({ token }: { token: string }) {
           </Select>
 
           {/* clear filters button */}
-          {(Boolean(searchText) || Boolean(Category)) && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearchText("")
-                setCategory("")
-              }}
-            >
+          {(Boolean(searchText) ||
+            Boolean(category) ||
+            Boolean(nutritional) ||
+            Boolean(season)) && (
+            <Button variant="outline" onClick={handleClearSearchValues}>
               Clear Filters
             </Button>
           )}

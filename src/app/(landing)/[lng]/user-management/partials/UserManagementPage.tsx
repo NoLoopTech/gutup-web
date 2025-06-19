@@ -44,6 +44,12 @@ interface UserManagementDataType {
   dailyScore: number
 }
 
+// Define the type for the range object
+interface DateRange {
+  startDate: Date | null
+  endDate: Date | null
+}
+
 export default function UserManagementPage({
   token
 }: {
@@ -214,25 +220,34 @@ export default function UserManagementPage({
   const handlePageChange = (newPage: number) => {
     setPage(newPage)
   }
-
   // handle page size change
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize)
     setPage(1)
   }
 
-  // unified onValueChange handler for Select
-  const handleSelectChange = (key: string, value: string) => {
-    switch (key) {
-      case "score":
-        setSelectedScore(value)
-        break
-      case "dateFilter":
-        setSelectedDateFilter(value)
-        break
-      default:
-        break
-    }
+  // handle Score change
+  const handleScoreChange = (value: string) => {
+    setSelectedScore(value)
+  }
+
+  // handle dates change
+  const handleDatesChange = (value: string) => {
+    setSelectedDateFilter(value)
+  }
+
+  // handle dates change
+  const handleDateRangeChange = (range: DateRange) => {
+    if (!range.startDate || !range.endDate) return
+    setSelectedDateRange(range)
+  }
+
+  // handle clear search values
+  const handleClearSearchValues = () => {
+    setSearchText("")
+    setSelectedScore("")
+    setSelectedDateFilter("")
+    setSelectedDateRange({ startDate: null, endDate: null })
   }
 
   // genarate score points
@@ -252,10 +267,7 @@ export default function UserManagementPage({
           onChange={handleSearchTextChange}
         />
         {/* select score points */}
-        <Select
-          value={selectedScore}
-          onValueChange={value => handleSelectChange("score", value)}
-        >
+        <Select value={selectedScore} onValueChange={handleScoreChange}>
           <SelectTrigger className="w-32">
             <SelectValue placeholder="Score Points" />
           </SelectTrigger>
@@ -271,10 +283,7 @@ export default function UserManagementPage({
         </Select>
 
         {/* select dates */}
-        <Select
-          value={selectedDateFilter}
-          onValueChange={value => handleSelectChange("dateFilter", value)}
-        >
+        <Select value={selectedDateFilter} onValueChange={handleDatesChange}>
           <SelectTrigger className="w-32">
             <SelectValue placeholder="All" />
           </SelectTrigger>
@@ -292,10 +301,7 @@ export default function UserManagementPage({
         <div>
           <DateRangePicker
             value={selectedDateRange}
-            onChange={range => {
-              if (!range.startDate || !range.endDate) return
-              setSelectedDateRange(range)
-            }}
+            onChange={handleDateRangeChange}
           />
         </div>
 
@@ -305,15 +311,7 @@ export default function UserManagementPage({
           Boolean(selectedDateFilter !== "All") ||
           Boolean(selectedDateRange.startDate) ||
           Boolean(selectedDateRange.endDate)) && (
-          <Button
-            variant="outline"
-            onClick={() => {
-              setSearchText("")
-              setSelectedScore("")
-              setSelectedDateFilter("All")
-              setSelectedDateRange({ startDate: null, endDate: null })
-            }}
-          >
+          <Button variant="outline" onClick={handleClearSearchValues}>
             Clear Filters
           </Button>
         )}
