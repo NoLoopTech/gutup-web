@@ -1,4 +1,3 @@
-// AddStorePopUp.tsx
 'use client';
 
 import React, { useRef } from 'react';
@@ -14,6 +13,11 @@ import SearchBar from '@/components/Shared/SearchBar/SearchBar';
 import { CustomTable } from '@/components/Shared/Table/CustomTable';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormField, FormItem, FormLabel, FormMessage, FormControl } from "@/components/ui/form"
+import z from "zod";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 const RichTextEditor = dynamic(
     async () => await import('@/components/Shared/TextEditor/RichTextEditor'),
@@ -50,10 +54,72 @@ const shopStatus: Option[] = [
     { value: 'Online', label: 'Online' },
 ];
 
+// Validation schema using Zod
+const AddStoreSchema = z.object({
+    storeName: z.string()
+        .nonempty("Required")
+        .min(2, { message: "Must be at least 2 characters" }),
+    category: z.string().min(1, "Please select a category"),
+    storeLocation: z.string().min(1, "Required"),
+    shopStatus: z.string().min(1, "Please select a shop status"),
+    shoplocation: z.string().min(1, "Required"),
+    phone: z.string()
+        .nonempty("Required")
+        .refine(
+            (val) =>
+                /^\d{10}$/.test(val) || /^\+\d{11}$/.test(val),
+            {
+                message: "Invalid Mobile number (e.g. 0712345678 or +94712345678)",
+            }
+        ),
+    email: z.string()
+        .nonempty("Required")
+        .email("Please enter a valid email."),
+    mapsPin: z.string()
+        .nonempty("Required"),
+    website: z.string().url("Invalid URL format").optional().or(z.literal("")),
+    facebook: z.string().url("Invalid URL format").optional().or(z.literal("")),
+    instagram: z.string().url("Invalid URL format").optional().or(z.literal("")),
+    about: z.string()
+        .refine((val) => {
+            const plainText = val.replace(/<(.|\n)*?>/g, '').trim();
+            const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val);
+            return plainText !== '' || hasImage;
+        }, {
+            message: "Required",
+        }),
+    storeImage: z.custom<File | null>((val) => val instanceof File, {
+        message: "Required"
+    }),
+});
+
+const onSubmit = (data: z.infer<typeof AddStoreSchema>): void => {
+    toast("Form submitted successfully!", {})
+}
+
 export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
     const aboutRef = useRef<any>(null);
     const [page, setPage] = React.useState<number>(1);
     const [pageSize, setPageSize] = React.useState<number>(5);
+
+    const form = useForm<z.infer<typeof AddStoreSchema>>({
+        resolver: zodResolver(AddStoreSchema),
+        defaultValues: {
+            storeName: "",
+            category: "",
+            storeLocation: "",
+            shopStatus: "",
+            shoplocation: "",
+            phone: "",
+            email: "",
+            mapsPin: "",
+            website: "",
+            facebook: "",
+            instagram: "",
+            about: "",
+            storeImage: null,
+        },
+    });
 
     // Dummy table data
     const availData: AvailableItem[] = [
@@ -115,194 +181,358 @@ export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
-                <div
-                    className="h-full overflow-y-auto p-2"
-                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
-                    <style>
-                        {`div::-webkit-scrollbar { width: 0px; background: transparent; }`}
-                    </style>
-
-                    {/* Header */}
-                    <DialogTitle>Add New Store</DialogTitle>
-
-                    {/* Store info */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 mb-6">
-                        <div>
-                            <Label className="text-black mb-1 block">Store Name</Label>
-                            <Input placeholder="Enter store name" />
-                        </div>
-                        <div>
-                            <Label className="block mb-1 text-black">Category</Label>
-                            <Select>
-                                <SelectTrigger id="categorySelect" name="categorySelect" className="w-full mt-1">
-                                    <SelectValue placeholder="Select category" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {categories.map((option) => (
-                                        <SelectItem key={option.value} value={option.value}>
-                                            {option.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div>
-                            <Label className="text-black mb-1 block">Store Location</Label>
-                            <Input placeholder="Enter store location" />
-                        </div>
-                        <div>
-                            <Label className="text-black mb-1 block">Shop Status</Label>
-                            <Select>
-                                <SelectTrigger id="shopStatusSelect" name="shopStatusSelect" className="w-full mt-1">
-                                    <SelectValue placeholder="Select Shop Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {shopStatus.map((option) => (
-                                        <SelectItem key={option.value} value={option.value}>
-                                            {option.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div>
-                            <Label className="text-black mb-1 block">Store Map Location</Label>
-                            <Input placeholder="Enter map location" />
-                        </div>
-
-                        <div>
-                            <Label className="text-black mb-1 block">Store Type</Label>
-                            <div className="flex items-center gap-4 mt-2">
-                                <Switch />
-                                <Label className="text-Primary-300">Premium Store</Label>
-                            </div>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                            <Label>Time</Label>
-                            <div className="flex gap-7 items-center">
-                                <div className="flex flex-col">
-                                    <Label htmlFor="time-from" className="text-xs text-gray-400">From</Label>
-                                    <Input
-                                        type="time"
-                                        id="time-from"
-                                        step="1"
-                                        defaultValue="10:30:00"
-                                        className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                                    />
-                                </div>
-                                <div className="flex flex-col">
-                                    <Label htmlFor="time-to" className="text-xs text-gray-400">To</Label>
-                                    <Input
-                                        type="time"
-                                        id="time-to"
-                                        step="1"
-                                        defaultValue="18:30:00"
-                                        className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Contact info */}
-                    <DialogTitle className='pt-4'>Store Contact</DialogTitle>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 mb-6">
-                        <div>
-                            <Label className="text-black mb-1 block">Mobile Number</Label>
-                            <Input placeholder="Enter store number" />
-                        </div>
-                        <div>
-                            <Label className="text-black mb-1 block">Email</Label>
-                            <Input placeholder="Enter store email" />
-                        </div>
-                        <div>
-                            <Label className="text-black mb-1 block">Maps Pin</Label>
-                            <Input placeholder="Enter google maps location" />
-                        </div>
-                        <div>
-                            <Label className="text-black mb-1 block">Facebook</Label>
-                            <Input placeholder="Enter Facebook URL" />
-                        </div>
-                        <div>
-                            <Label className="text-black mb-1 block">Instagram</Label>
-                            <Input placeholder="Enter Instagram URL" />
-                        </div>
-                        <div>
-                            <Label className="text-black mb-1 block">Website</Label>
-                            <Input placeholder="Enter Website URL" />
-                        </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Available Products */}
-                    <DialogTitle className='pt-4'>Available Products</DialogTitle>
-                    <div className="flex flex-col gap-4 pt-4">
-                        <div className="flex flex-col sm:flex-row gap-2 items-center w-full">
-                            <div className="flex flex-row gap-2 items-center mb-2 flex-1">
-                                <div className="flex-1">
-                                    <SearchBar title="Select available Ingredients" placeholder="Search for ingredients" />
-                                </div>
-                                <div className="flex items-end h-full mt-7">
-                                    <Button onClick={() => { }}>Add</Button>
-                                </div>
-                            </div>
-                            <div className="flex flex-row gap-2 items-center mb-2 flex-1">
-                                <div className="flex-1">
-                                    <SearchBar title="Select available categories" placeholder="Search available categories" />
-                                </div>
-                                <div className="flex items-end h-full mt-7">
-                                    <Button onClick={() => { }}>Add</Button>
-                                </div>
-                            </div>
-                        </div>
-                        <CustomTable
-                            columns={availColumns}
-                            data={availData.slice((page - 1) * pageSize, page * pageSize)}
-                            page={page}
-                            pageSize={pageSize}
-                            totalItems={availData.length}
-                            pageSizeOptions={[1, 5, 10]}
-                            onPageChange={(newPage) => { setPage(newPage); }}
-                            onPageSizeChange={(newSize) => {
-                                setPageSize(newSize);
-                                setPage(1);
+                <style>{`
+                    /* Hide scrollbar in Webkit browsers */
+                    div::-webkit-scrollbar {
+                        display: none;
+                    }
+                `}</style>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                        <div
+                            className="h-[calc(80vh-64px)] p-2 overflow-y-auto"
+                            style={{
+                                scrollbarWidth: "none", // Firefox
+                                msOverflowStyle: "none", // IE/Edge
                             }}
-                        />
-                    </div>
-
-                    <Separator />
-
-                    {/* About The Shop */}
-                    <DialogTitle className='pt-4'>About The Shop</DialogTitle>
-                    <div className="flex flex-col gap-6 pt-4 pb-6">
-                        <div>
-                            <span className="text-black text-sm mb-2 block">About Us</span>
-                            <RichTextEditor ref={aboutRef} />
-                        </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Upload Images */}
-                    <DialogTitle className='pt-4'>Upload Images</DialogTitle>
-                    <div className="pt-4 w-full sm:w-2/5">
-                        <ImageUploader title="Select Images for your store" />
-                    </div>
-                </div>
-                <DialogFooter>
-                    <div className="flex justify-between w-full gap-2">
-                        <Button
-                            variant="outline"
                         >
-                            Cancel
-                        </Button>
-                        <Button>Save</Button>
-                    </div>
-                </DialogFooter>
+
+                            {/* Header */}
+                            <DialogTitle>Add New Store</DialogTitle>
+
+                            {/* Store info */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 mb-6">
+                                <div>
+                                    <FormField
+                                        control={form.control}
+                                        name="storeName"
+                                        render={({ field }) => (
+                                            <FormItem className="flex-1">
+                                                <FormLabel className="block mb-1 text-black">Store Name</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Enter store name" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <FormField
+                                        control={form.control}
+                                        name="category"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="block mb-1 text-black">Category</FormLabel>
+                                                <FormControl>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <SelectTrigger className="w-full mt-1">
+                                                            <SelectValue placeholder="Select Category" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {categories.map((option: Option) => (
+                                                                <SelectItem key={option.value} value={option.value}>
+                                                                    {option.label}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <FormField
+                                        control={form.control}
+                                        name="storeLocation"
+                                        render={({ field }) => (
+                                            <FormItem className="flex-1">
+                                                <FormLabel className="block mb-1 text-black">Store Location</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Enter store location" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <FormField
+                                        control={form.control}
+                                        name="shopStatus"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="block mb-1 text-black">Shop Status</FormLabel>
+                                                <FormControl>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <SelectTrigger className="w-full mt-1">
+                                                            <SelectValue placeholder="Select Shop Status" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {shopStatus.map((option: Option) => (
+                                                                <SelectItem key={option.value} value={option.value}>
+                                                                    {option.label}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <FormField
+                                        control={form.control}
+                                        name="shoplocation"
+                                        render={({ field }) => (
+                                            <FormItem className="flex-1">
+                                                <FormLabel className="block mb-1 text-black">Store Map Location</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Enter map location" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label className="text-black mb-1 block">Store Type</Label>
+                                    <div className="flex items-center gap-4 mt-2">
+                                        <Switch />
+                                        <Label className="text-Primary-300">Premium Store</Label>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <Label>Time</Label>
+                                    <div className="flex gap-7 items-center">
+                                        <div className="flex flex-col">
+                                            <Label htmlFor="time-from" className="text-xs text-gray-400">From</Label>
+                                            <Input
+                                                type="time"
+                                                id="time-from"
+                                                step="1"
+                                                defaultValue="10:30:00"
+                                                className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <Label htmlFor="time-to" className="text-xs text-gray-400">To</Label>
+                                            <Input
+                                                type="time"
+                                                id="time-to"
+                                                step="1"
+                                                defaultValue="18:30:00"
+                                                className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            {/* Contact info */}
+                            <DialogTitle className='pt-4'>Store Contact</DialogTitle>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 mb-6">
+                                <div>
+                                    <FormField
+                                        control={form.control}
+                                        name="phone"
+                                        render={({ field }) => (
+                                            <FormItem className="flex-1">
+                                                <FormLabel className="block mb-1 text-black">Mobile Number</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Enter store number" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <FormField
+                                        control={form.control}
+                                        name="email"
+                                        render={({ field }) => (
+                                            <FormItem className="flex-1">
+                                                <FormLabel className="block mb-1 text-black">Email</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Enter store email" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <FormField
+                                        control={form.control}
+                                        name="mapsPin"
+                                        render={({ field }) => (
+                                            <FormItem className="flex-1">
+                                                <FormLabel className="block mb-1 text-black">Maps Pin</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Enter google maps location" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <FormField
+                                        control={form.control}
+                                        name="facebook"
+                                        render={({ field }) => (
+                                            <FormItem className="flex-1">
+                                                <FormLabel className="block mb-1 text-black">Facebook</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Enter Facebook URL" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <FormField
+                                        control={form.control}
+                                        name="instagram"
+                                        render={({ field }) => (
+                                            <FormItem className="flex-1">
+                                                <FormLabel className="block mb-1 text-black">Instagram</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Enter Instagram URL" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <FormField
+                                        control={form.control}
+                                        name="website"
+                                        render={({ field }) => (
+                                            <FormItem className="flex-1">
+                                                <FormLabel className="block mb-1 text-black">Website</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Enter Website URL" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            {/* Available Products */}
+                            <DialogTitle className='pt-4'>Available Products</DialogTitle>
+                            <div className="flex flex-col gap-4 pt-4">
+                                <div className="flex flex-col sm:flex-row gap-2 items-center w-full">
+                                    <div className="flex flex-row gap-2 items-center mb-2 flex-1">
+                                        <div className="flex-1">
+                                            <SearchBar title="Select available Ingredients" placeholder="Search for ingredients" />
+                                        </div>
+                                        <div className="flex items-end h-full mt-7">
+                                            <Button onClick={() => { }}>Add</Button>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-row gap-2 items-center mb-2 flex-1">
+                                        <div className="flex-1">
+                                            <SearchBar title="Select available categories" placeholder="Search available categories" />
+                                        </div>
+                                        <div className="flex items-end h-full mt-7">
+                                            <Button onClick={() => { }}>Add</Button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <CustomTable
+                                    columns={availColumns}
+                                    data={availData.slice((page - 1) * pageSize, page * pageSize)}
+                                    page={page}
+                                    pageSize={pageSize}
+                                    totalItems={availData.length}
+                                    pageSizeOptions={[1, 5, 10]}
+                                    onPageChange={(newPage) => { setPage(newPage); }}
+                                    onPageSizeChange={(newSize) => {
+                                        setPageSize(newSize);
+                                        setPage(1);
+                                    }}
+                                />
+                            </div>
+
+                            <Separator />
+
+                            {/* About The Shop */}
+                            <DialogTitle className='pt-4'>About The Shop</DialogTitle>
+                            <div className="flex flex-col gap-6 pt-4 pb-6">
+                                <div>
+                                    <FormField
+                                        control={form.control}
+                                        name="about"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="block mb-2 text-black">About Us</FormLabel>
+                                                <FormControl>
+                                                    <RichTextEditor
+                                                        ref={aboutRef}
+                                                        value={field.value}
+                                                        onChange={(val) => {
+                                                            field.onChange(val)
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            {/* Upload Images */}
+                            <DialogTitle className='pt-4'>Upload Images</DialogTitle>
+                            <div className="pt-4 w-full sm:w-2/5 pb-8">
+                                <FormField
+                                    control={form.control}
+                                    name="storeImage"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormControl>
+                                                <ImageUploader
+                                                    title="Select Images for your store"
+                                                    onChange={(file) => {
+                                                        field.onChange(file)
+                                                        form.clearErrors("storeImage")
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            {/* Save and Cancel buttons */}
+                            <div className="fixed bottom-0 left-0 w-full bg-white border-t py-4 px-4 flex justify-between gap-2 z-50">
+                                <Button variant="outline" onClick={() => { form.reset(); }}>
+                                    Cancel
+                                </Button>
+                                <Button type="submit">Save</Button>
+                            </div>
+                        </DialogFooter>
+                    </form>
+                </Form>
             </DialogContent>
         </Dialog>
     );
