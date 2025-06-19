@@ -1,12 +1,7 @@
 "use client"
 
-import React, { useState, useRef } from "react"
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogTitle
-} from "@/components/ui/dialog"
+import React, { useState, useRef, useEffect } from "react"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -14,19 +9,76 @@ import ViewFoodEnglish from "./ViewFoodEnglish"
 
 import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
 import ViewFoodFranch from "./ViewFoodFranch"
+import { getFoodsById } from "@/app/api/foods"
 
 interface Props {
   open: boolean
   onClose: () => void
+  token: string
+  foodId: number
 }
 interface Option {
   value: string
   label: string
 }
 
-export default function ViewFoodPopUp({ open, onClose }: Props): JSX.Element {
+interface FoodAttributes {
+  fiber: number
+  proteins: number
+  vitamins: string
+  minerals: string
+  fat: number
+  sugar: number
+}
+
+interface FoodDescribe {
+  selection: string
+  preparation: string
+  conservation: string
+}
+
+interface FoodImage {
+  image: string
+}
+
+interface HealthBenefit {
+  healthBenefit: string
+}
+
+export interface FoodDetailsTypes {
+  name: string
+  category: string
+  season: string
+  country: string
+  attributes: FoodAttributes
+  describe: FoodDescribe
+  images: FoodImage[]
+  healthBenefits: HealthBenefit[]
+}
+
+export default function ViewFoodPopUp({
+  open,
+  onClose,
+  token,
+  foodId
+}: Props): JSX.Element {
   const [allowMultiLang, setAllowMultiLang] = useState(false)
   const [activeTab, setActiveTab] = useState<"english" | "french">("english")
+  const [foodDetails, setFoodDetails] = useState<FoodDetailsTypes | null>(null)
+
+  useEffect(() => {
+    if (token && foodId) {
+      const getfoodsDetailsByFoodId = async () => {
+        const response = await getFoodsById(token, foodId)
+        if (response.status === 200) {
+          setFoodDetails(response.data)
+        } else {
+          console.error("Failed to get user details")
+        }
+      }
+      getfoodsDetailsByFoodId()
+    }
+  }, [token, foodId])
 
   // Refs for each RichTextEditor
   const selectionRef = useRef<RichTextEditorHandle>(null)
@@ -95,14 +147,12 @@ export default function ViewFoodPopUp({ open, onClose }: Props): JSX.Element {
               </div>
             </div>
 
-            {/* Render each tab’s content component */}
+            {/* Render each tab's content component */}
             <ViewFoodEnglish
-              categories={categories}
-              seasons={seasons}
-              countries={countries}
               selectionRef={selectionRef}
               preparationRef={preparationRef}
               conservationRef={conservationRef}
+              foodDetails={foodDetails || null}
             />
 
             {allowMultiLang && (

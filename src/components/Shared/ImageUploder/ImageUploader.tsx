@@ -6,14 +6,16 @@ import { UploadCloud, X } from "lucide-react"
 interface ImageUploaderProps {
   title: string
   onChange?: (file: File | null) => void
+  imageUrls?: string[]
 }
 
 export default function ImageUploader({
   title,
-  onChange
+  onChange,
+  imageUrl
 }: ImageUploaderProps): JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(imageUrl || null)
 
   const handleClick = (): void => {
     inputRef.current?.click()
@@ -52,7 +54,7 @@ export default function ImageUploader({
           <img
             src={previewUrl}
             alt="Uploaded preview"
-            className="max-h-full max-w-full object-contain"
+            className="object-contain max-w-full max-h-full"
           />
           <button
             onClick={handleRemoveImage}
