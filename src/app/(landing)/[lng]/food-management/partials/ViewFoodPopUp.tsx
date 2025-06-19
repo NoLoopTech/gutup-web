@@ -14,7 +14,6 @@ import ViewFoodEnglish from "./ViewFoodEnglish"
 
 import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
 import ViewFoodFranch from "./ViewFoodFranch"
-import { Button } from "@/components/ui/button"
 
 interface Props {
   open: boolean
@@ -64,13 +63,6 @@ export default function ViewFoodPopUp({ open, onClose }: Props): JSX.Element {
             msOverflowStyle: "none" // IE/Edge
           }}
         >
-          <style>{`
-            div::-webkit-scrollbar {
-              width: 0px;
-              background: transparent;
-            }
-          `}</style>
-
           <DialogTitle>Add New Food Item</DialogTitle>
 
           <Tabs

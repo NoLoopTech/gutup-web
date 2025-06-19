@@ -39,6 +39,10 @@ export default function ViewFoodEnglish({
   seasons,
   countries
 }: ViewFoodEnglishProps): JSX.Element {
+  const handleContentChange = (newContent: string) => {
+    console.log(newContent)
+  }
+
   return (
     <TabsContent value="english">
       {/* English Tab Content */}
@@ -155,15 +159,19 @@ export default function ViewFoodEnglish({
       <div className="flex flex-col gap-6">
         <div>
           <span className="block mb-2 text-sm text-black">Selection</span>
-          <RichTextEditor ref={selectionRef} />
+          <RichTextEditor
+            ref={selectionRef}
+            onChange={handleContentChange}
+            initialContent={""}
+          />
         </div>
         <div>
           <span className="block mb-2 text-sm text-black">Preparation</span>
-          <RichTextEditor ref={preparationRef} />
+          <RichTextEditor ref={preparationRef} disabled />
         </div>
         <div>
           <span className="block mb-2 text-sm text-black">Conservation</span>
-          <RichTextEditor ref={conservationRef} />
+          <RichTextEditor ref={conservationRef} disabled />
         </div>
       </div>
 
