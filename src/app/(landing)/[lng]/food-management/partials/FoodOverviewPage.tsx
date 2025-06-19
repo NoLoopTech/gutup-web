@@ -18,10 +18,9 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
-import sampleImage from "@/../../public/images/sample-image.png"
 import AddFoodPopUp from "./AddFoodPopUp"
 import { getAllFoods } from "@/app/api/foods"
 
@@ -54,6 +53,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
   const [pageSize, setPageSize] = useState<number>(10)
   const [openAddFoodPopUp, setOpenAddFoodPopUp] = useState<boolean>(false)
   const [foods, setFoods] = useState<FoodOverviewDataType[]>([])
+  const [searchText, setSearchText] = useState<string>("")
 
   // handle get users
   const getFoods = async () => {
@@ -81,6 +81,16 @@ export default function FoodOverviewPage({ token }: { token: string }) {
   // handle close add food popup
   const handleCloseAddFoodPopUp = () => {
     setOpenAddFoodPopUp(false)
+  }
+
+  // handle search text change
+  const handleSearchTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchText(e.target.value)
+  }
+
+  // handle category change
+  const handleCategoryChange = (value: string) => {
+    setCategory(value)
   }
 
   const columns: Column<FoodOverviewDataType>[] = [
@@ -170,9 +180,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem>Make a copy</DropdownMenuItem>
-            <DropdownMenuItem>Favorite</DropdownMenuItem>
+            <DropdownMenuItem>View</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -181,25 +189,16 @@ export default function FoodOverviewPage({ token }: { token: string }) {
 
   const pageSizeOptions: number[] = [5, 10, 20]
 
-  const totalItems: number = foods.length
-  const startIndex: number = (page - 1) * pageSize
-  const endIndex: number = startIndex + pageSize
-  const paginatedData: FoodOverviewDataType[] = foods.slice(
-    startIndex,
-    endIndex
-  )
-
   const handlePageChange = (newPage: number) => {
     setPage(newPage)
   }
-
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize)
     setPage(1)
   }
 
   const categories: dataListTypes[] = [
-    { value: "Fruits", label: "Fruits" },
+    { value: "Fruit", label: "Fruit" },
     { value: "Vegetables", label: "Vegetables" },
     { value: "Meat", label: "Meat" },
     { value: "Dairy", label: "Dairy" }
@@ -219,15 +218,42 @@ export default function FoodOverviewPage({ token }: { token: string }) {
     { value: "Winter", label: "Winter" }
   ]
 
+  const [Category, setCategory] = useState<string>("")
+
+  // filter foods (for table)
+  const filteredFoods = useMemo(() => {
+    return foods.filter(food => {
+      const nameMatch = food.name
+        .toLowerCase()
+        .includes(searchText.toLowerCase())
+      const categoryMatch = Category === "" || food.category === Category
+
+      return nameMatch && categoryMatch
+    })
+  }, [foods, searchText, Category])
+
+  const totalItems = filteredFoods.length
+
+  // paginate data (for table)
+  const paginatedData = useMemo(() => {
+    const startIndex = (page - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    return filteredFoods.slice(startIndex, endIndex)
+  }, [filteredFoods, page, pageSize])
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap justify-between gap-2">
         <div className="flex flex-wrap w-[80%] gap-2">
           {/* search foods by name */}
-          <Input className="max-w-xs" placeholder="Search by food name..." />
-
+          <Input
+            className="max-w-xs"
+            placeholder="Search by user name..."
+            value={searchText}
+            onChange={handleSearchTextChange}
+          />
           {/* select category */}
-          <Select>
+          <Select value={Category} onValueChange={handleCategoryChange}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
@@ -273,6 +299,19 @@ export default function FoodOverviewPage({ token }: { token: string }) {
               </SelectGroup>
             </SelectContent>
           </Select>
+
+          {/* clear filters button */}
+          {(Boolean(searchText) || Boolean(Category)) && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearchText("")
+                setCategory("")
+              }}
+            >
+              Clear Filters
+            </Button>
+          )}
         </div>
 
         {/* add new food button */}

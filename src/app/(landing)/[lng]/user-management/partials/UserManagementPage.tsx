@@ -77,6 +77,11 @@ export default function UserManagementPage({
     setUserOverviewPopupOpen(false)
   }
 
+  // handle search text change
+  const handleSearchTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchText(e.target.value)
+  }
+
   // handle get users
   const getUsers = async () => {
     try {
@@ -216,6 +221,20 @@ export default function UserManagementPage({
     setPage(1)
   }
 
+  // unified onValueChange handler for Select
+  const handleSelectChange = (key: string, value: string) => {
+    switch (key) {
+      case "score":
+        setSelectedScore(value)
+        break
+      case "dateFilter":
+        setSelectedDateFilter(value)
+        break
+      default:
+        break
+    }
+  }
+
   // genarate score points
   const scorePoints = Array.from({ length: 100 }, (_, i) => ({
     value: i + 1,
@@ -230,12 +249,12 @@ export default function UserManagementPage({
           className="max-w-xs"
           placeholder="Search by user name..."
           value={searchText}
-          onChange={e => setSearchText(e.target.value)}
+          onChange={handleSearchTextChange}
         />
         {/* select score points */}
         <Select
           value={selectedScore}
-          onValueChange={value => setSelectedScore(value)}
+          onValueChange={value => handleSelectChange("score", value)}
         >
           <SelectTrigger className="w-32">
             <SelectValue placeholder="Score Points" />
@@ -254,7 +273,7 @@ export default function UserManagementPage({
         {/* select dates */}
         <Select
           value={selectedDateFilter}
-          onValueChange={value => setSelectedDateFilter(value)}
+          onValueChange={value => handleSelectChange("dateFilter", value)}
         >
           <SelectTrigger className="w-32">
             <SelectValue placeholder="All" />
