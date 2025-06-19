@@ -321,6 +321,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
           />
+
           <Select value={category} onValueChange={handleCategoryChange}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Category" />
@@ -335,6 +336,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
               </SelectGroup>
             </SelectContent>
           </Select>
+
           <Select value={nutritional} onValueChange={handleNutritionalChange}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Nutritional" />
@@ -349,6 +351,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
               </SelectGroup>
             </SelectContent>
           </Select>
+
           <Select value={selectedMonth} onValueChange={handleMonthChange}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Select Month" />
@@ -363,6 +366,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
               </SelectGroup>
             </SelectContent>
           </Select>
+
           {/* Clear Filters Button */}
           {(Boolean(searchText) ||
             Boolean(category) ||
@@ -373,6 +377,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
             </Button>
           )}
         </div>
+
         {/* Add New Food Button */}
         <Button onClick={handleOpenAddFoodPopUp}>Add New</Button>
       </div>
@@ -394,6 +399,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
 
       {/* Add Food Popup */}
       <AddFoodPopUp open={openAddFoodPopUp} onClose={handleCloseAddFoodPopUp} />
+
       {/* View Food Details Popup */}
       <ViewFoodPopUp
         open={viewFood}
