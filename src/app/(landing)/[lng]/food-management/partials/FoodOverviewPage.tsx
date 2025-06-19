@@ -39,6 +39,15 @@ interface dataListTypes {
   label: string
 }
 
+interface FoodAttributesTypes {
+  fiber: number
+  proteins: number
+  vitamins: string
+  minerals: string
+  fat: number
+  sugar: number
+}
+
 interface FoodOverviewDataType {
   id: number
   name: string
@@ -48,6 +57,7 @@ interface FoodOverviewDataType {
   image: string
   status: string
   createdAt: string
+  attributes: FoodAttributesTypes
 }
 
 type Season = "Spring" | "Summer" | "Autumn" | "Winter"
@@ -142,10 +152,12 @@ export default function FoodOverviewPage({ token }: { token: string }) {
 
   // Static nutritional options for filtering foods
   const nutritionals: dataListTypes[] = [
-    { value: "Low Calories", label: "Low Calories" },
-    { value: "High Calories", label: "High Calories" },
-    { value: "Low Fat", label: "Low Fat" },
-    { value: "High Fat", label: "High Fat" }
+    { value: "fiber", label: "Fiber" },
+    { value: "proteins", label: "Proteins" },
+    { value: "vitamins", label: "Vitamins" },
+    { value: "minerals", label: "Minerals" },
+    { value: "fat", label: "Fat" },
+    { value: "sugar", label: "Sugar" }
   ]
 
   // Static months for filtering foods by month
@@ -171,8 +183,25 @@ export default function FoodOverviewPage({ token }: { token: string }) {
         .toLowerCase()
         .includes(searchText.toLowerCase())
       const categoryMatch = category ? food.category === category : true
-      const nutritionalMatch = nutritional ? food.name === nutritional : true
       const seasonMatch = season ? food.season === season : true
+
+      let nutritionalMatch = true
+      if (nutritional) {
+        // Check the selected nutritional value and apply filter logic
+        if (nutritional === "fiber" && food.attributes.fiber <= 0)
+          nutritionalMatch = false
+        if (nutritional === "proteins" && food.attributes.proteins <= 0)
+          nutritionalMatch = false
+        if (nutritional === "vitamins" && !food.attributes.vitamins)
+          nutritionalMatch = false
+        if (nutritional === "minerals" && !food.attributes.minerals)
+          nutritionalMatch = false
+        if (nutritional === "fat" && food.attributes.fat <= 0)
+          nutritionalMatch = false
+        if (nutritional === "sugar" && food.attributes.sugar <= 0)
+          nutritionalMatch = false
+      }
+
       return nameMatch && categoryMatch && nutritionalMatch && seasonMatch
     })
   }, [foods, searchText, category, nutritional, season])
