@@ -258,7 +258,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
           className={
             row.status === "Active"
               ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700"
-              : row.status === "Pending"
+              : row.status === "Incomplete"
               ? "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
               : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700"
           }
