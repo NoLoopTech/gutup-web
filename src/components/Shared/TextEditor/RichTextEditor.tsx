@@ -14,67 +14,55 @@ export interface RichTextEditorHandle {
   getContent: () => string
 }
 interface RichTextEditorProps {
-  value: string;
-  onChange: (value: string) => void;
-  disabled?: boolean; 
-  initialContent?: string;
+  onChange: (value: string) => void
+  disabled?: boolean
+  initialContent?: string
 }
 
 const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
-  ({ value, onChange, disabled = false, initialContent = '' }, ref) => {
-  const editorRef = useRef<HTMLDivElement>(null);
-  const quillRef = useRef<Quill | null>(null);
+  ({ onChange, disabled = false, initialContent = "" }, ref) => {
+    const editorRef = useRef<HTMLDivElement>(null)
+    const quillRef = useRef<Quill | null>(null)
 
-  useEffect(() => {
-    const container = editorRef.current;
-    if (
-      container &&
-      !quillRef.current &&
-      container.querySelector('.ql-toolbar') === null
-    ) {
-      quillRef.current = new Quill(container, {
-        theme: 'snow',
-        modules: {
-          toolbar: [
-            [{ header: [1, 2, 3, false] }],
-            ['bold', 'italic', 'underline', 'strike'],
-            [{ list: 'ordered' }, { list: 'bullet' }],
-            ['link', 'image'],
-            ['clean'],
-          ],
-        },
-        placeholder: !disabled ? 'Write something...' : '',
-          readOnly: disabled,
-      });
-
-        quillRef.current.on('text-change', () => {
-          if (onChange && quillRef.current) {
-            onChange(quillRef.current.root.innerHTML);
-          }
-        });
-      }
-    }, [onChange, disabled]);
-
-    // Set the initial content if provided
     useEffect(() => {
-      if (quillRef.current && initialContent !== quillRef.current.root.innerHTML) {
-        quillRef.current.root.innerHTML = initialContent;
-      }
-    }, [initialContent]);
+      const container = editorRef.current
+      if (
+        container &&
+        !quillRef.current &&
+        container.querySelector(".ql-toolbar") === null
+      ) {
+        quillRef.current = new Quill(container, {
+          theme: "snow",
+          modules: {
+            toolbar: [
+              [{ header: [1, 2, 3, false] }],
+              ["bold", "italic", "underline", "strike"],
+              [{ list: "ordered" }, { list: "bullet" }],
+              ["link", "image"],
+              ["clean"]
+            ]
+          },
+          placeholder: !disabled ? "Write something..." : "",
+          readOnly: disabled
+        })
 
-        // Add an event listener for content changes in the Quill editor
         quillRef.current.on("text-change", () => {
-          if (quillRef.current) {
-            const content = quillRef.current.root.innerHTML
-            if (onChange) {
-              onChange(content) // Notify the parent with the updated content
-            }
+          if (onChange && quillRef.current) {
+            onChange(quillRef.current.root.innerHTML)
           }
         })
       }
+    }, [onChange, disabled])
 
-      return () => {}
-    }, [onChange, initialContent, disabled]) // Only re-run the effect if onChange, initialContent, or disabled changes
+    // Set the initial content if provided
+    useEffect(() => {
+      if (
+        quillRef.current &&
+        initialContent !== quillRef.current.root.innerHTML
+      ) {
+        quillRef.current.root.innerHTML = initialContent
+      }
+    }, [initialContent])
 
     // Expose the getContent function to the parent component
     useImperativeHandle(ref, () => ({
@@ -86,33 +74,18 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
       }
     }))
 
-    useEffect(() => {
-      // When 'disabled' is set, ensure to hide toolbar and make the editor read-only
-      const container = editorRef.current
-      if (container && quillRef.current) {
-        const toolbar = container.querySelector(".ql-toolbar")
-        if (toolbar) {
-          if (disabled) {
-            toolbar.style.display = "none" // Hide the toolbar
-          } else {
-            toolbar.style.display = "" // Show the toolbar if not disabled
-          }
-        }
-        quillRef.current.enable(!disabled) // Enable or disable the editor based on 'disabled'
-      }
-    }, [disabled]) // Re-run when 'disabled' changes
-
     return (
       <>
         <div
-          className={`${disabled ? "cursor-not-allowed" : ""}`}
           ref={editorRef}
           style={{
             height: "300px",
+            // If you’d like the editor container itself to also have a bottom radius:
             borderBottomLeftRadius: "10px",
             borderBottomRightRadius: "10px"
           }}
         />
+        {/* Global CSS override: add 10px top-left & top-right radius to the toolbar */}
         <style jsx global>{`
           .ql-toolbar {
             border-top-left-radius: 10px;

@@ -161,7 +161,7 @@ export default function AddFoodFrench({
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <TabsContent value="french">
           {/* French Tab Content */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
             <div>
               <FormField
                 control={form.control}
@@ -194,7 +194,7 @@ export default function AddFoodFrench({
                         onValueChange={field.onChange}
                         value={field.value}
                       >
-                        <SelectTrigger className="w-full mt-1">
+                        <SelectTrigger className="mt-1 w-full">
                           <SelectValue placeholder="Sélectionner une catégorie" />
                         </SelectTrigger>
                         <SelectContent>
@@ -225,7 +225,7 @@ export default function AddFoodFrench({
                         onValueChange={field.onChange}
                         value={field.value}
                       >
-                        <SelectTrigger className="w-full mt-1">
+                        <SelectTrigger className="mt-1 w-full">
                           <SelectValue placeholder="Sélectionner une saison" />
                         </SelectTrigger>
                         <SelectContent>
@@ -256,7 +256,7 @@ export default function AddFoodFrench({
                         onValueChange={field.onChange}
                         value={field.value}
                       >
-                        <SelectTrigger className="w-full mt-1">
+                        <SelectTrigger className="mt-1 w-full">
                           <SelectValue placeholder="Sélectionner un pays" />
                         </SelectTrigger>
                         <SelectContent>
@@ -340,7 +340,7 @@ export default function AddFoodFrench({
                     <FormControl>
                       <RichTextEditor
                         ref={selectionRef}
-                        value={field.value}
+                        initialContent={field.value}
                         onChange={handleSelectionChange(field)}
                       />
                     </FormControl>
@@ -361,7 +361,7 @@ export default function AddFoodFrench({
                     <FormControl>
                       <RichTextEditor
                         ref={preparationRef}
-                        value={field.value}
+                        initialContent={field.value}
                         onChange={handlePreparationChange(field)}
                       />
                     </FormControl>
@@ -382,7 +382,7 @@ export default function AddFoodFrench({
                     <FormControl>
                       <RichTextEditor
                         ref={conservationRef}
-                        value={field.value}
+                        initialContent={field.value}
                         onChange={handleConservationChange(field)}
                       />
                     </FormControl>
@@ -393,7 +393,7 @@ export default function AddFoodFrench({
             </div>
           </div>
 
-          <div className="w-full mt-6 sm:w-2/5 pb-12">
+          <div className="pb-12 mt-6 w-full sm:w-2/5">
             <h3 className="mb-4 text-lg font-semibold text-black">
               Télécharger des images
             </h3>
@@ -415,7 +415,7 @@ export default function AddFoodFrench({
           </div>
 
           {/* Save and Cancel buttons */}
-          <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 py-4 px-4 flex justify-between gap-2 z-50">
+          <div className="flex fixed bottom-0 left-0 z-50 gap-2 justify-between px-4 py-4 w-full bg-white border-t border-gray-200">
             <Button
               variant="outline"
               onClick={() => {

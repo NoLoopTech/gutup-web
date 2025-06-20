@@ -28,7 +28,7 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
         <div
-          className="h-full p-2 overflow-y-auto"
+          className="overflow-y-auto p-2 h-full"
           style={{
             scrollbarWidth: "none", // Firefox
             msOverflowStyle: "none" // IE/Edge
@@ -50,7 +50,7 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
             }}
             className="w-full"
           >
-            <div className="flex flex-col items-start justify-between gap-4 mt-4 mb-6 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-4 justify-between items-start mt-4 mb-6 sm:flex-row sm:items-center">
               <TabsList>
                 <TabsTrigger value="english">English</TabsTrigger>
                 {allowMultiLang && (
@@ -58,7 +58,7 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
                 )}
               </TabsList>
 
-              <div className="flex items-center gap-2">
+              <div className="flex gap-2 items-center">
                 <Switch
                   id="multi-lang"
                   checked={allowMultiLang}

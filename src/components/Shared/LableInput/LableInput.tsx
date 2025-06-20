@@ -65,8 +65,8 @@ export default function LableInput({
   }
 
   return (
-    <div className="col-span-1 sm:col-span-2 md:col-span-1 w-full">
-      <Label className="text-black mb-1 block">{title}</Label>
+    <div className="col-span-1 w-full sm:col-span-2 md:col-span-1">
+      <Label className="block mb-1 text-black">{title}</Label>
 
       {!disable && (
         <Input
@@ -85,7 +85,7 @@ export default function LableInput({
         {items.map(item => (
           <div
             key={item}
-            className="flex items-center bg-white text-black shadow-sm border border-gray-300 py-1 px-2 text-sm rounded max-w-full"
+            className="flex items-center px-2 py-1 max-w-full text-sm text-black bg-white rounded border border-gray-300 shadow-sm"
           >
             <span className="mr-1">{item}</span>
             <button
@@ -103,7 +103,7 @@ export default function LableInput({
 
       {/* Display error message if no labels are entered */}
       {errors[name]?.message && (
-        <div className="text-red-500 text-sm mt-2">
+        <div className="text-sm text-red-500">
           {String(errors[name]?.message)}
         </div>
       )}

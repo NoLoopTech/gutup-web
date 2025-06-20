@@ -53,7 +53,7 @@ export default function ViewFoodFrench({
             <SelectTrigger
               id="categorySelect"
               name="categorySelect"
-              className="w-full mt-1"
+              className="mt-1 w-full"
             >
               <SelectValue placeholder="Sélectionner une catégorie" />
             </SelectTrigger>
@@ -72,7 +72,7 @@ export default function ViewFoodFrench({
             <SelectTrigger
               id="seasonSelect"
               name="seasonSelect"
-              className="w-full mt-1"
+              className="mt-1 w-full"
             >
               <SelectValue placeholder="Sélectionner une saison" />
             </SelectTrigger>
@@ -91,7 +91,7 @@ export default function ViewFoodFrench({
             <SelectTrigger
               id="countrySelect"
               name="countrySelect"
-              className="w-full mt-1"
+              className="mt-1 w-full"
             >
               <SelectValue placeholder="Sélectionner un comptoir" />
             </SelectTrigger>
@@ -144,6 +144,7 @@ export default function ViewFoodFrench({
             title="Bienfaits pour la santé"
             placeholder="Add up to 6 food benefits or lower"
             benefits={[]}
+            name={""}
           />
         </div>
       </div>
@@ -156,19 +157,34 @@ export default function ViewFoodFrench({
       <div className="flex flex-col gap-6">
         <div>
           <span className="block mb-2 text-sm text-black">Sélection</span>
-          <RichTextEditor ref={selectionRef} />
+          <RichTextEditor
+            ref={selectionRef}
+            onChange={function (value: string): void {
+              throw new Error("Function not implemented.")
+            }}
+          />
         </div>
         <div>
           <span className="block mb-2 text-sm text-black">Préparation</span>
-          <RichTextEditor ref={preparationRef} />
+          <RichTextEditor
+            ref={preparationRef}
+            onChange={function (value: string): void {
+              throw new Error("Function not implemented.")
+            }}
+          />
         </div>
         <div>
           <span className="block mb-2 text-sm text-black">Conservation</span>
-          <RichTextEditor ref={conservationRef} />
+          <RichTextEditor
+            ref={conservationRef}
+            onChange={function (value: string): void {
+              throw new Error("Function not implemented.")
+            }}
+          />
         </div>
       </div>
 
-      <div className="w-full pb-6 mt-6 sm:w-2/5">
+      <div className="pb-6 mt-6 w-full sm:w-2/5">
         <h3 className="mb-4 text-lg font-semibold text-black">
           Télécharger des images
         </h3>
