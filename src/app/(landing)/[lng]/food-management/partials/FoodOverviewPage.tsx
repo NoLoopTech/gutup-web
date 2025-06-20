@@ -18,11 +18,14 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
-import sampleImage from "@/../../public/images/sample-image.png"
 import AddFoodPopUp from "./AddFoodPopUp"
+import { getAllFoods } from "@/app/api/foods"
+import dayjs from "dayjs"
+import ViewFoodPopUp from "./ViewFoodPopUp"
+import { Label } from "@/components/ui/label"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -32,44 +35,173 @@ interface Column<T> {
   className?: string
 }
 
-interface FoodOverviewDataType {
-  media: string
-  name: string
-  category: string
-  healthBenefits: string[]
-  season: string
-  recipes: string
-  dateAdded: string
-  status: string
-}
-
 interface dataListTypes {
   value: string
   label: string
 }
 
-export default function FoodOverviewPage() {
-  const [page, setPage] = useState<number>(1)
-  const [pageSize, setPageSize] = useState<number>(10)
-  const [openAddFoodPopUp, setOpenAddFoodPopUp] = useState<boolean>(false)
+interface FoodAttributesTypes {
+  fiber: number
+  proteins: number
+  vitamins: string
+  minerals: string
+  fat: number
+  sugar: number
+}
 
-  // handle open add food popup
-  const handleOpenAddFoodPopUp = () => {
-    setOpenAddFoodPopUp(true)
+interface FoodOverviewDataType {
+  id: number
+  name: string
+  category: string
+  healthBenefits: string[]
+  season: string
+  image: string
+  status: string
+  createdAt: string
+  recipesCount: number
+  attributes: FoodAttributesTypes
+}
+
+export default function FoodOverviewPage({ token }: { token: string }) {
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [openAddFoodPopUp, setOpenAddFoodPopUp] = useState(false)
+  const [foods, setFoods] = useState<FoodOverviewDataType[]>([])
+  const [searchText, setSearchText] = useState("")
+  const [category, setCategory] = useState("")
+  const [nutritional, setNutritional] = useState("")
+  const [season, setSeason] = useState("")
+  const [viewFood, setViewFood] = useState(false)
+  const [foodId, setFoodId] = useState(0)
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([])
+
+  // Function to fetch all foods from API
+  const getFoods = async () => {
+    try {
+      const response = await getAllFoods(token)
+      if (response.status === 200) {
+        setFoods(response.data.foods)
+      } else {
+        console.log(response)
+      }
+    } catch (error) {
+      console.error("Failed to fetch foods:", error)
+    }
   }
 
-  // handle close add food popup
-  const handleCloseAddFoodPopUp = () => {
-    setOpenAddFoodPopUp(false)
+  useEffect(() => {
+    getFoods()
+  }, [token])
+
+  // Handler to open the "Add Food" popup
+  const handleOpenAddFoodPopUp = () => setOpenAddFoodPopUp(true)
+  // Handler to close the "Add Food" popup
+  const handleCloseAddFoodPopUp = () => setOpenAddFoodPopUp(false)
+  // Handler to close the "View Food" popup
+  const handleCloseViewFoodPopUp = () => setViewFood(false)
+  // Handler to open the "View Food" popup with the selected food ID
+  const handleViewFoodOverview = (foodId: number) => {
+    setViewFood(true)
+    setFoodId(foodId)
   }
 
+  // Handler to update the selected category filter
+  const handleCategoryChange = (value: string) => setCategory(value)
+  // Handler to update the selected nutritional filter
+  const handleNutritionalChange = (value: string) => setNutritional(value)
+
+  // Handler to clear all search and filter values
+  const handleClearSearchValues = () => {
+    setSearchText("")
+    setCategory("")
+    setNutritional("")
+    setSeason("")
+    setSelectedMonths([])
+  }
+
+  // Static categories for filtering foods
+  const categories: dataListTypes[] = [
+    { value: "Fruit", label: "Fruit" },
+    { value: "Vegetables", label: "Vegetables" },
+    { value: "Meat", label: "Meat" },
+    { value: "Dairy", label: "Dairy" }
+  ]
+
+  // Static nutritional options for filtering foods
+  const nutritionals: dataListTypes[] = [
+    { value: "fiber", label: "Fiber" },
+    { value: "proteins", label: "Proteins" },
+    { value: "vitamins", label: "Vitamins" },
+    { value: "minerals", label: "Minerals" },
+    { value: "fat", label: "Fat" },
+    { value: "sugar", label: "Sugar" }
+  ]
+
+  // Static months for filtering foods by month
+  const months: dataListTypes[] = [
+    { value: "January", label: "January" },
+    { value: "February", label: "February" },
+    { value: "March", label: "March" },
+    { value: "April", label: "April" },
+    { value: "May", label: "May" },
+    { value: "June", label: "June" },
+    { value: "July", label: "July" },
+    { value: "August", label: "August" },
+    { value: "September", label: "September" },
+    { value: "October", label: "October" },
+    { value: "November", label: "November" },
+    { value: "December", label: "December" }
+  ]
+
+  // Filtering logic for foods based on user input
+  const filteredFoods = useMemo(() => {
+    return foods.filter(food => {
+      const nameMatch = food.name
+        .toLowerCase()
+        .includes(searchText.toLowerCase())
+      const categoryMatch = category ? food.category === category : true
+      const seasonMatch = selectedMonths.length
+        ? selectedMonths.some(month => food.season === month)
+        : true
+
+      let nutritionalMatch = true
+      if (nutritional) {
+        // Check the selected nutritional value and apply filter logic
+        if (nutritional === "fiber" && food.attributes.fiber <= 0)
+          nutritionalMatch = false
+        if (nutritional === "proteins" && food.attributes.proteins <= 0)
+          nutritionalMatch = false
+        if (nutritional === "vitamins" && !food.attributes.vitamins)
+          nutritionalMatch = false
+        if (nutritional === "minerals" && !food.attributes.minerals)
+          nutritionalMatch = false
+        if (nutritional === "fat" && food.attributes.fat <= 0)
+          nutritionalMatch = false
+        if (nutritional === "sugar" && food.attributes.sugar <= 0)
+          nutritionalMatch = false
+      }
+
+      return nameMatch && categoryMatch && nutritionalMatch && seasonMatch
+    })
+  }, [foods, searchText, category, nutritional, season, selectedMonths])
+
+  const totalItems = filteredFoods.length
+
+  // Paginating the filtered foods
+  const paginatedData = useMemo(() => {
+    const startIndex = (page - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    return filteredFoods.slice(startIndex, endIndex)
+  }, [filteredFoods, page, pageSize])
+
+  // Columns for the food management table
   const columns: Column<FoodOverviewDataType>[] = [
     {
-      accessor: "media",
+      accessor: "image",
       header: "Media",
-      cell: (row: FoodOverviewDataType) => (
+      cell: row => (
         <Image
-          src={sampleImage}
+          src={row.image}
           alt={row.name}
           width={40}
           height={40}
@@ -85,47 +217,48 @@ export default function FoodOverviewPage() {
       accessor: "category",
       header: "Category",
       className: "w-40",
-      cell: (row: FoodOverviewDataType) => (
-        <Badge variant={"outline"}>{row.category}</Badge>
-      )
+      cell: row => <Badge variant={"outline"}>{row.category}</Badge>
     },
     {
       accessor: "healthBenefits",
       header: "Health Benefits",
-
-      cell: (row: FoodOverviewDataType) => (
+      cell: row => (
         <div className="flex flex-wrap gap-2">
-          {row.healthBenefits.map(benefit => (
-            <Badge variant={"outline"}>{benefit}</Badge>
+          {row.healthBenefits.map((benefit, index) => (
+            <Badge key={index} variant={"outline"}>
+              {benefit}
+            </Badge>
           ))}
         </div>
       )
     },
     {
       accessor: "season",
-      header: "Season",
-      cell: (row: FoodOverviewDataType) => (
-        <Badge variant={"outline"}>{row.season}</Badge>
+      header: "Month",
+      cell: row => <Badge variant={"outline"}>{row.season}</Badge>
+    },
+    {
+      accessor: "recipesCount",
+      header: "Recipes",
+      cell: row => (
+        <Label className="text-gray-500">{row.recipesCount} Available</Label>
       )
     },
     {
-      accessor: "recipes",
-      header: "Recipes"
-    },
-    {
-      accessor: "dateAdded",
-      header: "Date Added"
+      accessor: "createdAt",
+      header: "Date Added",
+      cell: row => dayjs(row.createdAt).format("DD/MM/YYYY")
     },
     {
       accessor: "status",
       header: "Status",
       className: "w-28",
-      cell: (row: FoodOverviewDataType) => (
+      cell: row => (
         <Badge
           className={
             row.status === "Active"
               ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700"
-              : row.status === "Pending"
+              : row.status === "Incomplete"
               ? "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
               : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700"
           }
@@ -137,7 +270,7 @@ export default function FoodOverviewPage() {
     {
       id: "actions",
       className: "w-12",
-      cell: (row: FoodOverviewDataType) => (
+      cell: row => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -150,91 +283,86 @@ export default function FoodOverviewPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem>Make a copy</DropdownMenuItem>
-            <DropdownMenuItem>Favorite</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleViewFoodOverview(row.id)}>
+              View
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
     }
   ]
 
-  const data: FoodOverviewDataType[] = [
-    {
-      media: "/images/carrot.jpg", // public/images/carrot.jpg
-      name: "Carrot",
-      category: "Vegetable",
-      healthBenefits: ["Immune Support", "Skin Health", "Eye Health"],
-      season: "Spring",
-      recipes: "1 Available",
-      dateAdded: "2025-05-16",
-      status: "Active"
-    },
-    {
-      media: "/images/carrot.jpg",
-      name: "Carrot",
-      category: "Vegetable",
-      healthBenefits: ["Immune Support", "Skin Health", "Eye Health"],
-      season: "Spring",
-      recipes: "1 Available",
-      dateAdded: "2025-05-16",
-      status: "Incomplete"
-    }
-  ]
-
-  const pageSizeOptions: number[] = [5, 10, 20]
-
-  const totalItems: number = data.length
-  const startIndex: number = (page - 1) * pageSize
-  const endIndex: number = startIndex + pageSize
-  const paginatedData: FoodOverviewDataType[] = data.slice(startIndex, endIndex)
-
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage)
-  }
-
-  const handlePageSizeChange = (newSize: number) => {
-    setPageSize(newSize)
-    setPage(1)
-  }
-
-  const categories: dataListTypes[] = [
-    { value: "Fruits", label: "Fruits" },
-    { value: "Vegetables", label: "Vegetables" },
-    { value: "Meat", label: "Meat" },
-    { value: "Dairy", label: "Dairy" }
-  ]
-
-  const nutritional: dataListTypes[] = [
-    { value: "Low Calories", label: "Low Calories" },
-    { value: "High Calories", label: "High Calories" },
-    { value: "Low Fat", label: "Low Fat" },
-    { value: "High Fat", label: "High Fat" }
-  ]
-
-  const seasons: dataListTypes[] = [
-    { value: "Spring", label: "Spring" },
-    { value: "Summer", label: "Summer" },
-    { value: "Autumn", label: "Autumn" },
-    { value: "Winter", label: "Winter" }
-  ]
-
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap justify-between gap-2">
+      {/* Filters and Search */}
+      <div className="flex flex-wrap gap-2 justify-between">
         <div className="flex flex-wrap w-[80%] gap-2">
-          {/* search foods by name */}
-          <Input className="max-w-xs" placeholder="Search by food name..." />
+          <Input
+            className="max-w-xs"
+            placeholder="Search by food name..."
+            value={searchText}
+            onChange={e => setSearchText(e.target.value)}
+          />
 
-          {/* select category */}
-          <Select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className={`overflow-x-auto overflow-y-hidden justify-between w-40  ${
+                  selectedMonths.length === 0
+                    ? "text-gray-500 font-normal hover:text-gray-500"
+                    : ""
+                }`}
+                style={{ scrollbarWidth: "none" }}
+              >
+                {selectedMonths.length > 0
+                  ? selectedMonths.join(", ")
+                  : "Select Months"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="overflow-auto w-40 max-h-64"
+              style={{ scrollbarWidth: "none" }}
+            >
+              <DropdownMenuItem
+                disabled
+                className="text-xs text-muted-foreground"
+              >
+                Filter by Months
+              </DropdownMenuItem>
+              {months.map(month => (
+                <DropdownMenuItem
+                  key={month.value}
+                  onClick={() => {
+                    if (selectedMonths.includes(month.value)) {
+                      setSelectedMonths(
+                        selectedMonths.filter(m => m !== month.value)
+                      )
+                    } else {
+                      setSelectedMonths([...selectedMonths, month.value])
+                    }
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedMonths.includes(month.value)}
+                    readOnly
+                    className="mr-2"
+                  />
+                  {month.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Select value={category} onValueChange={handleCategoryChange}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent className="max-h-40">
               <SelectGroup>
                 {categories.map(item => (
-                  <SelectItem value={item.value.toString()}>
+                  <SelectItem key={item.value} value={item.value}>
                     {item.label}
                   </SelectItem>
                 ))}
@@ -242,15 +370,14 @@ export default function FoodOverviewPage() {
             </SelectContent>
           </Select>
 
-          {/* select Nutritional */}
-          <Select>
+          <Select value={nutritional} onValueChange={handleNutritionalChange}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Nutritional" />
             </SelectTrigger>
             <SelectContent className="max-h-40">
               <SelectGroup>
-                {nutritional.map(item => (
-                  <SelectItem value={item.value.toString()}>
+                {nutritionals.map(item => (
+                  <SelectItem key={item.value} value={item.value}>
                     {item.label}
                   </SelectItem>
                 ))}
@@ -258,41 +385,48 @@ export default function FoodOverviewPage() {
             </SelectContent>
           </Select>
 
-          {/* select Season */}
-          <Select>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Season" />
-            </SelectTrigger>
-            <SelectContent className="max-h-40">
-              <SelectGroup>
-                {seasons.map(item => (
-                  <SelectItem value={item.value.toString()}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          {/* Clear Filters Button */}
+          {(Boolean(searchText) ||
+            Boolean(category) ||
+            Boolean(nutritional) ||
+            Boolean(season) ||
+            selectedMonths.length > 0) && (
+            <Button variant="outline" onClick={handleClearSearchValues}>
+              Clear Filters
+            </Button>
+          )}
         </div>
 
-        {/* add new food button */}
+        {/* Add New Food Button */}
         <Button onClick={handleOpenAddFoodPopUp}>Add New</Button>
       </div>
 
-      {/* foods management table */}
+      {/* Food Table */}
       <CustomTable
         columns={columns}
         data={paginatedData}
         page={page}
         pageSize={pageSize}
         totalItems={totalItems}
-        pageSizeOptions={pageSizeOptions}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
+        pageSizeOptions={[5, 10, 20]}
+        onPageChange={setPage}
+        onPageSizeChange={size => {
+          setPageSize(size)
+          setPage(1)
+        }}
       />
 
-      {/* add food popup */}
+      {/* Add Food Popup */}
       <AddFoodPopUp open={openAddFoodPopUp} onClose={handleCloseAddFoodPopUp} />
+
+      {/* View Food Details Popup */}
+      <ViewFoodPopUp
+        open={viewFood}
+        onClose={handleCloseViewFoodPopUp}
+        token={token}
+        foodId={foodId}
+        getFoods={getFoods}
+      />
     </div>
   )
 }
