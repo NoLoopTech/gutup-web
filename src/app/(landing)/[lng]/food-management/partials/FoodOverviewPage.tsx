@@ -310,7 +310,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
                 variant="outline"
                 className={`overflow-x-auto overflow-y-hidden justify-between w-40  ${
                   selectedMonths.length === 0
-                    ? "text-gray-400 hover:text-gray-400"
+                    ? "text-gray-500 font-normal hover:text-gray-500"
                     : ""
                 }`}
                 style={{ scrollbarWidth: "none" }}
