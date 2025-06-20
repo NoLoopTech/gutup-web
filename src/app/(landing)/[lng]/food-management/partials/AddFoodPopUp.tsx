@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useRef } from "react"
-import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -9,15 +9,10 @@ import AddFoodEnglish from "./AddFoodEnglish"
 
 import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
 import AddFoodFranch from "./AddFoodFranch"
-import { Button } from "@/components/ui/button"
 
 interface Props {
   open: boolean
   onClose: () => void
-}
-interface Option {
-  value: string
-  label: string
 }
 
 export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
@@ -28,26 +23,6 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
   const selectionRef = useRef<RichTextEditorHandle>(null)
   const preparationRef = useRef<RichTextEditorHandle>(null)
   const conservationRef = useRef<RichTextEditorHandle>(null)
-
-  // Shared data arrays
-  const categories: Option[] = [
-    { value: "fruits", label: "Fruits" },
-    { value: "vegetables", label: "Vegetables" },
-    { value: "dairy", label: "Dairy" },
-    { value: "grains", label: "Grains" }
-  ]
-  const seasons: Option[] = [
-    { value: "spring", label: "Spring" },
-    { value: "summer", label: "Summer" },
-    { value: "autumn", label: "Autumn" },
-    { value: "winter", label: "Winter" }
-  ]
-  const countries: Option[] = [
-    { value: "switzerland", label: "Switzerland" },
-    { value: "france", label: "France" },
-    { value: "germany", label: "Germany" },
-    { value: "italy", label: "Italy" }
-  ]
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -100,9 +75,6 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
 
             {/* Render each tab’s content component */}
             <AddFoodEnglish
-              categories={categories}
-              seasons={seasons}
-              countries={countries}
               selectionRef={selectionRef}
               preparationRef={preparationRef}
               conservationRef={conservationRef}
@@ -110,9 +82,6 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
 
             {allowMultiLang && (
               <AddFoodFranch
-                categories={categories}
-                seasons={seasons}
-                countries={countries}
                 selectionRef={selectionRef}
                 preparationRef={preparationRef}
                 conservationRef={conservationRef}
@@ -120,16 +89,6 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
             )}
           </Tabs>
         </div>
-        <DialogFooter>
-          <div className="flex justify-between w-full gap-2">
-            <Button
-              variant="outline"
-            >
-              Cancel
-            </Button>
-            <Button>Save</Button>
-          </div>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

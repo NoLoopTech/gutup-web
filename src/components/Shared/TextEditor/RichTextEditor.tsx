@@ -8,8 +8,15 @@ import 'quill/dist/quill.snow.css'; // Import Quill styles
 export interface RichTextEditorHandle {
   getContent: () => string;
 }
+interface RichTextEditorProps {
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean; 
+  initialContent?: string;
+}
 
-const RichTextEditor = forwardRef<RichTextEditorHandle>((_, ref) => {
+const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
+  ({ value, onChange, disabled = false, initialContent = '' }, ref) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const quillRef = useRef<Quill | null>(null);
 
@@ -31,13 +38,24 @@ const RichTextEditor = forwardRef<RichTextEditorHandle>((_, ref) => {
             ['clean'],
           ],
         },
-        placeholder: 'Write something...',
+        placeholder: !disabled ? 'Write something...' : '',
+          readOnly: disabled,
       });
-    }
 
-    return () => {
-    };
-  }, []);
+        quillRef.current.on('text-change', () => {
+          if (onChange && quillRef.current) {
+            onChange(quillRef.current.root.innerHTML);
+          }
+        });
+      }
+    }, [onChange, disabled]);
+
+    // Set the initial content if provided
+    useEffect(() => {
+      if (quillRef.current && initialContent !== quillRef.current.root.innerHTML) {
+        quillRef.current.root.innerHTML = initialContent;
+      }
+    }, [initialContent]);
 
   // Expose the getContent function to the parent component
   useImperativeHandle(ref, () => ({
