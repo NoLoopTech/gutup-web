@@ -116,11 +116,33 @@ const AddStoreSchema = z.object({
 const onSubmit = (data: z.infer<typeof AddStoreSchema>): void => {
   toast("Form submitted successfully!", {})
 }
-
+const handleCancel = (
+  form: ReturnType<typeof useForm<z.infer<typeof AddStoreSchema>>>
+): void => {
+  form.reset()
+}
+// Define function for handling image upload changes
+const handleImageUpload = (field: any) => (file: File | null) => {
+  field.onChange(file)
+}
+// Define function for handling RichTextEditor changes
+const handleRichTextEditorChange = (field: any) => (val: string) => {
+  field.onChange(val)
+}
 export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
   const aboutRef = useRef<any>(null)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
+
+  // Define functions to handle page changes
+  const handlePageChange = (newPage: number): void => {
+    setPage(newPage)
+  }
+
+  const handlePageSizeChange = (newSize: number): void => {
+    setPageSize(newSize)
+    setPage(1)
+  }
 
   const form = useForm<z.infer<typeof AddStoreSchema>>({
     resolver: zodResolver(AddStoreSchema),
@@ -184,12 +206,6 @@ export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
-        <style>{`
-                    /* Hide scrollbar in Webkit browsers */
-                    div::-webkit-scrollbar {
-                        display: none;
-                    }
-                `}</style>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <div
@@ -545,13 +561,8 @@ export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
                         pageSize={pageSize}
                         totalItems={availData.length}
                         pageSizeOptions={[1, 5, 10]}
-                        onPageChange={newPage => {
-                          setPage(newPage)
-                        }}
-                        onPageSizeChange={newSize => {
-                          setPageSize(newSize)
-                          setPage(1)
-                        }}
+                        onPageChange={handlePageChange}
+                        onPageSizeChange={handlePageSizeChange}
                       />
                       {availData.length === 0 && (
                         <FormMessage className="text-red-500">
@@ -581,9 +592,7 @@ export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
                           <RichTextEditor
                             ref={aboutRef}
                             value={field.value}
-                            onChange={val => {
-                              field.onChange(val)
-                            }}
+                            onChange={handleRichTextEditorChange(field)}
                           />
                         </FormControl>
                         <FormMessage />
@@ -606,10 +615,7 @@ export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
                       <FormControl>
                         <ImageUploader
                           title="Select Images for your store"
-                          onChange={file => {
-                            field.onChange(file)
-                            form.clearErrors("storeImage")
-                          }}
+                          onChange={handleImageUpload(field)}
                         />
                       </FormControl>
                       <FormMessage />
@@ -624,7 +630,7 @@ export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    form.reset()
+                    handleCancel(form)
                   }}
                 >
                   Cancel

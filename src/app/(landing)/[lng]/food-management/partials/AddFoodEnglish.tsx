@@ -114,6 +114,27 @@ const FoodSchema = z.object({
 const onSubmit = (data: z.infer<typeof FoodSchema>): void => {
   toast("Form submitted successfully!", {})
 }
+const handleCancel = (
+  form: ReturnType<typeof useForm<z.infer<typeof FoodSchema>>>
+): void => {
+  form.reset()
+}
+
+const handleSelectionChange = (field: any) => (val: string) => {
+  field.onChange(val)
+}
+
+const handlePreparationChange = (field: any) => (val: string) => {
+  field.onChange(val)
+}
+
+const handleConservationChange = (field: any) => (val: string) => {
+  field.onChange(val)
+}
+// Separate function for handling image upload
+const handleImageUpload = (field: any) => (file: File | null) => {
+  field.onChange(file)
+}
 
 export default function AddFoodEnglish({
   selectionRef,
@@ -319,9 +340,7 @@ export default function AddFoodEnglish({
                       <RichTextEditor
                         ref={selectionRef}
                         value={field.value}
-                        onChange={val => {
-                          field.onChange(val)
-                        }}
+                        onChange={handleSelectionChange(field)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -342,9 +361,7 @@ export default function AddFoodEnglish({
                       <RichTextEditor
                         ref={preparationRef}
                         value={field.value}
-                        onChange={val => {
-                          field.onChange(val)
-                        }}
+                        onChange={handlePreparationChange(field)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -365,9 +382,7 @@ export default function AddFoodEnglish({
                       <RichTextEditor
                         ref={conservationRef}
                         value={field.value}
-                        onChange={val => {
-                          field.onChange(val)
-                        }}
+                        onChange={handleConservationChange(field)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -389,10 +404,7 @@ export default function AddFoodEnglish({
                   <FormControl>
                     <ImageUploader
                       title="Select Images for your food item"
-                      onChange={file => {
-                        field.onChange(file)
-                        form.clearErrors("image")
-                      }}
+                      onChange={handleImageUpload(field)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -406,7 +418,7 @@ export default function AddFoodEnglish({
             <Button
               variant="outline"
               onClick={() => {
-                form.reset()
+                handleCancel(form)
               }}
             >
               Cancel

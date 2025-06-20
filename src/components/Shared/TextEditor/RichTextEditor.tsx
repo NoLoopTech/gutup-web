@@ -11,9 +11,12 @@ export interface RichTextEditorHandle {
 interface RichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean; 
+  initialContent?: string;
 }
 
-const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(({ value, onChange }, ref) => {
+const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
+  ({ value, onChange, disabled = false, initialContent = '' }, ref) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const quillRef = useRef<Quill | null>(null);
 
@@ -35,7 +38,8 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(({ 
             ['clean'],
           ],
         },
-        placeholder: 'Write something...',
+        placeholder: !disabled ? 'Write something...' : '',
+          readOnly: disabled,
       });
 
         quillRef.current.on('text-change', () => {
@@ -44,13 +48,14 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(({ 
           }
         });
       }
-    }, [onChange]);
+    }, [onChange, disabled]);
 
+    // Set the initial content if provided
     useEffect(() => {
-      if (quillRef.current && value !== quillRef.current.root.innerHTML) {
-        quillRef.current.root.innerHTML = value;
+      if (quillRef.current && initialContent !== quillRef.current.root.innerHTML) {
+        quillRef.current.root.innerHTML = initialContent;
       }
-    }, [value]);
+    }, [initialContent]);
 
   // Expose the getContent function to the parent component
   useImperativeHandle(ref, () => ({
