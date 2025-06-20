@@ -9,12 +9,25 @@ import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import dynamic from "next/dynamic"
 import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
 import LableInput from "@/components/Shared/LableInput/LableInput"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Form, FormField, FormItem, FormLabel, FormMessage, FormControl } from "@/components/ui/form"
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormControl
+} from "@/components/ui/form"
 import { toast } from "sonner"
 
 const RichTextEditor = dynamic(
@@ -50,46 +63,52 @@ const countries: Option[] = [
 ]
 
 const FoodSchema = z.object({
-  name: z.string()
+  name: z
+    .string()
     .nonempty("Required")
     .min(2, { message: "Must be at least 2 characters" }),
   category: z.string().nonempty("Please select a category"),
   season: z.string().nonempty("Please select a season"),
   country: z.string().nonempty("Please select a country"),
-  fiber: z.string().optional(),
-  proteins: z.string().optional(),
-  vitamins: z.string().optional(),
-  minerals: z.string().optional(),
-  fat: z.string().optional(),
-  sugar: z.string().optional(),
-  image: z.custom<File | null>((val) => val instanceof File, {
+  benefits: z
+    .array(z.string())
+    .refine(arr => arr.some(item => item.trim().length > 0), {
+      message: "Please enter at least one Benefit"
+    }),
+  image: z.custom<File | null>(val => val instanceof File, {
     message: "Required"
   }),
-  selection: z.string()
-    .refine((val) => {
-      const plainText = val.replace(/<(.|\n)*?>/g, '').trim(); // remove all tags
-      const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val); // check for <img> tags
-      return plainText !== '' || hasImage;
-    }, {
-      message: "Required",
-    }),
+  selection: z.string().refine(
+    val => {
+      const plainText = val.replace(/<(.|\n)*?>/g, "").trim() // remove all tags
+      const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val) // check for <img> tags
+      return plainText !== "" || hasImage
+    },
+    {
+      message: "Required"
+    }
+  ),
 
-  preparation: z.string()
-    .refine((val) => {
-      const plainText = val.replace(/<(.|\n)*?>/g, '').trim();
-      const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val);
-      return plainText !== '' || hasImage;
-    }, {
-      message: "Required",
-    }),
-  conservation: z.string()
-    .refine((val) => {
-      const plainText = val.replace(/<(.|\n)*?>/g, '').trim();
-      const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val);
-      return plainText !== '' || hasImage;
-    }, {
-      message: "Required",
-    }),
+  preparation: z.string().refine(
+    val => {
+      const plainText = val.replace(/<(.|\n)*?>/g, "").trim()
+      const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val)
+      return plainText !== "" || hasImage
+    },
+    {
+      message: "Required"
+    }
+  ),
+  conservation: z.string().refine(
+    val => {
+      const plainText = val.replace(/<(.|\n)*?>/g, "").trim()
+      const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val)
+      return plainText !== "" || hasImage
+    },
+    {
+      message: "Required"
+    }
+  )
 })
 
 const onSubmit = (data: z.infer<typeof FoodSchema>): void => {
@@ -99,8 +118,7 @@ const onSubmit = (data: z.infer<typeof FoodSchema>): void => {
 export default function AddFoodEnglish({
   selectionRef,
   preparationRef,
-  conservationRef,
-
+  conservationRef
 }: AddFoodEnglishProps): JSX.Element {
   const form = useForm<z.infer<typeof FoodSchema>>({
     resolver: zodResolver(FoodSchema),
@@ -109,12 +127,7 @@ export default function AddFoodEnglish({
       category: "",
       season: "",
       country: "",
-      fiber: "",
-      proteins: "",
-      vitamins: "",
-      minerals: "",
-      fat: "",
-      sugar: "",
+      benefits: [],
       image: null,
       selection: "",
       preparation: "",
@@ -134,7 +147,9 @@ export default function AddFoodEnglish({
                 name="name"
                 render={({ field }) => (
                   <FormItem className="flex-1">
-                    <FormLabel className="block mb-1 text-black">Name</FormLabel>
+                    <FormLabel className="block mb-1 text-black">
+                      Name
+                    </FormLabel>
                     <FormControl>
                       <Input placeholder="Enter food name" {...field} />
                     </FormControl>
@@ -149,9 +164,14 @@ export default function AddFoodEnglish({
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="block mb-1 text-black">Category</FormLabel>
+                    <FormLabel className="block mb-1 text-black">
+                      Category
+                    </FormLabel>
                     <FormControl>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue placeholder="Select Category" />
                         </SelectTrigger>
@@ -175,9 +195,14 @@ export default function AddFoodEnglish({
                 name="season"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="block mb-1 text-black">Season</FormLabel>
+                    <FormLabel className="block mb-1 text-black">
+                      Season
+                    </FormLabel>
                     <FormControl>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue placeholder="Select Season" />
                         </SelectTrigger>
@@ -201,9 +226,14 @@ export default function AddFoodEnglish({
                 name="country"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="block mb-1 text-black">Country</FormLabel>
+                    <FormLabel className="block mb-1 text-black">
+                      Country
+                    </FormLabel>
                     <FormControl>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue placeholder="Select Country" />
                         </SelectTrigger>
@@ -225,7 +255,9 @@ export default function AddFoodEnglish({
 
           <Separator className="my-2" />
 
-          <h3 className="mb-4 text-lg font-semibold text-black">Food Attributes</h3>
+          <h3 className="mb-4 text-lg font-semibold text-black">
+            Food Attributes
+          </h3>
           <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
             <div>
               <Label className="block mb-1 text-black">Fiber</Label>
@@ -251,16 +283,21 @@ export default function AddFoodEnglish({
               <Label className="block mb-1 text-black">Sugar</Label>
               <Input placeholder="Provide details if applicable" />
             </div>
-            <div
-              className="col-span-1 sm:col-span-2 md:col-span-1"
-              style={{ width: "100%" }}
-            >
-              <LableInput
-                title="Health Benefits"
-                placeholder="Add up to 6 food benefits or fewer"
-                benefits={[]}
-              />
-            </div>
+          </div>
+          <div className="w-[100%] ">
+            <FormField
+              control={form.control}
+              name="benefits"
+              render={({ field }) => (
+                <LableInput
+                  title="Health Benefits"
+                  placeholder="Add up to 6 food benefits or fewer"
+                  benefits={field.value || []}
+                  name="benefits"
+                  width="w-[32%]"
+                />
+              )}
+            />
           </div>
 
           <Separator className="my-2" />
@@ -275,12 +312,14 @@ export default function AddFoodEnglish({
                 name="selection"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="block mb-2 text-black">Selection</FormLabel>
+                    <FormLabel className="block mb-2 text-black">
+                      Selection
+                    </FormLabel>
                     <FormControl>
                       <RichTextEditor
                         ref={selectionRef}
                         value={field.value}
-                        onChange={(val) => {
+                        onChange={val => {
                           field.onChange(val)
                         }}
                       />
@@ -296,12 +335,14 @@ export default function AddFoodEnglish({
                 name="preparation"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="block mb-2 text-black">Preparation</FormLabel>
+                    <FormLabel className="block mb-2 text-black">
+                      Preparation
+                    </FormLabel>
                     <FormControl>
                       <RichTextEditor
                         ref={preparationRef}
                         value={field.value}
-                        onChange={(val) => {
+                        onChange={val => {
                           field.onChange(val)
                         }}
                       />
@@ -317,12 +358,14 @@ export default function AddFoodEnglish({
                 name="conservation"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="block mb-2 text-black">Conservation</FormLabel>
+                    <FormLabel className="block mb-2 text-black">
+                      Conservation
+                    </FormLabel>
                     <FormControl>
                       <RichTextEditor
                         ref={conservationRef}
                         value={field.value}
-                        onChange={(val) => {
+                        onChange={val => {
                           field.onChange(val)
                         }}
                       />
@@ -335,7 +378,9 @@ export default function AddFoodEnglish({
           </div>
 
           <div className="w-full mt-6 sm:w-2/5 pb-12">
-            <h3 className="mb-4 text-lg font-semibold text-black">Upload Images</h3>
+            <h3 className="mb-4 text-lg font-semibold text-black">
+              Upload Images
+            </h3>
             <FormField
               control={form.control}
               name="image"
@@ -344,7 +389,7 @@ export default function AddFoodEnglish({
                   <FormControl>
                     <ImageUploader
                       title="Select Images for your food item"
-                      onChange={(file) => {
+                      onChange={file => {
                         field.onChange(file)
                         form.clearErrors("image")
                       }}
@@ -358,7 +403,12 @@ export default function AddFoodEnglish({
 
           {/* Save and Cancel buttons */}
           <div className="fixed bottom-0 left-0 w-full bg-white border-t py-4 px-4 flex justify-between gap-2 z-50">
-            <Button variant="outline" onClick={() => { form.reset(); }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                form.reset()
+              }}
+            >
               Cancel
             </Button>
             <Button type="submit">Save</Button>
