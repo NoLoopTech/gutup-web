@@ -13,49 +13,54 @@ import "quill/dist/quill.snow.css" // Import Quill styles
 export interface RichTextEditorHandle {
   getContent: () => string
 }
-
 interface RichTextEditorProps {
-  onChange?: (content: string) => void // onChange prop to notify parent of content changes
-  initialContent?: string // Prop to pass initial content to the editor
-  disabled?: boolean // Prop to disable the editor
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean; 
+  initialContent?: string;
 }
 
 const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
-  (props, ref) => {
-    const { onChange, initialContent, disabled } = props // Get props
-    const editorRef = useRef<HTMLDivElement>(null)
-    const quillRef = useRef<Quill | null>(null)
+  ({ value, onChange, disabled = false, initialContent = '' }, ref) => {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const quillRef = useRef<Quill | null>(null);
 
-    useEffect(() => {
-      const container = editorRef.current
-      if (container && !quillRef.current) {
-        quillRef.current = new Quill(container, {
-          theme: "snow",
-          modules: {
-            toolbar: [
-              [{ header: [1, 2, 3, false] }],
-              ["bold", "italic", "underline", "strike"],
-              [{ list: "ordered" }, { list: "bullet" }],
-              ["link", "image"],
-              ["clean"]
-            ]
-          },
-          placeholder: "Write something..."
-        })
+  useEffect(() => {
+    const container = editorRef.current;
+    if (
+      container &&
+      !quillRef.current &&
+      container.querySelector('.ql-toolbar') === null
+    ) {
+      quillRef.current = new Quill(container, {
+        theme: 'snow',
+        modules: {
+          toolbar: [
+            [{ header: [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['link', 'image'],
+            ['clean'],
+          ],
+        },
+        placeholder: !disabled ? 'Write something...' : '',
+          readOnly: disabled,
+      });
 
-        // Set the initial content if provided
-        if (initialContent && quillRef.current) {
-          quillRef.current.root.innerHTML = initialContent
-        }
-
-        // Hide the toolbar and disable the editor if 'disabled' prop is true
-        if (disabled && quillRef.current) {
-          quillRef.current.enable(false) // Disable the editor
-          const toolbar = container.querySelector(".ql-toolbar")
-          if (toolbar) {
-            toolbar.style.display = "none" // Hide the toolbar
+        quillRef.current.on('text-change', () => {
+          if (onChange && quillRef.current) {
+            onChange(quillRef.current.root.innerHTML);
           }
-        }
+        });
+      }
+    }, [onChange, disabled]);
+
+    // Set the initial content if provided
+    useEffect(() => {
+      if (quillRef.current && initialContent !== quillRef.current.root.innerHTML) {
+        quillRef.current.root.innerHTML = initialContent;
+      }
+    }, [initialContent]);
 
         // Add an event listener for content changes in the Quill editor
         quillRef.current.on("text-change", () => {
