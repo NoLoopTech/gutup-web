@@ -25,6 +25,7 @@ import AddFoodPopUp from "./AddFoodPopUp"
 import { getAllFoods } from "@/app/api/foods"
 import dayjs from "dayjs"
 import ViewFoodPopUp from "./ViewFoodPopUp"
+import { Label } from "@/components/ui/label"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -57,27 +58,8 @@ interface FoodOverviewDataType {
   image: string
   status: string
   createdAt: string
+  recipesCount: number
   attributes: FoodAttributesTypes
-}
-
-type Season = "Spring" | "Summer" | "Autumn" | "Winter"
-
-// Helper Function for Season Mapping based on month
-const getSeasonByMonth = (month: string): Season => {
-  const seasonsMonths: { [key in Season]: string[] } = {
-    Spring: ["March", "April", "May"],
-    Summer: ["June", "July", "August"],
-    Autumn: ["September", "October", "November"],
-    Winter: ["December", "January", "February"]
-  }
-
-  // Loop through each season and check if the month belongs to that season
-  for (const season in seasonsMonths) {
-    if (seasonsMonths[season as Season].includes(month)) {
-      return season as Season // Return the corresponding season
-    }
-  }
-  return "Spring"
 }
 
 export default function FoodOverviewPage({ token }: { token: string }) {
@@ -89,9 +71,9 @@ export default function FoodOverviewPage({ token }: { token: string }) {
   const [category, setCategory] = useState("")
   const [nutritional, setNutritional] = useState("")
   const [season, setSeason] = useState("")
-  const [selectedMonth, setSelectedMonth] = useState("")
   const [viewFood, setViewFood] = useState(false)
   const [foodId, setFoodId] = useState(0)
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([])
 
   // Function to fetch all foods from API
   const getFoods = async () => {
@@ -127,11 +109,6 @@ export default function FoodOverviewPage({ token }: { token: string }) {
   const handleCategoryChange = (value: string) => setCategory(value)
   // Handler to update the selected nutritional filter
   const handleNutritionalChange = (value: string) => setNutritional(value)
-  // Handler to update the selected month and derive the season
-  const handleMonthChange = (value: string) => {
-    setSelectedMonth(value)
-    setSeason(getSeasonByMonth(value))
-  }
 
   // Handler to clear all search and filter values
   const handleClearSearchValues = () => {
@@ -139,7 +116,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
     setCategory("")
     setNutritional("")
     setSeason("")
-    setSelectedMonth("")
+    setSelectedMonths([])
   }
 
   // Static categories for filtering foods
@@ -183,7 +160,9 @@ export default function FoodOverviewPage({ token }: { token: string }) {
         .toLowerCase()
         .includes(searchText.toLowerCase())
       const categoryMatch = category ? food.category === category : true
-      const seasonMatch = season ? food.season === season : true
+      const seasonMatch = selectedMonths.length
+        ? selectedMonths.some(month => food.season === month)
+        : true
 
       let nutritionalMatch = true
       if (nutritional) {
@@ -204,7 +183,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
 
       return nameMatch && categoryMatch && nutritionalMatch && seasonMatch
     })
-  }, [foods, searchText, category, nutritional, season])
+  }, [foods, searchText, category, nutritional, season, selectedMonths])
 
   const totalItems = filteredFoods.length
 
@@ -255,12 +234,15 @@ export default function FoodOverviewPage({ token }: { token: string }) {
     },
     {
       accessor: "season",
-      header: "Season",
+      header: "Month",
       cell: row => <Badge variant={"outline"}>{row.season}</Badge>
     },
     {
-      accessor: "category",
-      header: "Recipes"
+      accessor: "recipesCount",
+      header: "Recipes",
+      cell: row => (
+        <Label className="text-gray-500">{row.recipesCount} Available</Label>
+      )
     },
     {
       accessor: "createdAt",
@@ -313,7 +295,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
   return (
     <div className="space-y-4">
       {/* Filters and Search */}
-      <div className="flex flex-wrap justify-between gap-2">
+      <div className="flex flex-wrap gap-2 justify-between">
         <div className="flex flex-wrap w-[80%] gap-2">
           <Input
             className="max-w-xs"
@@ -321,6 +303,57 @@ export default function FoodOverviewPage({ token }: { token: string }) {
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
           />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className={`overflow-x-auto overflow-y-hidden justify-between w-40  ${
+                  selectedMonths.length === 0
+                    ? "text-gray-400 hover:text-gray-400"
+                    : ""
+                }`}
+                style={{ scrollbarWidth: "none" }}
+              >
+                {selectedMonths.length > 0
+                  ? selectedMonths.join(", ")
+                  : "Select Months"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="overflow-auto w-40 max-h-64"
+              style={{ scrollbarWidth: "none" }}
+            >
+              <DropdownMenuItem
+                disabled
+                className="text-xs text-muted-foreground"
+              >
+                Filter by Months
+              </DropdownMenuItem>
+              {months.map(month => (
+                <DropdownMenuItem
+                  key={month.value}
+                  onClick={() => {
+                    if (selectedMonths.includes(month.value)) {
+                      setSelectedMonths(
+                        selectedMonths.filter(m => m !== month.value)
+                      )
+                    } else {
+                      setSelectedMonths([...selectedMonths, month.value])
+                    }
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedMonths.includes(month.value)}
+                    readOnly
+                    className="mr-2"
+                  />
+                  {month.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <Select value={category} onValueChange={handleCategoryChange}>
             <SelectTrigger className="w-32">
@@ -352,26 +385,12 @@ export default function FoodOverviewPage({ token }: { token: string }) {
             </SelectContent>
           </Select>
 
-          <Select value={selectedMonth} onValueChange={handleMonthChange}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Select Month" />
-            </SelectTrigger>
-            <SelectContent className="max-h-40">
-              <SelectGroup>
-                {months.map(item => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
           {/* Clear Filters Button */}
           {(Boolean(searchText) ||
             Boolean(category) ||
             Boolean(nutritional) ||
-            Boolean(season)) && (
+            Boolean(season) ||
+            selectedMonths.length > 0) && (
             <Button variant="outline" onClick={handleClearSearchValues}>
               Clear Filters
             </Button>
