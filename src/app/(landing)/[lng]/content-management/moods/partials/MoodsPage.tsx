@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
 import { useState } from "react"
-import AddMoodPopUp from "./AddMoodPopUp"
+import AddMoodMainPopUp from "./AddMoodMainPopUp"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -162,7 +162,7 @@ export default function MoodsPage() {
         onPageSizeChange={handlePageSizeChange}
       />
 
-      <AddMoodPopUp open={isOpenAddMood} onClose={handleCloseAddMood} />
+      <AddMoodMainPopUp open={isOpenAddMood} onClose={handleCloseAddMood} />
     </div>
   )
 }

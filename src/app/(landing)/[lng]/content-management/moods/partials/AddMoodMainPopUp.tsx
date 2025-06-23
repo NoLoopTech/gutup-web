@@ -5,15 +5,18 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import AddRecipeEnglish from "./AddRecipeEnglish"
-import AddRecipeFrench from "./AddRecipeFrench"
+import AddMoodPopUp from "./AddMoodPopUp"
+import AddMoodFrench from "./AddMoodFrench"
 
 interface Props {
   open: boolean
   onClose: () => void
 }
 
-export default function AddRecipePopUp({ open, onClose }: Props): JSX.Element {
+export default function AddMoodMainPopUp({
+  open,
+  onClose
+}: Props): JSX.Element {
   const [allowMultiLang, setAllowMultiLang] = useState(false) // Controls the language toggle
   const [activeTab, setActiveTab] = useState<"english" | "french">("english") // Default active tab
 
@@ -21,7 +24,7 @@ export default function AddRecipePopUp({ open, onClose }: Props): JSX.Element {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
+      <DialogContent className="max-w-xl h-[80vh] p-6 rounded-xl overflow-hidden">
         <div
           className="overflow-y-auto p-2 h-full"
           style={{
@@ -29,7 +32,7 @@ export default function AddRecipePopUp({ open, onClose }: Props): JSX.Element {
             msOverflowStyle: "none" // IE/Edge
           }}
         >
-          <DialogTitle>Add New Recipe</DialogTitle>
+          <DialogTitle>Add New Mood</DialogTitle>
 
           <Tabs
             value={activeTab}
@@ -63,15 +66,15 @@ export default function AddRecipePopUp({ open, onClose }: Props): JSX.Element {
 
             {/* English Tab Content */}
             <TabsContent value="english">
-              <AddRecipeEnglish open={open} onClose={onClose} />
+              <AddMoodPopUp open={open} onClose={onClose} />
             </TabsContent>
 
             {/* French Tab Content (if multi-language is allowed) */}
-            {allowMultiLang && (
+            {/* {allowMultiLang && (
               <TabsContent value="french">
-                <AddRecipeFrench open={open} onClose={onClose} />
+                <AddMoodFrench open={open} onClose={onClose} />
               </TabsContent>
-            )}
+            )} */}
           </Tabs>
         </div>
       </DialogContent>

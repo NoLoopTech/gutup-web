@@ -5,15 +5,18 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import AddRecipeEnglish from "./AddRecipeEnglish"
-import AddRecipeFrench from "./AddRecipeFrench"
+import AddDailyTipPopUp from "./AddDailyTipPopUp"
+import AddDailyTipFrench from "./AddDailyTipFrench"
 
 interface Props {
   open: boolean
   onClose: () => void
 }
 
-export default function AddRecipePopUp({ open, onClose }: Props): JSX.Element {
+export default function AddDailyTipMainPopUp({
+  open,
+  onClose
+}: Props): JSX.Element {
   const [allowMultiLang, setAllowMultiLang] = useState(false) // Controls the language toggle
   const [activeTab, setActiveTab] = useState<"english" | "french">("english") // Default active tab
 
@@ -29,7 +32,7 @@ export default function AddRecipePopUp({ open, onClose }: Props): JSX.Element {
             msOverflowStyle: "none" // IE/Edge
           }}
         >
-          <DialogTitle>Add New Recipe</DialogTitle>
+          <DialogTitle>Add New Daily Tip</DialogTitle>
 
           <Tabs
             value={activeTab}
@@ -63,13 +66,13 @@ export default function AddRecipePopUp({ open, onClose }: Props): JSX.Element {
 
             {/* English Tab Content */}
             <TabsContent value="english">
-              <AddRecipeEnglish open={open} onClose={onClose} />
+              <AddDailyTipPopUp open={open} onClose={onClose} />
             </TabsContent>
 
             {/* French Tab Content (if multi-language is allowed) */}
             {allowMultiLang && (
               <TabsContent value="french">
-                <AddRecipeFrench open={open} onClose={onClose} />
+                <AddDailyTipFrench open={open} onClose={onClose} />
               </TabsContent>
             )}
           </Tabs>

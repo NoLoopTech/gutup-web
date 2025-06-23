@@ -13,7 +13,7 @@ import { MoreVertical, ThumbsDown, ThumbsUp } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 import sampleImage from "@/../../public/images/sample-image.png"
-import AddDailyTipPopUp from "./AddDailyTipPopUp"
+import AddDailyTipMainPopUp from "./AddDailyTipMainPopUp.tsx"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -192,7 +192,7 @@ export default function DailyTipsPage() {
         onPageSizeChange={handlePageSizeChange}
       />
 
-      <AddDailyTipPopUp open={isOpenAddTip} onClose={handleCloseAddTip} />
+      <AddDailyTipMainPopUp open={isOpenAddTip} onClose={handleCloseAddTip} />
     </div>
   )
 }

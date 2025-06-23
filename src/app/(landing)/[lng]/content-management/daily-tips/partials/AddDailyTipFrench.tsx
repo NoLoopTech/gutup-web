@@ -32,7 +32,7 @@ const tabOptions: TabOption[] = [
   { value: "VideoTip", label: "Video Tip" }
 ]
 
-export default function AddDailyTipPopUp({
+export default function AddDailyTipFrench({
   open,
   onClose
 }: Props): JSX.Element {
