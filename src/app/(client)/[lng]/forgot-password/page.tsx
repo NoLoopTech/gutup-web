@@ -1,9 +1,5 @@
 import ForgetPasswordForm from "./partials/ForgotPasswordForm"
 
-export default function ForgetPassword({
-  searchParams
-}: {
-  searchParams: Record<"status", string | string[] | undefined>
-}): React.ReactNode {
+export default function ForgetPassword(): React.ReactNode {
   return <ForgetPasswordForm />
 }
