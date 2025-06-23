@@ -1,12 +1,13 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import AddMoodPopUp from "./AddMoodPopUp"
-import AddMoodFrench from "./AddMoodFrench"
+import { loadLanguage } from "@/../../src/i18n/locales"
+import { defaultTranslations, translationsTypes } from "@/types/moodsTypes"
 
 interface Props {
   open: boolean
@@ -17,10 +18,27 @@ export default function AddMoodMainPopUp({
   open,
   onClose
 }: Props): JSX.Element {
-  const [allowMultiLang, setAllowMultiLang] = useState(false) // Controls the language toggle
-  const [activeTab, setActiveTab] = useState<"english" | "french">("english") // Default active tab
+  const [allowMultiLang, setAllowMultiLang] = useState(false)
+  const [activeTab, setActiveTab] = useState<"en" | "de">("en")
+  const [translations, setTranslations] = useState<Partial<translationsTypes>>(
+    {}
+  )
 
-  // Refs for each RichTextEditor
+  // Load translations based on the selected language
+  useEffect(() => {
+    const loadTranslations = async () => {
+      const langData = await loadLanguage(activeTab, "moods")
+      setTranslations(langData)
+    }
+
+    loadTranslations()
+  }, [activeTab])
+
+  // Language toggle handler
+  const handleLanguageToggle = (val: boolean) => {
+    setAllowMultiLang(val)
+    if (!val) setActiveTab("en") // Default to English if multi-lang is disabled
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -32,20 +50,22 @@ export default function AddMoodMainPopUp({
             msOverflowStyle: "none" // IE/Edge
           }}
         >
-          <DialogTitle>Add New Mood</DialogTitle>
+          <DialogTitle>
+            {translations.addMoodTitle || "Add New Mood"}
+          </DialogTitle>
 
           <Tabs
             value={activeTab}
             onValueChange={val => {
-              setActiveTab(val as "english" | "french") // Set active tab when switching
+              setActiveTab(val as "en" | "de")
             }}
             className="w-full"
           >
             <div className="flex flex-col gap-4 justify-between items-start mt-4 mb-6 sm:flex-row sm:items-center">
               <TabsList>
-                <TabsTrigger value="english">English</TabsTrigger>
+                <TabsTrigger value="en">{translations.english}</TabsTrigger>
                 {allowMultiLang && (
-                  <TabsTrigger value="french">French</TabsTrigger>
+                  <TabsTrigger value="de">{translations.french}</TabsTrigger>
                 )}
               </TabsList>
 
@@ -53,28 +73,27 @@ export default function AddMoodMainPopUp({
                 <Switch
                   id="multi-lang"
                   checked={allowMultiLang}
-                  onCheckedChange={val => {
-                    setAllowMultiLang(val) // Toggle between languages
-                    if (!val) setActiveTab("english") // Switch to English if multi-lang is disabled
-                  }}
+                  onCheckedChange={val => handleLanguageToggle(val)}
                 />
                 <Label htmlFor="multi-lang" className="text-Primary-300">
-                  Allow Multi Lang
+                  {translations.allowMultiLang}
                 </Label>
               </div>
             </div>
 
             {/* English Tab Content */}
-            <TabsContent value="english">
-              <AddMoodPopUp open={open} onClose={onClose} />
+            <TabsContent value="en">
+              <AddMoodPopUp
+                translations={{ ...defaultTranslations, ...translations }}
+              />
             </TabsContent>
 
-            {/* French Tab Content (if multi-language is allowed) */}
-            {/* {allowMultiLang && (
-              <TabsContent value="french">
-                <AddMoodFrench open={open} onClose={onClose} />
-              </TabsContent>
-            )} */}
+            {/* German Tab Content */}
+            <TabsContent value="de">
+              <AddMoodPopUp
+                translations={{ ...defaultTranslations, ...translations }}
+              />
+            </TabsContent>
           </Tabs>
         </div>
       </DialogContent>

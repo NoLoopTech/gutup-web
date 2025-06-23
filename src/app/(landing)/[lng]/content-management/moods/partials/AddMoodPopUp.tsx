@@ -12,11 +12,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
-
-interface Props {
-  open: boolean
-  onClose: () => void
-}
+import { translationsTypes } from "@/types/moodsTypes"
 
 // Tab option
 interface TabOption {
@@ -32,14 +28,20 @@ const tabOptions: TabOption[] = [
   { value: "Recipe", label: "Recipe" }
 ]
 
-export default function AddMoodPopUp({ open, onClose }: Props): JSX.Element {
+export default function AddMoodPopUp({
+  translations
+}: {
+  translations: translationsTypes
+}): JSX.Element {
   const [activeTab, setActiveTab] = useState<LayoutOption>("Quote")
 
   return (
     <div>
       {/* Tab Selector using Input */}
       <div>
-        <Label className="block mb-2 text-black">Select Layout</Label>
+        <Label className="block mb-2 text-black">
+          {translations.selectLayout}
+        </Label>
         <Select
           value={activeTab}
           onValueChange={val => {
@@ -47,12 +49,14 @@ export default function AddMoodPopUp({ open, onClose }: Props): JSX.Element {
           }}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select Layout Type" />
+            <SelectValue placeholder={translations.selectLayoutType} />
           </SelectTrigger>
           <SelectContent>
             {tabOptions.map(opt => (
               <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
+                {translations[
+                  opt.value.toLowerCase() as keyof translationsTypes
+                ] || opt.label}{" "}
               </SelectItem>
             ))}
           </SelectContent>
@@ -61,9 +65,9 @@ export default function AddMoodPopUp({ open, onClose }: Props): JSX.Element {
 
       {/* Tab Content */}
       <div>
-        {activeTab === "Quote" && <QuoteTab />}
-        {activeTab === "Food" && <FoodTab />}
-        {activeTab === "Recipe" && <RecipeTab />}
+        {activeTab === "Quote" && <QuoteTab translations={translations} />}
+        {activeTab === "Food" && <FoodTab translations={translations} />}
+        {activeTab === "Recipe" && <RecipeTab translations={translations} />}
       </div>
     </div>
   )

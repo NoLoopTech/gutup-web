@@ -15,8 +15,16 @@ import { Textarea } from "@/components/ui/textarea"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage
+} from "@/components/ui/form"
 import { toast } from "sonner"
+import { translationsTypes } from "@/types/moodsTypes"
 
 interface Option {
   value: string
@@ -25,14 +33,15 @@ interface Option {
 
 // Validation schema for this page
 const FormSchema = z.object({
-  mood: z.string()
-    .nonempty("Please select a mood"),
-  author: z.string()
+  mood: z.string().nonempty("Please select a mood"),
+  author: z
+    .string()
     .nonempty("Required")
     .min(2, { message: "Author name must be at least 2 characters" }),
-  quote: z.string()
+  quote: z
+    .string()
     .nonempty("Required")
-    .min(10, { message: "Quote must be at least 10 characters" }),
+    .min(10, { message: "Quote must be at least 10 characters" })
 })
 
 const moods: Option[] = [
@@ -41,36 +50,43 @@ const moods: Option[] = [
   { value: "sad", label: "Sad" }
 ]
 
-export default function QuoteTab(): JSX.Element {
+export default function QuoteTab({
+  translations
+}: {
+  translations: translationsTypes
+}): JSX.Element {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       mood: "",
       author: "",
       quote: ""
-    },
+    }
   })
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
     toast("Form submitted", {
-      description: JSON.stringify(data, null, 2),
+      description: JSON.stringify(data, null, 2)
     })
   }
 
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 text-black">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-4 text-black"
+        >
           {/* Mood Field */}
           <FormField
             control={form.control}
             name="mood"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Select Mood</FormLabel>
+                <FormLabel>{translations.selectMood}</FormLabel>
                 <FormControl>
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className="w-full mt-1">
+                    <SelectTrigger className="mt-1 w-full">
                       <SelectValue placeholder="Select Mood" />
                     </SelectTrigger>
                     <SelectContent>
@@ -112,7 +128,10 @@ export default function QuoteTab(): JSX.Element {
               <FormItem className="flex-1 mb-6">
                 <FormLabel>Quote</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Add the quote here in detail." {...field} />
+                  <Textarea
+                    placeholder="Add the quote here in detail."
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -120,8 +139,14 @@ export default function QuoteTab(): JSX.Element {
           />
 
           {/* Action Buttons */}
-          <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
-            <Button variant="outline" type="button" onClick={() => { form.reset(); }}>
+          <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => {
+                form.reset()
+              }}
+            >
               Cancel
             </Button>
             <Button type="submit">Save</Button>
