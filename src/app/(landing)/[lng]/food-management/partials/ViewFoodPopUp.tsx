@@ -88,7 +88,7 @@ export default function ViewFoodPopUp({
 
   useEffect(() => {
     if (token && foodId) {
-      const getfoodsDetailsByFoodId = async () => {
+      const getfoodsDetailsByFoodId = async (): Promise<void> => {
         const response = await getFoodsById(token, foodId)
         if (response.status === 200) {
           setFoodDetails(response.data)
@@ -96,12 +96,12 @@ export default function ViewFoodPopUp({
           console.error("Failed to get user details")
         }
       }
-      getfoodsDetailsByFoodId()
+      void getfoodsDetailsByFoodId()
     }
   }, [token, foodId])
 
   // handle delete user by id
-  const handleDeleteFoodById = async () => {
+  const handleDeleteFoodById = async (): Promise<void> => {
     const response = await deleteFoodById(token, foodId)
     if (response.status === 200 && response.data.success) {
       toast.success(response.data.message)
@@ -142,11 +142,11 @@ export default function ViewFoodPopUp({
   ]
 
   // handle open delete confirmation popup
-  const handleOpenDeleteConfirmationPopup = () => {
+  const handleOpenDeleteConfirmationPopup = (): void => {
     setConfirmDeleteOpen(true)
   }
   // handle close delete confirmation popup
-  const handleCloseDeleteConfirmationPopup = () => {
+  const handleCloseDeleteConfirmationPopup = (): void => {
     setConfirmDeleteOpen(false)
   }
 
@@ -197,7 +197,7 @@ export default function ViewFoodPopUp({
               selectionRef={selectionRef}
               preparationRef={preparationRef}
               conservationRef={conservationRef}
-              foodDetails={foodDetails || null}
+              foodDetails={foodDetails ?? null}
             />
 
             {allowMultiLang && (

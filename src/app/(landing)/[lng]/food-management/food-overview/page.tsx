@@ -14,5 +14,5 @@ export default async function FoodOverview(): Promise<any> {
     redirect("/login")
   }
 
-  return <FoodOverviewPage token={session.apiToken as string} />
+  return <FoodOverviewPage token={session.apiToken} />
 }

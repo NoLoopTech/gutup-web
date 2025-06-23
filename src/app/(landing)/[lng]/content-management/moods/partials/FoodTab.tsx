@@ -45,8 +45,14 @@ const shopcategory: Option[] = [
 // Zod Validation Schema
 const FormSchema = z.object({
   mood: z.string().nonempty("Please select a mood"),
-  foodName: z.string().nonempty("Required").min(2, "Food name must be at least 2 characters"),
-  description: z.string().nonempty("Required").min(10, "Description must be at least 10 characters"),
+  foodName: z
+    .string()
+    .nonempty("Required")
+    .min(2, "Food name must be at least 2 characters"),
+  description: z
+    .string()
+    .nonempty("Required")
+    .min(10, "Description must be at least 10 characters"),
   shopCategory: z.string().nonempty("Please select a shop category")
 })
 
@@ -58,18 +64,21 @@ export default function FoodTab(): JSX.Element {
       foodName: "",
       description: "",
       shopCategory: ""
-    },
+    }
   })
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
     toast("Form submitted", {
-      description: JSON.stringify(data, null, 2),
+      description: JSON.stringify(data, null, 2)
     })
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 text-black pb-20">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4 text-black pb-20"
+      >
         {/* Mood */}
         <FormField
           control={form.control}
@@ -158,7 +167,13 @@ export default function FoodTab(): JSX.Element {
 
         {/* Action Buttons */}
         <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
-          <Button variant="outline" type="button" onClick={() => { form.reset(); }}>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() => {
+              form.reset()
+            }}
+          >
             Cancel
           </Button>
           <Button type="submit">Save</Button>

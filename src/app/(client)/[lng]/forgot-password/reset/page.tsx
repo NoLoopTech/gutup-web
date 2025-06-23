@@ -20,7 +20,7 @@ import { Loader2Icon } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { resetPassword } from "@/app/api/auth/auth"
-import { AxiosResponse } from "axios"
+import type { AxiosResponse } from "axios"
 
 interface ResetPasswordResponse {
   message: string
@@ -52,8 +52,8 @@ export default function ResetPasswordForm(): React.ReactNode {
   const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
-  const email = searchParams.get("email") || ""
-  const otp = searchParams.get("otp") || ""
+  const email = searchParams.get("email") ?? ""
+  const otp = searchParams.get("otp") ?? ""
 
   // validate form
   const form = useForm<ResetPasswordFormData>({

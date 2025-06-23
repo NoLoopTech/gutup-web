@@ -122,8 +122,8 @@ const handleCancel = (
   form.reset()
 }
 // Define function for handling image upload changes
-const handleImageUpload = (field: any) => (file: File | null) => {
-  field.onChange(file)
+const handleImageUpload = (field: any) => (files: File[] | null) => {
+  field.onChange(files && files.length > 0 ? files[0] : null)
 }
 // Define function for handling RichTextEditor changes
 const handleRichTextEditorChange = (field: any) => (val: string) => {
@@ -591,7 +591,7 @@ export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
                         <FormControl>
                           <RichTextEditor
                             ref={aboutRef}
-                            value={field.value}
+                            initialContent={field.value}
                             onChange={handleRichTextEditorChange(field)}
                           />
                         </FormControl>

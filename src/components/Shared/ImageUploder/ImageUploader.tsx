@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from "react"
 import { UploadCloud, X } from "lucide-react"
+import Image from "next/image"
 
 interface ImageUploaderProps {
   title: string
@@ -57,7 +58,13 @@ export default function ImageUploader({
   const handleRemoveImage = (imageUrl: string): void => {
     const updatedImageList = imageList.filter(image => image !== imageUrl)
     setImageList(updatedImageList) // Update the state with the new list
-    onChange?.(updatedImageList) // Pass the updated list of images back to parent component (if needed)
+    // Only update parent with null if all images are removed, otherwise keep previous behavior
+    if (updatedImageList.length === 0) {
+      onChange?.(null)
+    } else {
+      // Optionally, you could keep this line if you want to support multi-image upload in the future
+      // onChange?.(updatedImageList)
+    }
   }
 
   return (
@@ -74,15 +81,19 @@ export default function ImageUploader({
               key={index}
               className="relative w-[100%] flex items-center justify-center h-48 overflow-hidden border border-gray-300 rounded-lg bg-gray-50"
             >
-              <img
+              <Image
                 src={image}
                 alt={`Uploaded preview ${index}`}
+                width={192}
+                height={192}
                 className="object-contain max-w-full max-h-full"
               />
               {/* Remove button */}
               {!disabled && (
                 <button
-                  onClick={() => handleRemoveImage(image)}
+                  onClick={() => {
+                    handleRemoveImage(image)
+                  }}
                   className="absolute p-1 transition bg-white rounded-full shadow top-2 right-2 hover:bg-gray-100"
                 >
                   <X className="w-4 h-4 text-gray-600" />

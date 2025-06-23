@@ -22,12 +22,12 @@ export function DateRangePicker({
     startDate: Date | null
     endDate: Date | null
   }
-}) {
+}): React.ReactElement | null {
   const [open, setOpen] = React.useState(false)
 
   const [date, setDate] = React.useState<any>({
-    startDate: value?.startDate || null,
-    endDate: value?.endDate || null,
+    startDate: value?.startDate ?? null,
+    endDate: value?.endDate ?? null,
     key: "selection"
   })
 

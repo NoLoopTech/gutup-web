@@ -5,9 +5,7 @@ declare module "react-date-range" {
     key: string
   }
 
-  export interface RangeKeyDict {
-    [key: string]: Range
-  }
+  export type RangeKeyDict = Record<string, Range>
 
   export const DateRange: React.FC<any>
 }

@@ -4,9 +4,10 @@ import * as React from "react"
 import {
   ChevronDownIcon,
   ChevronLeftIcon,
-  ChevronRightIcon,
+  ChevronRightIcon
 } from "lucide-react"
-import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker"
+import { DayPicker, getDefaultClassNames } from "react-day-picker"
+import type { DayButton } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -22,7 +23,7 @@ function Calendar({
   ...props
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
-}) {
+}): JSX.Element {
   const defaultClassNames = getDefaultClassNames()
 
   return (
@@ -36,9 +37,9 @@ function Calendar({
       )}
       captionLayout={captionLayout}
       formatters={{
-        formatMonthDropdown: (date) =>
+        formatMonthDropdown: date =>
           date.toLocaleString("default", { month: "short" }),
-        ...formatters,
+        ...formatters
       }}
       classNames={{
         root: cn("w-fit", defaultClassNames.root),
@@ -119,7 +120,7 @@ function Calendar({
           defaultClassNames.disabled
         ),
         hidden: cn("invisible", defaultClassNames.hidden),
-        ...classNames,
+        ...classNames
       }}
       components={{
         Root: ({ className, rootRef, ...props }) => {
@@ -162,7 +163,7 @@ function Calendar({
             </td>
           )
         },
-        ...components,
+        ...components
       }}
       {...props}
     />
@@ -174,7 +175,7 @@ function CalendarDayButton({
   day,
   modifiers,
   ...props
-}: React.ComponentProps<typeof DayButton>) {
+}: React.ComponentProps<typeof DayButton>): JSX.Element {
   const defaultClassNames = getDefaultClassNames()
 
   const ref = React.useRef<HTMLButtonElement>(null)
