@@ -62,7 +62,7 @@ export default function UserOverviewPopup({
 
   useEffect(() => {
     if (token && userId) {
-      const getUserDetailsByUserId = async () => {
+      const getUserDetailsByUserId = async (): Promise<void> => {
         const response = await getUserById(token, userId)
         if (response.status === 200) {
           setUserDetails(response.data)
@@ -70,12 +70,12 @@ export default function UserOverviewPopup({
           console.error("Failed to get user details")
         }
       }
-      getUserDetailsByUserId()
+      void getUserDetailsByUserId()
     }
   }, [token, userId])
 
   // handle delete user by id
-  const handleDeleteUserById = async () => {
+  const handleDeleteUserById = async (): Promise<void> => {
     const response = await deleteUserById(token, userId)
     if (response.status === 200 && response.data.success) {
       toast.success(response.data.message)
@@ -91,16 +91,16 @@ export default function UserOverviewPopup({
   }
 
   // handle open delete confirmation popup
-  const handleOpenDeleteConfirmationPopup = () => {
+  const handleOpenDeleteConfirmationPopup = (): void => {
     setConfirmDeleteOpen(true)
   }
 
   // handle close delete confirmation popup
-  const handleCloseDeleteConfirmationPopup = () => {
+  const handleCloseDeleteConfirmationPopup = (): void => {
     setConfirmDeleteOpen(false)
   }
 
-  const badges: { label: string; value: string }[] = [
+  const badges: Array<{ label: string; value: string }> = [
     {
       label: "Stress",
       value: "stress"
@@ -115,9 +115,9 @@ export default function UserOverviewPopup({
     }
   ]
 
-  const food: { name: string; image: string }[] = []
+  const food: Array<{ name: string; image: string }> = []
 
-  const recipes: { name: string; image: string }[] = [
+  const recipes: Array<{ name: string; image: string }> = [
     {
       name: "Pizza1 ",
       image: Sample.src
@@ -192,7 +192,7 @@ export default function UserOverviewPopup({
               <Input
                 placeholder="Daily Score Points"
                 disabled
-                value={userDetails?.dailyScore.toString() || ""}
+                value={userDetails?.dailyScore?.toString() ?? ""}
               />
             </div>
           </div>
@@ -207,7 +207,7 @@ export default function UserOverviewPopup({
               <Input
                 placeholder="How would you describe your current diet?"
                 disabled
-                value={userDetails?.currentDiet || ""}
+                value={userDetails?.currentDiet ?? ""}
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -215,7 +215,7 @@ export default function UserOverviewPopup({
               <Input
                 placeholder="What is your rhythm of life?"
                 disabled
-                value={userDetails?.rhythmOfLife || ""}
+                value={userDetails?.rhythmOfLife ?? ""}
               />
             </div>
             <div className="flex flex-col gap-2">

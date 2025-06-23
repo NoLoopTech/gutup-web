@@ -1,7 +1,7 @@
 import axiosInstance from "@/query/axios.instance"
 
 // verify email
-export const verifyEmail = async (email: string) => {
+export const verifyEmail = async (email: string): Promise<any> => {
   try {
     const response = await axiosInstance.post("/v1/password/request-otp", {
       email
@@ -13,7 +13,7 @@ export const verifyEmail = async (email: string) => {
 }
 
 // verify otp
-export const verifyOtp = async (email: string, otp: string) => {
+export const verifyOtp = async (email: string, otp: string): Promise<any> => {
   try {
     const response = await axiosInstance.post("/v1/password/validate-otp", {
       email,
@@ -30,7 +30,7 @@ export const resetPassword = async (
   email: string,
   otp: string,
   newPassword: string
-) => {
+): Promise<any> => {
   try {
     const response = await axiosInstance.post("/v1/password/reset", {
       email,

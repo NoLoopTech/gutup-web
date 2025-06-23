@@ -25,7 +25,9 @@ import {
   Area
 } from "recharts"
 
-export default function DashboardPage() {
+import type { ReactElement } from "react"
+
+export default function DashboardPage(): ReactElement {
   const cardsData = [
     {
       title: "Total Revenue",
@@ -114,7 +116,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid-cols-2 gap-4 md:grid">
-        {/* Usage Graph*/}
+        {/* Usage Graph */}
         <Card className=" min-h-[300px] py-5 mt-10">
           <div className="pb-10 pl-6">
             <CardTitle>Usage Graph</CardTitle>
@@ -144,7 +146,7 @@ export default function DashboardPage() {
           </ResponsiveContainer>
         </Card>
 
-        {/* Time spent via Bot*/}
+        {/* Time spent via Bot */}
         <Card className=" min-h-[300px] py-5 mt-10">
           <div className="pb-10 pl-6">
             <CardTitle>Time spent via Bot</CardTitle>

@@ -30,18 +30,18 @@ interface MoodsDataType {
   status: string
 }
 
-export default function MoodsPage() {
+export default function MoodsPage(): JSX.Element {
   const [isOpenAddMood, setIsOpenAddMood] = useState<boolean>(false)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
 
-  const handleOpenAddMood = () => {
+  const handleOpenAddMood = (): void => {
     setIsOpenAddMood(true)
   }
-  const handleCloseAddMood = () => {
+  const handleCloseAddMood = (): void => {
     setIsOpenAddMood(false)
   }
-  const columns: Column<MoodsDataType>[] = [
+  const columns: Array<Column<MoodsDataType>> = [
     {
       accessor: "mood",
       header: "Mood",
@@ -135,11 +135,11 @@ export default function MoodsPage() {
   const endIndex = startIndex + pageSize
   const paginatedData = data.slice(startIndex, endIndex)
 
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = (newPage: number): void => {
     setPage(newPage)
   }
 
-  const handlePageSizeChange = (newSize: number) => {
+  const handlePageSizeChange = (newSize: number): void => {
     setPageSize(newSize)
     setPage(1)
   }

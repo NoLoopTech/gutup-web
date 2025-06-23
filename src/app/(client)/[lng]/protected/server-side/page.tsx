@@ -18,7 +18,7 @@ export default async function Page(): Promise<React.ReactNode> {
     <div className="grid grid-cols-2 text-white p-4">
       <div>
         <h1 className="leading-loose text-[5rem] font-extrabold text-accent">
-          Hi {userData.fullname}!
+          Hi {userData.name}!
         </h1>
       </div>
       <div>

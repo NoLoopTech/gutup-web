@@ -1,7 +1,6 @@
 "use client"
 
 import {
-  Inbox,
   ChevronDown,
   GalleryVerticalEnd,
   LogOut,
@@ -203,7 +202,7 @@ export function AppSidebar(): JSX.Element {
             >
               <Avatar className="w-8 h-8 rounded-lg">
                 <AvatarImage
-                  src={session?.user?.image || "https://github.com/shadcn.png"}
+                  src={session?.user?.image ?? "https://github.com/shadcn.png"}
                   alt="@shadcn"
                 />
                 <AvatarFallback>SC</AvatarFallback>

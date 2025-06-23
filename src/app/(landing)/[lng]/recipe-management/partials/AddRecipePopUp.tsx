@@ -127,8 +127,8 @@ const handleRichTextEditorChange = (field: any) => (val: string) => {
 }
 
 // Define function for handling image upload changes
-const handleImageUpload = (field: any) => (file: File | null) => {
-  field.onChange(file)
+const handleImageUpload = (field: any) => (files: File[] | null) => {
+  field.onChange(files && files.length > 0 ? files[0] : null)
 }
 
 // Dummy data
@@ -474,7 +474,7 @@ export default function AddRecipePopup({ open, onClose }: Props): JSX.Element {
                         <FormControl>
                           <RichTextEditor
                             ref={selectionRef}
-                            value={field.value}
+                            initialContent={field.value}
                             onChange={handleRichTextEditorChange(field)}
                           />
                         </FormControl>

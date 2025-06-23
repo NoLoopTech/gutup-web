@@ -16,7 +16,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select"
 import {
   Form,
@@ -24,10 +24,14 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form"
 import { toast } from "sonner"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover"
 import { CalendarIcon } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
@@ -40,40 +44,46 @@ interface Option {
 const concerns: Option[] = [
   { value: "Stress", label: "Stress" },
   { value: "Anxiety", label: "Anxiety" },
-  { value: "Depression", label: "Depression" },
+  { value: "Depression", label: "Depression" }
 ]
 
 // Validation schema including inputs & textareas
 const FormSchema = z.object({
-  title: z.string()
+  title: z
+    .string()
     .nonempty("Required")
     .min(2, { message: "Title must be at least 2 characters" }),
-  subTitleOne: z.string()
+  subTitleOne: z
+    .string()
     .nonempty("Required")
     .min(2, { message: "Sub Title One must be at least 2 characters" }),
   subDescriptionOne: z
     .string()
     .nonempty("Required")
     .min(10, { message: "Sub Description One must be at least 10 characters" })
-    .max(500, { message: "Sub Description One must not exceed 500 characters" }),
-  subTitleTwo: z.string()
+    .max(500, {
+      message: "Sub Description One must not exceed 500 characters"
+    }),
+  subTitleTwo: z
+    .string()
     .nonempty("Required")
     .min(2, { message: "Sub Title Two must be at least 2 characters" }),
   subDescriptionTwo: z
     .string()
     .nonempty("Required")
     .min(10, { message: "Sub Description Two must be at least 10 characters" })
-    .max(500, { message: "Sub Description Two must not exceed 500 characters" }),
+    .max(500, {
+      message: "Sub Description Two must not exceed 500 characters"
+    }),
   concern: z
     .string({ required_error: "Please select a concern" })
     .nonempty("Please select a concern"),
-  image: z
-    .custom<File | null>((val) => val instanceof File, {
-      message: "Required",
-    }),
-  dateselect: z.date({
-    required_error: "Required",
+  image: z.custom<File | null>(val => val instanceof File, {
+    message: "Required"
   }),
+  dateselect: z.date({
+    required_error: "Required"
+  })
 })
 
 export default function BasicLayoutTab(): JSX.Element {
@@ -87,8 +97,8 @@ export default function BasicLayoutTab(): JSX.Element {
       subDescriptionTwo: "",
       concern: "",
       image: null,
-      dateselect: undefined,
-    },
+      dateselect: undefined
+    }
   })
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
@@ -97,7 +107,7 @@ export default function BasicLayoutTab(): JSX.Element {
         <pre className="mt-2 w-[320px] rounded-md bg-neutral-950 p-4">
           <code className="text-white">{JSON.stringify(data, null, 2)}</code>
         </pre>
-      ),
+      )
     })
   }
 
@@ -121,15 +131,20 @@ export default function BasicLayoutTab(): JSX.Element {
                           data-empty={!field}
                           className="data-[empty=true]:text-muted-foreground w-[25.5rem] justify-between text-left font-normal"
                         >
-                          {field.value
-                            ? format(field.value, "PPP")
-                            : <span>Pick a date</span>
-                          }
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
                           <CalendarIcon className="ml-2 h-4 w-4 text-gray-500" />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} />
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                        />
                       </PopoverContent>
                     </Popover>
                     <FormMessage />
@@ -148,7 +163,10 @@ export default function BasicLayoutTab(): JSX.Element {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue placeholder="Select Concern" />
                         </SelectTrigger>
@@ -190,7 +208,9 @@ export default function BasicLayoutTab(): JSX.Element {
               name="subTitleOne"
               render={({ field }) => (
                 <FormItem className="flex-1 mb-4">
-                  <FormLabel className="block mb-1 text-black">Sub Title One</FormLabel>
+                  <FormLabel className="block mb-1 text-black">
+                    Sub Title One
+                  </FormLabel>
                   <FormControl>
                     <Input placeholder="Give a tip title" {...field} />
                   </FormControl>
@@ -205,7 +225,9 @@ export default function BasicLayoutTab(): JSX.Element {
               name="subDescriptionOne"
               render={({ field }) => (
                 <FormItem className="flex-1 mb-1 pb-4">
-                  <FormLabel className="block mb-1 text-black">Sub Description One</FormLabel>
+                  <FormLabel className="block mb-1 text-black">
+                    Sub Description One
+                  </FormLabel>
                   <FormControl>
                     <Textarea placeholder="Describe in detail." {...field} />
                   </FormControl>
@@ -219,7 +241,9 @@ export default function BasicLayoutTab(): JSX.Element {
               name="subTitleTwo"
               render={({ field }) => (
                 <FormItem className="flex-1 mb-4">
-                  <FormLabel className="block mb-1 text-black">Sub Title Two</FormLabel>
+                  <FormLabel className="block mb-1 text-black">
+                    Sub Title Two
+                  </FormLabel>
                   <FormControl>
                     <Input placeholder="Give a tip title" {...field} />
                   </FormControl>
@@ -234,7 +258,9 @@ export default function BasicLayoutTab(): JSX.Element {
               name="subDescriptionTwo"
               render={({ field }) => (
                 <FormItem className="flex-1 mb-1">
-                  <FormLabel className="block mb-1 text-black">Sub Description Two</FormLabel>
+                  <FormLabel className="block mb-1 text-black">
+                    Sub Description Two
+                  </FormLabel>
                   <FormControl>
                     <Textarea placeholder="Describe in detail." {...field} />
                   </FormControl>
@@ -259,7 +285,7 @@ export default function BasicLayoutTab(): JSX.Element {
                   <FormControl>
                     <ImageUploader
                       title="Select Images for your food item"
-                      onChange={(file) => {
+                      onChange={file => {
                         field.onChange(file)
                         form.clearErrors("image")
                       }}
@@ -274,7 +300,13 @@ export default function BasicLayoutTab(): JSX.Element {
 
         {/* Buttons */}
         <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
-          <Button variant="outline" type="button" onClick={() => { form.reset(); }}>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() => {
+              form.reset()
+            }}
+          >
             Cancel
           </Button>
           <Button type="submit">Save</Button>

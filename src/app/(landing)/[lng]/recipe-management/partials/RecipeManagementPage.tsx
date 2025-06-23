@@ -48,22 +48,22 @@ interface dataListTypes {
   label: string
 }
 
-export default function RecipeManagementPage() {
-  const [page, setPage] = useState<number>(1)
-  const [pageSize, setPageSize] = useState<number>(10)
-  const [openAddRecipePopUp, setOpenAddRecipePopUp] = useState<boolean>(false)
+export default function RecipeManagementPage(): JSX.Element {
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [openAddRecipePopUp, setOpenAddRecipePopUp] = useState(false)
 
   // handle open add food popup
-  const handleOpenAddRecipePopUp = () => {
+  const handleOpenAddRecipePopUp = (): void => {
     setOpenAddRecipePopUp(true)
   }
 
   // handle close add food popup
-  const handleCloseAddRecipePopUp = () => {
+  const handleCloseAddRecipePopUp = (): void => {
     setOpenAddRecipePopUp(false)
   }
 
-  const columns: Column<RecipeManagementDataType>[] = [
+  const columns: Array<Column<RecipeManagementDataType>> = [
     {
       accessor: "media",
       header: "Media",
@@ -102,8 +102,10 @@ export default function RecipeManagementPage() {
       header: "Health Benefits",
       cell: (row: RecipeManagementDataType) => (
         <div className="flex flex-wrap gap-2">
-          {row.healthBenefits.map(benefit => (
-            <Badge variant={"outline"}>{benefit}</Badge>
+          {row.healthBenefits.map((benefit, idx) => (
+            <Badge key={`${benefit}-${idx}`} variant={"outline"}>
+              {benefit}
+            </Badge>
           ))}
         </div>
       )
@@ -178,21 +180,18 @@ export default function RecipeManagementPage() {
     }
   ]
 
-  const pageSizeOptions: number[] = [5, 10, 20]
+  const pageSizeOptions = [5, 10, 20]
 
-  const totalItems: number = data.length
-  const startIndex: number = (page - 1) * pageSize
-  const endIndex: number = startIndex + pageSize
-  const paginatedData: RecipeManagementDataType[] = data.slice(
-    startIndex,
-    endIndex
-  )
+  const totalItems = data.length
+  const startIndex = (page - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const paginatedData = data.slice(startIndex, endIndex)
 
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = (newPage: number): void => {
     setPage(newPage)
   }
 
-  const handlePageSizeChange = (newSize: number) => {
+  const handlePageSizeChange = (newSize: number): void => {
     setPageSize(newSize)
     setPage(1)
   }
@@ -238,7 +237,7 @@ export default function RecipeManagementPage() {
             <SelectContent className="max-h-40">
               <SelectGroup>
                 {categories.map(item => (
-                  <SelectItem value={item.value.toString()}>
+                  <SelectItem key={item.value} value={item.value.toString()}>
                     {item.label}
                   </SelectItem>
                 ))}
@@ -254,7 +253,7 @@ export default function RecipeManagementPage() {
             <SelectContent className="max-h-40">
               <SelectGroup>
                 {servings.map(item => (
-                  <SelectItem value={item.value.toString()}>
+                  <SelectItem key={item.value} value={item.value.toString()}>
                     {item.label}
                   </SelectItem>
                 ))}
@@ -270,7 +269,7 @@ export default function RecipeManagementPage() {
             <SelectContent className="max-h-40">
               <SelectGroup>
                 {healthBenefits.map(item => (
-                  <SelectItem value={item.value.toString()}>
+                  <SelectItem key={item.value} value={item.value.toString()}>
                     {item.label}
                   </SelectItem>
                 ))}

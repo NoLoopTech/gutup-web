@@ -45,22 +45,22 @@ interface dataListTypes {
   label: string
 }
 
-export default function StoreManagementPage() {
+export default function StoreManagementPage(): React.ReactElement {
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(10)
   const [openAddStorePopUp, setOpenAddStorePopUp] = useState<boolean>(false)
 
   // handle open add food popup
-  const handleOpenAddStorePopUp = () => {
+  const handleOpenAddStorePopUp = (): void => {
     setOpenAddStorePopUp(true)
   }
 
   // handle close add food popup
-  const handleCloseAddStorePopUp = () => {
+  const handleCloseAddStorePopUp = (): void => {
     setOpenAddStorePopUp(false)
   }
 
-  const columns: Column<StoreManagementDataType>[] = [
+  const columns: Array<Column<StoreManagementDataType>> = [
     {
       accessor: "storeName",
       header: "Store Name"
@@ -153,21 +153,18 @@ export default function StoreManagementPage() {
     }
   ]
 
-  const pageSizeOptions: number[] = [5, 10, 20]
+  const pageSizeOptions = [5, 10, 20]
 
-  const totalItems: number = data.length
-  const startIndex: number = (page - 1) * pageSize
-  const endIndex: number = startIndex + pageSize
-  const paginatedData: StoreManagementDataType[] = data.slice(
-    startIndex,
-    endIndex
-  )
+  const totalItems = data.length
+  const startIndex = (page - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const paginatedData = data.slice(startIndex, endIndex)
 
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = (newPage: number): void => {
     setPage(newPage)
   }
 
-  const handlePageSizeChange = (newSize: number) => {
+  const handlePageSizeChange = (newSize: number): void => {
     setPageSize(newSize)
     setPage(1)
   }
@@ -201,7 +198,7 @@ export default function StoreManagementPage() {
             <SelectContent className="max-h-40">
               <SelectGroup>
                 {locations.map(item => (
-                  <SelectItem value={item.value.toString()}>
+                  <SelectItem key={item.value} value={item.value.toString()}>
                     {item.label}
                   </SelectItem>
                 ))}
@@ -217,7 +214,7 @@ export default function StoreManagementPage() {
             <SelectContent className="max-h-40">
               <SelectGroup>
                 {storeTypes.map(item => (
-                  <SelectItem value={item.value.toString()}>
+                  <SelectItem key={item.value} value={item.value.toString()}>
                     {item.label}
                   </SelectItem>
                 ))}

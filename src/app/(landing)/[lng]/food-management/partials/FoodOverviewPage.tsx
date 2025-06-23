@@ -62,7 +62,11 @@ interface FoodOverviewDataType {
   attributes: FoodAttributesTypes
 }
 
-export default function FoodOverviewPage({ token }: { token: string }) {
+export default function FoodOverviewPage({
+  token
+}: {
+  token: string
+}): React.ReactElement {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [openAddFoodPopUp, setOpenAddFoodPopUp] = useState(false)
@@ -76,7 +80,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
   const [selectedMonths, setSelectedMonths] = useState<string[]>([])
 
   // Function to fetch all foods from API
-  const getFoods = async () => {
+  const getFoods = async (): Promise<void> => {
     try {
       const response = await getAllFoods(token)
       if (response.status === 200) {
@@ -90,28 +94,38 @@ export default function FoodOverviewPage({ token }: { token: string }) {
   }
 
   useEffect(() => {
-    getFoods()
+    void getFoods()
   }, [token])
 
   // Handler to open the "Add Food" popup
-  const handleOpenAddFoodPopUp = () => setOpenAddFoodPopUp(true)
+  const handleOpenAddFoodPopUp = (): void => {
+    setOpenAddFoodPopUp(true)
+  }
   // Handler to close the "Add Food" popup
-  const handleCloseAddFoodPopUp = () => setOpenAddFoodPopUp(false)
+  const handleCloseAddFoodPopUp = (): void => {
+    setOpenAddFoodPopUp(false)
+  }
   // Handler to close the "View Food" popup
-  const handleCloseViewFoodPopUp = () => setViewFood(false)
+  const handleCloseViewFoodPopUp = (): void => {
+    setViewFood(false)
+  }
   // Handler to open the "View Food" popup with the selected food ID
-  const handleViewFoodOverview = (foodId: number) => {
+  const handleViewFoodOverview = (foodId: number): void => {
     setViewFood(true)
     setFoodId(foodId)
   }
 
   // Handler to update the selected category filter
-  const handleCategoryChange = (value: string) => setCategory(value)
+  const handleCategoryChange = (value: string): void => {
+    setCategory(value)
+  }
   // Handler to update the selected nutritional filter
-  const handleNutritionalChange = (value: string) => setNutritional(value)
+  const handleNutritionalChange = (value: string): void => {
+    setNutritional(value)
+  }
 
   // Handler to clear all search and filter values
-  const handleClearSearchValues = () => {
+  const handleClearSearchValues = (): void => {
     setSearchText("")
     setCategory("")
     setNutritional("")
@@ -195,7 +209,7 @@ export default function FoodOverviewPage({ token }: { token: string }) {
   }, [filteredFoods, page, pageSize])
 
   // Columns for the food management table
-  const columns: Column<FoodOverviewDataType>[] = [
+  const columns: Array<Column<FoodOverviewDataType>> = [
     {
       accessor: "image",
       header: "Media",
@@ -283,7 +297,11 @@ export default function FoodOverviewPage({ token }: { token: string }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem onClick={() => handleViewFoodOverview(row.id)}>
+            <DropdownMenuItem
+              onClick={() => {
+                handleViewFoodOverview(row.id)
+              }}
+            >
               View
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -301,7 +319,9 @@ export default function FoodOverviewPage({ token }: { token: string }) {
             className="max-w-xs"
             placeholder="Search by food name..."
             value={searchText}
-            onChange={e => setSearchText(e.target.value)}
+            onChange={e => {
+              setSearchText(e.target.value)
+            }}
           />
 
           <DropdownMenu>

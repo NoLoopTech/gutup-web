@@ -1,6 +1,6 @@
 // app/content-management/layout.tsx
 import Link from "next/link"
-import { ReactNode } from "react"
+import type { ReactNode } from "react"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/nextAuthOptions"
 import { redirect } from "next/navigation"
@@ -10,7 +10,11 @@ export const metadata = {
   title: "Food Management"
 }
 
-export default async function Layout({ children }: { children: ReactNode }) {
+export default async function Layout({
+  children
+}: {
+  children: ReactNode
+}): Promise<JSX.Element> {
   const session = await getServerSession(authOptions)
   if (!session) redirect("/login")
 
