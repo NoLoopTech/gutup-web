@@ -105,7 +105,9 @@ export default function ImageUploader({
       ) : (
         <div
           onClick={handleClick}
-          className="flex flex-col items-center justify-center w-full h-48 p-6 text-center transition duration-200 bg-gray-100 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-200"
+          className={`flex flex-col items-center justify-center w-full h-48 p-6 text-center transition duration-200 bg-gray-100 border border-gray-300 rounded-lg  hover:bg-gray-200 ${
+            disabled ? "cursor-not-allowed" : "cursor-pointer"
+          }`}
         >
           <UploadCloud size={40} className="mb-2 text-Primary-500" />
           <p className="mb-1 text-sm font-medium text-gray-700">

@@ -25,6 +25,7 @@ import AddRecipePopup from "./AddRecipePopUp"
 import { getAllRecipes } from "@/app/api/recipe"
 import { Label } from "@/components/ui/label"
 import dayjs from "dayjs"
+import ViewRecipePopUp from "./ViewRecipePopUp"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -66,6 +67,8 @@ export default function RecipeManagementPage({
   const [selectedCategory, setSelectedCategory] = useState<string>("")
   const [selectedPersons, setSelectedPersons] = useState<string>("")
   const [selectedBenefit, setSelectedBenefit] = useState<string>("")
+  const [viewRecipe, setViewRecipe] = useState<boolean>(false)
+  const [viewRecipeId, setViewRecipeId] = useState<number>(0)
 
   // handle get users
   const getRecipes = async (): Promise<void> => {
@@ -85,14 +88,23 @@ export default function RecipeManagementPage({
     void getRecipes()
   }, [])
 
-  // handle open add food popup
+  // handle open add Recipe popup
   const handleOpenAddRecipePopUp = (): void => {
     setOpenAddRecipePopUp(true)
   }
-
-  // handle close add food popup
+  // handle close add Recipe popup
   const handleCloseAddRecipePopUp = (): void => {
     setOpenAddRecipePopUp(false)
+  }
+
+  // handle open view Recipe popup
+  const handleOpenViewRecipePopUp = (id: number): void => {
+    setViewRecipeId(id)
+    setViewRecipe(true)
+  }
+  // handle close view Recipe popup
+  const handleCloseViewRecipePopUp = (): void => {
+    setViewRecipe(false)
   }
 
   // handle search text change
@@ -132,7 +144,9 @@ export default function RecipeManagementPage({
       accessor: "persons",
       header: "Servings",
       className: "w-28",
-      cell: (row: RecipeDataType) => <Label className="text-gray-500">{row.persons} Servings</Label>
+      cell: (row: RecipeDataType) => (
+        <Label className="text-gray-500">{row.persons} Servings</Label>
+      )
     },
     {
       accessor: "ingredients",
@@ -188,9 +202,9 @@ export default function RecipeManagementPage({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem>Make a copy</DropdownMenuItem>
-            <DropdownMenuItem>Favorite</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleOpenViewRecipePopUp(row.id)}>
+              View
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -349,11 +363,11 @@ export default function RecipeManagementPage({
           )}
         </div>
 
-        {/* add new food button */}
+        {/* add new Recipe button */}
         <Button onClick={handleOpenAddRecipePopUp}>Add New</Button>
       </div>
 
-      {/* foods management table */}
+      {/* Recipes management table */}
       <CustomTable
         columns={columns}
         data={paginatedData}
@@ -365,10 +379,18 @@ export default function RecipeManagementPage({
         onPageSizeChange={handlePageSizeChange}
       />
 
-      {/* add food popup */}
+      {/* add Recipe popup */}
       <AddRecipePopup
         open={openAddRecipePopUp}
         onClose={handleCloseAddRecipePopUp}
+      />
+
+      {/* view recipe pupup */}
+      <ViewRecipePopUp
+        open={viewRecipe}
+        token={token}
+        recipeId={viewRecipeId}
+        onClose={handleCloseViewRecipePopUp}
       />
     </div>
   )
