@@ -18,10 +18,9 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
-import sampleImage from "@/../../public/images/sample-image.png"
 import AddRecipePopup from "./AddRecipePopUp"
 import { getAllRecipes } from "@/app/api/recipe"
 import { Label } from "@/components/ui/label"
@@ -63,6 +62,10 @@ export default function RecipeManagementPage({
   const [pageSize, setPageSize] = useState(10)
   const [openAddRecipePopUp, setOpenAddRecipePopUp] = useState(false)
   const [recipes, seRecipes] = useState<RecipeDataType[]>([])
+  const [searchText, setSearchText] = useState<string>("")
+  const [selectedCategory, setSelectedCategory] = useState<string>("")
+  const [selectedPersons, setSelectedPersons] = useState<string>("")
+  const [selectedBenefit, setSelectedBenefit] = useState<string>("")
 
   // handle get users
   const getRecipes = async (): Promise<void> => {
@@ -92,13 +95,20 @@ export default function RecipeManagementPage({
     setOpenAddRecipePopUp(false)
   }
 
+  // handle search text change
+  const handleSearchTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    setSearchText(e.target.value)
+  }
+
   const columns: Array<Column<RecipeDataType>> = [
     {
       accessor: "images",
       header: "Media",
       cell: (row: RecipeDataType) => (
         <Image
-          src={sampleImage}
+          src={row.images[0]}
           alt={row.name}
           width={40}
           height={40}
@@ -189,39 +199,79 @@ export default function RecipeManagementPage({
 
   const pageSizeOptions = [5, 10, 20]
 
-  const totalItems = recipes.length
-  const startIndex = (page - 1) * pageSize
-  const endIndex = startIndex + pageSize
-  const paginatedData = recipes.slice(startIndex, endIndex)
+  // filter recipes
+  const filteredRecipes = useMemo(() => {
+    return recipes.filter(recipe => {
+      const nameMatch = recipe.name
+        .toLowerCase()
+        .includes(searchText.toLowerCase())
+      const scoreMatch =
+        selectedPersons === "" || recipe.persons === Number(selectedPersons)
+      const categoryMatch =
+        selectedCategory === "" || recipe.category === selectedCategory
+      const benefitMatch =
+        selectedBenefit === "" ||
+        recipe.healthBenefits.includes(selectedBenefit)
 
+      return nameMatch && categoryMatch && scoreMatch && benefitMatch
+    })
+  }, [recipes, searchText, selectedCategory, selectedPersons, selectedBenefit])
+
+  const totalItems = filteredRecipes.length
+
+  // paginate data (for table)
+  const paginatedData = useMemo(() => {
+    const startIndex = (page - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    return filteredRecipes.slice(startIndex, endIndex)
+  }, [filteredRecipes, page, pageSize])
+
+  // handle page change
   const handlePageChange = (newPage: number): void => {
     setPage(newPage)
   }
-
+  // handle page size change
   const handlePageSizeChange = (newSize: number): void => {
     setPageSize(newSize)
     setPage(1)
+  }
+
+  // handle Category change
+  const handleCategoryChange = (value: string): void => {
+    setSelectedCategory(value)
+  }
+
+  // handle Score change
+  const handleScoreChange = (value: string): void => {
+    setSelectedPersons(value)
+  }
+
+  // handle Score change
+  const handleBenefitChange = (value: string): void => {
+    setSelectedBenefit(value)
+  }
+
+  // handle clear search values
+  const handleClearSearchValues = (): void => {
+    setSearchText("")
+    setSelectedCategory("")
+    setSelectedPersons("")
+    setSelectedBenefit("")
+    setSelectedBenefit("")
   }
 
   const categories: dataListTypes[] = [
     { value: "Breakfast", label: "Breakfast" },
     { value: "Lunch", label: "Lunch" },
     { value: "Dinner", label: "Dinner" },
-    { value: "Snack", label: "Snack" }
+    { value: "Italian", label: "Italian" }
   ]
 
-  const servings: dataListTypes[] = [
-    { value: "1", label: "1" },
-    { value: "2", label: "2" },
-    { value: "3", label: "3" },
-    { value: "4", label: "4" },
-    { value: "5", label: "5" },
-    { value: "6", label: "6" },
-    { value: "7", label: "7" },
-    { value: "8", label: "8" },
-    { value: "9", label: "9" },
-    { value: "10", label: "10" }
-  ]
+  // genarate score points
+  const servings = Array.from({ length: 20 }, (_, i) => ({
+    value: i + 1,
+    label: (i + 1).toString()
+  }))
 
   const healthBenefits: dataListTypes[] = [
     { value: "Immune Support", label: "Immune Support" },
@@ -234,10 +284,14 @@ export default function RecipeManagementPage({
       <div className="flex flex-wrap justify-between gap-2">
         <div className="flex flex-wrap w-[80%] gap-2">
           {/* search recipes by name */}
-          <Input className="max-w-xs" placeholder="Search by recipe..." />
-
+          <Input
+            className="max-w-xs"
+            placeholder="Search by user name..."
+            value={searchText}
+            onChange={handleSearchTextChange}
+          />
           {/* select category */}
-          <Select>
+          <Select value={selectedCategory} onValueChange={handleCategoryChange}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
@@ -253,7 +307,7 @@ export default function RecipeManagementPage({
           </Select>
 
           {/* select Servings */}
-          <Select>
+          <Select value={selectedPersons} onValueChange={handleScoreChange}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Servings" />
             </SelectTrigger>
@@ -269,7 +323,7 @@ export default function RecipeManagementPage({
           </Select>
 
           {/* select Health Benefits */}
-          <Select>
+          <Select value={selectedBenefit} onValueChange={handleBenefitChange}>
             <SelectTrigger className="w-36">
               <SelectValue placeholder="Health Benefits" />
             </SelectTrigger>
@@ -283,6 +337,16 @@ export default function RecipeManagementPage({
               </SelectGroup>
             </SelectContent>
           </Select>
+
+          {/* clear filters button */}
+          {(Boolean(searchText) ||
+            Boolean(selectedPersons) ||
+            Boolean(selectedCategory) ||
+            Boolean(selectedBenefit)) && (
+            <Button variant="outline" onClick={handleClearSearchValues}>
+              Clear Filters
+            </Button>
+          )}
         </div>
 
         {/* add new food button */}
