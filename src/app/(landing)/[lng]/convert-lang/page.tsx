@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input"
 import { useTranslation } from "@/query/hooks/useTranslation"
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 
 export default function Page() {
   const [englishText, setEnglishText] = useState("")
@@ -18,12 +18,16 @@ export default function Page() {
     return () => clearTimeout(timeout)
   }, [englishText, translateText])
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEnglishText(e.target.value)
+  }
+
   return (
     <div className="space-y-4">
       <Input
         placeholder="Enter English"
         value={englishText}
-        onChange={e => setEnglishText(e.target.value)}
+        onChange={handleChange}
       />
       {loading && <p>Loading...</p>}
       <Input placeholder="Convert to French" value={translatedText} disabled />
