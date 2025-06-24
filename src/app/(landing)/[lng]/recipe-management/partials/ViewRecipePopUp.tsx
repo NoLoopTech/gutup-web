@@ -202,8 +202,8 @@ export default function ViewRecipePopUp({
             website: response.data.author.authorWebsite,
             recipe: response.data.describe.description,
             ingredientData: response.data.ingredients,
-            authorimage: null,
-            foodimage: null
+            authorimage: response.data.author.authorImage,
+            foodimage: response.data.ingredients.food.images
           })
           setRecipeDetails(response.data)
         } else {
@@ -541,7 +541,7 @@ export default function ViewRecipePopUp({
                     name: item.ingredientName,
                     quantity: item.quantity,
                     isMain: item.mainIngredient,
-                    tags: item.available ? ["InSystem"] : []
+                    tags: item.available ? ["InSystem"] : ["Incomplete"]
                   }))
 
                   return (
