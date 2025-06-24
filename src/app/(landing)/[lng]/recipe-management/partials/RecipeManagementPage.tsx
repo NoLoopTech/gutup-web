@@ -18,11 +18,14 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import sampleImage from "@/../../public/images/sample-image.png"
 import AddRecipePopup from "./AddRecipePopUp"
+import { getAllRecipes } from "@/app/api/recipe"
+import { Label } from "@/components/ui/label"
+import dayjs from "dayjs"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -32,15 +35,18 @@ interface Column<T> {
   className?: string
 }
 
-interface RecipeManagementDataType {
-  media: string
-  recipeName: string
+interface RecipeDataType {
+  id: number
+  name: string
   category: string
-  servings: string
-  mainIngredients: string[]
+  createdAt: string
+  isActive: boolean
+  images: string[]
   healthBenefits: string[]
-  dateAdded: string
-  status: string
+  preparation: string
+  rest: string
+  persons: number
+  ingredients: string[]
 }
 
 interface dataListTypes {
@@ -48,10 +54,33 @@ interface dataListTypes {
   label: string
 }
 
-export default function RecipeManagementPage(): JSX.Element {
+export default function RecipeManagementPage({
+  token
+}: {
+  token: string
+}): JSX.Element {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [openAddRecipePopUp, setOpenAddRecipePopUp] = useState(false)
+  const [recipes, seRecipes] = useState<RecipeDataType[]>([])
+
+  // handle get users
+  const getRecipes = async (): Promise<void> => {
+    try {
+      const response = await getAllRecipes(token)
+      if (response.status === 200) {
+        seRecipes(response.data)
+      } else {
+        console.log(response)
+      }
+    } catch (error) {
+      console.error("Failed to fetch users:", error)
+    }
+  }
+
+  useEffect(() => {
+    void getRecipes()
+  }, [])
 
   // handle open add food popup
   const handleOpenAddRecipePopUp = (): void => {
@@ -63,14 +92,14 @@ export default function RecipeManagementPage(): JSX.Element {
     setOpenAddRecipePopUp(false)
   }
 
-  const columns: Array<Column<RecipeManagementDataType>> = [
+  const columns: Array<Column<RecipeDataType>> = [
     {
-      accessor: "media",
+      accessor: "images",
       header: "Media",
-      cell: (row: RecipeManagementDataType) => (
+      cell: (row: RecipeDataType) => (
         <Image
           src={sampleImage}
-          alt={row.recipeName}
+          alt={row.name}
           width={40}
           height={40}
           className="rounded"
@@ -78,29 +107,31 @@ export default function RecipeManagementPage(): JSX.Element {
       )
     },
     {
-      accessor: "recipeName",
+      accessor: "name",
       header: "Recipe Name"
     },
     {
       accessor: "category",
       header: "Category",
       className: "w-40",
-      cell: (row: RecipeManagementDataType) => (
+      cell: (row: RecipeDataType) => (
         <Badge variant={"outline"}>{row.category}</Badge>
       )
     },
     {
-      accessor: "servings",
-      header: "Servings"
+      accessor: "persons",
+      header: "Servings",
+      className: "w-28",
+      cell: (row: RecipeDataType) => <Label>{row.persons} Servings</Label>
     },
     {
-      accessor: "mainIngredients",
+      accessor: "ingredients",
       header: "Main Ingredients"
     },
     {
       accessor: "healthBenefits",
       header: "Health Benefits",
-      cell: (row: RecipeManagementDataType) => (
+      cell: (row: RecipeDataType) => (
         <div className="flex flex-wrap gap-2">
           {row.healthBenefits.map((benefit, idx) => (
             <Badge key={`${benefit}-${idx}`} variant={"outline"}>
@@ -111,31 +142,30 @@ export default function RecipeManagementPage(): JSX.Element {
       )
     },
     {
-      accessor: "dateAdded",
-      header: "Date Added"
+      accessor: "createdAt",
+      header: "Date Added",
+      cell: (row: any) => dayjs(row.createdAt).format("DD/MM/YYYY")
     },
     {
-      accessor: "status",
+      accessor: "isActive",
       header: "Status",
       className: "w-28",
-      cell: (row: RecipeManagementDataType) => (
+      cell: (row: RecipeDataType) => (
         <Badge
           className={
-            row.status === "Active"
+            row.isActive
               ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700"
-              : row.status === "Pending"
-              ? "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
               : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700"
           }
         >
-          {row.status}
+          {row.isActive ? "Active" : "Inactive"}
         </Badge>
       )
     },
     {
       id: "actions",
       className: "w-12",
-      cell: (row: RecipeManagementDataType) => (
+      cell: (row: RecipeDataType) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -157,35 +187,12 @@ export default function RecipeManagementPage(): JSX.Element {
     }
   ]
 
-  const data: RecipeManagementDataType[] = [
-    {
-      media: "/images/carrot.jpg", // public/images/carrot.jpg
-      recipeName: "Carrot",
-      category: "Vegetable",
-      healthBenefits: ["Immune Support", "Skin Health", "Eye Health"],
-      mainIngredients: ["Carrot", "Potato", "Onion"],
-      servings: "1 Available",
-      dateAdded: "2025-05-16",
-      status: "Active"
-    },
-    {
-      media: "/images/carrot.jpg",
-      recipeName: "Carrot",
-      category: "Vegetable",
-      healthBenefits: ["Immune Support", "Skin Health", "Eye Health"],
-      mainIngredients: ["Carrot", "Potato", "Onion"],
-      servings: "1 Available",
-      dateAdded: "2025-05-16",
-      status: "Incomplete"
-    }
-  ]
-
   const pageSizeOptions = [5, 10, 20]
 
-  const totalItems = data.length
+  const totalItems = recipes.length
   const startIndex = (page - 1) * pageSize
   const endIndex = startIndex + pageSize
-  const paginatedData = data.slice(startIndex, endIndex)
+  const paginatedData = recipes.slice(startIndex, endIndex)
 
   const handlePageChange = (newPage: number): void => {
     setPage(newPage)
