@@ -132,7 +132,7 @@ export default function RecipeManagementPage({
       accessor: "persons",
       header: "Servings",
       className: "w-28",
-      cell: (row: RecipeDataType) => <Label>{row.persons} Servings</Label>
+      cell: (row: RecipeDataType) => <Label className="text-gray-500">{row.persons} Servings</Label>
     },
     {
       accessor: "ingredients",
