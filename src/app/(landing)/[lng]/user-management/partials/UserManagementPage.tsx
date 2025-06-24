@@ -252,7 +252,7 @@ export default function UserManagementPage({
   const handleClearSearchValues = (): void => {
     setSearchText("")
     setSelectedScore("")
-    setSelectedDateFilter("")
+    setSelectedDateFilter("All")
     setSelectedDateRange({ startDate: null, endDate: null })
   }
 
