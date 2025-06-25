@@ -12,11 +12,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
-
-interface Props {
-  open: boolean
-  onClose: () => void
-}
+import { type translationsTypes } from "@/types/dailyTipTypes"
 
 // Tab option
 interface TabOption {
@@ -33,16 +29,19 @@ const tabOptions: TabOption[] = [
 ]
 
 export default function AddDailyTipPopUp({
-  open,
-  onClose
-}: Props): JSX.Element {
+  translations
+}: {
+  translations: translationsTypes
+}): JSX.Element {
   const [activeTab, setActiveTab] = useState<LayoutOption>("BasicLayout")
 
   return (
     <div>
       {/* Tab Selector using Input */}
       <div className="mb-4 w-[25.4rem] relative">
-        <Label className="block mb-1 text-black">Layout Selection</Label>
+        <Label className="block mb-1 text-black">
+          {translations.layoutSelection}
+        </Label>
         <Select
           value={activeTab}
           onValueChange={val => {
@@ -50,12 +49,14 @@ export default function AddDailyTipPopUp({
           }}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select Layout Type" />
+            <SelectValue placeholder={translations.selectLayoutType} />
           </SelectTrigger>
           <SelectContent>
             {tabOptions.map(opt => (
               <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
+                {translations[
+                  opt.value.toLowerCase() as keyof translationsTypes
+                ] || opt.label}{" "}
               </SelectItem>
             ))}
           </SelectContent>
@@ -64,9 +65,15 @@ export default function AddDailyTipPopUp({
 
       {/* Tab Content */}
       <div>
-        {activeTab === "BasicLayout" && <BasicLayoutTab />}
-        {activeTab === "ShopPromotion" && <ShopPromotionTab />}
-        {activeTab === "VideoTip" && <VideoTipTab />}
+        {activeTab === "BasicLayout" && (
+          <BasicLayoutTab translations={translations} />
+        )}
+        {activeTab === "ShopPromotion" && (
+          <ShopPromotionTab translations={translations} />
+        )}
+        {activeTab === "VideoTip" && (
+          <VideoTipTab translations={translations} />
+        )}
       </div>
     </div>
   )

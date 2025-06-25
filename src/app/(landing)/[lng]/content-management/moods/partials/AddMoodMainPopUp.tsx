@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import AddMoodPopUp from "./AddMoodPopUp"
 import { loadLanguage } from "@/../../src/i18n/locales"
-import { defaultTranslations, translationsTypes } from "@/types/moodsTypes"
+import { defaultTranslations, type translationsTypes } from "@/types/moodsTypes"
 
 interface Props {
   open: boolean

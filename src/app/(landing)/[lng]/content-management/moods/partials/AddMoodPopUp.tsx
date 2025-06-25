@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
-import { translationsTypes } from "@/types/moodsTypes"
+import { type translationsTypes } from "@/types/moodsTypes"
 
 // Tab option
 interface TabOption {

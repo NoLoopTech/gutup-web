@@ -24,25 +24,12 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { toast } from "sonner"
-import { translationsTypes } from "@/types/moodsTypes"
+import { type translationsTypes } from "@/types/moodsTypes"
 
 interface Option {
   value: string
   label: string
 }
-
-// Validation schema for this page
-const FormSchema = z.object({
-  mood: z.string().nonempty("Please select a mood"),
-  author: z
-    .string()
-    .nonempty("Required")
-    .min(2, { message: "Author name must be at least 2 characters" }),
-  quote: z
-    .string()
-    .nonempty("Required")
-    .min(10, { message: "Quote must be at least 10 characters" })
-})
 
 const moods: Option[] = [
   { value: "happy", label: "Happy" },
@@ -55,6 +42,18 @@ export default function QuoteTab({
 }: {
   translations: translationsTypes
 }): JSX.Element {
+  // Validation schema for this page
+  const FormSchema = z.object({
+    mood: z.string().nonempty(translations.pleaseSelectAMood),
+    author: z
+      .string()
+      .nonempty(translations.required)
+      .min(2, { message: translations.authorNameMustBeAtLeast2Characters }),
+    quote: z
+      .string()
+      .nonempty(translations.required)
+      .min(10, { message: translations.quoteMustBeAtLeast10Characters })
+  })
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -77,31 +76,35 @@ export default function QuoteTab({
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-4 text-black"
         >
-          {/* Mood Field */}
-          <FormField
-            control={form.control}
-            name="mood"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{translations.selectMood}</FormLabel>
-                <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className="mt-1 w-full">
-                      <SelectValue placeholder="Select Mood" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {moods.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="pt-4 pb-3">
+            {/* Mood Field */}
+            <FormField
+              control={form.control}
+              name="mood"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{translations.selectMood}</FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="mt-1 w-full">
+                        <SelectValue placeholder={translations.selectMood} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {moods.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {translations[
+                              option.value.toLowerCase() as keyof translationsTypes
+                            ] || option.label}{" "}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <Separator />
 
@@ -110,10 +113,13 @@ export default function QuoteTab({
             control={form.control}
             name="author"
             render={({ field }) => (
-              <FormItem className="flex-1 mb-4">
-                <FormLabel>Quote Author</FormLabel>
+              <FormItem className="flex-1">
+                <FormLabel>{translations.quoteAuthor}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter quote author" {...field} />
+                  <Input
+                    placeholder={translations.enterQuoteQuthor}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -125,11 +131,11 @@ export default function QuoteTab({
             control={form.control}
             name="quote"
             render={({ field }) => (
-              <FormItem className="flex-1 mb-6">
-                <FormLabel>Quote</FormLabel>
+              <FormItem className="flex-1">
+                <FormLabel>{translations.quote}</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Add the quote here in detail."
+                    placeholder={translations.addTheQuoteHereInDetails}
                     {...field}
                   />
                 </FormControl>
@@ -147,9 +153,9 @@ export default function QuoteTab({
                 form.reset()
               }}
             >
-              Cancel
+              {translations.cancel}
             </Button>
-            <Button type="submit">Save</Button>
+            <Button type="submit">{translations.save}</Button>
           </div>
         </form>
       </Form>

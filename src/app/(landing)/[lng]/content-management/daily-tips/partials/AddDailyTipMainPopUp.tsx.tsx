@@ -1,12 +1,16 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import AddDailyTipPopUp from "./AddDailyTipPopUp"
-import AddDailyTipFrench from "./AddDailyTipFrench"
+import { loadLanguage } from "@/../../src/i18n/locales"
+import {
+  defaultTranslations,
+  type translationsTypes
+} from "@/types/dailyTipTypes"
 
 interface Props {
   open: boolean
@@ -17,10 +21,26 @@ export default function AddDailyTipMainPopUp({
   open,
   onClose
 }: Props): JSX.Element {
-  const [allowMultiLang, setAllowMultiLang] = useState(false) // Controls the language toggle
-  const [activeTab, setActiveTab] = useState<"english" | "french">("english") // Default active tab
+  const [allowMultiLang, setAllowMultiLang] = useState(false)
+  const [activeTab, setActiveTab] = useState<"en" | "de">("en")
+  const [translations, setTranslations] = useState<Partial<translationsTypes>>(
+    {}
+  )
+  // Load translations based on the selected language
+  useEffect(() => {
+    const loadTranslations = async () => {
+      const langData = await loadLanguage(activeTab, "dailyTip")
+      setTranslations(langData)
+    }
 
-  // Refs for each RichTextEditor
+    loadTranslations()
+  }, [activeTab])
+
+  // Language toggle handler
+  const handleLanguageToggle = (val: boolean) => {
+    setAllowMultiLang(val)
+    if (!val) setActiveTab("en") // Default to English if multi-lang is disabled
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -32,20 +52,22 @@ export default function AddDailyTipMainPopUp({
             msOverflowStyle: "none" // IE/Edge
           }}
         >
-          <DialogTitle>Add New Daily Tip</DialogTitle>
+          <DialogTitle>
+            {translations.addDailyTipTitle || "Add New Daily Tip"}
+          </DialogTitle>
 
           <Tabs
             value={activeTab}
             onValueChange={val => {
-              setActiveTab(val as "english" | "french") // Set active tab when switching
+              setActiveTab(val as "en" | "de") // Set active tab when switching
             }}
             className="w-full"
           >
             <div className="flex flex-col gap-4 justify-between items-start mt-4 mb-6 sm:flex-row sm:items-center">
               <TabsList>
-                <TabsTrigger value="english">English</TabsTrigger>
+                <TabsTrigger value="en">{translations.english}</TabsTrigger>
                 {allowMultiLang && (
-                  <TabsTrigger value="french">French</TabsTrigger>
+                  <TabsTrigger value="de">{translations.french}</TabsTrigger>
                 )}
               </TabsList>
 
@@ -53,26 +75,27 @@ export default function AddDailyTipMainPopUp({
                 <Switch
                   id="multi-lang"
                   checked={allowMultiLang}
-                  onCheckedChange={val => {
-                    setAllowMultiLang(val) // Toggle between languages
-                    if (!val) setActiveTab("english") // Switch to English if multi-lang is disabled
-                  }}
+                  onCheckedChange={val => handleLanguageToggle(val)}
                 />
                 <Label htmlFor="multi-lang" className="text-Primary-300">
-                  Allow Multi Lang
+                  {translations.allowMultiLang}
                 </Label>
               </div>
             </div>
 
             {/* English Tab Content */}
-            <TabsContent value="english">
-              <AddDailyTipPopUp open={open} onClose={onClose} />
+            <TabsContent value="en">
+              <AddDailyTipPopUp
+                translations={{ ...defaultTranslations, ...translations }}
+              />
             </TabsContent>
 
             {/* French Tab Content (if multi-language is allowed) */}
             {allowMultiLang && (
-              <TabsContent value="french">
-                <AddDailyTipFrench open={open} onClose={onClose} />
+              <TabsContent value="de">
+                <AddDailyTipPopUp
+                  translations={{ ...defaultTranslations, ...translations }}
+                />
               </TabsContent>
             )}
           </Tabs>
