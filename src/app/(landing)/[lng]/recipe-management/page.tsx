@@ -14,5 +14,5 @@ export default async function RecipeManagement(): Promise<any> {
     redirect("/login")
   }
 
-  return <RecipeManagementPage />
+  return <RecipeManagementPage token={session.apiToken} />
 }

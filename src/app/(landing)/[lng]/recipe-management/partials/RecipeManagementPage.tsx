@@ -18,11 +18,14 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
-import sampleImage from "@/../../public/images/sample-image.png"
 import AddRecipePopup from "./AddRecipePopUp"
+import { getAllRecipes } from "@/app/api/recipe"
+import { Label } from "@/components/ui/label"
+import dayjs from "dayjs"
+import ViewRecipePopUp from "./ViewRecipePopUp"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -32,15 +35,18 @@ interface Column<T> {
   className?: string
 }
 
-interface RecipeManagementDataType {
-  media: string
-  recipeName: string
+interface RecipeDataType {
+  id: number
+  name: string
   category: string
-  servings: string
-  mainIngredients: string[]
+  createdAt: string
+  isActive: boolean
+  images: string[]
   healthBenefits: string[]
-  dateAdded: string
-  status: string
+  preparation: string
+  rest: string
+  persons: number
+  ingredients: string[]
 }
 
 interface dataListTypes {
@@ -48,29 +54,74 @@ interface dataListTypes {
   label: string
 }
 
-export default function RecipeManagementPage(): JSX.Element {
+export default function RecipeManagementPage({
+  token
+}: {
+  token: string
+}): JSX.Element {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [openAddRecipePopUp, setOpenAddRecipePopUp] = useState(false)
+  const [recipes, seRecipes] = useState<RecipeDataType[]>([])
+  const [searchText, setSearchText] = useState<string>("")
+  const [selectedCategory, setSelectedCategory] = useState<string>("")
+  const [selectedPersons, setSelectedPersons] = useState<string>("")
+  const [selectedBenefit, setSelectedBenefit] = useState<string>("")
+  const [viewRecipe, setViewRecipe] = useState<boolean>(false)
+  const [viewRecipeId, setViewRecipeId] = useState<number>(0)
 
-  // handle open add food popup
+  // handle get users
+  const getRecipes = async (): Promise<void> => {
+    try {
+      const response = await getAllRecipes(token)
+      if (response.status === 200) {
+        seRecipes(response.data)
+      } else {
+        console.log(response)
+      }
+    } catch (error) {
+      console.error("Failed to fetch users:", error)
+    }
+  }
+
+  useEffect(() => {
+    void getRecipes()
+  }, [])
+
+  // handle open add Recipe popup
   const handleOpenAddRecipePopUp = (): void => {
     setOpenAddRecipePopUp(true)
   }
-
-  // handle close add food popup
+  // handle close add Recipe popup
   const handleCloseAddRecipePopUp = (): void => {
     setOpenAddRecipePopUp(false)
   }
 
-  const columns: Array<Column<RecipeManagementDataType>> = [
+  // handle open view Recipe popup
+  const handleOpenViewRecipePopUp = (id: number): void => {
+    setViewRecipeId(id)
+    setViewRecipe(true)
+  }
+  // handle close view Recipe popup
+  const handleCloseViewRecipePopUp = (): void => {
+    setViewRecipe(false)
+  }
+
+  // handle search text change
+  const handleSearchTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    setSearchText(e.target.value)
+  }
+
+  const columns: Array<Column<RecipeDataType>> = [
     {
-      accessor: "media",
+      accessor: "images",
       header: "Media",
-      cell: (row: RecipeManagementDataType) => (
+      cell: (row: RecipeDataType) => (
         <Image
-          src={sampleImage}
-          alt={row.recipeName}
+          src={row.images[0]}
+          alt={row.name}
           width={40}
           height={40}
           className="rounded"
@@ -78,29 +129,42 @@ export default function RecipeManagementPage(): JSX.Element {
       )
     },
     {
-      accessor: "recipeName",
+      accessor: "name",
       header: "Recipe Name"
     },
     {
       accessor: "category",
       header: "Category",
       className: "w-40",
-      cell: (row: RecipeManagementDataType) => (
+      cell: (row: RecipeDataType) => (
         <Badge variant={"outline"}>{row.category}</Badge>
       )
     },
     {
-      accessor: "servings",
-      header: "Servings"
+      accessor: "persons",
+      header: "Servings",
+      className: "w-28",
+      cell: (row: RecipeDataType) => (
+        <Label className="text-gray-500">{row.persons} Servings</Label>
+      )
     },
     {
-      accessor: "mainIngredients",
-      header: "Main Ingredients"
+      accessor: "ingredients",
+      header: "Main Ingredients",
+      cell: (row: RecipeDataType) => (
+        <div className="flex flex-wrap gap-2">
+          {row.ingredients.map((ingredient, idx) => (
+            <Badge key={`${ingredient}-${idx}`} variant={"outline"}>
+              {ingredient}
+            </Badge>
+          ))}
+        </div>
+      )
     },
     {
       accessor: "healthBenefits",
       header: "Health Benefits",
-      cell: (row: RecipeManagementDataType) => (
+      cell: (row: RecipeDataType) => (
         <div className="flex flex-wrap gap-2">
           {row.healthBenefits.map((benefit, idx) => (
             <Badge key={`${benefit}-${idx}`} variant={"outline"}>
@@ -111,31 +175,30 @@ export default function RecipeManagementPage(): JSX.Element {
       )
     },
     {
-      accessor: "dateAdded",
-      header: "Date Added"
+      accessor: "createdAt",
+      header: "Date Added",
+      cell: (row: any) => dayjs(row.createdAt).format("DD/MM/YYYY")
     },
     {
-      accessor: "status",
+      accessor: "isActive",
       header: "Status",
       className: "w-28",
-      cell: (row: RecipeManagementDataType) => (
+      cell: (row: RecipeDataType) => (
         <Badge
           className={
-            row.status === "Active"
+            row.isActive
               ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700"
-              : row.status === "Pending"
-              ? "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
               : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700"
           }
         >
-          {row.status}
+          {row.isActive ? "Active" : "Inactive"}
         </Badge>
       )
     },
     {
       id: "actions",
       className: "w-12",
-      cell: (row: RecipeManagementDataType) => (
+      cell: (row: RecipeDataType) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -148,73 +211,90 @@ export default function RecipeManagementPage(): JSX.Element {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem>Make a copy</DropdownMenuItem>
-            <DropdownMenuItem>Favorite</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleOpenViewRecipePopUp(row.id)}>
+              View
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
     }
   ]
 
-  const data: RecipeManagementDataType[] = [
-    {
-      media: "/images/carrot.jpg", // public/images/carrot.jpg
-      recipeName: "Carrot",
-      category: "Vegetable",
-      healthBenefits: ["Immune Support", "Skin Health", "Eye Health"],
-      mainIngredients: ["Carrot", "Potato", "Onion"],
-      servings: "1 Available",
-      dateAdded: "2025-05-16",
-      status: "Active"
-    },
-    {
-      media: "/images/carrot.jpg",
-      recipeName: "Carrot",
-      category: "Vegetable",
-      healthBenefits: ["Immune Support", "Skin Health", "Eye Health"],
-      mainIngredients: ["Carrot", "Potato", "Onion"],
-      servings: "1 Available",
-      dateAdded: "2025-05-16",
-      status: "Incomplete"
-    }
-  ]
-
   const pageSizeOptions = [5, 10, 20]
 
-  const totalItems = data.length
-  const startIndex = (page - 1) * pageSize
-  const endIndex = startIndex + pageSize
-  const paginatedData = data.slice(startIndex, endIndex)
+  // filter recipes
+  const filteredRecipes = useMemo(() => {
+    return recipes.filter(recipe => {
+      const nameMatch = recipe.name
+        .toLowerCase()
+        .includes(searchText.toLowerCase())
+      const scoreMatch =
+        selectedPersons === "" || recipe.persons === Number(selectedPersons)
+      const categoryMatch =
+        selectedCategory === "" || recipe.category === selectedCategory
+      const benefitMatch =
+        selectedBenefit === "" ||
+        recipe.healthBenefits.includes(selectedBenefit)
 
+      return nameMatch && categoryMatch && scoreMatch && benefitMatch
+    })
+  }, [recipes, searchText, selectedCategory, selectedPersons, selectedBenefit])
+
+  const totalItems = filteredRecipes.length
+
+  // paginate data (for table)
+  const paginatedData = useMemo(() => {
+    const startIndex = (page - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    return filteredRecipes.slice(startIndex, endIndex)
+  }, [filteredRecipes, page, pageSize])
+
+  // handle page change
   const handlePageChange = (newPage: number): void => {
     setPage(newPage)
   }
-
+  // handle page size change
   const handlePageSizeChange = (newSize: number): void => {
     setPageSize(newSize)
     setPage(1)
+  }
+
+  // handle Category change
+  const handleCategoryChange = (value: string): void => {
+    setSelectedCategory(value)
+  }
+
+  // handle Score change
+  const handleScoreChange = (value: string): void => {
+    setSelectedPersons(value)
+  }
+
+  // handle Score change
+  const handleBenefitChange = (value: string): void => {
+    setSelectedBenefit(value)
+  }
+
+  // handle clear search values
+  const handleClearSearchValues = (): void => {
+    setSearchText("")
+    setSelectedCategory("")
+    setSelectedPersons("")
+    setSelectedBenefit("")
+    setSelectedBenefit("")
   }
 
   const categories: dataListTypes[] = [
     { value: "Breakfast", label: "Breakfast" },
     { value: "Lunch", label: "Lunch" },
     { value: "Dinner", label: "Dinner" },
-    { value: "Snack", label: "Snack" }
+    { value: "Italian", label: "Italian" }
   ]
 
-  const servings: dataListTypes[] = [
-    { value: "1", label: "1" },
-    { value: "2", label: "2" },
-    { value: "3", label: "3" },
-    { value: "4", label: "4" },
-    { value: "5", label: "5" },
-    { value: "6", label: "6" },
-    { value: "7", label: "7" },
-    { value: "8", label: "8" },
-    { value: "9", label: "9" },
-    { value: "10", label: "10" }
-  ]
+  // genarate score points
+  const servings = Array.from({ length: 20 }, (_, i) => ({
+    value: i + 1,
+    label: (i + 1).toString()
+  }))
 
   const healthBenefits: dataListTypes[] = [
     { value: "Immune Support", label: "Immune Support" },
@@ -224,13 +304,17 @@ export default function RecipeManagementPage(): JSX.Element {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap justify-between gap-2">
+      <div className="flex flex-wrap gap-2 justify-between">
         <div className="flex flex-wrap w-[80%] gap-2">
           {/* search recipes by name */}
-          <Input className="max-w-xs" placeholder="Search by recipe..." />
-
+          <Input
+            className="max-w-xs"
+            placeholder="Search by user name..."
+            value={searchText}
+            onChange={handleSearchTextChange}
+          />
           {/* select category */}
-          <Select>
+          <Select value={selectedCategory} onValueChange={handleCategoryChange}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
@@ -246,7 +330,7 @@ export default function RecipeManagementPage(): JSX.Element {
           </Select>
 
           {/* select Servings */}
-          <Select>
+          <Select value={selectedPersons} onValueChange={handleScoreChange}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Servings" />
             </SelectTrigger>
@@ -262,7 +346,7 @@ export default function RecipeManagementPage(): JSX.Element {
           </Select>
 
           {/* select Health Benefits */}
-          <Select>
+          <Select value={selectedBenefit} onValueChange={handleBenefitChange}>
             <SelectTrigger className="w-36">
               <SelectValue placeholder="Health Benefits" />
             </SelectTrigger>
@@ -276,13 +360,23 @@ export default function RecipeManagementPage(): JSX.Element {
               </SelectGroup>
             </SelectContent>
           </Select>
+
+          {/* clear filters button */}
+          {(Boolean(searchText) ||
+            Boolean(selectedPersons) ||
+            Boolean(selectedCategory) ||
+            Boolean(selectedBenefit)) && (
+            <Button variant="outline" onClick={handleClearSearchValues}>
+              Clear Filters
+            </Button>
+          )}
         </div>
 
-        {/* add new food button */}
+        {/* add new Recipe button */}
         <Button onClick={handleOpenAddRecipePopUp}>Add New</Button>
       </div>
 
-      {/* foods management table */}
+      {/* Recipes management table */}
       <CustomTable
         columns={columns}
         data={paginatedData}
@@ -294,10 +388,18 @@ export default function RecipeManagementPage(): JSX.Element {
         onPageSizeChange={handlePageSizeChange}
       />
 
-      {/* add food popup */}
+      {/* add Recipe popup */}
       <AddRecipePopup
         open={openAddRecipePopUp}
         onClose={handleCloseAddRecipePopUp}
+      />
+
+      {/* view recipe pupup */}
+      <ViewRecipePopUp
+        open={viewRecipe}
+        token={token}
+        recipeId={viewRecipeId}
+        onClose={handleCloseViewRecipePopUp}
       />
     </div>
   )
