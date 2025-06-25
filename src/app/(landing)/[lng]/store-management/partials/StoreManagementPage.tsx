@@ -81,12 +81,10 @@ export default function StoreManagementPage({
   const getStores = async (): Promise<void> => {
     try {
       const response = await getAllStores(token)
-      console.log(response)
       if (response.status === 200) {
         setStores(response.data)
       } else {
         console.warn("No stores found or wrong format:", response)
-        console.log(response)
       }
     } catch (error) {
       console.error("Failed to fetch stores:", error)
@@ -220,6 +218,7 @@ export default function StoreManagementPage({
     setPageSize(newSize)
     setPage(1)
   }
+
   // handle clear search values
   const handleClearSearchValues = (): void => {
     setSearchText("")
@@ -285,6 +284,7 @@ export default function StoreManagementPage({
               </SelectGroup>
             </SelectContent>
           </Select>
+
           {/* clear filters button */}
           {(searchText || selectedLocation || selectedStoreType) && (
             <Button variant="outline" onClick={handleClearSearchValues}>
