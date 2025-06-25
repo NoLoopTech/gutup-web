@@ -63,15 +63,9 @@ export default function AddMoodPopUp({
 
       {/* Tab Content */}
       <div>
-        {activeTab === "Quote" && (
-          <QuoteTab translations={translations} lang={lang} />
-        )}
-        {activeTab === "Food" && (
-          <FoodTab translations={translations} lang={lang} />
-        )}
-        {activeTab === "Recipe" && (
-          <RecipeTab translations={translations} lang={lang} />
-        )}
+        {activeTab === "Quote" && <QuoteTab translations={translations} />}
+        {activeTab === "Food" && <FoodTab translations={translations} />}
+        {activeTab === "Recipe" && <RecipeTab translations={translations} />}
       </div>
     </div>
   )
