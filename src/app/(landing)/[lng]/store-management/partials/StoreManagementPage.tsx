@@ -17,10 +17,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical } from "lucide-react"
-import { useState } from "react"
+import { MoreVertical, Store } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { getAllStores } from "@/app/api/store"
 import { Badge } from "@/components/ui/badge"
 import AddStorePopUp from "./AddStorePopUp"
+import { Label } from "@/components/ui/label"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -32,12 +34,12 @@ interface Column<T> {
 
 interface StoreManagementDataType {
   storeName: string
-  location: string
-  geolocation: string
+  storeLocation: string
   storeType: string
-  contactInformation: string
-  productsAvailable: string
-  status: string
+  phoneNumber: string
+  shopStatus: boolean
+  ingredients: string
+  subscriptionType: string
 }
 
 interface dataListTypes {
@@ -45,10 +47,18 @@ interface dataListTypes {
   label: string
 }
 
-export default function StoreManagementPage(): React.ReactElement {
+export default function StoreManagementPage({
+  token
+}: {
+  token: string
+}): JSX.Element {
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(10)
+  const [stores, setStores] = useState<StoreManagementDataType[]>([])
   const [openAddStorePopUp, setOpenAddStorePopUp] = useState<boolean>(false)
+  const [searchText, setSearchText] = useState<string>("")
+  const [selectedLocation, setSelectedLocation] = useState<string>("")
+  const [selectedStoreType, setSelectedStoreType] = useState<string>("")
 
   // handle open add food popup
   const handleOpenAddStorePopUp = (): void => {
@@ -60,50 +70,91 @@ export default function StoreManagementPage(): React.ReactElement {
     setOpenAddStorePopUp(false)
   }
 
+  // handle search text change
+  const handleSearchTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    setSearchText(e.target.value)
+  }
+
+  // handle get stores
+  const getStores = async (): Promise<void> => {
+    try {
+      const response = await getAllStores(token)
+      if (response.status === 200) {
+        setStores(response.data)
+      } else {
+        console.warn("No stores found or wrong format:", response)
+      }
+    } catch (error) {
+      console.error("Failed to fetch stores:", error)
+    }
+  }
+
+  useEffect(() => {
+    void getStores()
+  }, [])
+
   const columns: Array<Column<StoreManagementDataType>> = [
     {
       accessor: "storeName",
       header: "Store Name"
     },
     {
-      accessor: "location",
+      accessor: "storeLocation",
       header: "Location"
     },
     {
-      accessor: "geolocation",
-      header: "Geolocation"
+      accessor: "subscriptionType",
+      header: "Subscriptions",
+      className: "w-25",
+      cell: (row: StoreManagementDataType) => (
+        <Badge
+          className={
+            row.subscriptionType === "premium"
+              ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700 capitalize"
+              : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700 capitalize"
+          }
+        >
+          {row.subscriptionType}
+        </Badge>
+      )
     },
     {
       accessor: "storeType",
       header: "Store Type",
-      className: "w-40",
+      className: "w-40 capitalize",
       cell: (row: StoreManagementDataType) => (
         <Badge variant={"outline"}>{row.storeType}</Badge>
       )
     },
     {
-      accessor: "contactInformation",
+      accessor: "phoneNumber",
       header: "Contact Information"
     },
     {
-      accessor: "productsAvailable",
-      header: "Products Available"
+      accessor: "ingredients",
+      header: "Products Available",
+      cell: (row: StoreManagementDataType) => (
+        <Label className="text-gray-500">
+          {row.ingredients.length} Available
+        </Label>
+      )
     },
     {
-      accessor: "status",
+      accessor: "shopStatus",
       header: "Status",
       className: "w-28",
       cell: (row: StoreManagementDataType) => (
         <Badge
           className={
-            row.status === "Active"
+            row.shopStatus
               ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700"
-              : row.status === "Pending"
-              ? "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
-              : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700"
+              : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700 "
           }
         >
-          {row.status}
+          {/* {row.shopStatus ? "Active" : "Inactive"} */}
+          {row.shopStatus === true ? "Active" : "Inactive"}
         </Badge>
       )
     },
@@ -132,33 +183,32 @@ export default function StoreManagementPage(): React.ReactElement {
     }
   ]
 
-  const data: StoreManagementDataType[] = [
-    {
-      storeName: "Carrot",
-      location: "Carrot",
-      geolocation: "Carrot",
-      storeType: "Vegetable",
-      contactInformation: "Carrot",
-      productsAvailable: "1 Available",
-      status: "Active"
-    },
-    {
-      storeName: "Carrot",
-      location: "Carrot",
-      geolocation: "Carrot",
-      storeType: "Vegetable",
-      contactInformation: "Carrot",
-      productsAvailable: "1 Available",
-      status: "Incomplete"
-    }
-  ]
+  // filter stores (for table)
+  const filteredStores = useMemo(() => {
+    return stores.filter(store => {
+      const nameMatch = store.storeName
+        .toLowerCase()
+        .includes(searchText.toLowerCase())
+      const locationMatch =
+        selectedLocation === "" || store.storeLocation === selectedLocation
+
+      const typeMatch =
+        selectedStoreType === "" ||
+        store.storeType.toLowerCase() === selectedStoreType.toLowerCase()
+
+      return nameMatch && locationMatch && typeMatch
+    })
+  }, [stores, searchText, selectedLocation, selectedStoreType])
 
   const pageSizeOptions = [5, 10, 20]
+  const totalItems = filteredStores.length
 
-  const totalItems = data.length
-  const startIndex = (page - 1) * pageSize
-  const endIndex = startIndex + pageSize
-  const paginatedData = data.slice(startIndex, endIndex)
+  // paginate data (for table)
+  const paginatedData = useMemo(() => {
+    const startIndex = (page - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    return filteredStores.slice(startIndex, endIndex)
+  }, [filteredStores, page, pageSize])
 
   const handlePageChange = (newPage: number): void => {
     setPage(newPage)
@@ -169,6 +219,13 @@ export default function StoreManagementPage(): React.ReactElement {
     setPage(1)
   }
 
+  // handle clear search values
+  const handleClearSearchValues = (): void => {
+    setSearchText("")
+    setSelectedLocation("")
+    setSelectedStoreType("")
+  }
+
   const locations: dataListTypes[] = [
     { value: "Lagos", label: "Lagos" },
     { value: "Abuja", label: "Abuja" },
@@ -177,10 +234,8 @@ export default function StoreManagementPage(): React.ReactElement {
   ]
 
   const storeTypes: dataListTypes[] = [
-    { value: "Grocery", label: "Grocery" },
-    { value: "Pharmacy", label: "Pharmacy" },
-    { value: "Supermarket", label: "Supermarket" },
-    { value: "Convenience Store", label: "Convenience Store" }
+    { value: "Online", label: "Online" },
+    { value: "Physical", label: "Physical" }
   ]
 
   return (
@@ -188,10 +243,15 @@ export default function StoreManagementPage(): React.ReactElement {
       <div className="flex flex-wrap justify-between gap-2">
         <div className="flex flex-wrap w-[80%] gap-2">
           {/* search stores by name */}
-          <Input className="max-w-xs" placeholder="Search by store name..." />
+          <Input
+            className="max-w-xs"
+            placeholder="Search by store name..."
+            value={searchText}
+            onChange={handleSearchTextChange}
+          />
 
           {/* select location */}
-          <Select>
+          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Location" />
             </SelectTrigger>
@@ -207,7 +267,10 @@ export default function StoreManagementPage(): React.ReactElement {
           </Select>
 
           {/* select Store Type */}
-          <Select>
+          <Select
+            value={selectedStoreType}
+            onValueChange={setSelectedStoreType}
+          >
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Store Type" />
             </SelectTrigger>
@@ -221,6 +284,13 @@ export default function StoreManagementPage(): React.ReactElement {
               </SelectGroup>
             </SelectContent>
           </Select>
+
+          {/* clear filters button */}
+          {(searchText || selectedLocation || selectedStoreType) && (
+            <Button variant="outline" onClick={handleClearSearchValues}>
+              Clear Filters
+            </Button>
+          )}
         </div>
 
         {/* add new food button */}

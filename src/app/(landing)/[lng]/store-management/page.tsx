@@ -14,5 +14,5 @@ export default async function StoreManagement(): Promise<any> {
     redirect("/login")
   }
 
-  return <StoreManagementPage />
+  return <StoreManagementPage token={session.apiToken} />
 }
