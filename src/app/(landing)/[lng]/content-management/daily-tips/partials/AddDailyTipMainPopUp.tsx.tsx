@@ -22,7 +22,7 @@ export default function AddDailyTipMainPopUp({
   onClose
 }: Props): JSX.Element {
   const [allowMultiLang, setAllowMultiLang] = useState(false)
-  const [activeTab, setActiveTab] = useState<"en" | "de">("en")
+  const [activeTab, setActiveTab] = useState<"en" | "fr">("en")
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
   )
@@ -59,7 +59,7 @@ export default function AddDailyTipMainPopUp({
           <Tabs
             value={activeTab}
             onValueChange={val => {
-              setActiveTab(val as "en" | "de") // Set active tab when switching
+              setActiveTab(val as "en" | "fr") // Set active tab when switching
             }}
             className="w-full"
           >
@@ -67,7 +67,7 @@ export default function AddDailyTipMainPopUp({
               <TabsList>
                 <TabsTrigger value="en">{translations.english}</TabsTrigger>
                 {allowMultiLang && (
-                  <TabsTrigger value="de">{translations.french}</TabsTrigger>
+                  <TabsTrigger value="fr">{translations.french}</TabsTrigger>
                 )}
               </TabsList>
 
@@ -92,7 +92,7 @@ export default function AddDailyTipMainPopUp({
 
             {/* French Tab Content (if multi-language is allowed) */}
             {allowMultiLang && (
-              <TabsContent value="de">
+              <TabsContent value="fr">
                 <AddDailyTipPopUp
                   translations={{ ...defaultTranslations, ...translations }}
                 />

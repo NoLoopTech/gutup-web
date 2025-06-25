@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import AddMoodPopUp from "./AddMoodPopUp"
 import { loadLanguage } from "@/../../src/i18n/locales"
 import { defaultTranslations, type translationsTypes } from "@/types/moodsTypes"
+import { useMoodStore } from "@/stores/useMoodStore"
 
 interface Props {
   open: boolean
@@ -18,26 +19,27 @@ export default function AddMoodMainPopUp({
   open,
   onClose
 }: Props): JSX.Element {
-  const [allowMultiLang, setAllowMultiLang] = useState(false)
-  const [activeTab, setActiveTab] = useState<"en" | "de">("en")
+  const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
+    useMoodStore()
+
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
   )
 
-  // Load translations based on the selected language
+  // Load translations when activeLang changes
   useEffect(() => {
-    const loadTranslations = async () => {
-      const langData = await loadLanguage(activeTab, "moods")
+    const loadTranslationsAsync = async () => {
+      const langData = await loadLanguage(activeLang, "moods")
       setTranslations(langData)
     }
 
-    loadTranslations()
-  }, [activeTab])
+    loadTranslationsAsync()
+  }, [activeLang])
 
   // Language toggle handler
   const handleLanguageToggle = (val: boolean) => {
     setAllowMultiLang(val)
-    if (!val) setActiveTab("en") // Default to English if multi-lang is disabled
+    if (!val) setActiveLang("en")
   }
 
   return (
@@ -46,8 +48,8 @@ export default function AddMoodMainPopUp({
         <div
           className="overflow-y-auto p-2 h-full"
           style={{
-            scrollbarWidth: "none", // Firefox
-            msOverflowStyle: "none" // IE/Edge
+            scrollbarWidth: "none",
+            msOverflowStyle: "none"
           }}
         >
           <DialogTitle>
@@ -55,17 +57,15 @@ export default function AddMoodMainPopUp({
           </DialogTitle>
 
           <Tabs
-            value={activeTab}
-            onValueChange={val => {
-              setActiveTab(val as "en" | "de")
-            }}
+            value={activeLang}
+            onValueChange={val => setActiveLang(val as "en" | "fr")}
             className="w-full"
           >
             <div className="flex flex-col gap-4 justify-between items-start mt-4 mb-6 sm:flex-row sm:items-center">
               <TabsList>
                 <TabsTrigger value="en">{translations.english}</TabsTrigger>
                 {allowMultiLang && (
-                  <TabsTrigger value="de">{translations.french}</TabsTrigger>
+                  <TabsTrigger value="fr">{translations.french}</TabsTrigger>
                 )}
               </TabsList>
 
@@ -73,7 +73,7 @@ export default function AddMoodMainPopUp({
                 <Switch
                   id="multi-lang"
                   checked={allowMultiLang}
-                  onCheckedChange={val => handleLanguageToggle(val)}
+                  onCheckedChange={handleLanguageToggle}
                 />
                 <Label htmlFor="multi-lang" className="text-Primary-300">
                   {translations.allowMultiLang}
@@ -81,17 +81,10 @@ export default function AddMoodMainPopUp({
               </div>
             </div>
 
-            {/* English Tab Content */}
-            <TabsContent value="en">
+            <TabsContent value={activeLang}>
               <AddMoodPopUp
                 translations={{ ...defaultTranslations, ...translations }}
-              />
-            </TabsContent>
-
-            {/* German Tab Content */}
-            <TabsContent value="de">
-              <AddMoodPopUp
-                translations={{ ...defaultTranslations, ...translations }}
+                lang={activeLang}
               />
             </TabsContent>
           </Tabs>

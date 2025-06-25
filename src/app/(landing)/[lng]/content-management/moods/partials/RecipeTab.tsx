@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/form"
 import { toast } from "sonner"
 import { type translationsTypes } from "@/types/moodsTypes"
+import { useMoodStore } from "@/stores/useMoodStore"
 
 interface Option {
   value: string
@@ -40,9 +41,10 @@ const moods: Option[] = [
 export default function RecipeTab({
   translations
 }: {
-  translations: any
+  translations: translationsTypes
 }): JSX.Element {
-  // Validation schema
+  const { activeLang, translationsData, setTranslationField } = useMoodStore()
+
   const FormSchema = z.object({
     mood: z.string().nonempty(translations.pleaseSelectAMood),
     recipe: z
@@ -57,12 +59,12 @@ export default function RecipeTab({
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: {
-      mood: "",
-      recipe: "",
-      description: ""
-    }
+    defaultValues: translationsData.recipeData[activeLang]
   })
+
+  useEffect(() => {
+    form.reset(translationsData.recipeData[activeLang])
+  }, [activeLang, form.reset, translationsData.recipeData])
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
     toast("Recipe Submitted", {
@@ -76,8 +78,8 @@ export default function RecipeTab({
         onSubmit={form.handleSubmit(onSubmit)}
         className="pb-20 space-y-4 text-black"
       >
+        {/* Mood */}
         <div className="pt-4 pb-3">
-          {/* Mood */}
           <FormField
             control={form.control}
             name="mood"
@@ -85,7 +87,18 @@ export default function RecipeTab({
               <FormItem>
                 <FormLabel>{translations.selectMood}</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select
+                    value={field.value}
+                    onValueChange={value => {
+                      field.onChange(value)
+                      setTranslationField(
+                        "recipeData",
+                        activeLang,
+                        "mood",
+                        value
+                      )
+                    }}
+                  >
                     <SelectTrigger className="mt-1 w-full">
                       <SelectValue placeholder={translations.selectMood} />
                     </SelectTrigger>
@@ -94,7 +107,7 @@ export default function RecipeTab({
                         <SelectItem key={option.value} value={option.value}>
                           {translations[
                             option.value.toLowerCase() as keyof translationsTypes
-                          ] || option.label}{" "}
+                          ] || option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -105,6 +118,7 @@ export default function RecipeTab({
             )}
           />
         </div>
+
         <Separator />
 
         {/* Recipe Name */}
@@ -115,7 +129,19 @@ export default function RecipeTab({
             <FormItem>
               <FormLabel>{translations.recipe}</FormLabel>
               <FormControl>
-                <Input placeholder={translations.searchForRecipe} {...field} />
+                <Input
+                  placeholder={translations.searchForRecipe}
+                  {...field}
+                  onChange={e => {
+                    field.onChange(e)
+                    setTranslationField(
+                      "recipeData",
+                      activeLang,
+                      "recipe",
+                      e.target.value
+                    )
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -133,6 +159,15 @@ export default function RecipeTab({
                 <Textarea
                   placeholder={translations.addDetailsInHere}
                   {...field}
+                  onChange={e => {
+                    field.onChange(e)
+                    setTranslationField(
+                      "recipeData",
+                      activeLang,
+                      "description",
+                      e.target.value
+                    )
+                  }}
                 />
               </FormControl>
               <FormMessage />
@@ -140,14 +175,12 @@ export default function RecipeTab({
           )}
         />
 
-        {/* Action Buttons */}
+        {/* Actions */}
         <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
           <Button
             variant="outline"
             type="button"
-            onClick={() => {
-              form.reset()
-            }}
+            onClick={() => form.reset(translationsData.recipeData[activeLang])}
           >
             {translations.cancel}
           </Button>
