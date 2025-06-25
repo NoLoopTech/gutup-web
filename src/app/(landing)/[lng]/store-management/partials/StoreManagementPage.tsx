@@ -17,8 +17,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical } from "lucide-react"
-import { useState, useEffect } from "react"
+import { MoreVertical, Store } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
 import { getAllStores } from "@/app/api/store"
 import { Badge } from "@/components/ui/badge"
 import AddStorePopUp from "./AddStorePopUp"
@@ -56,6 +56,9 @@ export default function StoreManagementPage({
   const [pageSize, setPageSize] = useState<number>(10)
   const [stores, setStores] = useState<StoreManagementDataType[]>([])
   const [openAddStorePopUp, setOpenAddStorePopUp] = useState<boolean>(false)
+  const [searchText, setSearchText] = useState<string>("")
+  const [selectedLocation, setSelectedLocation] = useState<string>("")
+  const [selectedStoreType, setSelectedStoreType] = useState<string>("")
 
   // handle open add food popup
   const handleOpenAddStorePopUp = (): void => {
@@ -66,6 +69,14 @@ export default function StoreManagementPage({
   const handleCloseAddStorePopUp = (): void => {
     setOpenAddStorePopUp(false)
   }
+
+  // handle search text change
+  const handleSearchTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    setSearchText(e.target.value)
+  }
+
   // handle get stores
   const getStores = async (): Promise<void> => {
     try {
@@ -101,7 +112,7 @@ export default function StoreManagementPage({
       className: "w-25",
       cell: (row: StoreManagementDataType) => (
         <Badge
-          className={ 
+          className={
             row.subscriptionType === "premium"
               ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700 capitalize"
               : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700 capitalize"
@@ -114,7 +125,7 @@ export default function StoreManagementPage({
     {
       accessor: "storeType",
       header: "Store Type",
-      className: "w-40 capitalize" ,
+      className: "w-40 capitalize",
       cell: (row: StoreManagementDataType) => (
         <Badge variant={"outline"}>{row.storeType}</Badge>
       )
@@ -174,11 +185,32 @@ export default function StoreManagementPage({
     }
   ]
 
+  // filter stores (for table)
+  const filteredStores = useMemo(() => {
+    return stores.filter(store => {
+      const nameMatch = store.storeName
+        .toLowerCase()
+        .includes(searchText.toLowerCase())
+      const locationMatch =
+        selectedLocation === "" || store.storeLocation === selectedLocation
+
+      const typeMatch =
+        selectedStoreType === "" ||
+        store.storeType.toLowerCase() === selectedStoreType.toLowerCase()
+
+      return nameMatch && locationMatch && typeMatch
+    })
+  }, [stores, searchText, selectedLocation, selectedStoreType])
+
   const pageSizeOptions = [5, 10, 20]
-  const totalItems = stores.length
-  const startIndex = (page - 1) * pageSize
-  const endIndex = startIndex + pageSize
-  const paginatedData = stores.slice(startIndex, endIndex)
+  const totalItems = filteredStores.length
+
+  // paginate data (for table)
+  const paginatedData = useMemo(() => {
+    const startIndex = (page - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    return filteredStores.slice(startIndex, endIndex)
+  }, [filteredStores, page, pageSize])
 
   const handlePageChange = (newPage: number): void => {
     setPage(newPage)
@@ -187,6 +219,12 @@ export default function StoreManagementPage({
   const handlePageSizeChange = (newSize: number): void => {
     setPageSize(newSize)
     setPage(1)
+  }
+  // handle clear search values
+  const handleClearSearchValues = (): void => {
+    setSearchText("")
+    setSelectedLocation("")
+    setSelectedStoreType("")
   }
 
   const locations: dataListTypes[] = [
@@ -197,10 +235,8 @@ export default function StoreManagementPage({
   ]
 
   const storeTypes: dataListTypes[] = [
-    { value: "Grocery", label: "Grocery" },
-    { value: "Pharmacy", label: "Pharmacy" },
-    { value: "Supermarket", label: "Supermarket" },
-    { value: "Convenience Store", label: "Convenience Store" }
+    { value: "Online", label: "Online" },
+    { value: "Physical", label: "Physical" }
   ]
 
   return (
@@ -208,10 +244,15 @@ export default function StoreManagementPage({
       <div className="flex flex-wrap justify-between gap-2">
         <div className="flex flex-wrap w-[80%] gap-2">
           {/* search stores by name */}
-          <Input className="max-w-xs" placeholder="Search by store name..." />
+          <Input
+            className="max-w-xs"
+            placeholder="Search by store name..."
+            value={searchText}
+            onChange={handleSearchTextChange}
+          />
 
           {/* select location */}
-          <Select>
+          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Location" />
             </SelectTrigger>
@@ -227,7 +268,10 @@ export default function StoreManagementPage({
           </Select>
 
           {/* select Store Type */}
-          <Select>
+          <Select
+            value={selectedStoreType}
+            onValueChange={setSelectedStoreType}
+          >
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Store Type" />
             </SelectTrigger>
@@ -241,6 +285,12 @@ export default function StoreManagementPage({
               </SelectGroup>
             </SelectContent>
           </Select>
+          {/* clear filters button */}
+          {(searchText || selectedLocation || selectedStoreType) && (
+            <Button variant="outline" onClick={handleClearSearchValues}>
+              Clear Filters
+            </Button>
+          )}
         </div>
 
         {/* add new food button */}
