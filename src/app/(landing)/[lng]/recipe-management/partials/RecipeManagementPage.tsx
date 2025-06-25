@@ -150,7 +150,16 @@ export default function RecipeManagementPage({
     },
     {
       accessor: "ingredients",
-      header: "Main Ingredients"
+      header: "Main Ingredients",
+      cell: (row: RecipeDataType) => (
+        <div className="flex flex-wrap gap-2">
+          {row.ingredients.map((ingredient, idx) => (
+            <Badge key={`${ingredient}-${idx}`} variant={"outline"}>
+              {ingredient}
+            </Badge>
+          ))}
+        </div>
+      )
     },
     {
       accessor: "healthBenefits",
@@ -295,7 +304,7 @@ export default function RecipeManagementPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap justify-between gap-2">
+      <div className="flex flex-wrap gap-2 justify-between">
         <div className="flex flex-wrap w-[80%] gap-2">
           {/* search recipes by name */}
           <Input

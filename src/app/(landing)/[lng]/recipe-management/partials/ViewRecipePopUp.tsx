@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -13,13 +13,11 @@ import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import dynamic from "next/dynamic"
 import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
 import LableInput from "@/components/Shared/LableInput/LableInput"
-import SearchBar from "@/components/Shared/SearchBar/SearchBar"
 import { Button } from "@/components/ui/button"
 import { CustomTable } from "@/components/Shared/Table/CustomTable"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { CircleFadingPlus } from "lucide-react"
-import CustomImage from "@/components/Shared/CustomImage/CustomImage"
 import {
   Select,
   SelectContent,
@@ -40,6 +38,7 @@ import { toast } from "sonner"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { getRecipeById } from "@/app/api/recipe"
+import Image from "next/image"
 
 const imageList = [
   "/images/1.jpg",
@@ -57,16 +56,63 @@ interface Ingredient {
   isMain: boolean
   tags: string[]
 }
+
 interface Option {
   value: string
   label: string
 }
+
 interface Props {
   open: boolean
   onClose: () => void
   token: string
   recipeId: number
 }
+
+interface RecipeDetailsTypes {
+  id: number
+  name: string
+  category: string
+  season: string
+  isActive: boolean
+  attribute: {
+    preparation: string
+    rest: string
+    persons: number
+  }
+  describe: {
+    description: string
+  }
+  images: {
+    imageUrl: string
+  }[]
+  healthBenefits: {
+    healthBenefit: string
+  }[]
+  author: {
+    authorName: string
+    authorCategory: string
+    authorPhone: string
+    authorEmail: string
+    authorWebsite: string
+    authorImage: string
+  }
+  ingredients: {
+    ingredientName: string
+    quantity: string
+    mainIngredient: boolean
+    foodId: number
+    available: boolean
+    food: {
+      id: number
+      name: string
+      images: {
+        image: string
+      }[]
+    }
+  }[]
+}
+
 const RecipeSchema = z.object({
   name: z
     .string()
@@ -122,50 +168,6 @@ const RichTextEditor = dynamic(
   { ssr: false }
 )
 
-interface RecipeDetailsTypes {
-  id: number
-  name: string
-  category: string
-  season: string
-  isActive: boolean
-  attribute: {
-    preparation: string
-    rest: string
-    persons: number
-  }
-  describe: {
-    description: string
-  }
-  images: {
-    imageUrl: string
-  }[]
-  healthBenefits: {
-    healthBenefit: string
-  }[]
-  author: {
-    authorName: string
-    authorCategory: string
-    authorPhone: string
-    authorEmail: string
-    authorWebsite: string
-    authorImage: string
-  }
-  ingredients: {
-    ingredientName: string
-    quantity: string
-    mainIngredient: boolean
-    foodId: number
-    available: boolean
-    food: {
-      id: number
-      name: string
-      images: {
-        image: string
-      }[]
-    }
-  }[]
-}
-
 export default function ViewRecipePopUp({
   open,
   onClose,
@@ -183,7 +185,6 @@ export default function ViewRecipePopUp({
     if (token && recipeId) {
       const getUserDetailsByUserId = async (): Promise<void> => {
         const response = await getRecipeById(token, recipeId)
-        console.log("Response:", response)
         if (response.status === 200) {
           form.reset({
             name: response.data.name,
@@ -203,7 +204,7 @@ export default function ViewRecipePopUp({
             recipe: response.data.describe.description,
             ingredientData: response.data.ingredients,
             authorimage: response.data.author.authorImage,
-            foodimage: response.data.ingredients.food.images
+            foodimage: null
           })
           setRecipeDetails(response.data)
         } else {
@@ -257,13 +258,13 @@ export default function ViewRecipePopUp({
       header: "Available in Ingredients",
       accessor: (row: Ingredient) =>
         row.tags.includes("InSystem") ? (
-          <Badge className="bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors">
+          <Badge className="px-2 py-1 text-xs text-black bg-green-200 rounded-md border border-green-500 transition-colors hover:bg-green-100">
             In the System
           </Badge>
         ) : (
           <Button
             variant="ghost"
-            className="text-secondary-blue text-xs px-2 py-1 flex items-center gap-1 hover:bg-transparent focus:bg-transparent active:bg-transparent"
+            className="flex gap-1 items-center px-2 py-1 text-xs text-secondary-blue hover:bg-transparent focus:bg-transparent active:bg-transparent"
             size="sm"
           >
             <CircleFadingPlus size={14} />
@@ -296,7 +297,7 @@ export default function ViewRecipePopUp({
     { value: "Winter", label: "Winter" }
   ]
   const authorSpeality: Option[] = [
-    { value: "Spring", label: "Spring" },
+    { value: "Chef", label: "Chef" },
     { value: "Summer", label: "Summer" },
     { value: "Autumn", label: "Autumn" }
   ]
@@ -322,20 +323,32 @@ export default function ViewRecipePopUp({
     }
   })
 
+  const getLinkedFoodImages = (): { src: string; alt: string }[] => {
+    if (!recipeDetails?.ingredients) return []
+
+    return recipeDetails.ingredients.flatMap(
+      ingredient =>
+        ingredient.food?.images?.map(img => ({
+          src: img.image,
+          alt: ingredient.food?.name || "Food Image"
+        })) || []
+    )
+  }
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <div
-              className="h-[calc(80vh-64px)] p-2 overflow-y-auto"
+              className="h-[calc(80vh-64px)] px-2 pt-2 pb-10 overflow-y-auto"
               style={{
                 scrollbarWidth: "none", // Firefox
                 msOverflowStyle: "none" // IE/Edge
               }}
             >
               <DialogTitle>Add New Recipe</DialogTitle>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 pb-6">
+              <div className="grid grid-cols-1 gap-4 pt-4 pb-6 sm:grid-cols-2 md:grid-cols-3">
                 <div>
                   <FormField
                     control={form.control}
@@ -372,7 +385,7 @@ export default function ViewRecipePopUp({
                             value={field.value}
                             disabled
                           >
-                            <SelectTrigger className="w-full mt-1">
+                            <SelectTrigger className="mt-1 w-full">
                               <SelectValue placeholder="Select Category" />
                             </SelectTrigger>
                             <SelectContent>
@@ -407,7 +420,7 @@ export default function ViewRecipePopUp({
                             value={field.value}
                             disabled
                           >
-                            <SelectTrigger className="w-full mt-1">
+                            <SelectTrigger className="mt-1 w-full">
                               <SelectValue placeholder="Select Season" />
                             </SelectTrigger>
                             <SelectContent>
@@ -432,7 +445,7 @@ export default function ViewRecipePopUp({
               <Separator />
 
               <DialogTitle className="pt-4">Recipe Attributes</DialogTitle>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 mb-4">
+              <div className="grid grid-cols-1 gap-4 pt-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
                 <div>
                   <FormField
                     control={form.control}
@@ -526,7 +539,7 @@ export default function ViewRecipePopUp({
                     placeholder="Search for ingredient"
                   />
                 </div> */}
-                {/* <div className="flex items-end h-full mt-7">
+                {/* <div className="flex items-end mt-7 h-full">
                   <Button onClick={() => {}}>Add</Button>
                 </div> */}
               </div>
@@ -601,9 +614,9 @@ export default function ViewRecipePopUp({
 
               <DialogTitle>Add Author</DialogTitle>
 
-              <div className="flex flex-col sm:flex-row gap-8 mb-4 pt-4 items-start">
+              <div className="flex flex-col gap-8 items-start pt-4 mb-4 sm:flex-row">
                 {/* Left: Author Inputs */}
-                <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid flex-1 grid-cols-1 gap-4 w-full sm:grid-cols-2">
                   <div className="w-full">
                     <FormField
                       control={form.control}
@@ -640,7 +653,7 @@ export default function ViewRecipePopUp({
                               value={field.value}
                               disabled
                             >
-                              <SelectTrigger className="w-full mt-1">
+                              <SelectTrigger className="mt-1 w-full">
                                 <SelectValue placeholder="Enter author specialty" />
                               </SelectTrigger>
                               <SelectContent>
@@ -725,7 +738,7 @@ export default function ViewRecipePopUp({
                   </div>
                 </div>
                 {/* Right: Image Uploader */}
-                <div className="w-full sm:w-2/5 ">
+                <div className="w-full sm:w-2/5">
                   <FormField
                     control={form.control}
                     name="authorimage"
@@ -733,7 +746,10 @@ export default function ViewRecipePopUp({
                       <FormItem>
                         <FormControl>
                           <ImageUploader
-                            title="Upload Autor Image"
+                            title="Upload Author Image"
+                            previewUrls={[
+                              recipeDetails?.author.authorImage || ""
+                            ]}
                             onChange={handleImageUpload(field)}
                             disabled
                           />
@@ -747,7 +763,7 @@ export default function ViewRecipePopUp({
 
               <DialogTitle>Upload Images</DialogTitle>
 
-              <div className="mt-6 pb-2 w-full sm:w-2/5">
+              <div className="pb-2 mt-6 w-full sm:w-2/5">
                 <FormField
                   control={form.control}
                   name="foodimage"
@@ -755,7 +771,10 @@ export default function ViewRecipePopUp({
                     <FormItem>
                       <FormControl>
                         <ImageUploader
-                          title="Select Images for your food item"
+                          title="Select Images for your Recipe item"
+                          previewUrls={[
+                            recipeDetails?.images[0].imageUrl || ""
+                          ]}
                           onChange={handleImageUpload(field)}
                           disabled
                         />
@@ -766,21 +785,29 @@ export default function ViewRecipePopUp({
                 />
               </div>
               <Separator className="my-4" />
-              <DialogTitle>Linked Food</DialogTitle>
 
-              <CustomImage
-                srcList={imageList}
-                count={5}
-                maxCount={6}
-                text="Recipe Image"
-                width={80}
-                height={80}
-              />
+              <DialogTitle>Linked Food</DialogTitle>
+              <div className="flex flex-wrap gap-4 pt-4">
+                {getLinkedFoodImages().map((imgObj, index) => (
+                  <div key={index} className="flex flex-col items-center">
+                    <Image
+                      src={imgObj.src}
+                      alt={imgObj.alt}
+                      width={80}
+                      height={80}
+                      className="rounded-md border"
+                    />
+                    <span className="text-sm text-gray-700 mt-1 text-center max-w-[100px] truncate">
+                      {imgObj.alt}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <DialogFooter>
               {/* Save and Cancel buttons */}
-              <div className="fixed bottom-0 left-0 w-full bg-white border-t py-4 px-4 flex justify-between gap-2 z-50">
+              <div className="flex fixed bottom-0 left-0 z-50 gap-2 justify-between px-4 py-4 w-full bg-white border-t">
                 <Button
                   variant="outline"
                   onClick={() => {
