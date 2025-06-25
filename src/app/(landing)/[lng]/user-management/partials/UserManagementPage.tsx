@@ -73,23 +73,25 @@ export default function UserManagementPage({
   const [userId, setUserId] = useState<number>(0)
 
   // handle view user overview
-  const handleViewUserOverview = (userId: number) => {
+  const handleViewUserOverview = (userId: number): void => {
     setUserOverviewPopupOpen(true)
     setUserId(userId)
   }
 
   // handle close user overview
-  const handleCloseUserOverview = () => {
+  const handleCloseUserOverview = (): void => {
     setUserOverviewPopupOpen(false)
   }
 
   // handle search text change
-  const handleSearchTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void => {
     setSearchText(e.target.value)
   }
 
   // handle get users
-  const getUsers = async () => {
+  const getUsers = async (): Promise<void> => {
     try {
       const response = await getAllUsers(token)
       if (response.status === 200) {
@@ -103,10 +105,10 @@ export default function UserManagementPage({
   }
 
   useEffect(() => {
-    getUsers()
+    void getUsers()
   }, [])
 
-  const columns: Column<UserManagementDataType>[] = useMemo(
+  const columns: Array<Column<UserManagementDataType>> = useMemo(
     () => [
       {
         accessor: "id" as const,
@@ -151,7 +153,11 @@ export default function UserManagementPage({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-32">
-              <DropdownMenuItem onClick={() => handleViewUserOverview(row.id)}>
+              <DropdownMenuItem
+                onClick={() => {
+                  handleViewUserOverview(row.id)
+                }}
+              >
                 View
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -217,36 +223,36 @@ export default function UserManagementPage({
   }, [filteredUsers, page, pageSize])
 
   // handle page change
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = (newPage: number): void => {
     setPage(newPage)
   }
   // handle page size change
-  const handlePageSizeChange = (newSize: number) => {
+  const handlePageSizeChange = (newSize: number): void => {
     setPageSize(newSize)
     setPage(1)
   }
 
   // handle Score change
-  const handleScoreChange = (value: string) => {
+  const handleScoreChange = (value: string): void => {
     setSelectedScore(value)
   }
 
   // handle dates change
-  const handleDatesChange = (value: string) => {
+  const handleDatesChange = (value: string): void => {
     setSelectedDateFilter(value)
   }
 
   // handle dates change
-  const handleDateRangeChange = (range: DateRange) => {
+  const handleDateRangeChange = (range: DateRange): void => {
     if (!range.startDate || !range.endDate) return
     setSelectedDateRange(range)
   }
 
   // handle clear search values
-  const handleClearSearchValues = () => {
+  const handleClearSearchValues = (): void => {
     setSearchText("")
     setSelectedScore("")
-    setSelectedDateFilter("")
+    setSelectedDateFilter("All")
     setSelectedDateRange({ startDate: null, endDate: null })
   }
 

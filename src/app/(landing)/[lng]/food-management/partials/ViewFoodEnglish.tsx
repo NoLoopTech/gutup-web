@@ -29,7 +29,7 @@ import {
   FormControl
 } from "@/components/ui/form"
 import { toast } from "sonner"
-import { FoodDetailsTypes } from "./ViewFoodPopUp"
+import { type FoodDetailsTypes } from "./ViewFoodPopUp"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),

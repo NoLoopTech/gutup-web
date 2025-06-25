@@ -530,7 +530,7 @@ const SidebarMenuButton = React.forwardRef<
     ref
   ) => {
     const Comp = asChild ? Slot : "button"
-    const { state } = useSidebar()
+    useSidebar()
 
     const button = (
       <Comp
@@ -626,6 +626,10 @@ const SidebarMenuSkeleton = React.forwardRef<
     return `${Math.floor(Math.random() * 40) + 50}%`
   }, [])
 
+  const skeletonStyle: React.CSSProperties & Record<string, string | number> = {
+    "--skeleton-width": width
+  }
+
   return (
     <div
       ref={ref}
@@ -642,11 +646,7 @@ const SidebarMenuSkeleton = React.forwardRef<
       <Skeleton
         className="h-4 max-w-[--skeleton-width] flex-1"
         data-sidebar="menu-skeleton-text"
-        style={
-          {
-            "--skeleton-width": width
-          } as React.CSSProperties
-        }
+        style={skeletonStyle}
       />
     </div>
   )

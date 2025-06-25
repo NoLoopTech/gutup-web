@@ -73,6 +73,7 @@ export default function VideoTipTab({
       required_error: translations.required
     })
   })
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {

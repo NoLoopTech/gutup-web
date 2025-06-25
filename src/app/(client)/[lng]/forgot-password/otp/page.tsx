@@ -23,7 +23,7 @@ import { useState } from "react"
 import { Loader2Icon } from "lucide-react"
 import { verifyOtp } from "@/app/api/auth/auth"
 import { toast } from "sonner"
-import { AxiosResponse } from "axios"
+import { type AxiosResponse } from "axios"
 
 interface VerifyOtpResponse {
   message: string

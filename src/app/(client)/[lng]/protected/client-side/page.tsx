@@ -21,7 +21,7 @@ export default function ClientSideRoot(): React.ReactNode {
     <div className="grid grid-cols-2 text-white p-4">
       <div>
         <h1 className="leading-loose text-[5rem] font-extrabold text-accent">
-          Hi {session?.user.fullname}!
+          Hi {session?.user.name}!
         </h1>
       </div>
       <QueryClientProvider client={rtkQueryClient}>

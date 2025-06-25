@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import { useState } from "react"
+import { useState, type ReactElement } from "react"
 import { Badge } from "@/components/ui/badge"
 import AddNewTagPopUp from "../../partials/AddNewTagPopUp"
 
@@ -28,27 +28,27 @@ interface FoodsBenefitsDataType {
   status: string
 }
 
-export default function FoodsBenefitsPage() {
+export default function FoodsBenefitsPage(): ReactElement {
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(10)
   const [openAddNewTagPopUp, setOpenAddNewTagPopUp] = useState<boolean>(false)
 
   // handle open add food popup
-  const handleOpenAddNewTagPopUp = () => {
+  const handleOpenAddNewTagPopUp = (): void => {
     setOpenAddNewTagPopUp(true)
   }
 
   // handle close add food popup
-  const handleCloseAddNewTagPopUp = () => {
+  const handleCloseAddNewTagPopUp = (): void => {
     setOpenAddNewTagPopUp(false)
   }
 
-  const columns: Column<FoodsBenefitsDataType>[] = [
+  const columns: Array<Column<FoodsBenefitsDataType>> = [
     {
       accessor: "tag",
       header: "Tag",
       className: "w-40",
-      cell: (row: FoodsBenefitsDataType) => (
+      cell: (row: FoodsBenefitsDataType): React.ReactNode => (
         <Badge variant={"outline"}>{row.tag}</Badge>
       )
     },
@@ -64,7 +64,7 @@ export default function FoodsBenefitsPage() {
       accessor: "status",
       header: "Status",
       className: "w-28",
-      cell: (row: FoodsBenefitsDataType) => (
+      cell: (row: FoodsBenefitsDataType): React.ReactNode => (
         <Badge
           className={
             row.status === "Active"
@@ -81,7 +81,7 @@ export default function FoodsBenefitsPage() {
     {
       id: "actions",
       className: "w-12",
-      cell: (row: FoodsBenefitsDataType) => (
+      cell: (row: FoodsBenefitsDataType): React.ReactNode => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -128,11 +128,11 @@ export default function FoodsBenefitsPage() {
     endIndex
   )
 
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = (newPage: number): void => {
     setPage(newPage)
   }
 
-  const handlePageSizeChange = (newSize: number) => {
+  const handlePageSizeChange = (newSize: number): void => {
     setPageSize(newSize)
     setPage(1)
   }

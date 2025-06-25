@@ -5,17 +5,17 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ChevronUp,
-  ChevronDown,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+  ChevronDown
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface CustomPaginationProps {
-  page: number;
-  pageSize: number;
-  totalItems: number;
-  pageSizeOptions: number[];
-  onPageChange: (page: number) => void;
-  onPageSizeChange: (size: number) => void;
+  page: number
+  pageSize: number
+  totalItems: number
+  pageSizeOptions: number[]
+  onPageChange: (page: number) => void
+  onPageSizeChange: (size: number) => void
 }
 
 export const CustomPagination = ({
@@ -24,10 +24,10 @@ export const CustomPagination = ({
   totalItems,
   pageSizeOptions,
   onPageChange,
-  onPageSizeChange,
+  onPageSizeChange
 }: CustomPaginationProps): JSX.Element => {
-  const totalPages = Math.ceil(totalItems / pageSize);
-  const currentSizeIndex = pageSizeOptions.indexOf(pageSize);
+  const totalPages = Math.ceil(totalItems / pageSize)
+  const currentSizeIndex = pageSizeOptions.indexOf(pageSize)
 
   return (
     <div className="w-full flex justify-end py-2 space-x-4 sm:space-x-6 items-center text-xs sm:text-sm text-black">
@@ -41,8 +41,8 @@ export const CustomPagination = ({
               className="h-2.5 w-2.5 sm:h-3 sm:w-3 cursor-pointer"
               onClick={() => {
                 if (currentSizeIndex < pageSizeOptions.length - 1) {
-                  onPageSizeChange(pageSizeOptions[currentSizeIndex + 1]);
-                  onPageChange(1);
+                  onPageSizeChange(pageSizeOptions[currentSizeIndex + 1])
+                  onPageChange(1)
                 }
               }}
             />
@@ -50,8 +50,8 @@ export const CustomPagination = ({
               className="h-2.5 w-2.5 sm:h-3 sm:w-3 cursor-pointer"
               onClick={() => {
                 if (currentSizeIndex > 0) {
-                  onPageSizeChange(pageSizeOptions[currentSizeIndex - 1]);
-                  onPageChange(1);
+                  onPageSizeChange(pageSizeOptions[currentSizeIndex - 1])
+                  onPageChange(1)
                 }
               }}
             />
@@ -69,7 +69,9 @@ export const CustomPagination = ({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => { onPageChange(1); }}
+          onClick={() => {
+            onPageChange(1)
+          }}
           disabled={page <= 1}
           className="border border-Primary-200 mr-1 h-5 w-5 sm:h-8 sm:w-8"
         >
@@ -78,7 +80,9 @@ export const CustomPagination = ({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => { onPageChange(page - 1); }}
+          onClick={() => {
+            onPageChange(page - 1)
+          }}
           disabled={page <= 1}
           className="border border-Primary-200 mr-1 h-5 w-5 sm:h-8 sm:w-8"
         >
@@ -87,7 +91,9 @@ export const CustomPagination = ({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => { onPageChange(page + 1); }}
+          onClick={() => {
+            onPageChange(page + 1)
+          }}
           disabled={page >= totalPages}
           className="border border-Primary-200 mr-1 h-5 w-5 sm:h-8 sm:w-8"
         >
@@ -96,7 +102,9 @@ export const CustomPagination = ({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => { onPageChange(totalPages); }}
+          onClick={() => {
+            onPageChange(totalPages)
+          }}
           disabled={page >= totalPages}
           className="border border-Primary-200 h-5 w-5 sm:h-8 sm:w-8"
         >
@@ -104,5 +112,5 @@ export const CustomPagination = ({
         </Button>
       </div>
     </div>
-  );
-};
+  )
+}

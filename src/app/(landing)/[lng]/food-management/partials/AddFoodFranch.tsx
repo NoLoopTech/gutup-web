@@ -132,8 +132,8 @@ const handleConservationChange = (field: any) => (val: string) => {
   field.onChange(val)
 }
 // Separate function for handling image upload
-const handleImageUpload = (field: any) => (file: File | null) => {
-  field.onChange(file)
+const handleImageUpload = (field: any) => (files: File[] | null) => {
+  field.onChange(files && files.length > 0 ? files[0] : null)
 }
 
 export default function AddFoodFrench({

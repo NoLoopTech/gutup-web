@@ -17,8 +17,6 @@ export default function AddRecipePopUp({ open, onClose }: Props): JSX.Element {
   const [allowMultiLang, setAllowMultiLang] = useState(false) // Controls the language toggle
   const [activeTab, setActiveTab] = useState<"english" | "french">("english") // Default active tab
 
-  // Refs for each RichTextEditor
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">

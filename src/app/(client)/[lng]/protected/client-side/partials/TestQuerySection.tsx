@@ -28,7 +28,7 @@ export default function TestQuerySection(): React.ReactNode {
       <button className="btn btn-primary" onClick={handleTestQueryBtn}>
         {protectedLoading ? "Loading..." : "Submit"}
       </button>
-      <div>{protectedLoading ? "Loading" : protectedData?.fullname}</div>
+      <div>{protectedLoading ? "Loading" : protectedData?.name}</div>
     </div>
   )
 }

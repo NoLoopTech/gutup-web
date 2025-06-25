@@ -34,19 +34,19 @@ interface DailyTipsDataType {
   dislikes: number
 }
 
-export default function DailyTipsPage() {
+export default function DailyTipsPage(): React.ReactElement {
   const [isOpenAddTip, setIsOpenAddTip] = useState<boolean>(false)
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(10)
 
-  const handleOpenAddTip = () => {
+  const handleOpenAddTip = (): void => {
     setIsOpenAddTip(true)
   }
-  const handleCloseAddTip = () => {
+  const handleCloseAddTip = (): void => {
     setIsOpenAddTip(false)
   }
 
-  const columns: Column<DailyTipsDataType>[] = [
+  const columns: Array<Column<DailyTipsDataType>> = [
     {
       accessor: "media",
       header: "Media",
@@ -166,11 +166,11 @@ export default function DailyTipsPage() {
   const endIndex: number = startIndex + pageSize
   const paginatedData: DailyTipsDataType[] = data.slice(startIndex, endIndex)
 
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = (newPage: number): void => {
     setPage(newPage)
   }
 
-  const handlePageSizeChange = (newSize: number) => {
+  const handlePageSizeChange = (newSize: number): void => {
     setPageSize(newSize)
     setPage(1)
   }

@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/nextAuthOptions"
 import { redirect } from "next/navigation"
-import DashboardPage from "./partials/DashboardPage"
 
 export const metadata = {
   title: "Dashboard"

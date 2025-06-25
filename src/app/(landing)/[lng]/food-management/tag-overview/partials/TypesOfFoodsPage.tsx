@@ -28,22 +28,22 @@ interface TypesOfFoodsDataType {
   status: string
 }
 
-export default function TypesOfFoodsPage() {
+export default function TypesOfFoodsPage(): React.ReactElement {
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(10)
   const [openAddNewTagPopUp, setOpenAddNewTagPopUp] = useState<boolean>(false)
 
   // handle open add food popup
-  const handleOpenAddNewTagPopUp = () => {
+  const handleOpenAddNewTagPopUp = (): void => {
     setOpenAddNewTagPopUp(true)
   }
 
   // handle close add food popup
-  const handleCloseAddNewTagPopUp = () => {
+  const handleCloseAddNewTagPopUp = (): void => {
     setOpenAddNewTagPopUp(false)
   }
 
-  const columns: Column<TypesOfFoodsDataType>[] = [
+  const columns: Array<Column<TypesOfFoodsDataType>> = [
     {
       accessor: "tag",
       header: "Tag",
@@ -118,18 +118,18 @@ export default function TypesOfFoodsPage() {
     }
   ]
 
-  const pageSizeOptions: number[] = [5, 10, 20]
+  const pageSizeOptions = [5, 10, 20]
 
-  const totalItems: number = data.length
-  const startIndex: number = (page - 1) * pageSize
-  const endIndex: number = startIndex + pageSize
-  const paginatedData: TypesOfFoodsDataType[] = data.slice(startIndex, endIndex)
+  const totalItems = data.length
+  const startIndex = (page - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const paginatedData = data.slice(startIndex, endIndex)
 
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = (newPage: number): void => {
     setPage(newPage)
   }
 
-  const handlePageSizeChange = (newSize: number) => {
+  const handlePageSizeChange = (newSize: number): void => {
     setPageSize(newSize)
     setPage(1)
   }

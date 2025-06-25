@@ -14,5 +14,5 @@ export default async function UserManagement(): Promise<any> {
     redirect("/login")
   }
 
-  return <UserManagementPage token={session.apiToken as string} />
+  return <UserManagementPage token={session.apiToken} />
 }
