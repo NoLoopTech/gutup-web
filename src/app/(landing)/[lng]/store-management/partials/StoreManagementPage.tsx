@@ -153,8 +153,7 @@ export default function StoreManagementPage({
               : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700 "
           }
         >
-          {/* {row.shopStatus ? "Active" : "Inactive"} */}
-          {row.shopStatus === true ? "Active" : "Inactive"}
+          {row.shopStatus ? "Active" : "Inactive"}
         </Badge>
       )
     },
