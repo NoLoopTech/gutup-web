@@ -21,7 +21,7 @@ export default async function Layout({
   return (
     <main>
       {/* Tabs with links */}
-      <Tabs defaultValue="daily-tips" className="mb-4 ">
+      <Tabs defaultValue="daily-tips" className="mb-4">
         <TabsList className="h-10">
           <Link href="/content-management/daily-tips" passHref>
             <TabsTrigger value="daily-tips" className="h-[34px]">

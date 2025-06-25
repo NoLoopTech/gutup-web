@@ -35,6 +35,7 @@ import {
 import { CalendarIcon } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
+import { type translationsTypes } from "@/types/dailyTipTypes"
 
 interface Option {
   value: string
@@ -42,51 +43,68 @@ interface Option {
 }
 
 const concerns: Option[] = [
-  { value: "Stress", label: "Stress" },
-  { value: "Anxiety", label: "Anxiety" },
-  { value: "Depression", label: "Depression" }
+  { value: "stress", label: "Stress" },
+  { value: "anxiety", label: "Anxiety" },
+  { value: "depression", label: "Depression" }
 ]
+// Define function for handling image upload changes
+const handleImageUpload = (field: any) => (files: File[] | null) => {
+  field.onChange(files && files.length > 0 ? files[0] : null)
+}
 
-// Validation schema including inputs & textareas
-const FormSchema = z.object({
-  title: z
-    .string()
-    .nonempty("Required")
-    .min(2, { message: "Title must be at least 2 characters" }),
-  subTitleOne: z
-    .string()
-    .nonempty("Required")
-    .min(2, { message: "Sub Title One must be at least 2 characters" }),
-  subDescriptionOne: z
-    .string()
-    .nonempty("Required")
-    .min(10, { message: "Sub Description One must be at least 10 characters" })
-    .max(500, {
-      message: "Sub Description One must not exceed 500 characters"
+export default function BasicLayoutTab({
+  translations
+}: {
+  translations: translationsTypes
+}): JSX.Element {
+  // Validation schema including inputs & textareas
+  const FormSchema = z.object({
+    title: z
+      .string()
+      .nonempty(translations.required)
+      .min(2, { message: translations.titleMustBeAtLeast2Characters }),
+    subTitleOne: z
+      .string()
+      .nonempty(translations.required)
+      .min(2, { message: translations.subTitleOneMustBeAtLeast2Characters }),
+    subDescriptionOne: z
+      .string()
+      .nonempty(translations.required)
+      .min(10, {
+        message: translations.subDescriptionOneMustBeAtLeast10Characters
+      })
+      .max(500, {
+        message: translations.subDescriptionOneMustNotExceed500Characters
+      }),
+    subTitleTwo: z
+      .string()
+      .nonempty(translations.required)
+      .min(2, { message: translations.subTitleTwoMustBeAtLeast2Characters }),
+    subDescriptionTwo: z
+      .string()
+      .nonempty(translations.required)
+      .min(10, {
+        message: translations.subDescriptionTwoMustBeAtLeast10Characters
+      })
+      .max(500, {
+        message: translations.subDescriptionTwoMustNotExceed500Characters
+      }),
+    concern: z
+      .string({ required_error: translations.pleaseSelectAConcern })
+      .nonempty(translations.pleaseSelectAConcern),
+    image: z.custom<File | null>(val => val instanceof File, {
+      message: translations.required
     }),
-  subTitleTwo: z
-    .string()
-    .nonempty("Required")
-    .min(2, { message: "Sub Title Two must be at least 2 characters" }),
-  subDescriptionTwo: z
-    .string()
-    .nonempty("Required")
-    .min(10, { message: "Sub Description Two must be at least 10 characters" })
-    .max(500, {
-      message: "Sub Description Two must not exceed 500 characters"
-    }),
-  concern: z
-    .string({ required_error: "Please select a concern" })
-    .nonempty("Please select a concern"),
-  image: z.custom<File | null>(val => val instanceof File, {
-    message: "Required"
-  }),
-  dateselect: z.date({
-    required_error: "Required"
+    dateselect: z.date({
+      required_error: translations.required
+    })
   })
-})
-
-export default function BasicLayoutTab(): JSX.Element {
+  const handleCancel = (
+    form: ReturnType<typeof useForm<z.infer<typeof FormSchema>>>
+  ): void => {
+    form.reset()
+  }
+ 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -123,7 +141,7 @@ export default function BasicLayoutTab(): JSX.Element {
                 name="dateselect"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>When to be Displayed</FormLabel>
+                    <FormLabel>{translations.whenTobeDisplayed}</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -134,7 +152,7 @@ export default function BasicLayoutTab(): JSX.Element {
                           {field.value ? (
                             format(field.value, "PPP")
                           ) : (
-                            <span>Pick a date</span>
+                            <span>{translations.pickADate}</span>
                           )}
                           <CalendarIcon className="ml-2 h-4 w-4 text-gray-500" />
                         </Button>
@@ -155,7 +173,7 @@ export default function BasicLayoutTab(): JSX.Element {
           </div>
 
           <div className="flex flex-col gap-1 pb-2">
-            <Label>Concerns</Label>
+            <Label>{translations.concern}</Label>
             <div className="w-full">
               <FormField
                 control={form.control}
@@ -168,12 +186,16 @@ export default function BasicLayoutTab(): JSX.Element {
                         value={field.value}
                       >
                         <SelectTrigger className="w-full mt-1">
-                          <SelectValue placeholder="Select Concern" />
+                          <SelectValue
+                            placeholder={translations.selectConcern}
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {concerns.map(option => (
                             <SelectItem key={option.value} value={option.value}>
-                              {option.label}
+                              {translations[
+                                option.value.toLowerCase() as keyof translationsTypes
+                              ] || option.label}{" "}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -194,9 +216,14 @@ export default function BasicLayoutTab(): JSX.Element {
               name="title"
               render={({ field }) => (
                 <FormItem className="flex-1 mb-4">
-                  <FormLabel className="block mb-1 text-black">Title</FormLabel>
+                  <FormLabel className="block mb-1 text-black">
+                    {translations.title}
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="Give a tip title" {...field} />
+                    <Input
+                      placeholder={translations.giveATipTitle}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -209,10 +236,13 @@ export default function BasicLayoutTab(): JSX.Element {
               render={({ field }) => (
                 <FormItem className="flex-1 mb-4">
                   <FormLabel className="block mb-1 text-black">
-                    Sub Title One
+                    {translations.subTitleOne}
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="Give a tip title" {...field} />
+                    <Input
+                      placeholder={translations.giveATipTitle}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -226,10 +256,13 @@ export default function BasicLayoutTab(): JSX.Element {
               render={({ field }) => (
                 <FormItem className="flex-1 mb-1 pb-4">
                   <FormLabel className="block mb-1 text-black">
-                    Sub Description One
+                    {translations.subDescriptionOne}
                   </FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Describe in detail." {...field} />
+                    <Textarea
+                      placeholder={translations.describeInDetail}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -242,10 +275,13 @@ export default function BasicLayoutTab(): JSX.Element {
               render={({ field }) => (
                 <FormItem className="flex-1 mb-4">
                   <FormLabel className="block mb-1 text-black">
-                    Sub Title Two
+                    {translations.subTitleTwo}
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="Give a tip title" {...field} />
+                    <Input
+                      placeholder={translations.giveATipTitle}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -259,10 +295,13 @@ export default function BasicLayoutTab(): JSX.Element {
               render={({ field }) => (
                 <FormItem className="flex-1 mb-1">
                   <FormLabel className="block mb-1 text-black">
-                    Sub Description Two
+                    {translations.subDescriptionTwo}
                   </FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Describe in detail." {...field} />
+                    <Textarea
+                      placeholder={translations.describeInDetail}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -273,7 +312,9 @@ export default function BasicLayoutTab(): JSX.Element {
           <Separator />
 
           <div className="flex items-center justify-between mt-4 mb-4">
-            <h2 className="text-lg font-bold text-black">Upload Images</h2>
+            <h2 className="text-lg font-bold text-black">
+              {translations.uploadImages}
+            </h2>
           </div>
           {/* Image Uploader */}
           <div className="pb-12">
@@ -284,11 +325,8 @@ export default function BasicLayoutTab(): JSX.Element {
                 <FormItem>
                   <FormControl>
                     <ImageUploader
-                      title="Select Images for your food item"
-                      onChange={file => {
-                        field.onChange(file)
-                        form.clearErrors("image")
-                      }}
+                      title={translations.selectImagesForYourFoodItem}
+                      onChange={handleImageUpload(field)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -302,14 +340,13 @@ export default function BasicLayoutTab(): JSX.Element {
         <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
           <Button
             variant="outline"
-            type="button"
             onClick={() => {
-              form.reset()
+              handleCancel(form)
             }}
           >
-            Cancel
+            {translations.cancel}
           </Button>
-          <Button type="submit">Save</Button>
+          <Button type="submit">{translations.save}</Button>
         </div>
       </form>
     </Form>

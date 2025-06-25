@@ -33,6 +33,7 @@ import {
 import { CalendarIcon } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
+import { type translationsTypes } from "@/types/dailyTipTypes"
 
 interface Option {
   value: string
@@ -45,31 +46,34 @@ const concerns: Option[] = [
   { value: "Depression", label: "Depression" }
 ]
 
-// Validation schema for this page
-const FormSchema = z.object({
-  concern: z.string().nonempty("Please select a concern"),
-  title: z
-    .string()
-    .nonempty("Required")
-    .min(2, { message: "Title must be at least 2 characters" }),
-  subTitle: z
-    .string()
-    .nonempty("Required")
-    .min(2, { message: "Sub Title must be at least 2 characters" }),
-  subDescription: z
-    .string()
-    .nonempty("Required")
-    .min(10, { message: "Sub Description must be at least 10 characters" }),
-  videoLink: z
-    .string()
-    .nonempty("Required")
-    .url({ message: "Invalid URL format" }),
-  dateselect: z.date({
-    required_error: "Required"
+export default function VideoTipTab({
+  translations
+}: {
+  translations: translationsTypes
+}): JSX.Element {
+  // Validation schema for this page
+  const FormSchema = z.object({
+    concern: z.string().nonempty(translations.pleaseSelectAConcern),
+    title: z
+      .string()
+      .nonempty(translations.required)
+      .min(2, { message: translations.titleMustBeAtLeast2Characters }),
+    subTitle: z
+      .string()
+      .nonempty(translations.required)
+      .min(2, { message: translations.subTitlMustBeAtLeast2Characters }),
+    subDescription: z.string().nonempty(translations.required).min(10, {
+      message: translations.subDescriptioMustBeAtLeast10Characters
+    }),
+    videoLink: z
+      .string()
+      .nonempty(translations.required)
+      .url({ message: translations.invalidURLFormat }),
+    dateselect: z.date({
+      required_error: translations.required
+    })
   })
-})
 
-export default function VideoTipTab(): JSX.Element {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -81,7 +85,11 @@ export default function VideoTipTab(): JSX.Element {
       dateselect: undefined
     }
   })
-
+  const handleCancel = (
+    form: ReturnType<typeof useForm<z.infer<typeof FormSchema>>>
+  ): void => {
+    form.reset()
+  }
   function onSubmit(data: z.infer<typeof FormSchema>): void {
     toast("Form submitted", {
       description: JSON.stringify(data, null, 2)
@@ -99,7 +107,7 @@ export default function VideoTipTab(): JSX.Element {
                 name="dateselect"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>When to be Displayed</FormLabel>
+                    <FormLabel>{translations.whenTobeDisplayed}</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -110,7 +118,7 @@ export default function VideoTipTab(): JSX.Element {
                           {field.value ? (
                             format(field.value, "PPP")
                           ) : (
-                            <span>Pick a date</span>
+                            <span>{translations.pickADate}</span>
                           )}
                           <CalendarIcon className="ml-2 h-4 w-4 text-gray-500" />
                         </Button>
@@ -131,7 +139,7 @@ export default function VideoTipTab(): JSX.Element {
           </div>
 
           <div className="flex flex-col gap-1 pt-1">
-            <Label>Concerns</Label>
+            <Label>{translations.concern}</Label>
             <div className="w-full">
               <FormField
                 control={form.control}
@@ -144,12 +152,16 @@ export default function VideoTipTab(): JSX.Element {
                         value={field.value}
                       >
                         <SelectTrigger className="w-full mt-1">
-                          <SelectValue placeholder="Select Concern" />
+                          <SelectValue
+                            placeholder={translations.selectConcern}
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {concerns.map(option => (
                             <SelectItem key={option.value} value={option.value}>
-                              {option.label}
+                              {translations[
+                                option.value.toLowerCase() as keyof translationsTypes
+                              ] || option.label}{" "}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -163,15 +175,15 @@ export default function VideoTipTab(): JSX.Element {
           </div>
         </div>
 
-        <div className="pt-4">
+        <div className="pt-4 pb-1">
           <FormField
             control={form.control}
             name="title"
             render={({ field }) => (
               <FormItem className="flex-1 mb-4">
-                <FormLabel>Title</FormLabel>
+                <FormLabel>{translations.title}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter title" {...field} />
+                  <Input placeholder={translations.enterTitle} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -183,9 +195,9 @@ export default function VideoTipTab(): JSX.Element {
             name="subTitle"
             render={({ field }) => (
               <FormItem className="flex-1 mb-4">
-                <FormLabel>Sub Title</FormLabel>
+                <FormLabel>{translations.subTitle}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter sub title" {...field} />
+                  <Input placeholder={translations.enterSubTitle} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -197,10 +209,10 @@ export default function VideoTipTab(): JSX.Element {
             name="subDescription"
             render={({ field }) => (
               <FormItem className="flex-1 mb-6">
-                <FormLabel>Sub Description</FormLabel>
+                <FormLabel>{translations.subDescription}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Describe in detail"
+                    placeholder={translations.describeInDetail}
                     className="h-14"
                     {...field}
                   />
@@ -213,16 +225,16 @@ export default function VideoTipTab(): JSX.Element {
 
         <Separator />
 
-        <div className="flex-1 mt-6 mb-8">
+        <div className="flex-1 mt-4 mb-8">
           <FormField
             control={form.control}
             name="videoLink"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Video Link</FormLabel>
+                <FormLabel>{translations.videoLink}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Enter the video link eg: YouTube & Vimeo"
+                    placeholder={translations.enterTheVideoLink}
                     {...field}
                   />
                 </FormControl>
@@ -235,14 +247,13 @@ export default function VideoTipTab(): JSX.Element {
         <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
           <Button
             variant="outline"
-            type="button"
             onClick={() => {
-              form.reset()
+              handleCancel(form)
             }}
           >
-            Cancel
+            {translations.cancel}
           </Button>
-          <Button type="submit">Save</Button>
+          <Button type="submit">{translations.save}</Button>
         </div>
       </form>
     </Form>

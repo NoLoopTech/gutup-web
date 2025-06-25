@@ -1,0 +1,79 @@
+export interface translationsTypes {
+  addMoodTitle: string
+  allowMultiLang: string
+  english: string
+  french: string
+  selectLayout: string
+  selectLayoutType: string
+  quote: string
+  food: string
+  recipe: string
+  selectMood: string
+  quoteAuthor: string
+  enterQuoteQuthor: string
+  addTheQuoteHereInDetails: string
+  save: string
+  cancel: string
+  foodName: string
+  description: string
+  shopcategory: string
+  searchForFood: string
+  addDetailsInHere: string
+  selectShopCategory: string
+  searchForRecipe: string
+  sad: string
+  happy: string
+  angry: string
+  bakery: string
+  dairy: string
+  produce: string
+
+  required: string
+  pleaseSelectAMood: string
+  authorNameMustBeAtLeast2Characters: string
+  quoteMustBeAtLeast10Characters: string
+  recipeNameMustBeAtLeast2Characters: string
+  descriptionMustBeAtLeast10Characters: string
+  foodNameMustBeAtLeast2Characters: string
+  pleaseSelectAShopCategory: string
+}
+
+export const defaultTranslations: translationsTypes = {
+  addMoodTitle: "",
+  allowMultiLang: "",
+  english: "",
+  french: "",
+  selectLayout: "",
+  selectLayoutType: "",
+  quote: "",
+  food: "",
+  recipe: "",
+  selectMood: "",
+  quoteAuthor: "",
+  enterQuoteQuthor: "",
+  addTheQuoteHereInDetails: "",
+  save: "",
+  cancel: "",
+  foodName: "",
+  description: "",
+  shopcategory: "",
+  searchForFood: "",
+  addDetailsInHere: "",
+  selectShopCategory: "",
+  searchForRecipe: "",
+  sad: "",
+  happy: "",
+  angry: "",
+  bakery: "",
+  dairy: "",
+  produce: "",
+
+  required: "",
+  pleaseSelectAMood: "",
+  authorNameMustBeAtLeast2Characters: "",
+  quoteMustBeAtLeast10Characters: "",
+  recipeNameMustBeAtLeast2Characters: "",
+  descriptionMustBeAtLeast10Characters: "",
+  foodNameMustBeAtLeast2Characters: "",
+  pleaseSelectAShopCategory: ""
+}

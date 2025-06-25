@@ -24,6 +24,7 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { toast } from "sonner"
+import { type translationsTypes } from "@/types/moodsTypes"
 
 interface Option {
   value: string
@@ -36,20 +37,24 @@ const moods: Option[] = [
   { value: "sad", label: "Sad" }
 ]
 
-// Validation schema
-const FormSchema = z.object({
-  mood: z.string().nonempty("Please select a mood"),
-  recipe: z
-    .string()
-    .nonempty("Required")
-    .min(2, "Recipe name must be at least 2 characters"),
-  description: z
-    .string()
-    .nonempty("Required")
-    .min(10, "Description must be at least 10 characters")
-})
+export default function RecipeTab({
+  translations
+}: {
+  translations: any
+}): JSX.Element {
+  // Validation schema
+  const FormSchema = z.object({
+    mood: z.string().nonempty(translations.pleaseSelectAMood),
+    recipe: z
+      .string()
+      .nonempty(translations.required)
+      .min(2, translations.recipeNameMustBeAtLeast2Characters),
+    description: z
+      .string()
+      .nonempty(translations.required)
+      .min(10, translations.descriptionMustBeAtLeast10Characters)
+  })
 
-export default function RecipeTab(): JSX.Element {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -69,34 +74,37 @@ export default function RecipeTab(): JSX.Element {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 text-black pb-20"
+        className="pb-20 space-y-4 text-black"
       >
-        {/* Mood */}
-        <FormField
-          control={form.control}
-          name="mood"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Select Mood</FormLabel>
-              <FormControl>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="w-full mt-1">
-                    <SelectValue placeholder="Select Mood" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {moods.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
+        <div className="pt-4 pb-3">
+          {/* Mood */}
+          <FormField
+            control={form.control}
+            name="mood"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{translations.selectMood}</FormLabel>
+                <FormControl>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger className="mt-1 w-full">
+                      <SelectValue placeholder={translations.selectMood} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {moods.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {translations[
+                            option.value.toLowerCase() as keyof translationsTypes
+                          ] || option.label}{" "}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <Separator />
 
         {/* Recipe Name */}
@@ -105,9 +113,9 @@ export default function RecipeTab(): JSX.Element {
           name="recipe"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Recipe</FormLabel>
+              <FormLabel>{translations.recipe}</FormLabel>
               <FormControl>
-                <Input placeholder="Search for recipe" {...field} />
+                <Input placeholder={translations.searchForRecipe} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -120,9 +128,12 @@ export default function RecipeTab(): JSX.Element {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>{translations.description}</FormLabel>
               <FormControl>
-                <Textarea placeholder="Add details in here" {...field} />
+                <Textarea
+                  placeholder={translations.addDetailsInHere}
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -130,7 +141,7 @@ export default function RecipeTab(): JSX.Element {
         />
 
         {/* Action Buttons */}
-        <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
+        <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
           <Button
             variant="outline"
             type="button"
@@ -138,9 +149,9 @@ export default function RecipeTab(): JSX.Element {
               form.reset()
             }}
           >
-            Cancel
+            {translations.cancel}
           </Button>
-          <Button type="submit">Save</Button>
+          <Button type="submit">{translations.save}</Button>
         </div>
       </form>
     </Form>

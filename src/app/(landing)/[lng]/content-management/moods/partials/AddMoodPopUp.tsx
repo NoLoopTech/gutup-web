@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState } from "react"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import QuoteTab from "./QuoteTab"
 import FoodTab from "./FoodTab"
@@ -13,11 +12,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
-
-interface Props {
-  open: boolean
-  onClose: () => void
-}
+import { type translationsTypes } from "@/types/moodsTypes"
 
 // Tab option
 interface TabOption {
@@ -33,49 +28,47 @@ const tabOptions: TabOption[] = [
   { value: "Recipe", label: "Recipe" }
 ]
 
-export default function AddMoodPopUp({ open, onClose }: Props): JSX.Element {
+export default function AddMoodPopUp({
+  translations
+}: {
+  translations: translationsTypes
+}): JSX.Element {
   const [activeTab, setActiveTab] = useState<LayoutOption>("Quote")
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-xl h-[80vh] p-6 rounded-xl overflow-hidden">
-        <div
-          className="h-full p-2 space-y-4 overflow-y-auto"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+    <div>
+      {/* Tab Selector using Input */}
+      <div>
+        <Label className="block mb-2 text-black">
+          {translations.selectLayout}
+        </Label>
+        <Select
+          value={activeTab}
+          onValueChange={val => {
+            setActiveTab(val as LayoutOption)
+          }}
         >
-          {/* Header */}
-          <DialogTitle>Add New Mood</DialogTitle>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder={translations.selectLayoutType} />
+          </SelectTrigger>
+          <SelectContent>
+            {tabOptions.map(opt => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {translations[
+                  opt.value.toLowerCase() as keyof translationsTypes
+                ] || opt.label}{" "}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-          {/* Tab Selector using Input */}
-          <div>
-            <Label className="block mb-2 text-black">Select Layout</Label>
-            <Select
-              value={activeTab}
-              onValueChange={val => {
-                setActiveTab(val as LayoutOption)
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Layout Type" />
-              </SelectTrigger>
-              <SelectContent>
-                {tabOptions.map(opt => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Tab Content */}
-          <div>
-            {activeTab === "Quote" && <QuoteTab />}
-            {activeTab === "Food" && <FoodTab />}
-            {activeTab === "Recipe" && <RecipeTab />}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+      {/* Tab Content */}
+      <div>
+        {activeTab === "Quote" && <QuoteTab translations={translations} />}
+        {activeTab === "Food" && <FoodTab translations={translations} />}
+        {activeTab === "Recipe" && <RecipeTab translations={translations} />}
+      </div>
+    </div>
   )
 }
