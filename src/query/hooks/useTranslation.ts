@@ -6,28 +6,30 @@ export function useTranslation() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  const translateText = useCallback(async (text: string) => {
-    if (!text.trim()) return
+  const translateText = useCallback(async (text: string): Promise<string> => {
+    if (!text.trim()) return ""
 
     setLoading(true)
     setError("")
+    let result = ""
 
     try {
       const response = await axios.post("/api/translate", { text })
 
       if (response.data.translated) {
-        setTranslatedText(response.data.translated)
+        result = response.data.translated
+        setTranslatedText(result)
       } else {
         setError("Translation failed, please try again.")
-        setTranslatedText("")
       }
     } catch (err) {
       console.error("Translation request failed", err)
       setError("Something went wrong. Please try again later.")
-      setTranslatedText("")
     } finally {
       setLoading(false)
     }
+
+    return result
   }, [])
 
   return {

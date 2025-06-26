@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React from "react"
 import { Label } from "@/components/ui/label"
 import QuoteTab from "./QuoteTab"
 import FoodTab from "./FoodTab"
@@ -13,16 +13,12 @@ import {
   SelectValue
 } from "@/components/ui/select"
 import { type translationsTypes } from "@/types/moodsTypes"
+import { useMoodStore } from "@/stores/useMoodStore"
 
 // Tab option
-interface TabOption {
-  value: LayoutOption
-  label: string
-}
-
 type LayoutOption = "Quote" | "Food" | "Recipe"
 
-const tabOptions: TabOption[] = [
+const tabOptions: { value: LayoutOption; label: string }[] = [
   { value: "Quote", label: "Quote" },
   { value: "Food", label: "Food" },
   { value: "Recipe", label: "Recipe" }
@@ -33,18 +29,18 @@ export default function AddMoodPopUp({
 }: {
   translations: translationsTypes
 }): JSX.Element {
-  const [activeTab, setActiveTab] = useState<LayoutOption>("Quote")
+  const { activeTab, setActiveTab } = useMoodStore()
 
   return (
     <div>
-      {/* Tab Selector using Input */}
+      {/* Tab Selector */}
       <div>
         <Label className="block mb-2 text-black">
           {translations.selectLayout}
         </Label>
         <Select
           value={activeTab}
-          onValueChange={val => {
+          onValueChange={(val: string) => {
             setActiveTab(val as LayoutOption)
           }}
         >
@@ -56,7 +52,7 @@ export default function AddMoodPopUp({
               <SelectItem key={opt.value} value={opt.value}>
                 {translations[
                   opt.value.toLowerCase() as keyof translationsTypes
-                ] || opt.label}{" "}
+                ] || opt.label}
               </SelectItem>
             ))}
           </SelectContent>
