@@ -54,6 +54,7 @@ export default function QuoteTab({
 }): JSX.Element {
   const { translateText } = useTranslation()
   const { activeLang, translationsData, setTranslationField } = useMoodStore()
+  const [isTranslating, setIsTranslating] = useState(false)
 
   // Schema
   const FormSchema = z.object({
@@ -78,17 +79,6 @@ export default function QuoteTab({
     form.reset(translationsData.quoteData[activeLang])
   }, [activeLang, form.reset, translationsData.quoteData])
 
-  // handle translate texts
-  const handleTranslation = async (
-    value: string,
-    fieldName: "author" | "quote"
-  ) => {
-    if (activeLang === "en" && value.trim()) {
-      const translated = await translateText(value)
-      setTranslationField("quoteData", "fr", fieldName, translated)
-    }
-  }
-
   const handleInputChange = (fieldName: "author" | "quote", value: string) => {
     form.setValue(fieldName, value)
     setTranslationField("quoteData", activeLang, fieldName, value)
@@ -99,8 +89,13 @@ export default function QuoteTab({
     value: string
   ) => {
     if (activeLang === "en" && value.trim()) {
-      const translated = await translateText(value)
-      setTranslationField("quoteData", "fr", fieldName, translated)
+      try {
+        setIsTranslating(true)
+        const translated = await translateText(value)
+        setTranslationField("quoteData", "fr", fieldName, translated)
+      } finally {
+        setIsTranslating(false)
+      }
     }
   }
 
@@ -134,89 +129,99 @@ export default function QuoteTab({
   }
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 text-black"
-      >
-        {/* Mood */}
-        <div className="pt-4 pb-3">
+    <div className="relative">
+      {isTranslating && (
+        <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
+          <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
+        </div>
+      )}
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-4 text-black"
+        >
+          {/* Mood */}
+          <div className="pt-4 pb-3">
+            <FormField
+              control={form.control}
+              name="mood"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{translations.selectMood}</FormLabel>
+                  <FormControl>
+                    <Select
+                      value={field.value}
+                      onValueChange={handleMoodChange}
+                    >
+                      <SelectTrigger className="mt-1 w-full">
+                        <SelectValue placeholder={translations.selectMood} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {moodOptions[activeLang].map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <Separator />
+
+          {/* Author Field */}
           <FormField
             control={form.control}
-            name="mood"
+            name="author"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>{translations.selectMood}</FormLabel>
+              <FormItem className="flex-1">
+                <FormLabel>{translations.quoteAuthor}</FormLabel>
                 <FormControl>
-                  <Select value={field.value} onValueChange={handleMoodChange}>
-                    <SelectTrigger className="mt-1 w-full">
-                      <SelectValue placeholder={translations.selectMood} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {moodOptions[activeLang].map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    placeholder={translations.enterQuoteQuthor}
+                    {...field}
+                    onChange={e => handleInputChange("author", e.target.value)}
+                    onBlur={() => handleInputBlur("author", field.value)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-        </div>
 
-        <Separator />
+          {/* Quote Field */}
+          <FormField
+            control={form.control}
+            name="quote"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>{translations.quote}</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder={translations.addTheQuoteHereInDetails}
+                    {...field}
+                    onChange={e => handleInputChange("quote", e.target.value)}
+                    onBlur={() => handleInputBlur("quote", field.value)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {/* Author Field */}
-        <FormField
-          control={form.control}
-          name="author"
-          render={({ field }) => (
-            <FormItem className="flex-1">
-              <FormLabel>{translations.quoteAuthor}</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder={translations.enterQuoteQuthor}
-                  {...field}
-                  onChange={e => handleInputChange("author", e.target.value)}
-                  onBlur={() => handleInputBlur("author", field.value)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Quote Field */}
-        <FormField
-          control={form.control}
-          name="quote"
-          render={({ field }) => (
-            <FormItem className="flex-1">
-              <FormLabel>{translations.quote}</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder={translations.addTheQuoteHereInDetails}
-                  {...field}
-                  onChange={e => handleInputChange("quote", e.target.value)}
-                  onBlur={() => handleInputBlur("quote", field.value)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Action Buttons */}
-        <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
-          <Button variant="outline" type="button" onClick={handleResetForm}>
-            {translations.cancel}
-          </Button>
-          <Button type="submit">{translations.save}</Button>
-        </div>
-      </form>
-    </Form>
+          {/* Action Buttons */}
+          <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
+            <Button variant="outline" type="button" onClick={handleResetForm}>
+              {translations.cancel}
+            </Button>
+            <Button type="submit">{translations.save}</Button>
+          </div>
+        </form>
+      </Form>
+    </div>
   )
 }

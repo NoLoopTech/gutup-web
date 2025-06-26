@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
@@ -66,6 +66,7 @@ export default function FoodTab({
 }): JSX.Element {
   const { activeLang, translationsData, setTranslationField } = useMoodStore()
   const { translateText } = useTranslation()
+  const [isTranslating, setIsTranslating] = useState(false)
 
   const FormSchema = z.object({
     mood: z.string().nonempty(translations.pleaseSelectAMood),
@@ -141,8 +142,13 @@ export default function FoodTab({
     fieldName: "foodName" | "description"
   ) => {
     if (activeLang === "en" && value.trim()) {
-      const translated = await translateText(value)
-      setTranslationField("foodData", "fr", fieldName, translated)
+      try {
+        setIsTranslating(true)
+        const translated = await translateText(value)
+        setTranslationField("foodData", "fr", fieldName, translated)
+      } finally {
+        setIsTranslating(false)
+      }
     }
   }
 
@@ -157,120 +163,127 @@ export default function FoodTab({
   }
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="pb-20 space-y-4 text-black"
-      >
-        {/* Mood */}
-        <FormField
-          control={form.control}
-          name="mood"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{translations.selectMood}</FormLabel>
-              <FormControl>
-                <Select value={field.value} onValueChange={handleMoodChange}>
-                  <SelectTrigger className="mt-1 w-full">
-                    <SelectValue placeholder={translations.selectMood} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {moodOptions[activeLang].map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Separator />
-
-        {/* Food Name */}
-        <FormField
-          control={form.control}
-          name="foodName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{translations.foodName}</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder={translations.searchForFood}
-                  {...field}
-                  onChange={e => handleInputChange(e, "foodName")}
-                  onBlur={() => handleInputBlur(field.value, "foodName")}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Description */}
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{translations.description}</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder={translations.addDetailsInHere}
-                  {...field}
-                  onChange={e => handleInputChange(e, "description")}
-                  onBlur={() => handleInputBlur(field.value, "description")}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Separator />
-
-        {/* Shop Category */}
-        <FormField
-          control={form.control}
-          name="shopCategory"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{translations.shopcategory}</FormLabel>
-              <FormControl>
-                <Select
-                  value={field.value}
-                  onValueChange={handleShopCategoryChange}
-                >
-                  <SelectTrigger className="mt-1 w-full">
-                    <SelectValue
-                      placeholder={translations.selectShopCategory}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {shopcategory[activeLang].map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Actions */}
-        <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
-          <Button variant="outline" type="button" onClick={handleReset}>
-            {translations.cancel}
-          </Button>
-          <Button type="submit">{translations.save}</Button>
+    <div className="relative">
+      {isTranslating && (
+        <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
+          <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
         </div>
-      </form>
-    </Form>
+      )}
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="pb-20 space-y-4 text-black"
+        >
+          {/* Mood */}
+          <FormField
+            control={form.control}
+            name="mood"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{translations.selectMood}</FormLabel>
+                <FormControl>
+                  <Select value={field.value} onValueChange={handleMoodChange}>
+                    <SelectTrigger className="mt-1 w-full">
+                      <SelectValue placeholder={translations.selectMood} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {moodOptions[activeLang].map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <Separator />
+
+          {/* Food Name */}
+          <FormField
+            control={form.control}
+            name="foodName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{translations.foodName}</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder={translations.searchForFood}
+                    {...field}
+                    onChange={e => handleInputChange(e, "foodName")}
+                    onBlur={() => handleInputBlur(field.value, "foodName")}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Description */}
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{translations.description}</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder={translations.addDetailsInHere}
+                    {...field}
+                    onChange={e => handleInputChange(e, "description")}
+                    onBlur={() => handleInputBlur(field.value, "description")}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <Separator />
+
+          {/* Shop Category */}
+          <FormField
+            control={form.control}
+            name="shopCategory"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{translations.shopcategory}</FormLabel>
+                <FormControl>
+                  <Select
+                    value={field.value}
+                    onValueChange={handleShopCategoryChange}
+                  >
+                    <SelectTrigger className="mt-1 w-full">
+                      <SelectValue
+                        placeholder={translations.selectShopCategory}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {shopcategory[activeLang].map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Actions */}
+          <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
+            <Button variant="outline" type="button" onClick={handleReset}>
+              {translations.cancel}
+            </Button>
+            <Button type="submit">{translations.save}</Button>
+          </div>
+        </form>
+      </Form>
+    </div>
   )
 }
