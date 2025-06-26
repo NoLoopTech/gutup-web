@@ -26,17 +26,26 @@ import {
 import { toast } from "sonner"
 import { type translationsTypes } from "@/types/moodsTypes"
 import { useMoodStore } from "@/stores/useMoodStore"
+import { useTranslation } from "@/query/hooks/useTranslation"
 
 interface Option {
   value: string
   label: string
 }
 
-const moods: Option[] = [
-  { value: "happy", label: "Happy" },
-  { value: "angry", label: "Angry" },
-  { value: "sad", label: "Sad" }
-]
+// Mood options per language
+const moodOptions: Record<string, Option[]> = {
+  en: [
+    { value: "happy", label: "Happy" },
+    { value: "angry", label: "Angry" },
+    { value: "sad", label: "Sad" }
+  ],
+  fr: [
+    { value: "heureuse", label: "Heureuse" },
+    { value: "en colère", label: "En colère" },
+    { value: "triste", label: "Triste" }
+  ]
+}
 
 export default function RecipeTab({
   translations
@@ -44,6 +53,7 @@ export default function RecipeTab({
   translations: translationsTypes
 }): JSX.Element {
   const { activeLang, translationsData, setTranslationField } = useMoodStore()
+  const { translateText } = useTranslation()
 
   const FormSchema = z.object({
     mood: z.string().nonempty(translations.pleaseSelectAMood),
@@ -66,7 +76,49 @@ export default function RecipeTab({
     form.reset(translationsData.recipeData[activeLang])
   }, [activeLang, form.reset, translationsData.recipeData])
 
-  function onSubmit(data: z.infer<typeof FormSchema>): void {
+  const handleMoodChange = (value: string) => {
+    form.setValue("mood", value)
+    setTranslationField("recipeData", activeLang, "mood", value)
+
+    const current = moodOptions[activeLang]
+    const oppositeLang = activeLang === "en" ? "fr" : "en"
+    const opposite = moodOptions[oppositeLang]
+
+    const index = current.findIndex(opt => opt.value === value)
+    if (index !== -1) {
+      setTranslationField(
+        "recipeData",
+        oppositeLang,
+        "mood",
+        opposite[index].value
+      )
+    }
+  }
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    fieldName: "recipe" | "description"
+  ) => {
+    const value = e.target.value
+    form.setValue(fieldName, value)
+    setTranslationField("recipeData", activeLang, fieldName, value)
+  }
+
+  const handleInputBlur = async (
+    value: string,
+    fieldName: "recipe" | "description"
+  ) => {
+    if (activeLang === "en" && value.trim()) {
+      const translated = await translateText(value)
+      setTranslationField("recipeData", "fr", fieldName, translated)
+    }
+  }
+
+  const handleResetForm = () => {
+    form.reset(translationsData.recipeData[activeLang])
+  }
+
+  const onSubmit = (data: z.infer<typeof FormSchema>): void => {
     toast("Recipe Submitted", {
       description: JSON.stringify(data, null, 2)
     })
@@ -87,27 +139,14 @@ export default function RecipeTab({
               <FormItem>
                 <FormLabel>{translations.selectMood}</FormLabel>
                 <FormControl>
-                  <Select
-                    value={field.value}
-                    onValueChange={value => {
-                      field.onChange(value)
-                      setTranslationField(
-                        "recipeData",
-                        activeLang,
-                        "mood",
-                        value
-                      )
-                    }}
-                  >
+                  <Select value={field.value} onValueChange={handleMoodChange}>
                     <SelectTrigger className="mt-1 w-full">
                       <SelectValue placeholder={translations.selectMood} />
                     </SelectTrigger>
                     <SelectContent>
-                      {moods.map(option => (
+                      {moodOptions[activeLang].map(option => (
                         <SelectItem key={option.value} value={option.value}>
-                          {translations[
-                            option.value.toLowerCase() as keyof translationsTypes
-                          ] || option.label}
+                          {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -121,7 +160,7 @@ export default function RecipeTab({
 
         <Separator />
 
-        {/* Recipe Name */}
+        {/* Recipe */}
         <FormField
           control={form.control}
           name="recipe"
@@ -132,15 +171,8 @@ export default function RecipeTab({
                 <Input
                   placeholder={translations.searchForRecipe}
                   {...field}
-                  onChange={e => {
-                    field.onChange(e)
-                    setTranslationField(
-                      "recipeData",
-                      activeLang,
-                      "recipe",
-                      e.target.value
-                    )
-                  }}
+                  onChange={e => handleInputChange(e, "recipe")}
+                  onBlur={() => handleInputBlur(field.value, "recipe")}
                 />
               </FormControl>
               <FormMessage />
@@ -159,15 +191,8 @@ export default function RecipeTab({
                 <Textarea
                   placeholder={translations.addDetailsInHere}
                   {...field}
-                  onChange={e => {
-                    field.onChange(e)
-                    setTranslationField(
-                      "recipeData",
-                      activeLang,
-                      "description",
-                      e.target.value
-                    )
-                  }}
+                  onChange={e => handleInputChange(e, "description")}
+                  onBlur={() => handleInputBlur(field.value, "description")}
                 />
               </FormControl>
               <FormMessage />
@@ -177,11 +202,7 @@ export default function RecipeTab({
 
         {/* Actions */}
         <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
-          <Button
-            variant="outline"
-            type="button"
-            onClick={() => form.reset(translationsData.recipeData[activeLang])}
-          >
+          <Button variant="outline" type="button" onClick={handleResetForm}>
             {translations.cancel}
           </Button>
           <Button type="submit">{translations.save}</Button>

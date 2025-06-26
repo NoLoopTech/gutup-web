@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
@@ -26,26 +26,36 @@ import {
 import { toast } from "sonner"
 import { type translationsTypes } from "@/types/moodsTypes"
 import { useMoodStore } from "@/stores/useMoodStore"
+import { useTranslation } from "@/query/hooks/useTranslation"
 
 interface Option {
   value: string
   label: string
 }
 
-const moods: Option[] = [
-  { value: "happy", label: "Happy" },
-  { value: "angry", label: "Angry" },
-  { value: "sad", label: "Sad" }
-]
+// Mood options per language
+const moodOptions: Record<string, Option[]> = {
+  en: [
+    { value: "happy", label: "Happy" },
+    { value: "angry", label: "Angry" },
+    { value: "sad", label: "Sad" }
+  ],
+  fr: [
+    { value: "heureuse", label: "Heureuse" },
+    { value: "en colère", label: "En colère" },
+    { value: "triste", label: "Triste" }
+  ]
+}
 
 export default function QuoteTab({
   translations
 }: {
   translations: translationsTypes
 }): JSX.Element {
+  const { translateText } = useTranslation()
   const { activeLang, translationsData, setTranslationField } = useMoodStore()
 
-  // Validation schema
+  // Schema
   const FormSchema = z.object({
     mood: z.string().nonempty(translations.pleaseSelectAMood),
     author: z
@@ -63,15 +73,64 @@ export default function QuoteTab({
     defaultValues: translationsData.quoteData[activeLang]
   })
 
-  // Sync form when language changes
+  // Update form when lang changes
   useEffect(() => {
     form.reset(translationsData.quoteData[activeLang])
   }, [activeLang, form.reset, translationsData.quoteData])
+
+  // handle translate texts
+  const handleTranslation = async (
+    value: string,
+    fieldName: "author" | "quote"
+  ) => {
+    if (activeLang === "en" && value.trim()) {
+      const translated = await translateText(value)
+      setTranslationField("quoteData", "fr", fieldName, translated)
+    }
+  }
+
+  const handleInputChange = (fieldName: "author" | "quote", value: string) => {
+    form.setValue(fieldName, value)
+    setTranslationField("quoteData", activeLang, fieldName, value)
+  }
+
+  const handleInputBlur = async (
+    fieldName: "author" | "quote",
+    value: string
+  ) => {
+    if (activeLang === "en" && value.trim()) {
+      const translated = await translateText(value)
+      setTranslationField("quoteData", "fr", fieldName, translated)
+    }
+  }
+
+  const handleMoodChange = (value: string) => {
+    form.setValue("mood", value)
+    setTranslationField("quoteData", activeLang, "mood", value)
+
+    const current = moodOptions[activeLang]
+    const oppositeLang = activeLang === "en" ? "fr" : "en"
+    const opposite = moodOptions[oppositeLang]
+
+    const index = current.findIndex(opt => opt.value === value)
+    if (index !== -1) {
+      setTranslationField(
+        "quoteData",
+        oppositeLang,
+        "mood",
+        opposite[index].value
+      )
+    }
+  }
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
     toast("Form submitted", {
       description: JSON.stringify(data, null, 2)
     })
+  }
+
+  const handleResetForm = () => {
+    form.reset(translationsData.quoteData[activeLang])
   }
 
   return (
@@ -80,7 +139,7 @@ export default function QuoteTab({
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4 text-black"
       >
-        {/* Mood Field */}
+        {/* Mood */}
         <div className="pt-4 pb-3">
           <FormField
             control={form.control}
@@ -89,27 +148,14 @@ export default function QuoteTab({
               <FormItem>
                 <FormLabel>{translations.selectMood}</FormLabel>
                 <FormControl>
-                  <Select
-                    value={field.value}
-                    onValueChange={value => {
-                      field.onChange(value)
-                      setTranslationField(
-                        "quoteData",
-                        activeLang,
-                        "mood",
-                        value
-                      )
-                    }}
-                  >
+                  <Select value={field.value} onValueChange={handleMoodChange}>
                     <SelectTrigger className="mt-1 w-full">
                       <SelectValue placeholder={translations.selectMood} />
                     </SelectTrigger>
                     <SelectContent>
-                      {moods.map(option => (
+                      {moodOptions[activeLang].map(option => (
                         <SelectItem key={option.value} value={option.value}>
-                          {translations[
-                            option.value.toLowerCase() as keyof translationsTypes
-                          ] || option.label}
+                          {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -134,15 +180,8 @@ export default function QuoteTab({
                 <Input
                   placeholder={translations.enterQuoteQuthor}
                   {...field}
-                  onChange={e => {
-                    field.onChange(e)
-                    setTranslationField(
-                      "quoteData",
-                      activeLang,
-                      "author",
-                      e.target.value
-                    )
-                  }}
+                  onChange={e => handleInputChange("author", e.target.value)}
+                  onBlur={() => handleInputBlur("author", field.value)}
                 />
               </FormControl>
               <FormMessage />
@@ -161,15 +200,8 @@ export default function QuoteTab({
                 <Textarea
                   placeholder={translations.addTheQuoteHereInDetails}
                   {...field}
-                  onChange={e => {
-                    field.onChange(e)
-                    setTranslationField(
-                      "quoteData",
-                      activeLang,
-                      "quote",
-                      e.target.value
-                    )
-                  }}
+                  onChange={e => handleInputChange("quote", e.target.value)}
+                  onBlur={() => handleInputBlur("quote", field.value)}
                 />
               </FormControl>
               <FormMessage />
@@ -179,11 +211,7 @@ export default function QuoteTab({
 
         {/* Action Buttons */}
         <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
-          <Button
-            variant="outline"
-            type="button"
-            onClick={() => form.reset(translationsData.quoteData[activeLang])}
-          >
+          <Button variant="outline" type="button" onClick={handleResetForm}>
             {translations.cancel}
           </Button>
           <Button type="submit">{translations.save}</Button>

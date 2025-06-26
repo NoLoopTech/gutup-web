@@ -25,11 +25,9 @@ const tabOptions: { value: LayoutOption; label: string }[] = [
 ]
 
 export default function AddMoodPopUp({
-  translations,
-  lang
+  translations
 }: {
   translations: translationsTypes
-  lang: string
 }): JSX.Element {
   const { activeTab, setActiveTab } = useMoodStore()
 

@@ -26,23 +26,38 @@ import {
 import { toast } from "sonner"
 import { type translationsTypes } from "@/types/moodsTypes"
 import { useMoodStore } from "@/stores/useMoodStore"
+import { useTranslation } from "@/query/hooks/useTranslation"
 
 interface Option {
   value: string
   label: string
 }
 
-const moods: Option[] = [
-  { value: "happy", label: "Happy" },
-  { value: "angry", label: "Angry" },
-  { value: "sad", label: "Sad" }
-]
+const moodOptions: Record<string, Option[]> = {
+  en: [
+    { value: "happy", label: "Happy" },
+    { value: "angry", label: "Angry" },
+    { value: "sad", label: "Sad" }
+  ],
+  fr: [
+    { value: "heureuse", label: "Heureuse" },
+    { value: "en colère", label: "En colère" },
+    { value: "triste", label: "Triste" }
+  ]
+}
 
-const shopcategory: Option[] = [
-  { value: "bakery", label: "Bakery" },
-  { value: "dairy", label: "Dairy" },
-  { value: "produce", label: "Produce" }
-]
+const shopcategory: Record<string, Option[]> = {
+  en: [
+    { value: "bakery", label: "Bakery" },
+    { value: "dairy", label: "Dairy" },
+    { value: "produce", label: "Produce" }
+  ],
+  fr: [
+    { value: "boulangerie", label: "Boulangerie" },
+    { value: "laitière", label: "Laitière" },
+    { value: "produire", label: "Produire" }
+  ]
+}
 
 export default function FoodTab({
   translations
@@ -50,6 +65,7 @@ export default function FoodTab({
   translations: translationsTypes
 }): JSX.Element {
   const { activeLang, translationsData, setTranslationField } = useMoodStore()
+  const { translateText } = useTranslation()
 
   const FormSchema = z.object({
     mood: z.string().nonempty(translations.pleaseSelectAMood),
@@ -69,12 +85,72 @@ export default function FoodTab({
     defaultValues: translationsData.foodData[activeLang]
   })
 
-  // Sync RHF form with Zustand store
   useEffect(() => {
     form.reset(translationsData.foodData[activeLang])
   }, [activeLang, form.reset, translationsData.foodData])
 
-  function onSubmit(data: z.infer<typeof FormSchema>): void {
+  const handleMoodChange = (value: string) => {
+    form.setValue("mood", value)
+    setTranslationField("foodData", activeLang, "mood", value)
+
+    const current = moodOptions[activeLang]
+    const oppositeLang = activeLang === "en" ? "fr" : "en"
+    const opposite = moodOptions[oppositeLang]
+
+    const index = current.findIndex(opt => opt.value === value)
+    if (index !== -1) {
+      setTranslationField(
+        "foodData",
+        oppositeLang,
+        "mood",
+        opposite[index].value
+      )
+    }
+  }
+
+  const handleShopCategoryChange = (value: string) => {
+    form.setValue("shopCategory", value)
+    setTranslationField("foodData", activeLang, "shopCategory", value)
+
+    const current = shopcategory[activeLang]
+    const oppositeLang = activeLang === "en" ? "fr" : "en"
+    const opposite = shopcategory[oppositeLang]
+
+    const index = current.findIndex(opt => opt.value === value)
+    if (index !== -1) {
+      setTranslationField(
+        "foodData",
+        oppositeLang,
+        "shopCategory",
+        opposite[index].value
+      )
+    }
+  }
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    fieldName: "foodName" | "description"
+  ) => {
+    const value = e.target.value
+    form.setValue(fieldName, value)
+    setTranslationField("foodData", activeLang, fieldName, value)
+  }
+
+  const handleInputBlur = async (
+    value: string,
+    fieldName: "foodName" | "description"
+  ) => {
+    if (activeLang === "en" && value.trim()) {
+      const translated = await translateText(value)
+      setTranslationField("foodData", "fr", fieldName, translated)
+    }
+  }
+
+  const handleReset = () => {
+    form.reset(translationsData.foodData[activeLang])
+  }
+
+  const onSubmit = (data: z.infer<typeof FormSchema>): void => {
     toast("Form submitted", {
       description: JSON.stringify(data, null, 2)
     })
@@ -87,40 +163,30 @@ export default function FoodTab({
         className="pb-20 space-y-4 text-black"
       >
         {/* Mood */}
-        <div className="pt-4 pb-3">
-          <FormField
-            control={form.control}
-            name="mood"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{translations.selectMood}</FormLabel>
-                <FormControl>
-                  <Select
-                    value={field.value}
-                    onValueChange={value => {
-                      field.onChange(value)
-                      setTranslationField("foodData", activeLang, "mood", value)
-                    }}
-                  >
-                    <SelectTrigger className="mt-1 w-full">
-                      <SelectValue placeholder={translations.selectMood} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {moods.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {translations[
-                            option.value.toLowerCase() as keyof translationsTypes
-                          ] || option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="mood"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{translations.selectMood}</FormLabel>
+              <FormControl>
+                <Select value={field.value} onValueChange={handleMoodChange}>
+                  <SelectTrigger className="mt-1 w-full">
+                    <SelectValue placeholder={translations.selectMood} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {moodOptions[activeLang].map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <Separator />
 
@@ -135,15 +201,8 @@ export default function FoodTab({
                 <Input
                   placeholder={translations.searchForFood}
                   {...field}
-                  onChange={e => {
-                    field.onChange(e)
-                    setTranslationField(
-                      "foodData",
-                      activeLang,
-                      "foodName",
-                      e.target.value
-                    )
-                  }}
+                  onChange={e => handleInputChange(e, "foodName")}
+                  onBlur={() => handleInputBlur(field.value, "foodName")}
                 />
               </FormControl>
               <FormMessage />
@@ -162,15 +221,8 @@ export default function FoodTab({
                 <Textarea
                   placeholder={translations.addDetailsInHere}
                   {...field}
-                  onChange={e => {
-                    field.onChange(e)
-                    setTranslationField(
-                      "foodData",
-                      activeLang,
-                      "description",
-                      e.target.value
-                    )
-                  }}
+                  onChange={e => handleInputChange(e, "description")}
+                  onBlur={() => handleInputBlur(field.value, "description")}
                 />
               </FormControl>
               <FormMessage />
@@ -190,15 +242,7 @@ export default function FoodTab({
               <FormControl>
                 <Select
                   value={field.value}
-                  onValueChange={value => {
-                    field.onChange(value)
-                    setTranslationField(
-                      "foodData",
-                      activeLang,
-                      "shopCategory",
-                      value
-                    )
-                  }}
+                  onValueChange={handleShopCategoryChange}
                 >
                   <SelectTrigger className="mt-1 w-full">
                     <SelectValue
@@ -206,11 +250,9 @@ export default function FoodTab({
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    {shopcategory.map(option => (
+                    {shopcategory[activeLang].map(option => (
                       <SelectItem key={option.value} value={option.value}>
-                        {translations[
-                          option.value.toLowerCase() as keyof translationsTypes
-                        ] || option.label}
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -221,13 +263,9 @@ export default function FoodTab({
           )}
         />
 
-        {/* Action Buttons */}
+        {/* Actions */}
         <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
-          <Button
-            variant="outline"
-            type="button"
-            onClick={() => form.reset(translationsData.foodData[activeLang])}
-          >
+          <Button variant="outline" type="button" onClick={handleReset}>
             {translations.cancel}
           </Button>
           <Button type="submit">{translations.save}</Button>
