@@ -4,6 +4,7 @@ import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 
 interface QuoteFields {
+  mood: string
   author: string
   quote: string
 }
