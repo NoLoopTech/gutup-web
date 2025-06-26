@@ -31,6 +31,7 @@ import z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
+import { type translationsTypes } from "@/types/storeTypes"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -41,10 +42,7 @@ interface Option {
   value: string
   label: string
 }
-interface Props {
-  open: boolean
-  onClose: () => void
-}
+
 interface AvailableItem {
   id: number
   name: string
@@ -57,76 +55,16 @@ interface AvailableItem {
 }
 
 const categories: Option[] = [
-  { value: "Breakfast", label: "Breakfast" },
-  { value: "Dinner", label: "Dinner" },
+  { value: "breakfast", label: "Breakfast" },
+  { value: "dinner", label: "Dinner" },
   { value: "dairy", label: "Dairy" }
 ]
 
-const shopStatus: Option[] = [
+const storeType: Option[] = [
   { value: "physical", label: "physical" },
-  { value: "Online", label: "Online" }
+  { value: "online", label: "Online" }
 ]
 
-// Validation schema using Zod
-const AddStoreSchema = z.object({
-  storeName: z
-    .string()
-    .nonempty("Requis")
-    .min(2, { message: "Doit comporter au moins 2 caractères" }),
-  category: z.string().min(1, "Veuillez sélectionner une catégorie"),
-  storeLocation: z.string().min(1, "Requis"),
-  shopStatus: z.string().min(1, "Veuillez sélectionner un statut de boutique"),
-  shoplocation: z.string().min(1, "Requis"),
-  timeFrom: z.string().min(1, "Requis"),
-  timeTo: z.string().min(1, "Requis"),
-  phone: z
-    .string()
-    .nonempty("Requis")
-    .refine(val => /^\d{10}$/.test(val) || /^\+\d{11}$/.test(val), {
-      message: "Numéro de mobile invalide (ex : 0712345678 ou +94712345678)"
-    }),
-  email: z
-    .string()
-    .nonempty("Requis")
-    .email("Veuillez saisir un email valide."),
-  mapsPin: z.string().nonempty("Requis"),
-  website: z.string().url("Format d'URL invalide").optional().or(z.literal("")),
-  facebook: z
-    .string()
-    .url("Format d'URL invalide")
-    .optional()
-    .or(z.literal("")),
-  instagram: z
-    .string()
-    .url("Format d'URL invalide")
-    .optional()
-    .or(z.literal("")),
-  about: z.string().refine(
-    val => {
-      const plainText = val.replace(/<(.|\n)*?>/g, "").trim()
-      const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val)
-      return plainText !== "" || hasImage
-    },
-    {
-      message: "Requis"
-    }
-  ),
-  availData: z
-    .array(z.unknown())
-    .nonempty("Au moins un ingrédient/catégorie doit être ajouté."),
-  storeImage: z.custom<File | null>(val => val instanceof File, {
-    message: "Requis"
-  })
-})
-
-const onSubmit = (data: z.infer<typeof AddStoreSchema>): void => {
-  toast("Form submitted successfully!", {})
-}
-const handleCancel = (
-  form: ReturnType<typeof useForm<z.infer<typeof AddStoreSchema>>>
-): void => {
-  form.reset()
-}
 // Define function for handling image upload changes
 const handleImageUpload = (field: any) => (files: File[] | null) => {
   field.onChange(files && files.length > 0 ? files[0] : null)
@@ -135,11 +73,78 @@ const handleImageUpload = (field: any) => (files: File[] | null) => {
 const handleRichTextEditorChange = (field: any) => (val: string) => {
   field.onChange(val)
 }
-export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
+export default function AddStorePopUpContent({
+  translations
+}: {
+  translations: translationsTypes
+}): JSX.Element {
   const aboutRef = useRef<any>(null)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
-
+  const [isPremium, setIsPremium] = React.useState(false)
+  // Validation schema using Zod
+  const AddStoreSchema = z.object({
+    storeName: z
+      .string()
+      .nonempty(translations.required)
+      .min(2, { message: translations.mustbeatleast2characters }),
+    category: z.string().min(1, translations.pleaseselectacategory),
+    storeLocation: z.string().min(1, translations.required),
+    storeType: z.string().min(1, translations.pleaseselectaStoreType),
+    shoplocation: z.string().min(1, translations.required),
+    timeFrom: z.string().min(1, translations.required),
+    timeTo: z.string().min(1, translations.required),
+    phone: z
+      .string()
+      .nonempty(translations.required)
+      .refine(val => /^\d{10}$/.test(val) || /^\+\d{11}$/.test(val), {
+        message: translations.invalidmobilenumbereg0712345678or94712345678
+      }),
+    email: z
+      .string()
+      .nonempty(translations.required)
+      .email(translations.pleaseenteravalidemail),
+    mapsPin: z.string().nonempty(translations.required),
+    website: z
+      .string()
+      .url(translations.invalidurlformat)
+      .optional()
+      .or(z.literal("")),
+    facebook: z
+      .string()
+      .url(translations.invalidurlformat)
+      .optional()
+      .or(z.literal("")),
+    instagram: z
+      .string()
+      .url(translations.invalidurlformat)
+      .optional()
+      .or(z.literal("")),
+    about: z.string().refine(
+      val => {
+        const plainText = val.replace(/<(.|\n)*?>/g, "").trim()
+        const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val)
+        return plainText !== "" || hasImage
+      },
+      {
+        message: translations.required
+      }
+    ),
+    availData: z
+      .array(z.unknown())
+      .nonempty(translations.atleastoneingredientcategorymustbeadded),
+    storeImage: z.custom<File | null>(val => val instanceof File, {
+      message: translations.required
+    })
+  })
+  const handleCancel = (
+    form: ReturnType<typeof useForm<z.infer<typeof AddStoreSchema>>>
+  ): void => {
+    form.reset()
+  }
+  const onSubmit = (data: z.infer<typeof AddStoreSchema>): void => {
+    toast(translations.formSubmittedSuccessfully, {})
+  }
   // Define functions to handle page changes
   const handlePageChange = (newPage: number): void => {
     setPage(newPage)
@@ -156,7 +161,7 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
       storeName: "",
       category: "",
       storeLocation: "",
-      shopStatus: "",
+      storeType: "",
       shoplocation: "",
       timeFrom: "",
       timeTo: "",
@@ -176,11 +181,11 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
 
   const availColumns = [
     {
-      header: "Available Ingredients & Categories",
+      header: translations.availableIngredientsAndCategories,
       accessor: "name" as const
     },
     {
-      header: "Type",
+      header: translations.type,
       accessor: (row: { type: string }) => (
         <Badge className="bg-white text-black text-xs px-2 py-1 rounded-md border border-gray-100 hover:bg-white">
           {row.type}
@@ -188,7 +193,7 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
       )
     },
     {
-      header: "Availability Status",
+      header: translations.availabilityStatus,
       accessor: (row: AvailableItem) => (
         <Badge
           className={
@@ -202,7 +207,7 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
       )
     },
     {
-      header: "Display Status",
+      header: translations.displayStatus,
       accessor: (row: AvailableItem) => (
         <Switch checked={row.display} className="scale-75" />
       )
@@ -222,11 +227,11 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel className="block mb-1 text-black">
-                      Nom du magasin
+                      {translations.storeName}
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Entrez le nom du magasin"
+                        placeholder={translations.enterStoreName}
                         {...field}
                       />
                     </FormControl>
@@ -242,7 +247,7 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="block mb-1 text-black">
-                      Catégorie
+                      {translations.category}
                     </FormLabel>
                     <FormControl>
                       <Select
@@ -250,12 +255,16 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
                         value={field.value}
                       >
                         <SelectTrigger className="w-full mt-1">
-                          <SelectValue placeholder="Sélectionner une catégorie" />
+                          <SelectValue
+                            placeholder={translations.selectCategory}
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {categories.map((option: Option) => (
                             <SelectItem key={option.value} value={option.value}>
-                              {option.label}
+                              {translations[
+                                option.value.toLowerCase() as keyof translationsTypes
+                              ] || option.label}{" "}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -273,11 +282,11 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel className="block mb-1 text-black">
-                      Emplacement du magasin
+                      {translations.storeLocation}
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Entrez l'emplacement du magasin"
+                        placeholder={translations.enterStoreLocation}
                         {...field}
                       />
                     </FormControl>
@@ -289,11 +298,11 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
             <div>
               <FormField
                 control={form.control}
-                name="shopStatus"
+                name="storeType"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="block mb-1 text-black">
-                      Statut de la boutique
+                      {translations.storeType}
                     </FormLabel>
                     <FormControl>
                       <Select
@@ -301,12 +310,16 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
                         value={field.value}
                       >
                         <SelectTrigger className="w-full mt-1">
-                          <SelectValue placeholder="Sélectionner un statut de boutique" />
+                          <SelectValue
+                            placeholder={translations.selectStoreType}
+                          />
                         </SelectTrigger>
                         <SelectContent>
-                          {shopStatus.map((option: Option) => (
+                          {storeType.map((option: Option) => (
                             <SelectItem key={option.value} value={option.value}>
-                              {option.label}
+                              {translations[
+                                option.value.toLowerCase() as keyof translationsTypes
+                              ] || option.label}{" "}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -324,11 +337,11 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel className="block mb-1 text-black">
-                      Emplacement sur la carte
+                      {translations.storeMapLocation}
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Entrez l'emplacement sur la carte"
+                        placeholder={translations.enterMapLocation}
                         {...field}
                       />
                     </FormControl>
@@ -339,18 +352,22 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
             </div>
 
             <div>
-              <Label className="text-black mb-1 block">Type de magasin</Label>
+              <Label className="text-black mb-1 block">
+                {translations.subscription}
+              </Label>
               <div className="flex items-center gap-4 mt-2">
-                <Switch />
-                <Label className="text-Primary-300">Magasin Premium</Label>
+                <Switch checked={isPremium} onCheckedChange={setIsPremium} />
+                <Label className="text-Primary-300">
+                  {isPremium ? translations.premium : translations.freemium}
+                </Label>
               </div>
             </div>
             <div className="flex flex-col gap-1">
-              <Label>Heure</Label>
+              <Label>{translations.time}</Label>
               <div className="flex gap-7 items-center">
                 <div className="flex flex-col">
                   <Label htmlFor="time-from" className="text-xs text-gray-400">
-                    De
+                    {translations.from}
                   </Label>
                   <FormField
                     control={form.control}
@@ -371,7 +388,7 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
                 </div>
                 <div className="flex flex-col">
                   <Label htmlFor="time-to" className="text-xs text-gray-400">
-                    À
+                    {translations.to}
                   </Label>
                   <FormField
                     control={form.control}
@@ -397,7 +414,9 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
           <Separator />
 
           {/* Contact info */}
-          <DialogTitle className="pt-4">Contact du magasin</DialogTitle>
+          <DialogTitle className="pt-4">
+            {translations.storeContact}
+          </DialogTitle>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 mb-6">
             <div>
               <FormField
@@ -406,11 +425,11 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel className="block mb-1 text-black">
-                      Numéro de mobile
+                      {translations.mobileNumber}
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Entrez le numéro du magasin"
+                        placeholder={translations.enterStoreNumber}
                         {...field}
                       />
                     </FormControl>
@@ -426,11 +445,11 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel className="block mb-1 text-black">
-                      E-mail
+                      {translations.email}
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Entrez l'email du magasin"
+                        placeholder={translations.enterStoreEmail}
                         {...field}
                       />
                     </FormControl>
@@ -446,11 +465,11 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel className="block mb-1 text-black">
-                      Épingle Google Maps
+                      {translations.mapsPin}
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Entrez l'emplacement Google Maps"
+                        placeholder={translations.enterGoogleMapsLocation}
                         {...field}
                       />
                     </FormControl>
@@ -466,10 +485,13 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel className="block mb-1 text-black">
-                      Facebook
+                      {translations.facebook}
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Entrez l'URL Facebook" {...field} />
+                      <Input
+                        placeholder={translations.enterFacebookUrl}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -483,10 +505,13 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel className="block mb-1 text-black">
-                      Instagram
+                      {translations.instagram}
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Entrez l'URL Instagram" {...field} />
+                      <Input
+                        placeholder={translations.enterInstagramUrl}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -500,11 +525,11 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel className="block mb-1 text-black">
-                      Site Web
+                      {translations.website}
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Entrez l'URL du site Web"
+                        placeholder={translations.enterWebsiteUrl}
                         {...field}
                       />
                     </FormControl>
@@ -518,29 +543,31 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
           <Separator />
 
           {/* Available Products */}
-          <DialogTitle className="pt-4">Produits disponibles</DialogTitle>
+          <DialogTitle className="pt-4">
+            {translations.availableProducts}
+          </DialogTitle>
           <div className="flex flex-col gap-4 pt-4">
             <div className="flex flex-col sm:flex-row gap-2 items-center w-full">
               <div className="flex flex-row gap-2 items-center mb-2 flex-1">
                 <div className="flex-1">
                   <SearchBar
-                    title="Sélectionner les ingrédients disponibles"
-                    placeholder="Rechercher des ingrédients"
+                    title={translations.selectAvailableIngredients}
+                    placeholder={translations.searchForIngredients}
                   />
                 </div>
                 <div className="flex items-end h-full mt-7">
-                  <Button onClick={() => {}}>Add</Button>
+                  <Button onClick={() => {}}>{translations.add}</Button>
                 </div>
               </div>
               <div className="flex flex-row gap-2 items-center mb-2 flex-1">
                 <div className="flex-1">
                   <SearchBar
-                    title="Sélectionner les catégories disponibles"
-                    placeholder="Rechercher des catégories disponibles"
+                    title={translations.selectAvailableCategories}
+                    placeholder={translations.searchAvailableCategories}
                   />
                 </div>
                 <div className="flex items-end h-full mt-7">
-                  <Button onClick={() => {}}>Add</Button>
+                  <Button onClick={() => {}}>{translations.add}</Button>
                 </div>
               </div>
             </div>
@@ -575,7 +602,9 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
           <Separator />
 
           {/* About The Shop */}
-          <DialogTitle className="pt-4">À propos du magasin</DialogTitle>
+          <DialogTitle className="pt-4">
+            {translations.aboutTheShop}
+          </DialogTitle>
           <div className="flex flex-col gap-6 pt-4 pb-6">
             <div>
               <FormField
@@ -584,7 +613,7 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="block mb-2 text-black">
-                      À propos de nous
+                      {translations.aboutUs}
                     </FormLabel>
                     <FormControl>
                       <RichTextEditor
@@ -603,7 +632,9 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
           <Separator />
 
           {/* Upload Images */}
-          <DialogTitle className="pt-4">Télécharger des images</DialogTitle>
+          <DialogTitle className="pt-4">
+            {translations.uploadImages}
+          </DialogTitle>
           <div className="pt-4 w-full sm:w-2/5 pb-8">
             <FormField
               control={form.control}
@@ -612,7 +643,7 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
                 <FormItem>
                   <FormControl>
                     <ImageUploader
-                      title="Sélectionnez des images pour votre magasin"
+                      title={translations.selectImagesForYourStore}
                       onChange={handleImageUpload(field)}
                     />
                   </FormControl>
@@ -631,9 +662,9 @@ export default function AddStoreFrench({ open, onClose }: Props): JSX.Element {
                 handleCancel(form)
               }}
             >
-              Annuler
+              {translations.cancel}
             </Button>
-            <Button type="submit">Enregistrer</Button>
+            <Button type="submit">{translations.save}</Button>
           </div>
         </DialogFooter>
       </form>

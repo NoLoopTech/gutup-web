@@ -14,7 +14,6 @@ import { CustomTable } from "@/components/Shared/Table/CustomTable"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { CircleFadingPlus } from "lucide-react"
-import CustomImage from "@/components/Shared/CustomImage/CustomImage"
 import {
   Select,
   SelectContent,
@@ -34,15 +33,7 @@ import z from "zod"
 import { toast } from "sonner"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-
-const imageList = [
-  "/images/1.jpg",
-  "/images/2.jpg",
-  "/images/3.jpg",
-  "/images/4.jpg",
-  "/images/5.jpg",
-  "/images/6.jpg"
-]
+import { type translationsTypes } from "@/types/recipeTypes"
 
 interface Ingredient {
   id: number
@@ -55,67 +46,7 @@ interface Option {
   value: string
   label: string
 }
-interface Props {
-  open: boolean
-  onClose: () => void
-}
-const RecipeSchema = z.object({
-  name: z
-    .string()
-    .nonempty("Required")
-    .min(2, { message: "Must be at least 2 characters" }),
-  category: z.string().min(1, "Please select a category"),
-  season: z.string().min(1, "Please select a Season"),
-  preparation: z.string().nonempty("Required"),
-  rest: z.string().nonempty("Required"),
-  persons: z.string().nonempty("Required"),
-  benefits: z
-    .array(z.string())
-    .refine(arr => arr.some(item => item.trim().length > 0), {
-      message: "Please enter at least one Benefit"
-    }),
-  ingredientData: z
-    .array(z.unknown())
-    .nonempty("At least one ingredient/category must be added."),
-  authorName: z
-    .string()
-    .nonempty("Required")
-    .min(2, { message: "Must be at least 2 characters" }),
-  authorCategory: z.string().min(1, "Please select a category"),
-  phone: z
-    .string()
-    .nonempty("Required")
-    .refine(val => /^\d{10}$/.test(val) || /^\+\d{11}$/.test(val), {
-      message: "Invalid Mobile number (e.g. 0712345678 or +94712345678)"
-    }),
-  email: z.string().nonempty("Required").email("Please enter a valid email."),
-  website: z.string().url("Invalid URL format").optional().or(z.literal("")),
-  recipe: z.string().refine(
-    val => {
-      const plainText = val.replace(/<(.|\n)*?>/g, "").trim()
-      const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val)
-      return plainText !== "" || hasImage
-    },
-    {
-      message: "Required"
-    }
-  ),
-  authorimage: z.custom<File | null>(val => val instanceof File, {
-    message: "Required"
-  }),
-  foodimage: z.custom<File | null>(val => val instanceof File, {
-    message: "Required"
-  })
-})
 
-const onSubmit = (data: z.infer<typeof RecipeSchema>): void => {
-  toast("Form submitted successfully!", {})
-}
-const handleCancel = (
-  form: ReturnType<typeof useForm<z.infer<typeof RecipeSchema>>>
-): void => {
-  form.reset()
-}
 // Define function for handling RichTextEditor changes
 const handleRichTextEditorChange = (field: any) => (val: string) => {
   field.onChange(val)
@@ -126,63 +57,128 @@ const handleImageUpload = (field: any) => (files: File[] | null) => {
   field.onChange(files && files.length > 0 ? files[0] : null)
 }
 
-// Dummy data
-const ingredientData: Ingredient[] = []
-
-// Table columns
-const ingredientColumns = [
-  {
-    header: "Ingredient Name",
-    accessor: "name" as const
-  },
-  {
-    header: "Quantity",
-    accessor: "quantity" as const
-  },
-  {
-    header: "Main Ingredient",
-    accessor: (row: Ingredient) => (
-      <Switch
-        checked={row.isMain}
-        className="scale-75"
-        style={{ minWidth: 28, minHeight: 16 }}
-      />
-    )
-  },
-  {
-    header: "Available in Ingredients",
-    accessor: (row: Ingredient) =>
-      row.tags.includes("InSystem") ? (
-        <Badge className="bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors">
-          In the System
-        </Badge>
-      ) : (
-        <Button
-          variant="ghost"
-          className="text-secondary-blue text-xs px-2 py-1 flex items-center gap-1 hover:bg-transparent focus:bg-transparent active:bg-transparent"
-          size="sm"
-        >
-          <CircleFadingPlus size={14} />
-          Add to Ingredients
-        </Button>
-      )
-  }
-]
-
 // Dynamically load RichTextEditor with SSR disabled
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
   { ssr: false }
 )
 
-export default function AddRecipeEnglish({
-  open,
-  onClose
-}: Props): JSX.Element {
+export default function AddRecipePopUpContent({
+  translations
+}: {
+  translations: translationsTypes
+}): JSX.Element {
   const selectionRef = useRef<RichTextEditorHandle>(null)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
 
+  const RecipeSchema = z.object({
+    name: z
+      .string()
+      .nonempty(translations.required)
+      .min(2, { message: translations.mustbeatleast2characters }),
+    category: z.string().min(1, translations.pleaseselectacategory),
+    season: z.string().min(1, translations.pleaseselectaseason),
+    preparation: z.string().nonempty(translations.required),
+    rest: z.string().nonempty(translations.required),
+    persons: z.string().nonempty(translations.required),
+    benefits: z
+      .array(z.string())
+      .refine(arr => arr.some(item => item.trim().length > 0), {
+        message: translations.pleaseenteratleastonebenefit
+      }),
+    ingredientData: z
+      .array(z.unknown())
+      .nonempty(translations.atleastoneingredientcategorymustbeadded),
+    authorName: z
+      .string()
+      .nonempty(translations.required)
+      .min(2, { message: translations.mustbeatleast2characters }),
+    authorCategory: z.string().min(1, translations.pleaseselectacategory),
+    phone: z
+      .string()
+      .nonempty(translations.required)
+      .refine(val => /^\d{10}$/.test(val) || /^\+\d{11}$/.test(val), {
+        message: translations.invalidmobilenumbereg0712345678or94712345678
+      }),
+    email: z
+      .string()
+      .nonempty(translations.required)
+      .email(translations.pleaseenteravalidemail),
+    website: z
+      .string()
+      .url(translations.invalidurlformat)
+      .optional()
+      .or(z.literal("")),
+    recipe: z.string().refine(
+      val => {
+        const plainText = val.replace(/<(.|\n)*?>/g, "").trim()
+        const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val)
+        return plainText !== "" || hasImage
+      },
+      {
+        message: translations.required
+      }
+    ),
+    authorimage: z.custom<File | null>(val => val instanceof File, {
+      message: translations.required
+    }),
+    foodimage: z.custom<File | null>(val => val instanceof File, {
+      message: translations.required
+    })
+  })
+
+  const onSubmit = (data: z.infer<typeof RecipeSchema>): void => {
+    toast(translations.formSubmittedSuccessfully, {})
+  }
+  const handleCancel = (
+    form: ReturnType<typeof useForm<z.infer<typeof RecipeSchema>>>
+  ): void => {
+    form.reset()
+  }
+
+  // Dummy data
+  const ingredientData: Ingredient[] = []
+
+  // Table columns
+  const ingredientColumns = [
+    {
+      header: translations.ingredientName,
+      accessor: "name" as const
+    },
+    {
+      header: translations.quantity,
+      accessor: "quantity" as const
+    },
+    {
+      header: translations.mainIngredient,
+      accessor: (row: Ingredient) => (
+        <Switch
+          checked={row.isMain}
+          className="scale-75"
+          style={{ minWidth: 28, minHeight: 16 }}
+        />
+      )
+    },
+    {
+      header: translations.availableInIngredients,
+      accessor: (row: Ingredient) =>
+        row.tags.includes("InSystem") ? (
+          <Badge className="bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors">
+            In the System
+          </Badge>
+        ) : (
+          <Button
+            variant="ghost"
+            className="text-secondary-blue text-xs px-2 py-1 flex items-center gap-1 hover:bg-transparent focus:bg-transparent active:bg-transparent"
+            size="sm"
+          >
+            <CircleFadingPlus size={14} />
+            Add to Ingredients
+          </Button>
+        )
+    }
+  ]
   // Define functions to handle page changes
   const handlePageChange = (newPage: number): void => {
     setPage(newPage)
@@ -221,6 +217,7 @@ export default function AddRecipeEnglish({
       persons: "",
       benefits: [],
       authorName: "",
+      ingredientData: [],
       authorCategory: "",
       phone: "",
       email: "",
@@ -241,9 +238,14 @@ export default function AddRecipeEnglish({
               name="name"
               render={({ field }) => (
                 <FormItem className="flex-1">
-                  <FormLabel className="block mb-1 text-black">Name</FormLabel>
+                  <FormLabel className="block mb-1 text-black">
+                    {translations.name}
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter food name" {...field} />
+                    <Input
+                      placeholder={translations.enterFoodName}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -257,17 +259,21 @@ export default function AddRecipeEnglish({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="block mb-1 text-black">
-                    Category
+                    {translations.category}
                   </FormLabel>
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger className="w-full mt-1">
-                        <SelectValue placeholder="Select Category" />
+                        <SelectValue
+                          placeholder={translations.selectCategory}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {categories.map((option: Option) => (
                           <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                            {translations[
+                              option.value.toLowerCase() as keyof translationsTypes
+                            ] || option.label}{" "}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -285,17 +291,19 @@ export default function AddRecipeEnglish({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="block mb-1 text-black">
-                    Season
+                    {translations.season}
                   </FormLabel>
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger className="w-full mt-1">
-                        <SelectValue placeholder="Select Season" />
+                        <SelectValue placeholder={translations.selectSeason} />
                       </SelectTrigger>
                       <SelectContent>
                         {seasons.map((option: Option) => (
                           <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                            {translations[
+                              option.value.toLowerCase() as keyof translationsTypes
+                            ] || option.label}{" "}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -310,7 +318,9 @@ export default function AddRecipeEnglish({
 
         <Separator />
 
-        <DialogTitle className="pt-4">Recipe Attributes</DialogTitle>
+        <DialogTitle className="pt-4">
+          {translations.recipeAttributes}
+        </DialogTitle>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 mb-4">
           <div>
             <FormField
@@ -319,11 +329,11 @@ export default function AddRecipeEnglish({
               render={({ field }) => (
                 <FormItem className="flex-1">
                   <FormLabel className="block mb-1 text-black">
-                    Preparation
+                    {translations.preparation}
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="How long does it take to make?"
+                      placeholder={translations.howLongDoesItTakeToMake}
                       {...field}
                     />
                   </FormControl>
@@ -338,10 +348,12 @@ export default function AddRecipeEnglish({
               name="rest"
               render={({ field }) => (
                 <FormItem className="flex-1">
-                  <FormLabel className="block mb-1 text-black">Rest</FormLabel>
+                  <FormLabel className="block mb-1 text-black">
+                    {translations.rest}
+                  </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="How long to keep it resting?"
+                      placeholder={translations.howLongToKeepItResting}
                       {...field}
                     />
                   </FormControl>
@@ -357,11 +369,11 @@ export default function AddRecipeEnglish({
               render={({ field }) => (
                 <FormItem className="flex-1">
                   <FormLabel className="block mb-1 text-black">
-                    Persons
+                    {translations.persons}
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Number of people the meal serves"
+                      placeholder={translations.numberOfPeopleTheMealServes}
                       {...field}
                     />
                   </FormControl>
@@ -378,8 +390,8 @@ export default function AddRecipeEnglish({
             name="benefits"
             render={({ field }) => (
               <LableInput
-                title="Health Benefits"
-                placeholder="Add up to 6 food benefits or lower"
+                title={translations.healthBenefits}
+                placeholder={translations.addUpTo6FoodBenefitsOrLower}
                 benefits={field.value || []}
                 name="benefits"
                 width="w-[32%]"
@@ -390,17 +402,17 @@ export default function AddRecipeEnglish({
 
         <Separator className="my-4" />
 
-        <DialogTitle>Ingredients Selection</DialogTitle>
+        <DialogTitle>{translations.ingredientsSelection}</DialogTitle>
 
         <div className="flex flex-row gap-2 items-center pt-4 mb-4">
           <div className="flex-1">
             <SearchBar
-              title="Select Your Ingredients"
-              placeholder="Search for ingredient"
+              title={translations.selectYourIngredients}
+              placeholder={translations.searchForIngredient}
             />
           </div>
           <div className="flex items-end h-full mt-7">
-            <Button onClick={() => {}}>Add</Button>
+            <Button onClick={() => {}}>{translations.add}</Button>
           </div>
         </div>
         <FormField
@@ -432,7 +444,7 @@ export default function AddRecipeEnglish({
 
         <Separator className="my-4" />
 
-        <DialogTitle>Describe the Recipe</DialogTitle>
+        <DialogTitle>{translations.describeTheRecipe}</DialogTitle>
         <div className="flex flex-col gap-6 pt-4 pb-2">
           <div>
             <FormField
@@ -441,7 +453,7 @@ export default function AddRecipeEnglish({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="block mb-2 text-black">
-                    Recipe
+                    {translations.recipe}
                   </FormLabel>
                   <FormControl>
                     <RichTextEditor
@@ -459,7 +471,7 @@ export default function AddRecipeEnglish({
 
         <Separator className="my-4" />
 
-        <DialogTitle>Add Author</DialogTitle>
+        <DialogTitle>{translations.addAuthor}</DialogTitle>
 
         <div className="flex flex-col sm:flex-row gap-8 mb-4 pt-4 items-start">
           {/* Left: Author Inputs */}
@@ -471,10 +483,13 @@ export default function AddRecipeEnglish({
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel className="block mb-1 text-black">
-                      Name
+                      {translations.name}
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter author name" {...field} />
+                      <Input
+                        placeholder={translations.addAuthorName}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -488,7 +503,7 @@ export default function AddRecipeEnglish({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="block mb-1 text-black">
-                      Category
+                      {translations.category}
                     </FormLabel>
                     <FormControl>
                       <Select
@@ -496,12 +511,16 @@ export default function AddRecipeEnglish({
                         value={field.value}
                       >
                         <SelectTrigger className="w-full mt-1">
-                          <SelectValue placeholder="Enter author specialty" />
+                          <SelectValue
+                            placeholder={translations.enterAuthorSpecialty}
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {authorSpeality.map((option: Option) => (
                             <SelectItem key={option.value} value={option.value}>
-                              {option.label}
+                              {translations[
+                                option.value.toLowerCase() as keyof translationsTypes
+                              ] || option.label}{" "}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -519,10 +538,13 @@ export default function AddRecipeEnglish({
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel className="block mb-1 text-black">
-                      Phone
+                      {translations.phone}
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter author number" {...field} />
+                      <Input
+                        placeholder={translations.enterAuthorNumber}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -536,10 +558,13 @@ export default function AddRecipeEnglish({
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel className="block mb-1 text-black">
-                      Email
+                      {translations.email}
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter author email" {...field} />
+                      <Input
+                        placeholder={translations.enterAuthorEmail}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -553,10 +578,13 @@ export default function AddRecipeEnglish({
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel className="block mb-1 text-black">
-                      Website
+                      {translations.website}
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter author website" {...field} />
+                      <Input
+                        placeholder={translations.enterAuthorWebSite}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -573,7 +601,7 @@ export default function AddRecipeEnglish({
                 <FormItem>
                   <FormControl>
                     <ImageUploader
-                      title="Upload Autor Image"
+                      title={translations.uploadAuthorImage}
                       onChange={handleImageUpload(field)}
                     />
                   </FormControl>
@@ -584,7 +612,7 @@ export default function AddRecipeEnglish({
           </div>
         </div>
 
-        <DialogTitle>Upload Images</DialogTitle>
+        <DialogTitle>{translations.uploadImages}</DialogTitle>
 
         <div className="mt-6 pb-2 w-full sm:w-2/5">
           <FormField
@@ -594,7 +622,7 @@ export default function AddRecipeEnglish({
               <FormItem>
                 <FormControl>
                   <ImageUploader
-                    title="Select Images for your food item"
+                    title={translations.selectImagesForYourFoodItem}
                     onChange={handleImageUpload(field)}
                   />
                 </FormControl>
@@ -604,17 +632,6 @@ export default function AddRecipeEnglish({
           />
         </div>
         <Separator className="my-4" />
-        <DialogTitle>Linked Food</DialogTitle>
-        <div className="pb-6">
-          <CustomImage
-            srcList={imageList}
-            count={5}
-            maxCount={6}
-            text="Recipe Image"
-            width={80}
-            height={80}
-          />
-        </div>
         <DialogFooter>
           {/* Save and Cancel buttons */}
           <div className="fixed bottom-0 left-0 w-full bg-white border-t py-4 px-4 flex justify-between gap-2 z-50">
@@ -624,9 +641,9 @@ export default function AddRecipeEnglish({
                 handleCancel(form)
               }}
             >
-              Cancel
+              {translations.cancel}
             </Button>
-            <Button type="submit">Save</Button>
+            <Button type="submit">{translations.save}</Button>
           </div>
         </DialogFooter>
       </form>
