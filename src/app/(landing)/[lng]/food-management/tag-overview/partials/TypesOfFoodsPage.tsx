@@ -8,10 +8,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical } from "lucide-react"
-import { useState } from "react"
+import { MoreVertical, Type } from "lucide-react"
+import { useState, useEffect } from "react"
+import { getAllTags } from "@/app/api/foods"
 import { Badge } from "@/components/ui/badge"
 import AddNewTagPopUp from "../../partials/AddNewTagPopUp"
+import { Label } from "@/components/ui/label"
+import { useGetAllTags } from "@/query/hooks/useGetAllTags"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -22,16 +25,24 @@ interface Column<T> {
 }
 
 interface TypesOfFoodsDataType {
-  tag: string
-  activeOn: string
-  createdOn: string
-  status: string
+  // tag: string
+  category: string
+  // activeOn: string
+  count: string
+  // createdOn: string
+  status: boolean
 }
 
-export default function TypesOfFoodsPage(): React.ReactElement {
+export default function TypesOfFoodsPage({
+  token
+}: {
+  token: string
+}): JSX.Element {
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(10)
+  const [foodTypes, setFoodTypes] = useState<TypesOfFoodsDataType[]>([])
   const [openAddNewTagPopUp, setOpenAddNewTagPopUp] = useState<boolean>(false)
+  const {tags, loading, error } = useGetAllTags(token)
 
   // handle open add food popup
   const handleOpenAddNewTagPopUp = (): void => {
@@ -43,23 +54,30 @@ export default function TypesOfFoodsPage(): React.ReactElement {
     setOpenAddNewTagPopUp(false)
   }
 
+  useEffect(() => {
+    if (tags) {
+      setFoodTypes(tags)
+    }
+  }, [tags])
+
   const columns: Array<Column<TypesOfFoodsDataType>> = [
     {
-      accessor: "tag",
+      accessor: "category",
       header: "Tag",
-      className: "w-40",
+      className: "w-40 capitalize",
       cell: (row: TypesOfFoodsDataType) => (
-        <Badge variant={"outline"}>{row.tag}</Badge>
+        <Badge variant={"outline"}>{row.category}</Badge>
       )
     },
     {
-      accessor: "activeOn",
-      header: "Active On"
+      accessor: "count",
+      header: "Active On",
+      cell: (row: TypesOfFoodsDataType) => <Label>{row.count} Items</Label>
     },
-    {
-      accessor: "createdOn",
-      header: "Created On"
-    },
+    // {
+    //   accessor: "createdOn",
+    //   header: "Created On"
+    // },
     {
       accessor: "status",
       header: "Status",
@@ -67,14 +85,12 @@ export default function TypesOfFoodsPage(): React.ReactElement {
       cell: (row: TypesOfFoodsDataType) => (
         <Badge
           className={
-            row.status === "Active"
+            row.status
               ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700"
-              : row.status === "In Active"
-              ? "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
               : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700"
           }
         >
-          {row.status}
+          {row.status ? "Active" : "Inactive"}
         </Badge>
       )
     },
@@ -103,23 +119,8 @@ export default function TypesOfFoodsPage(): React.ReactElement {
     }
   ]
 
-  const data: TypesOfFoodsDataType[] = [
-    {
-      tag: "Carrot",
-      activeOn: "2025-05-16",
-      createdOn: "2025-05-16",
-      status: "Active"
-    },
-    {
-      tag: "Carrot",
-      activeOn: "2025-05-16",
-      createdOn: "2025-05-16",
-      status: "In Active"
-    }
-  ]
-
+  const data = foodTypes
   const pageSizeOptions = [5, 10, 20]
-
   const totalItems = data.length
   const startIndex = (page - 1) * pageSize
   const endIndex = startIndex + pageSize

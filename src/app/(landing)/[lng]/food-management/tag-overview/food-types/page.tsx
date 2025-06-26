@@ -12,7 +12,7 @@ export default async function TagFoodTypes(): Promise<any> {
 
   return (
     <div>
-      <TypesOfFoodsPage />
+      <TypesOfFoodsPage token={session.apiToken} />
     </div>
   )
 }
