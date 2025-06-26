@@ -7,8 +7,15 @@ interface TypesOfFoodsDataType {
   status: boolean
 }
 
-export function useGetAllTags(token: string) {
-  const [tags, setTags] = useState<TypesOfFoodsDataType[]>([])
+interface FoodsBenefitsDataType {
+  category: string
+  count: string
+  status: boolean
+}
+
+export function useGetAllTags<T>(token: string) {
+  const [tags, setTags] = useState<T[]>([])
+  // const [tags, setTags] = useState<FoodsBenefitsDataType[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 

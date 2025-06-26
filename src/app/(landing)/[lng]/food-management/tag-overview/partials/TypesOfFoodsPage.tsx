@@ -42,7 +42,7 @@ export default function TypesOfFoodsPage({
   const [pageSize, setPageSize] = useState<number>(10)
   const [foodTypes, setFoodTypes] = useState<TypesOfFoodsDataType[]>([])
   const [openAddNewTagPopUp, setOpenAddNewTagPopUp] = useState<boolean>(false)
-  const {tags, loading, error } = useGetAllTags(token)
+  const {tags, loading, error } = useGetAllTags<TypesOfFoodsDataType>(token)
 
   // handle open add food popup
   const handleOpenAddNewTagPopUp = (): void => {
@@ -56,8 +56,11 @@ export default function TypesOfFoodsPage({
 
   useEffect(() => {
     if (tags) {
+      console.log("test : " + tags)
+      console.log(tags)
       setFoodTypes(tags)
     }
+     console.log("Tags updated:", tags);
   }, [tags])
 
   const columns: Array<Column<TypesOfFoodsDataType>> = [

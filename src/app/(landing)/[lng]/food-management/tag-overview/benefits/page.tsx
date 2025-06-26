@@ -10,5 +10,5 @@ export default async function TagBenefits(): Promise<any> {
     redirect("/login")
   }
 
-  return <FoodsBenefitsPage />
+  return <FoodsBenefitsPage token={session.apiToken} />
 }

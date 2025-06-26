@@ -9,9 +9,12 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import { useState, type ReactElement } from "react"
+import { useState, useEffect } from "react"
+import { getAllTags } from "@/app/api/foods"
 import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
 import AddNewTagPopUp from "../../partials/AddNewTagPopUp"
+import { useGetAllTags } from "@/query/hooks/useGetAllTags"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -22,16 +25,24 @@ interface Column<T> {
 }
 
 interface FoodsBenefitsDataType {
-  tag: string
-  activeOn: string
-  createdOn: string
-  status: string
+  // tag: string
+  category: string
+  count: string
+  // activeOn: string
+  // createdOn: string
+  status: boolean
 }
 
-export default function FoodsBenefitsPage(): ReactElement {
+export default function FoodsBenefitsPage({
+  token
+}: {
+  token: string
+}): JSX.Element {
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(10)
+  const [foodBenefits, setFoodBenefits] = useState<FoodsBenefitsDataType[]>([])
   const [openAddNewTagPopUp, setOpenAddNewTagPopUp] = useState<boolean>(false)
+  const { tags, loading, error } = useGetAllTags<FoodsBenefitsDataType>(token)
 
   // handle open add food popup
   const handleOpenAddNewTagPopUp = (): void => {
@@ -43,23 +54,31 @@ export default function FoodsBenefitsPage(): ReactElement {
     setOpenAddNewTagPopUp(false)
   }
 
+  useEffect(() => {
+    if (tags) {
+      setFoodBenefits(tags)
+    }
+    console.log("Tags updated2:", tags)
+  }, [tags])
+
   const columns: Array<Column<FoodsBenefitsDataType>> = [
     {
-      accessor: "tag",
+      accessor: "category",
       header: "Tag",
-      className: "w-40",
+      className: "w-40 capitalize" ,
       cell: (row: FoodsBenefitsDataType): React.ReactNode => (
-        <Badge variant={"outline"}>{row.tag}</Badge>
+        <Badge variant={"outline"}>{row.category}</Badge>
       )
     },
     {
-      accessor: "activeOn",
-      header: "Active On"
+      accessor: "count",
+      header: "Active On",
+      cell: (row: FoodsBenefitsDataType) => <Label>{row.count} Items</Label>
     },
-    {
-      accessor: "createdOn",
-      header: "Created On"
-    },
+    // {
+    //   accessor: "createdOn",
+    //   header: "Created On"
+    // },
     {
       accessor: "status",
       header: "Status",
@@ -67,14 +86,12 @@ export default function FoodsBenefitsPage(): ReactElement {
       cell: (row: FoodsBenefitsDataType): React.ReactNode => (
         <Badge
           className={
-            row.status === "Active"
+            row.status
               ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700"
-              : row.status === "In Active"
-              ? "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
               : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700"
           }
         >
-          {row.status}
+          {row.status ? "Active" : "Inactive"}
         </Badge>
       )
     },
@@ -103,23 +120,8 @@ export default function FoodsBenefitsPage(): ReactElement {
     }
   ]
 
-  const data: FoodsBenefitsDataType[] = [
-    {
-      tag: "Carrot",
-      activeOn: "2025-05-16",
-      createdOn: "2025-05-16",
-      status: "Active"
-    },
-    {
-      tag: "Carrot",
-      activeOn: "2025-05-16",
-      createdOn: "2025-05-16",
-      status: "In Active"
-    }
-  ]
-
+  const data = foodBenefits
   const pageSizeOptions: number[] = [5, 10, 20]
-
   const totalItems: number = data.length
   const startIndex: number = (page - 1) * pageSize
   const endIndex: number = startIndex + pageSize
