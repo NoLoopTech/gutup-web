@@ -1,14 +1,13 @@
 "use client"
 
-import React, { useState, useRef } from "react"
+import React, { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import AddFoodEnglish from "./AddFoodEnglish"
-
-import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
-import AddFoodFranch from "./AddFoodFranch"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import AddFoodPopUpContent from "./AddFoodPopUpContent"
+import { loadLanguage } from "@/../../src/i18n/locales"
+import { defaultTranslations, type translationsTypes } from "@/types/foodTypes"
 
 interface Props {
   open: boolean
@@ -17,12 +16,25 @@ interface Props {
 
 export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
   const [allowMultiLang, setAllowMultiLang] = useState(false)
-  const [activeTab, setActiveTab] = useState<"english" | "french">("english")
+  const [activeTab, setActiveTab] = useState<"en" | "fr">("en")
+  const [translations, setTranslations] = useState<Partial<translationsTypes>>(
+    {}
+  )
+  // Load translations based on the selected language
+  useEffect(() => {
+    const loadTranslations = async () => {
+      const langData = await loadLanguage(activeTab, "food")
+      setTranslations(langData)
+    }
 
-  // Refs for each RichTextEditor
-  const selectionRef = useRef<RichTextEditorHandle>(null)
-  const preparationRef = useRef<RichTextEditorHandle>(null)
-  const conservationRef = useRef<RichTextEditorHandle>(null)
+    loadTranslations()
+  }, [activeTab])
+
+  // Language toggle handler
+  const handleLanguageToggle = (val: boolean) => {
+    setAllowMultiLang(val)
+    if (!val) setActiveTab("en") // Default to English if multi-lang is disabled
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -41,20 +53,22 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
             }
           `}</style>
 
-          <DialogTitle>Add New Food Item</DialogTitle>
+          <DialogTitle>
+            {translations.addNewFoodItem ?? "Add New Food Item"}
+          </DialogTitle>
 
           <Tabs
             value={activeTab}
             onValueChange={val => {
-              setActiveTab(val as "english" | "french")
+              setActiveTab(val as "en" | "fr")
             }}
             className="w-full"
           >
             <div className="flex flex-col gap-4 justify-between items-start mt-4 mb-6 sm:flex-row sm:items-center">
               <TabsList>
-                <TabsTrigger value="english">English</TabsTrigger>
+                <TabsTrigger value="en">{translations.english}</TabsTrigger>
                 {allowMultiLang && (
-                  <TabsTrigger value="french">French</TabsTrigger>
+                  <TabsTrigger value="fr">{translations.french}</TabsTrigger>
                 )}
               </TabsList>
 
@@ -63,29 +77,28 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
                   id="multi-lang"
                   checked={allowMultiLang}
                   onCheckedChange={val => {
-                    setAllowMultiLang(val)
-                    if (!val) setActiveTab("english")
+                    handleLanguageToggle(val)
                   }}
                 />
                 <Label htmlFor="multi-lang" className="text-Primary-300">
-                  Allow Multi Lang
+                  {translations.allowMultiLang}
                 </Label>
               </div>
             </div>
 
             {/* Render each tab’s content component */}
-            <AddFoodEnglish
-              selectionRef={selectionRef}
-              preparationRef={preparationRef}
-              conservationRef={conservationRef}
-            />
+            <TabsContent value="en">
+              <AddFoodPopUpContent
+                translations={{ ...defaultTranslations, ...translations }}
+              />
+            </TabsContent>
 
             {allowMultiLang && (
-              <AddFoodFranch
-                selectionRef={selectionRef}
-                preparationRef={preparationRef}
-                conservationRef={conservationRef}
-              />
+              <TabsContent value="fr">
+                <AddFoodPopUpContent
+                  translations={{ ...defaultTranslations, ...translations }}
+                />
+              </TabsContent>
             )}
           </Tabs>
         </div>
