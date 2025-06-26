@@ -11,6 +11,7 @@ import {
   defaultTranslations,
   type translationsTypes
 } from "@/types/dailyTipTypes"
+import { useDailyTipStore } from "@/stores/useDailyTipStore"
 
 interface Props {
   open: boolean
@@ -21,35 +22,34 @@ export default function AddDailyTipMainPopUp({
   open,
   onClose
 }: Props): JSX.Element {
-  const [allowMultiLang, setAllowMultiLang] = useState(false)
-  const [activeTab, setActiveTab] = useState<"en" | "fr">("en")
+  const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
+    useDailyTipStore()
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
   )
   // Load translations based on the selected language
   useEffect(() => {
     const loadTranslations = async () => {
-      const langData = await loadLanguage(activeTab, "dailyTip")
+      const langData = await loadLanguage(activeLang, "dailyTip")
       setTranslations(langData)
     }
 
     loadTranslations()
-  }, [activeTab])
+  }, [activeLang])
 
   // Language toggle handler
   const handleLanguageToggle = (val: boolean) => {
     setAllowMultiLang(val)
-    if (!val) setActiveTab("en") // Default to English if multi-lang is disabled
+    if (!val) setActiveLang("en")
   }
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
         <div
           className="overflow-y-auto p-2 h-full"
           style={{
-            scrollbarWidth: "none", // Firefox
-            msOverflowStyle: "none" // IE/Edge
+            scrollbarWidth: "none",
+            msOverflowStyle: "none"
           }}
         >
           <DialogTitle>
@@ -57,10 +57,8 @@ export default function AddDailyTipMainPopUp({
           </DialogTitle>
 
           <Tabs
-            value={activeTab}
-            onValueChange={val => {
-              setActiveTab(val as "en" | "fr") // Set active tab when switching
-            }}
+            value={activeLang}
+            onValueChange={val => setActiveLang(val as "en" | "fr")}
             className="w-full"
           >
             <div className="flex flex-col gap-4 justify-between items-start mt-4 mb-6 sm:flex-row sm:items-center">
@@ -75,7 +73,7 @@ export default function AddDailyTipMainPopUp({
                 <Switch
                   id="multi-lang"
                   checked={allowMultiLang}
-                  onCheckedChange={val => handleLanguageToggle(val)}
+                  onCheckedChange={handleLanguageToggle}
                 />
                 <Label htmlFor="multi-lang" className="text-Primary-300">
                   {translations.allowMultiLang}
@@ -84,20 +82,11 @@ export default function AddDailyTipMainPopUp({
             </div>
 
             {/* English Tab Content */}
-            <TabsContent value="en">
+            <TabsContent value={activeLang}>
               <AddDailyTipPopUp
                 translations={{ ...defaultTranslations, ...translations }}
               />
             </TabsContent>
-
-            {/* French Tab Content (if multi-language is allowed) */}
-            {allowMultiLang && (
-              <TabsContent value="fr">
-                <AddDailyTipPopUp
-                  translations={{ ...defaultTranslations, ...translations }}
-                />
-              </TabsContent>
-            )}
           </Tabs>
         </div>
       </DialogContent>
