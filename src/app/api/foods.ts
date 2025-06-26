@@ -13,13 +13,16 @@ export const getAllFoods = async (token: string): Promise<any> => {
 }
 
 // get all types
-export const getAllTags = async (token: string): Promise<any> => {
+export const getAllTags = async (
+  token: string,
+  category: string
+): Promise<any> => {
   try {
-    const response = await axiosInstance.get("/food/tag-overview", {
+    const response = await axiosInstance.get(`/food/tag-overview/${category}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     return response
-  } catch (error) {    
+  } catch (error) {
     return error
   }
 }
@@ -35,8 +38,6 @@ export const getFoodsById = async (token: string, id: number): Promise<any> => {
     return error
   }
 }
-
-
 
 // delete user by id
 export const deleteFoodById = async (

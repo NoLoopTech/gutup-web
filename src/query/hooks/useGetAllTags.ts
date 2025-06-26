@@ -13,18 +13,17 @@ interface FoodsBenefitsDataType {
   status: boolean
 }
 
-export function useGetAllTags<T>(token: string) {
+export function useGetAllTags<T>(token: string, category: string) {
   const [tags, setTags] = useState<T[]>([])
-  // const [tags, setTags] = useState<FoodsBenefitsDataType[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!token) return
+    if (!token || !category) return
 
     const fetchTags = async () => {
       try {
-        const response = await fetchTagsAPI(token)
+        const response = await fetchTagsAPI(token, category)
         if (response.status === 200) {
           setTags(response.data)
         } else {
@@ -38,7 +37,7 @@ export function useGetAllTags<T>(token: string) {
     }
 
     fetchTags()
-  }, [token])
+  }, [token, category])
 
   return { tags, loading, error }
 }

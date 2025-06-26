@@ -25,11 +25,8 @@ interface Column<T> {
 }
 
 interface FoodsBenefitsDataType {
-  // tag: string
   category: string
   count: string
-  // activeOn: string
-  // createdOn: string
   status: boolean
 }
 
@@ -42,7 +39,10 @@ export default function FoodsBenefitsPage({
   const [pageSize, setPageSize] = useState<number>(10)
   const [foodBenefits, setFoodBenefits] = useState<FoodsBenefitsDataType[]>([])
   const [openAddNewTagPopUp, setOpenAddNewTagPopUp] = useState<boolean>(false)
-  const { tags, loading, error } = useGetAllTags<FoodsBenefitsDataType>(token)
+  const { tags, loading, error } = useGetAllTags<FoodsBenefitsDataType>(
+    token,
+    "Benefit"
+  )
 
   // handle open add food popup
   const handleOpenAddNewTagPopUp = (): void => {
@@ -65,7 +65,7 @@ export default function FoodsBenefitsPage({
     {
       accessor: "category",
       header: "Tag",
-      className: "w-40 capitalize" ,
+      className: "w-40 capitalize",
       cell: (row: FoodsBenefitsDataType): React.ReactNode => (
         <Badge variant={"outline"}>{row.category}</Badge>
       )
@@ -75,10 +75,6 @@ export default function FoodsBenefitsPage({
       header: "Active On",
       cell: (row: FoodsBenefitsDataType) => <Label>{row.count} Items</Label>
     },
-    // {
-    //   accessor: "createdOn",
-    //   header: "Created On"
-    // },
     {
       accessor: "status",
       header: "Status",
