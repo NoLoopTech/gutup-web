@@ -46,6 +46,7 @@ interface Option {
   value: string
   label: string
 }
+
 interface Ingredient {
   id: number
   name: string
@@ -53,36 +54,11 @@ interface Ingredient {
   isMain: boolean
   tags: string[]
 }
+
 interface Column<T> {
   header: string
   accessor: keyof T | ((row: T) => React.ReactNode)
 }
-
-const reason: Record<string, Option[]> = {
-  en: [
-    { value: "stress", label: "Stress" },
-    { value: "anxiety", label: "Anxiety" },
-    { value: "depression", label: "Depression" }
-  ],
-  fr: [
-    { value: "stresser", label: "Stresser" },
-    { value: "anxiété", label: "Anxiété" },
-    { value: "dépression", label: "Dépression" }
-  ]
-}
-const ingredientColumns: Array<Column<Ingredient>> = [
-  { header: "Ingredient Name", accessor: "name" },
-  {
-    header: "Main Ingredient",
-    accessor: row => (
-      <Switch
-        checked={row.isMain}
-        className="scale-75"
-        style={{ minWidth: 28, minHeight: 16 }}
-      />
-    )
-  }
-]
 
 type FieldNames =
   | "reason"
@@ -96,6 +72,33 @@ type FieldNames =
   | "facebook"
   | "instagram"
   | "website"
+
+const reason: Record<string, Option[]> = {
+  en: [
+    { value: "stress", label: "Stress" },
+    { value: "anxiety", label: "Anxiety" },
+    { value: "depression", label: "Depression" }
+  ],
+  fr: [
+    { value: "stresser", label: "Stresser" },
+    { value: "anxiété", label: "Anxiété" },
+    { value: "dépression", label: "Dépression" }
+  ]
+}
+
+const ingredientColumns: Array<Column<Ingredient>> = [
+  { header: "Ingredient Name", accessor: "name" },
+  {
+    header: "Main Ingredient",
+    accessor: row => (
+      <Switch
+        checked={row.isMain}
+        className="scale-75"
+        style={{ minWidth: 28, minHeight: 16 }}
+      />
+    )
+  }
+]
 
 export default function ShopPromotionTab({
   translations
