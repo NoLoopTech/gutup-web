@@ -89,10 +89,6 @@ const handlePreparationChange = (field: any) => (val: string) => {
 const handleConservationChange = (field: any) => (val: string) => {
   field.onChange(val)
 }
-// Separate function for handling image upload
-const handleImageUpload = (field: any) => (files: File[] | null) => {
-  field.onChange(files && files.length > 0 ? files[0] : null)
-}
 
 export default function AddFoodPopUpContent({
   translations
@@ -162,7 +158,10 @@ export default function AddFoodPopUpContent({
   // Form hook
   const form = useForm<z.infer<typeof FoodSchema>>({
     resolver: zodResolver(FoodSchema),
-    defaultValues: foodData[activeLang]
+    defaultValues: {
+      ...foodData[activeLang],
+      category: foodData[activeLang]?.category || ""
+    }
   })
   console.log("Form default values:", foodData[activeLang])
   // Update form when lang changes
@@ -310,6 +309,18 @@ export default function AddFoodPopUpContent({
         }
       }
     }
+  }
+  const handleImageUpload = (field: any) => (files: File[] | null) => {
+    const file = files && files.length > 0 ? files[0] : null
+    // 1) update RHF
+    field.onChange(file)
+    // 2) store into the active language
+    setTranslationField("foodData", activeLang, "image", file)
+    // 3) mirror it into the opposite language
+    const opp = activeLang === "en" ? "fr" : "en"
+    setTranslationField("foodData", opp, "image", file)
+    // 4) also keep RHF internal state in sync
+    form.setValue("image", file)
   }
   // Submit handler
   const onSubmit = (): void => {
@@ -755,6 +766,15 @@ export default function AddFoodPopUpContent({
                     <ImageUploader
                       title={translations.selectImagesForYourFoodItem}
                       onChange={handleImageUpload(field)}
+                      previewUrls={
+                        foodData[activeLang].image
+                          ? [
+                              URL.createObjectURL(
+                                foodData[activeLang].image as File
+                              )
+                            ]
+                          : []
+                      }
                     />
                   </FormControl>
                   <FormMessage />

@@ -12,6 +12,13 @@ interface FoodFields {
   fat: string
   sugar: string
   benefits: string[]
+  image: File | null
+  category: string
+  season: string
+  country: string
+  selection: string
+  preparation: string
+  conservation: string
 }
 
 interface LangData<T> {
@@ -45,7 +52,14 @@ const emptyFields: FoodFields = {
   minerals: "",
   fat: "",
   sugar: "",
-  benefits: []
+  benefits: [],
+  image: null,
+  category: "",
+  season: "",
+  country: "",
+  selection: "",
+  preparation: "",
+  conservation: ""
 }
 
 export const useFoodStore = create<FoodStoreState>()(
