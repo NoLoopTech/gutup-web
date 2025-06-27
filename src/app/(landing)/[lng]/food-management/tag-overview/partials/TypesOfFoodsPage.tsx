@@ -152,6 +152,7 @@ export default function TypesOfFoodsPage({
       <AddNewTagPopUp
         open={openAddNewTagPopUp}
         onClose={handleCloseAddNewTagPopUp}
+        token={token}
       />
     </div>
   )

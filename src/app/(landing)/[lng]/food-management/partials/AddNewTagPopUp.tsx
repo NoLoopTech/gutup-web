@@ -4,6 +4,7 @@ import React from "react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { AddNewTag } from "@/app/api/foods"
 import {
   Select,
   SelectContent,
@@ -27,6 +28,7 @@ import { toast } from "sonner"
 interface Props {
   open: boolean
   onClose: () => void
+  token: string
 }
 interface Option {
   value: string
@@ -34,9 +36,8 @@ interface Option {
 }
 // Dummy categories
 const categories: Option[] = [
-  { value: "breakfast", label: "Breakfast" },
-  { value: "lunch", label: "Lunch" },
-  { value: "dinner", label: "Dinner" }
+  { value: "Type", label: "Type" },
+  { value: "Benefit", label: "Benefit" }
 ]
 // Schema
 const TagSchema = z.object({
@@ -47,7 +48,11 @@ const TagSchema = z.object({
     .min(2, "Tag name must be at least 2 characters")
 })
 
-export default function AddNewTagPopUp({ open, onClose }: Props): JSX.Element {
+export default function AddNewTagPopUp({
+  open,
+  onClose,
+  token
+}: Props): JSX.Element {
   const form = useForm<z.infer<typeof TagSchema>>({
     resolver: zodResolver(TagSchema),
     defaultValues: {
@@ -56,9 +61,26 @@ export default function AddNewTagPopUp({ open, onClose }: Props): JSX.Element {
     }
   })
 
-  const onSubmit = (data: z.infer<typeof TagSchema>): void => {
-    toast("Tag added successfully!", {})
-    onClose()
+  const onSubmit = async (data: z.infer<typeof TagSchema>): Promise<void> => {
+    try {
+      const response = await AddNewTag(token, data)
+
+      if (response?.status === 200 || response?.status === 201) {
+        toast.success("Tag added successfully!", {
+          description: `${data.tagName} added under ${data.category}`
+        })
+        onClose()
+        form.reset() // reset the form after success
+      } else {
+        toast.error("Failed to add tag", {
+          description: response?.message || "Unexpected error occurred"
+        })
+      }
+    } catch (error: any) {
+      toast.error("Error adding tag", {
+        description: error?.response?.data?.message || error.message
+      })
+    }
   }
 
   return (

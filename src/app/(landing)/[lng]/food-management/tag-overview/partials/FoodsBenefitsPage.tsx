@@ -23,7 +23,6 @@ interface Column<T> {
   cell?: (row: T) => React.ReactNode
   className?: string
 }
-
 interface FoodsBenefitsDataType {
   category: string
   count: string
@@ -158,6 +157,7 @@ export default function FoodsBenefitsPage({
       <AddNewTagPopUp
         open={openAddNewTagPopUp}
         onClose={handleCloseAddNewTagPopUp}
+        token={token}
       />
     </div>
   )
