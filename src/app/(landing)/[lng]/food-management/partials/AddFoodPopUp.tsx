@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import AddFoodPopUpContent from "./AddFoodPopUpContent"
 import { loadLanguage } from "@/../../src/i18n/locales"
 import { defaultTranslations, type translationsTypes } from "@/types/foodTypes"
+import { useFoodStore } from "@/stores/useFoodStore"
 
 interface Props {
   open: boolean
@@ -15,25 +16,26 @@ interface Props {
 }
 
 export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
-  const [allowMultiLang, setAllowMultiLang] = useState(false)
-  const [activeTab, setActiveTab] = useState<"en" | "fr">("en")
+  const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
+    useFoodStore()
+
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
   )
   // Load translations based on the selected language
   useEffect(() => {
     const loadTranslations = async () => {
-      const langData = await loadLanguage(activeTab, "food")
+      const langData = await loadLanguage(activeLang, "food")
       setTranslations(langData)
     }
 
     loadTranslations()
-  }, [activeTab])
+  }, [activeLang])
 
   // Language toggle handler
   const handleLanguageToggle = (val: boolean) => {
     setAllowMultiLang(val)
-    if (!val) setActiveTab("en") // Default to English if multi-lang is disabled
+    if (!val) setActiveLang("en") // Default to English if multi-lang is disabled
   }
 
   return (
@@ -58,9 +60,9 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
           </DialogTitle>
 
           <Tabs
-            value={activeTab}
+            value={activeLang}
             onValueChange={val => {
-              setActiveTab(val as "en" | "fr")
+              setActiveLang(val as "en" | "fr")
             }}
             className="w-full"
           >
