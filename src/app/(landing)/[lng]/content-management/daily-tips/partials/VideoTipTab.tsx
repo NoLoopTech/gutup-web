@@ -117,8 +117,12 @@ export default function VideoTipTab({
     if (activeLang === "en" && value.trim()) {
       try {
         setIsTranslating(true)
-        const translated = await translateText(value)
-        setTranslationField("videoTipData", "fr", fieldName, translated)
+        if (fieldName !== "videoLink") {
+          const translated = await translateText(value)
+          setTranslationField("videoTipData", "fr", fieldName, translated)
+        } else {
+          setTranslationField("videoTipData", "fr", "videoLink", value)
+        }
       } finally {
         setIsTranslating(false)
       }
