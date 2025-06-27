@@ -11,6 +11,7 @@ interface FoodFields {
   minerals: string
   fat: string
   sugar: string
+  benefits: string[]
 }
 
 interface LangData<T> {
@@ -21,17 +22,30 @@ interface LangData<T> {
 interface FoodStoreState {
   allowMultiLang: boolean
   activeLang: "en" | "fr"
-  // dynamic “name” input values
   foodData: LangData<FoodFields>
   setAllowMultiLang: (val: boolean) => void
   setActiveLang: (lang: "en" | "fr") => void
+
+  // same signature you had:
   setTranslationField: (
     section: "foodData",
     lang: "en" | "fr",
     field: keyof FoodFields,
-    value: string
+    value: string | string[]
   ) => void
+
   resetForm: () => void
+}
+
+const emptyFields: FoodFields = {
+  name: "",
+  fiber: "",
+  proteins: "",
+  vitamins: "",
+  minerals: "",
+  fat: "",
+  sugar: "",
+  benefits: []
 }
 
 export const useFoodStore = create<FoodStoreState>()(
@@ -40,24 +54,8 @@ export const useFoodStore = create<FoodStoreState>()(
       allowMultiLang: false,
       activeLang: "en",
       foodData: {
-        en: {
-          name: "",
-          fiber: "",
-          proteins: "",
-          vitamins: "",
-          minerals: "",
-          fat: "",
-          sugar: ""
-        },
-        fr: {
-          name: "",
-          fiber: "",
-          proteins: "",
-          vitamins: "",
-          minerals: "",
-          fat: "",
-          sugar: ""
-        }
+        en: { ...emptyFields },
+        fr: { ...emptyFields }
       },
 
       setAllowMultiLang: val => {
@@ -72,39 +70,24 @@ export const useFoodStore = create<FoodStoreState>()(
       },
 
       setTranslationField: (section, lang, field, value) => {
-        const sectionData = get()[section]
-        set({
+        set(state => ({
           [section]: {
-            ...sectionData,
+            // take the existing two‐language object...
+            ...state[section],
             [lang]: {
-              ...sectionData[lang],
+              // and overwrite only that one field:
+              ...state[section][lang],
               [field]: value
             }
           }
-        } as any)
+        }))
       },
 
       resetForm: () => {
         set({
           foodData: {
-            en: {
-              name: "",
-              fiber: "",
-              proteins: "",
-              vitamins: "",
-              minerals: "",
-              fat: "",
-              sugar: ""
-            },
-            fr: {
-              name: "",
-              fiber: "",
-              proteins: "",
-              vitamins: "",
-              minerals: "",
-              fat: "",
-              sugar: ""
-            }
+            en: { ...emptyFields },
+            fr: { ...emptyFields }
           }
         })
       }

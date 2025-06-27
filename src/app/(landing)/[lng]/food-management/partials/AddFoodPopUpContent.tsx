@@ -82,10 +82,6 @@ const countriesOptions: Record<string, Option[]> = {
   ]
 }
 
-const handleSelectionChange = (field: any) => (val: string) => {
-  field.onChange(val)
-}
-
 const handlePreparationChange = (field: any) => (val: string) => {
   field.onChange(val)
 }
@@ -233,7 +229,7 @@ export default function AddFoodPopUpContent({
       )
     }
   }
-    // This function updates the season
+  // This function updates the season
   const handleSeasonChange = (value: string): void => {
     form.setValue("season", value)
     setTranslationField("foodData", activeLang, "season", value)
@@ -252,7 +248,7 @@ export default function AddFoodPopUpContent({
       )
     }
   }
-      // This function updates the country
+  // This function updates the country
   const handleCountryChange = (value: string): void => {
     form.setValue("country", value)
     setTranslationField("foodData", activeLang, "country", value)
@@ -269,6 +265,50 @@ export default function AddFoodPopUpContent({
         "country",
         opposite[index].value
       )
+    }
+  }
+
+  const makeRichHandlers = (
+    fieldName: "selection" | "preparation" | "conservation"
+  ): { onChange: (val: string) => void; onBlur: () => Promise<void> } => {
+    const onChange = (val: string): void => {
+      form.setValue(fieldName, val)
+      setTranslationField("foodData", activeLang, fieldName, val)
+    }
+    const onBlur = async (): Promise<void> => {
+      const val = form.getValues(fieldName)
+      if (activeLang === "en" && val.trim()) {
+        setIsTranslating(true)
+        try {
+          const tr = await translateText(val)
+          setTranslationField("foodData", "fr", fieldName, tr)
+        } finally {
+          setIsTranslating(false)
+        }
+      }
+    }
+    return { onChange, onBlur }
+  }
+  // adds/removes benefits:
+  function handleBenefitsChange(vals: string[]): void {
+    form.setValue("benefits", vals)
+    setTranslationField("foodData", activeLang, "benefits", vals)
+  }
+
+  async function handleBenefitsBlur(): Promise<void> {
+    if (activeLang === "en") {
+      const vals = form.getValues("benefits")
+      if (vals.length) {
+        setIsTranslating(true)
+        try {
+          const trArr = await Promise.all(
+            vals.map(async v => await translateText(v))
+          )
+          setTranslationField("foodData", "fr", "benefits", trArr)
+        } finally {
+          setIsTranslating(false)
+        }
+      }
     }
   }
   // Submit handler
@@ -596,7 +636,12 @@ export default function AddFoodPopUpContent({
               />
             </div>
           </div>
-          <div className="w-[100%] ">
+          <div className="w-[100%]">
+            {isTranslating && (
+              <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
+                <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 animate-spin" />
+              </div>
+            )}
             <FormField
               control={form.control}
               name="benefits"
@@ -607,6 +652,14 @@ export default function AddFoodPopUpContent({
                   benefits={field.value || []}
                   name="benefits"
                   width="w-[32%]"
+                  onChange={(newArr: string[]) => {
+                    handleBenefitsChange(newArr)
+                    field.onChange(newArr)
+                  }}
+                  onBlur={() => {
+                    void handleBenefitsBlur()
+                    field.onBlur()
+                  }}
                 />
               )}
             />
@@ -622,20 +675,29 @@ export default function AddFoodPopUpContent({
               <FormField
                 control={form.control}
                 name="selection"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="block mb-2 text-black">
-                      {translations.selection}
-                    </FormLabel>
-                    <FormControl>
-                      <RichTextEditor
-                        initialContent={field.value}
-                        onChange={handleSelectionChange(field)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const { onChange } = makeRichHandlers("selection")
+                  return (
+                    <FormItem className="relative">
+                      {isTranslating && (
+                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                          <span className="loader" />
+                        </div>
+                      )}
+                      <FormLabel>{translations.selection}</FormLabel>
+                      <FormControl>
+                        <RichTextEditor
+                          initialContent={field.value}
+                          onChange={val => {
+                            onChange(val)
+                            field.onChange(val)
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
             </div>
             <div>
