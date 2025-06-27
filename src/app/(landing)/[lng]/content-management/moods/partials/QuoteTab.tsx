@@ -232,6 +232,7 @@ export default function QuoteTab({
               <FormItem>
                 <FormControl className="flex gap-2 items-center">
                   <Checkbox
+                    id="share-checkbox"
                     checked={field.value}
                     onCheckedChange={(checked: boolean) => {
                       field.onChange(checked)
@@ -239,7 +240,12 @@ export default function QuoteTab({
                       setTranslationField("quoteData", "fr", "share", checked)
                     }}
                   />{" "}
-                  <FormLabel>{translations.share}</FormLabel>
+                  <FormLabel
+                    htmlFor="share-checkbox"
+                    className="m-0 cursor-pointer"
+                  >
+                    {translations.share}
+                  </FormLabel>
                 </FormControl>
 
                 <FormMessage />
