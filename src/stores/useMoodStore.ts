@@ -7,6 +7,7 @@ interface QuoteFields {
   mood: string
   author: string
   quote: string
+  share: boolean | undefined
 }
 
 interface FoodFields {
@@ -43,7 +44,7 @@ interface MoodStoreState {
     section: keyof MoodStoreState["translationsData"],
     lang: "en" | "fr",
     field: string,
-    value: string
+    value: string | boolean
   ) => void
   resetTranslations: () => void
 }
@@ -56,8 +57,8 @@ export const useMoodStore = create<MoodStoreState>()(
       activeTab: "Quote",
       translationsData: {
         quoteData: {
-          en: { mood: "", author: "", quote: "" },
-          fr: { mood: "", author: "", quote: "" }
+          en: { mood: "", author: "", quote: "", share: false },
+          fr: { mood: "", author: "", quote: "", share: false }
         },
         foodData: {
           en: { mood: "", foodName: "", description: "", shopCategory: "" },
@@ -99,8 +100,8 @@ export const useMoodStore = create<MoodStoreState>()(
         set({
           translationsData: {
             quoteData: {
-              en: { mood: "", author: "", quote: "" },
-              fr: { mood: "", author: "", quote: "" }
+              en: { mood: "", author: "", quote: "", share: false },
+              fr: { mood: "", author: "", quote: "", share: false }
             },
             foodData: {
               en: { mood: "", foodName: "", description: "", shopCategory: "" },

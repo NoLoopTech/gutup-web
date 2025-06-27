@@ -6,6 +6,7 @@ export interface translationsTypes {
   selectLayout: string
   selectLayoutType: string
   quote: string
+  share: string
   food: string
   recipe: string
   selectMood: string
@@ -46,6 +47,7 @@ export const defaultTranslations: translationsTypes = {
   selectLayout: "",
   selectLayoutType: "",
   quote: "",
+  share: "",
   food: "",
   recipe: "",
   selectMood: "",

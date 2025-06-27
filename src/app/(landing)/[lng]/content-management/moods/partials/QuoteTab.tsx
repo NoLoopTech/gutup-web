@@ -12,7 +12,7 @@ import {
   SelectValue
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { useForm } from "react-hook-form"
+import { Resolver, useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
@@ -27,6 +27,7 @@ import { toast } from "sonner"
 import { type translationsTypes } from "@/types/moodsTypes"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { useTranslation } from "@/query/hooks/useTranslation"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface Option {
   value: string
@@ -66,12 +67,23 @@ export default function QuoteTab({
     quote: z
       .string()
       .nonempty(translations.required)
-      .min(10, { message: translations.quoteMustBeAtLeast10Characters })
+      .min(10, { message: translations.quoteMustBeAtLeast10Characters }),
+    share: z
+      .boolean({ required_error: translations.required })
+      .default(false)
+      .refine(val => typeof val === "boolean", {
+        message: translations.required
+      })
   })
 
   const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: translationsData.quoteData[activeLang]
+    resolver: zodResolver(FormSchema) as Resolver<
+      z.infer<typeof FormSchema>,
+      any
+    >,
+    defaultValues: translationsData.quoteData[activeLang] as z.infer<
+      typeof FormSchema
+    >
   })
 
   // Update form when lang changes
@@ -208,6 +220,28 @@ export default function QuoteTab({
                     onBlur={() => handleInputBlur("quote", field.value)}
                   />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="share"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl className="flex gap-2 items-center">
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={(checked: boolean) => {
+                      field.onChange(checked)
+                      setTranslationField("quoteData", "en", "share", checked)
+                      setTranslationField("quoteData", "fr", "share", checked)
+                    }}
+                  />{" "}
+                  <FormLabel>{translations.share}</FormLabel>
+                </FormControl>
+
                 <FormMessage />
               </FormItem>
             )}
