@@ -42,6 +42,13 @@ interface Option {
   label: string
 }
 
+type FieldNames =
+  | "title"
+  | "subTitleOne"
+  | "subDescriptionOne"
+  | "subTitleTwo"
+  | "subDescriptionTwo"
+
 const concerns: Record<string, Option[]> = {
   en: [
     { value: "stress", label: "Stress" },
@@ -110,28 +117,12 @@ export default function BasicLayoutTab({
     form.reset()
   }
 
-  const handleInputChange = (
-    fieldName:
-      | "title"
-      | "subTitleOne"
-      | "subDescriptionOne"
-      | "subTitleTwo"
-      | "subDescriptionTwo",
-    value: string
-  ) => {
+  const handleInputChange = (fieldName: FieldNames, value: string) => {
     form.setValue(fieldName, value)
     setTranslationField("basicLayoutData", activeLang, fieldName, value)
   }
 
-  const handleInputBlur = async (
-    fieldName:
-      | "title"
-      | "subTitleOne"
-      | "subDescriptionOne"
-      | "subTitleTwo"
-      | "subDescriptionTwo",
-    value: string
-  ) => {
+  const handleInputBlur = async (fieldName: FieldNames, value: string) => {
     if (activeLang === "en" && value.trim()) {
       try {
         setIsTranslating(true)

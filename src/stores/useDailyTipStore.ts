@@ -21,16 +21,18 @@ interface BasicLayoutFields {
 
 interface ShopPromotionFields {
   reason: string
-  name: string
-  location: string
-  desc: string
-  phoneNumber: string
+  shopName: string
+  shopLocation: string
+  subDescription: string
+  shopCategory: string
+  mobileNumber: string
   email: string
   mapsPin: string
   facebook: string
   instagram: string
   website: string
   image: string
+  dateselect: string
   shopPromoteFoods: shopPromoteFoodsTypes[]
 }
 
@@ -100,17 +102,19 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
         },
         shopPromotionData: {
           en: {
-            name: "",
-            location: "",
-            desc: "",
-            phoneNumber: "",
+            reason: "",
+            shopName: "",
+            shopLocation: "",
+            subDescription: "",
+            shopCategory: "",
+            mobileNumber: "",
             email: "",
             mapsPin: "",
             facebook: "",
-            image: "",
             instagram: "",
-            reason: "",
             website: "",
+            image: "",
+            dateselect: "",
             shopPromoteFoods: [
               {
                 foodId: 0,
@@ -119,17 +123,19 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             ]
           },
           fr: {
-            name: "",
-            location: "",
-            desc: "",
-            phoneNumber: "",
+            reason: "",
+            shopName: "",
+            shopLocation: "",
+            subDescription: "",
+            shopCategory: "",
+            mobileNumber: "",
             email: "",
             mapsPin: "",
             facebook: "",
-            image: "",
             instagram: "",
-            reason: "",
             website: "",
+            image: "",
+            dateselect: "",
             shopPromoteFoods: [
               {
                 foodId: 0,
@@ -212,17 +218,19 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             },
             shopPromotionData: {
               en: {
-                name: "",
-                location: "",
-                desc: "",
-                phoneNumber: "",
+                reason: "",
+                shopName: "",
+                shopLocation: "",
+                subDescription: "",
+                shopCategory: "",
+                mobileNumber: "",
                 email: "",
                 mapsPin: "",
                 facebook: "",
-                image: "",
                 instagram: "",
-                reason: "",
                 website: "",
+                image: "",
+                dateselect: "",
                 shopPromoteFoods: [
                   {
                     foodId: 0,
@@ -231,17 +239,19 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 ]
               },
               fr: {
-                name: "",
-                location: "",
-                desc: "",
-                phoneNumber: "",
+                reason: "",
+                shopName: "",
+                shopLocation: "",
+                subDescription: "",
+                shopCategory: "",
+                mobileNumber: "",
                 email: "",
                 mapsPin: "",
                 facebook: "",
-                image: "",
                 instagram: "",
-                reason: "",
                 website: "",
+                image: "",
+                dateselect: "",
                 shopPromoteFoods: [
                   {
                     foodId: 0,
