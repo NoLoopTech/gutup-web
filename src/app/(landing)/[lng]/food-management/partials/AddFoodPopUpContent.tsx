@@ -82,14 +82,6 @@ const countriesOptions: Record<string, Option[]> = {
   ]
 }
 
-const handlePreparationChange = (field: any) => (val: string) => {
-  field.onChange(val)
-}
-
-const handleConservationChange = (field: any) => (val: string) => {
-  field.onChange(val)
-}
-
 export default function AddFoodPopUpContent({
   translations
 }: {
@@ -715,40 +707,58 @@ export default function AddFoodPopUpContent({
               <FormField
                 control={form.control}
                 name="preparation"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="block mb-2 text-black">
-                      {translations.preparation}
-                    </FormLabel>
-                    <FormControl>
-                      <RichTextEditor
-                        initialContent={field.value}
-                        onChange={handlePreparationChange(field)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const { onChange } = makeRichHandlers("preparation")
+                  return (
+                    <FormItem className="relative">
+                      {isTranslating && (
+                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                          <span className="loader" />
+                        </div>
+                      )}
+                      <FormLabel>{translations.preparation}</FormLabel>
+                      <FormControl>
+                        <RichTextEditor
+                          initialContent={field.value}
+                          onChange={val => {
+                            onChange(val)
+                            field.onChange(val)
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
             </div>
             <div>
               <FormField
                 control={form.control}
                 name="conservation"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="block mb-2 text-black">
-                      {translations.conservation}
-                    </FormLabel>
-                    <FormControl>
-                      <RichTextEditor
-                        initialContent={field.value}
-                        onChange={handleConservationChange(field)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const { onChange } = makeRichHandlers("conservation")
+                  return (
+                    <FormItem className="relative">
+                      {isTranslating && (
+                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                          <span className="loader" />
+                        </div>
+                      )}
+                      <FormLabel>{translations.conservation}</FormLabel>
+                      <FormControl>
+                        <RichTextEditor
+                          initialContent={field.value}
+                          onChange={val => {
+                            onChange(val)
+                            field.onChange(val)
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
             </div>
           </div>
