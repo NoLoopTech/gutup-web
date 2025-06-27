@@ -39,7 +39,7 @@ export default function AddDailyTipPopUp({
   return (
     <div>
       {/* Tab Selector using Input */}
-      <div className="mb-4 w-[25.4rem] relative">
+      <div className="mb-4 w-[25.4rem] relative z-20">
         <Label className="block mb-1 text-black">
           {translations.layoutSelection}
         </Label>

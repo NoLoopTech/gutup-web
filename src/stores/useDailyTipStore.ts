@@ -38,8 +38,9 @@ interface VideoTipFields {
   concern: string
   title: string
   subTitle: string
-  subDesc: string
-  videoUrl: string
+  subDescription: string
+  videoLink: string
+  dateselect: string
 }
 
 interface LangData<T> {
@@ -142,15 +143,17 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             concern: "",
             title: "",
             subTitle: "",
-            subDesc: "",
-            videoUrl: ""
+            subDescription: "",
+            videoLink: "",
+            dateselect: ""
           },
           fr: {
             concern: "",
             title: "",
             subTitle: "",
-            subDesc: "",
-            videoUrl: ""
+            subDescription: "",
+            videoLink: "",
+            dateselect: ""
           }
         }
       },
@@ -252,15 +255,17 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 concern: "",
                 title: "",
                 subTitle: "",
-                subDesc: "",
-                videoUrl: ""
+                subDescription: "",
+                videoLink: "",
+                dateselect: ""
               },
               fr: {
                 concern: "",
                 title: "",
                 subTitle: "",
-                subDesc: "",
-                videoUrl: ""
+                subDescription: "",
+                videoLink: "",
+                dateselect: ""
               }
             }
           }
