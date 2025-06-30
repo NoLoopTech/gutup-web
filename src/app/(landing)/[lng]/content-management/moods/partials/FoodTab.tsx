@@ -133,7 +133,7 @@ export default function FoodTab({
     fieldName: "foodName" | "description"
   ) => {
     const value = e.target.value
-    form.setValue(fieldName, value)
+    form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
     setTranslationField("foodData", activeLang, fieldName, value)
   }
 

@@ -101,7 +101,7 @@ export default function RecipeTab({
     fieldName: "recipe" | "description"
   ) => {
     const value = e.target.value
-    form.setValue(fieldName, value)
+    form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
     setTranslationField("recipeData", activeLang, fieldName, value)
   }
 

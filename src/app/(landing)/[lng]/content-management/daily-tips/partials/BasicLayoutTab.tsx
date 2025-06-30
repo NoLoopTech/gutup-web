@@ -118,7 +118,7 @@ export default function BasicLayoutTab({
   }
 
   const handleInputChange = (fieldName: FieldNames, value: string) => {
-    form.setValue(fieldName, value)
+    form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
     setTranslationField("basicLayoutData", activeLang, fieldName, value)
   }
 
@@ -142,7 +142,7 @@ export default function BasicLayoutTab({
   // Update form when lang changes
   useEffect(() => {
     form.reset(translationsData.basicLayoutData[activeLang])
-  }, [activeLang, form.reset, translationsData.basicLayoutData])
+  }, [form.reset, translationsData.basicLayoutData])
 
   // handle change concerns function
   const handleConcernsChange = (value: string) => {

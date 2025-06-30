@@ -92,7 +92,7 @@ export default function QuoteTab({
   }, [activeLang, form.reset, translationsData.quoteData])
 
   const handleInputChange = (fieldName: "author" | "quote", value: string) => {
-    form.setValue(fieldName, value)
+    form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
     setTranslationField("quoteData", activeLang, fieldName, value)
   }
 

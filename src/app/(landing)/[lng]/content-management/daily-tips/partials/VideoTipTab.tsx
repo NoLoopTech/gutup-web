@@ -106,7 +106,7 @@ export default function VideoTipTab({
     fieldName: "title" | "subTitle" | "subDescription" | "videoLink",
     value: string
   ) => {
-    form.setValue(fieldName, value)
+    form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
     setTranslationField("videoTipData", activeLang, fieldName, value)
   }
 
