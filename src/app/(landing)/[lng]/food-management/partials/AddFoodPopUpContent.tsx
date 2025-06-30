@@ -261,24 +261,38 @@ export default function AddFoodPopUpContent({
 
   const makeRichHandlers = (
     fieldName: "selection" | "preparation" | "conservation"
-  ): { onChange: (val: string) => void; onBlur: () => Promise<void> } => {
+  ): { onChange: (val: string) => void } => {
     const onChange = (val: string): void => {
       form.setValue(fieldName, val)
       setTranslationField("foodData", activeLang, fieldName, val)
     }
-    const onBlur = async (): Promise<void> => {
-      const val = form.getValues(fieldName)
-      if (activeLang === "en" && val.trim()) {
+    return { onChange }
+  }
+  const richTextFieldOnBlur = async (
+    fieldName: "selection" | "preparation" | "conservation"
+  ): Promise<void> => {
+    if (activeLang === "en") {
+      const vals = form.getValues(fieldName)
+      if (typeof vals === "string" && vals.trim().length > 0) {
         setIsTranslating(true)
         try {
-          const tr = await translateText(val)
-          setTranslationField("foodData", "fr", fieldName, tr)
+          const translated = await translateText(vals)
+          setTranslationField("foodData", "fr", fieldName, translated)
+        } finally {
+          setIsTranslating(false)
+        }
+      } else if (Array.isArray(vals) && vals.length) {
+        setIsTranslating(true)
+        try {
+          const trArr = await Promise.all(
+            vals.map(async v => await translateText(v))
+          )
+          setTranslationField("foodData", "fr", fieldName, trArr)
         } finally {
           setIsTranslating(false)
         }
       }
     }
-    return { onChange, onBlur }
   }
   // adds/removes benefits:
   function handleBenefitsChange(vals: string[]): void {
@@ -695,6 +709,9 @@ export default function AddFoodPopUpContent({
                             onChange(val)
                             field.onChange(val)
                           }}
+                          onBlur={async () => {
+                            await richTextFieldOnBlur("selection")
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -724,6 +741,9 @@ export default function AddFoodPopUpContent({
                             onChange(val)
                             field.onChange(val)
                           }}
+                          onBlur={async () => {
+                            await richTextFieldOnBlur("preparation")
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -752,6 +772,9 @@ export default function AddFoodPopUpContent({
                           onChange={val => {
                             onChange(val)
                             field.onChange(val)
+                          }}
+                          onBlur={async () => {
+                            await richTextFieldOnBlur("conservation")
                           }}
                         />
                       </FormControl>
