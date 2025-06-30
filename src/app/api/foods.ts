@@ -38,3 +38,15 @@ export const deleteFoodById = async (
     return error
   }
 }
+
+// get all food list for search and select
+export const getAllFoodsList = async (token: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get("/food/foodlist", {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response
+  } catch (error) {
+    return error
+  }
+}

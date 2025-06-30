@@ -16,11 +16,13 @@ import { useDailyTipStore } from "@/stores/useDailyTipStore"
 interface Props {
   open: boolean
   onClose: () => void
+  token: string
 }
 
 export default function AddDailyTipMainPopUp({
   open,
-  onClose
+  onClose,
+  token
 }: Props): JSX.Element {
   const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
     useDailyTipStore()
@@ -86,6 +88,7 @@ export default function AddDailyTipMainPopUp({
               <AddDailyTipPopUp
                 onClose={onClose}
                 translations={{ ...defaultTranslations, ...translations }}
+                token={token}
               />
             </TabsContent>
           </Tabs>

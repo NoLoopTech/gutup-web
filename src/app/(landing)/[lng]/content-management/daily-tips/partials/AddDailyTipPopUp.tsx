@@ -31,10 +31,12 @@ const tabOptions: TabOption[] = [
 
 export default function AddDailyTipPopUp({
   translations,
-  onClose
+  onClose,
+  token
 }: {
   translations: translationsTypes
   onClose: () => void
+  token: string
 }): JSX.Element {
   const { activeTab, setActiveTab } = useDailyTipStore()
 
@@ -71,7 +73,11 @@ export default function AddDailyTipPopUp({
           <BasicLayoutTab translations={translations} onClose={onClose} />
         )}
         {activeTab === "shopPromote" && (
-          <ShopPromotionTab translations={translations} onClose={onClose} />
+          <ShopPromotionTab
+            translations={translations}
+            onClose={onClose}
+            token={token}
+          />
         )}
         {activeTab === "videoForm" && (
           <VideoTipTab translations={translations} onClose={onClose} />

@@ -45,6 +45,7 @@ import {
   deleteImageFromFirebase,
   uploadImageToFirebase
 } from "@/lib/firebaseImageUtils"
+import { useFoodList } from "@/query/hooks/useFoodList"
 
 interface Option {
   value: string
@@ -54,9 +55,7 @@ interface Option {
 interface Ingredient {
   id: number
   name: string
-  quantity: string
-  isMain: boolean
-  tags: string[]
+  displayStatus: boolean
 }
 
 interface Column<T> {
@@ -90,35 +89,53 @@ const reason: Record<string, Option[]> = {
   ]
 }
 
-const ingredientColumns: Array<Column<Ingredient>> = [
-  { header: "Ingredient Name", accessor: "name" },
-  {
-    header: "Main Ingredient",
-    accessor: row => (
-      <Switch
-        checked={row.isMain}
-        className="scale-75"
-        style={{ minWidth: 28, minHeight: 16 }}
-      />
-    )
-  }
-]
-
 export default function ShopPromotionTab({
   translations,
-  onClose
+  onClose,
+  token
 }: {
   translations: translationsTypes
+  token: string
   onClose: () => void
 }): JSX.Element {
   const [page, setPage] = React.useState(1)
   const [pageSize, setPageSize] = React.useState(2)
-  const [ingredientData] = React.useState<Ingredient[]>([])
   const { translateText } = useTranslation()
   const { activeLang, translationsData, setTranslationField } =
     useDailyTipStore()
   const [isTranslating, setIsTranslating] = useState(false)
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const { foods } = useFoodList(token)
+  const [ingredientData, setIngredientData] = useState<Ingredient[]>([])
+
+  const updateStoreWithIngredients = (updated: Ingredient[]) => {
+    const mapped = updated.map(i => ({
+      foodId: i.id,
+      dispalyStatus: i.displayStatus
+    }))
+    setTranslationField("shopPromotionData", "en", "shopPromoteFoods", mapped)
+    setTranslationField("shopPromotionData", "fr", "shopPromoteFoods", mapped)
+  }
+
+  const handleToggleStatus = (id: number, checked: boolean) => {
+    const updated = ingredientData.map(i =>
+      i.id === id ? { ...i, displayStatus: checked } : i
+    )
+    setIngredientData(updated)
+    form.setValue("ingredientData", updated as [Ingredient, ...Ingredient[]], {
+      shouldValidate: true
+    })
+    updateStoreWithIngredients(updated)
+  }
+
+  const handleRemoveIngredient = (id: number) => {
+    const updated = ingredientData.filter(i => i.id !== id)
+    setIngredientData(updated)
+    form.setValue("ingredientData", updated as [Ingredient, ...Ingredient[]], {
+      shouldValidate: true
+    })
+    updateStoreWithIngredients(updated)
+  }
 
   // Validate only inputs and select
   const FormSchema = z.object({
@@ -157,7 +174,13 @@ export default function ShopPromotionTab({
         message: translations.invalidWebsiteURL
       }),
     ingredientData: z
-      .array(z.unknown())
+      .array(
+        z.object({
+          id: z.number(),
+          name: z.string(),
+          displayStatus: z.boolean()
+        })
+      )
       .nonempty(translations.atLeastOneIngredientCategoryMustBeAdded),
     image: z.string().nonempty(translations.required),
     dateselect: z.string().nonempty(translations.required)
@@ -300,11 +323,64 @@ export default function ShopPromotionTab({
     onClose()
   }
 
+  const handleSelectFood = (item: {
+    id: number
+    name: string
+    displayStatus?: boolean
+  }) => {
+    const alreadyExists = ingredientData.some(i => i.id === item.id)
+    if (alreadyExists) {
+      toast.warning("Ingredient already added")
+      return
+    }
+
+    const newIngredient: Ingredient = {
+      id: item.id,
+      name: item.name,
+      displayStatus: item.displayStatus ?? false
+    }
+
+    const updated = [...ingredientData, newIngredient]
+    setIngredientData(updated)
+    form.setValue("ingredientData", updated as [Ingredient, ...Ingredient[]], {
+      shouldValidate: true
+    })
+
+    updateStoreWithIngredients(updated)
+  }
+
   function onSubmit(data: z.infer<typeof FormSchema>): void {
     toast("Form submitted", {
       description: JSON.stringify(data, null, 2)
     })
   }
+
+  const ingredientColumns: Array<Column<Ingredient>> = [
+    { header: "Ingredient Name", accessor: "name" },
+    {
+      header: "Main Ingredient",
+      accessor: row => (
+        <Switch
+          checked={row.displayStatus}
+          onCheckedChange={checked => handleToggleStatus(row.id, checked)}
+          className="scale-75"
+          style={{ minWidth: 28, minHeight: 16 }}
+        />
+      )
+    },
+    {
+      header: "Action",
+      accessor: row => (
+        <Button
+          variant="ghost"
+          className="text-red-500 hover:underline"
+          onClick={() => handleRemoveIngredient(row.id)}
+        >
+          Remove
+        </Button>
+      )
+    }
+  ]
 
   return (
     <div className="relative">
@@ -614,19 +690,16 @@ export default function ShopPromotionTab({
 
             <Separator />
 
-            {/* Star Products */}
+            {/* Select Featured Ingredients */}
             <div className="flex flex-row gap-2 items-center mb-4">
               <SearchBar
-                title={translations.selectFeaturedIngredients}
-                placeholder={translations.searchForIngredients}
+                title="Select Food"
+                placeholder="Search for food..."
+                dataList={foods}
+                onSelect={handleSelectFood}
               />
-              <Button className="mt-7" onClick={() => {}}>
-                {translations.add}
-              </Button>
             </div>
-            <Label className="block text-gray-500">
-              {translations.cantFindtheIngredientDescription}
-            </Label>
+
             <FormField
               control={form.control}
               name="ingredientData"
