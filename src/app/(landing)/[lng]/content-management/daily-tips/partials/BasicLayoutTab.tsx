@@ -142,7 +142,7 @@ export default function BasicLayoutTab({
   // Update form when lang changes
   useEffect(() => {
     form.reset(translationsData.basicLayoutData[activeLang])
-  }, [form.reset, translationsData.basicLayoutData])
+  }, [activeLang, form.reset, translationsData.basicLayoutData])
 
   // handle change concerns function
   const handleConcernsChange = (value: string) => {
