@@ -84,6 +84,7 @@ export default function FoodsBenefitsPage({
     } else {
       toast.error("Failed to delete tag", {
         description: result.message
+      })
       setConfirmDeleteOpen(false)
     }
   }
