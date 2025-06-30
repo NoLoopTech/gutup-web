@@ -88,7 +88,6 @@ export default function AddFoodPopUpContent({
   translations: translationsTypes
 }): JSX.Element {
   const { translateText } = useTranslation()
-  // Remove setTranslationField if not in your store, or add it to your store if needed
   const { activeLang, foodData, setTranslationField } = useFoodStore() as any
   const [isTranslating, setIsTranslating] = useState(false)
 
@@ -155,13 +154,10 @@ export default function AddFoodPopUpContent({
       category: foodData[activeLang]?.category || ""
     }
   })
-  console.log("Form default values:", foodData[activeLang])
   // Update form when lang changes
   React.useEffect(() => {
     form.reset(foodData[activeLang])
   }, [activeLang, form.reset, foodData])
-
-  // Helper to update both form & store
 
   // Input change handler for fields that need translation
   const handleInputChange = (
@@ -201,59 +197,30 @@ export default function AddFoodPopUpContent({
       }
     }
   }
-  // This function updates the category
-  const handleCategoryChange = (value: string): void => {
-    form.setValue("category", value)
-    setTranslationField("foodData", activeLang, "category", value)
+  // Function to update select fields (category, season, country)
+  const handleSelectChange = (
+    fieldName: "category" | "season" | "country",
+    value: string
+  ): void => {
+    form.setValue(fieldName, value)
+    setTranslationField("foodData", activeLang, fieldName, value)
 
-    const current = categoryOptions[activeLang]
+    // Get the correct options set
+    let optionsMap: Record<string, Option[]>
+    if (fieldName === "category") optionsMap = categoryOptions
+    else if (fieldName === "season") optionsMap = seasonOptions
+    else optionsMap = countriesOptions
+
+    const current = optionsMap[activeLang]
     const oppositeLang = activeLang === "en" ? "fr" : "en"
-    const opposite = categoryOptions[oppositeLang]
+    const opposite = optionsMap[oppositeLang]
 
     const index = current.findIndex(opt => opt.value === value)
-    if (index !== -1) {
+    if (index !== -1 && opposite[index]) {
       setTranslationField(
         "foodData",
         oppositeLang,
-        "category",
-        opposite[index].value
-      )
-    }
-  }
-  // This function updates the season
-  const handleSeasonChange = (value: string): void => {
-    form.setValue("season", value)
-    setTranslationField("foodData", activeLang, "season", value)
-
-    const current = seasonOptions[activeLang]
-    const oppositeLang = activeLang === "en" ? "fr" : "en"
-    const opposite = seasonOptions[oppositeLang]
-
-    const index = current.findIndex(opt => opt.value === value)
-    if (index !== -1) {
-      setTranslationField(
-        "foodData",
-        oppositeLang,
-        "season",
-        opposite[index].value
-      )
-    }
-  }
-  // This function updates the country
-  const handleCountryChange = (value: string): void => {
-    form.setValue("country", value)
-    setTranslationField("foodData", activeLang, "country", value)
-
-    const current = countriesOptions[activeLang]
-    const oppositeLang = activeLang === "en" ? "fr" : "en"
-    const opposite = countriesOptions[oppositeLang]
-
-    const index = current.findIndex(opt => opt.value === value)
-    if (index !== -1) {
-      setTranslationField(
-        "foodData",
-        oppositeLang,
-        "country",
+        fieldName,
         opposite[index].value
       )
     }
@@ -318,14 +285,10 @@ export default function AddFoodPopUpContent({
   }
   const handleImageUpload = (field: any) => (files: File[] | null) => {
     const file = files && files.length > 0 ? files[0] : null
-    // 1) update RHF
     field.onChange(file)
-    // 2) store into the active language
     setTranslationField("foodData", activeLang, "image", file)
-    // 3) mirror it into the opposite language
     const opp = activeLang === "en" ? "fr" : "en"
     setTranslationField("foodData", opp, "image", file)
-    // 4) also keep RHF internal state in sync
     form.setValue("image", file)
   }
   // Submit handler
@@ -344,7 +307,6 @@ export default function AddFoodPopUpContent({
     <div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          {/* English Tab Content */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
             <div>
               {isTranslating && (
@@ -389,7 +351,9 @@ export default function AddFoodPopUpContent({
                     <FormControl>
                       <Select
                         value={field.value}
-                        onValueChange={handleCategoryChange}
+                        onValueChange={value => {
+                          handleSelectChange("category", value)
+                        }}
                       >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue
@@ -422,7 +386,9 @@ export default function AddFoodPopUpContent({
                     <FormControl>
                       <Select
                         value={field.value}
-                        onValueChange={handleSeasonChange}
+                        onValueChange={value => {
+                          handleSelectChange("season", value)
+                        }}
                       >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue
@@ -455,7 +421,9 @@ export default function AddFoodPopUpContent({
                     <FormControl>
                       <Select
                         value={field.value}
-                        onValueChange={handleCountryChange}
+                        onValueChange={value => {
+                          handleSelectChange("country", value)
+                        }}
                       >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue
