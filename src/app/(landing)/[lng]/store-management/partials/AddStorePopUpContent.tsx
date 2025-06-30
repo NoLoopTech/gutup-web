@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useRef } from "react"
+import React, { useState } from "react"
 import { DialogFooter, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -32,6 +32,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { type translationsTypes } from "@/types/storeTypes"
+import { useStoreStore } from "@/stores/useStoreStore"
+import { useTranslation } from "@/query/hooks/useTranslation"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -54,31 +56,38 @@ interface AvailableItem {
   isMain: boolean
 }
 
-const categories: Option[] = [
-  { value: "breakfast", label: "Breakfast" },
-  { value: "dinner", label: "Dinner" },
-  { value: "dairy", label: "Dairy" }
-]
-
-const storeType: Option[] = [
-  { value: "physical", label: "physical" },
-  { value: "online", label: "Online" }
-]
-
-// Define function for handling image upload changes
-const handleImageUpload = (field: any) => (files: File[] | null) => {
-  field.onChange(files && files.length > 0 ? files[0] : null)
+const categoryOptions: Record<string, Option[]> = {
+  en: [
+    { value: "breakfast", label: "Breakfast" },
+    { value: "dinner", label: "Dinner" },
+    { value: "dairy", label: "Dairy" }
+  ],
+  fr: [
+    { value: "breakfast", label: "Petit déjeuner" },
+    { value: "dinner", label: "Dîner" },
+    { value: "dairy", label: "Produits laitiers" }
+  ]
 }
-// Define function for handling RichTextEditor changes
-const handleRichTextEditorChange = (field: any) => (val: string) => {
-  field.onChange(val)
+
+const storeTypeOptions: Record<string, Option[]> = {
+  en: [
+    { value: "physical", label: "Physical" },
+    { value: "online", label: "Online" }
+  ],
+  fr: [
+    { value: "physical", label: "Physique" },
+    { value: "online", label: "En ligne" }
+  ]
 }
+
 export default function AddStorePopUpContent({
   translations
 }: {
   translations: translationsTypes
 }): JSX.Element {
-  const aboutRef = useRef<any>(null)
+  const { translateText } = useTranslation()
+  const { activeLang, storeData, setTranslationField } = useStoreStore() as any
+  const [isTranslating, setIsTranslating] = useState(false)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [isPremium, setIsPremium] = React.useState(false)
@@ -137,45 +146,113 @@ export default function AddStorePopUpContent({
       message: translations.required
     })
   })
-  const handleCancel = (
-    form: ReturnType<typeof useForm<z.infer<typeof AddStoreSchema>>>
-  ): void => {
-    form.reset()
-  }
-  const onSubmit = (data: z.infer<typeof AddStoreSchema>): void => {
-    toast(translations.formSubmittedSuccessfully, {})
-  }
-  // Define functions to handle page changes
-  const handlePageChange = (newPage: number): void => {
-    setPage(newPage)
-  }
 
-  const handlePageSizeChange = (newSize: number): void => {
-    setPageSize(newSize)
-    setPage(1)
-  }
-
+  // Form hook
   const form = useForm<z.infer<typeof AddStoreSchema>>({
     resolver: zodResolver(AddStoreSchema),
     defaultValues: {
-      storeName: "",
-      category: "",
-      storeLocation: "",
-      storeType: "",
-      shoplocation: "",
-      timeFrom: "",
-      timeTo: "",
-      phone: "",
-      email: "",
-      mapsPin: "",
-      website: "",
-      facebook: "",
-      instagram: "",
-      about: "",
-      availData: [],
-      storeImage: null
+      ...storeData[activeLang],
+      category: storeData[activeLang]?.category || ""
     }
   })
+  // Update form when lang changes
+  React.useEffect(() => {
+    form.reset(storeData[activeLang])
+  }, [activeLang, form.reset, storeData])
+
+  // Input change handler for fields that need translation
+  const handleInputChange = (
+    fieldName:
+      | "storeName"
+      | "storeLocation"
+      | "shoplocation"
+      | "phone"
+      | "email"
+      | "mapsPin"
+      | "website"
+      | "facebook"
+      | "instagram",
+    value: string
+  ): void => {
+    form.setValue(fieldName, value)
+    setTranslationField("storeData", activeLang, fieldName, value)
+  }
+
+  // Input blur handler for translation
+  const handleInputBlur = async (
+    fieldName:
+      | "storeName"
+      | "storeLocation"
+      | "shoplocation"
+      | "phone"
+      | "email"
+      | "mapsPin"
+      | "website"
+      | "facebook"
+      | "instagram",
+    value: string
+  ): Promise<void> => {
+    if (activeLang === "en" && value.trim()) {
+      try {
+        setIsTranslating(true)
+        const translated = await translateText(value)
+        setTranslationField("storeData", "fr", fieldName, translated)
+      } finally {
+        setIsTranslating(false)
+      }
+    }
+  }
+  // Function to update select fields (category, season, country)
+  const handleSelectChange = (
+    fieldName: "category" | "storeType",
+    value: string
+  ): void => {
+    form.setValue(fieldName, value)
+    setTranslationField("storeData", activeLang, fieldName, value)
+
+    // Get the correct options set
+    let optionsMap: Record<string, Option[]>
+    if (fieldName === "category") optionsMap = categoryOptions
+    else optionsMap = storeTypeOptions
+
+    const current = optionsMap[activeLang]
+    const oppositeLang = activeLang === "en" ? "fr" : "en"
+    const opposite = optionsMap[oppositeLang]
+
+    const index = current.findIndex(opt => opt.value === value)
+    if (index !== -1 && opposite[index]) {
+      setTranslationField(
+        "storeData",
+        oppositeLang,
+        fieldName,
+        opposite[index].value
+      )
+    }
+  }
+
+  const makeRichHandlers = (
+    fieldName: "about"
+  ): { onChange: (val: string) => void } => {
+    const onChange = (val: string): void => {
+      form.setValue(fieldName, val)
+      setTranslationField("storeData", activeLang, fieldName, val)
+    }
+    return { onChange }
+  }
+  const richTextFieldOnBlur = async (fieldName: "about"): Promise<void> => {
+    if (activeLang === "en") {
+      const val = form.getValues(fieldName)
+      if (typeof val === "string" && val.trim().length > 0) {
+        setIsTranslating(true)
+        try {
+          const translated = await translateText(val)
+          setTranslationField("storeData", "fr", fieldName, translated)
+        } finally {
+          setIsTranslating(false)
+        }
+      }
+    }
+  }
   //  table data for available ingredients and categories
   const availData: AvailableItem[] = []
 
@@ -213,11 +290,42 @@ export default function AddStorePopUpContent({
       )
     }
   ]
+  // Define functions to handle page changes
+  const handlePageChange = (newPage: number): void => {
+    setPage(newPage)
+  }
+
+  const handlePageSizeChange = (newSize: number): void => {
+    setPageSize(newSize)
+    setPage(1)
+  }
+
+  const handleImageUpload = (field: any) => (files: File[] | null) => {
+    const file = files && files.length > 0 ? files[0] : null
+    field.onChange(file)
+    setTranslationField("storeData", activeLang, "storeImage", file)
+    const opp = activeLang === "en" ? "fr" : "en"
+    setTranslationField("storeData", opp, "storeImage", file)
+    form.setValue("storeImage", file)
+  }
+  const handleCancel = (
+    form: ReturnType<typeof useForm<z.infer<typeof AddStoreSchema>>>
+  ): void => {
+    form.reset()
+  }
+  const onSubmit = (data: z.infer<typeof AddStoreSchema>): void => {
+    toast(translations.formSubmittedSuccessfully, {})
+  }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="pb-6">
+          {isTranslating && (
+            <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
+              <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
+            </div>
+          )}
           {/* Store info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
             <div>
@@ -233,6 +341,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterStoreName}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("storeName", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("storeName", field.value)
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -251,8 +365,10 @@ export default function AddStorePopUpContent({
                     </FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={field.onChange}
                         value={field.value}
+                        onValueChange={value => {
+                          handleSelectChange("category", value)
+                        }}
                       >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue
@@ -260,11 +376,9 @@ export default function AddStorePopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {categories.map((option: Option) => (
+                          {categoryOptions[activeLang].map(option => (
                             <SelectItem key={option.value} value={option.value}>
-                              {translations[
-                                option.value.toLowerCase() as keyof translationsTypes
-                              ] || option.label}{" "}
+                              {option.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -288,6 +402,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterStoreLocation}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("storeLocation", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("storeLocation", field.value)
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -306,8 +426,10 @@ export default function AddStorePopUpContent({
                     </FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={field.onChange}
                         value={field.value}
+                        onValueChange={value => {
+                          handleSelectChange("storeType", value)
+                        }}
                       >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue
@@ -315,11 +437,9 @@ export default function AddStorePopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {storeType.map((option: Option) => (
+                          {storeTypeOptions[activeLang].map(option => (
                             <SelectItem key={option.value} value={option.value}>
-                              {translations[
-                                option.value.toLowerCase() as keyof translationsTypes
-                              ] || option.label}{" "}
+                              {option.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -343,6 +463,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterMapLocation}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("shoplocation", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("shoplocation", field.value)
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -431,6 +557,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterStoreNumber}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("phone", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("phone", field.value)
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -451,6 +583,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterStoreEmail}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("email", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("email", field.value)
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -471,6 +609,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterGoogleMapsLocation}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("mapsPin", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("mapsPin", field.value)
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -491,6 +635,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterFacebookUrl}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("facebook", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("facebook", field.value ?? "")
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -511,6 +661,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterInstagramUrl}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("instagram", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("instagram", field.value ?? "")
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -531,6 +687,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterWebsiteUrl}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("website", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("website", field.value ?? "")
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -610,21 +772,32 @@ export default function AddStorePopUpContent({
               <FormField
                 control={form.control}
                 name="about"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="block mb-2 text-black">
-                      {translations.aboutUs}
-                    </FormLabel>
-                    <FormControl>
-                      <RichTextEditor
-                        ref={aboutRef}
-                        value={field.value}
-                        onChange={handleRichTextEditorChange(field)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const { onChange } = makeRichHandlers("about")
+                  return (
+                    <FormItem className="relative">
+                      {isTranslating && (
+                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                          <span className="loader" />
+                        </div>
+                      )}
+                      <FormLabel>{translations.aboutUs}</FormLabel>
+                      <FormControl>
+                        <RichTextEditor
+                          initialContent={field.value}
+                          onChange={val => {
+                            onChange(val)
+                            field.onChange(val)
+                          }}
+                          onBlur={async () => {
+                            await richTextFieldOnBlur("about")
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
             </div>
           </div>
@@ -645,6 +818,15 @@ export default function AddStorePopUpContent({
                     <ImageUploader
                       title={translations.selectImagesForYourStore}
                       onChange={handleImageUpload(field)}
+                      previewUrls={
+                        storeData[activeLang].storeImage
+                          ? [
+                              URL.createObjectURL(
+                                storeData[activeLang].storeImage as File
+                              )
+                            ]
+                          : []
+                      }
                     />
                   </FormControl>
                   <FormMessage />
