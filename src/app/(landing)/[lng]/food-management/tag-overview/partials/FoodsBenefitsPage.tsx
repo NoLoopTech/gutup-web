@@ -11,10 +11,23 @@ import {
 import { MoreVertical } from "lucide-react"
 import { useState, useEffect } from "react"
 import { getAllTags } from "@/app/api/foods"
+import { deleteTagById } from "@/app/api/foods"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import AddNewTagPopUp from "../../partials/AddNewTagPopUp"
 import { useGetAllTags } from "@/query/hooks/useGetAllTags"
+import { useDeleteTag } from "@/query/hooks/useDeleteTags"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -24,6 +37,7 @@ interface Column<T> {
   className?: string
 }
 interface FoodsBenefitsDataType {
+  tagId: number
   category: string
   count: string
   status: boolean
@@ -37,11 +51,52 @@ export default function FoodsBenefitsPage({
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(10)
   const [foodBenefits, setFoodBenefits] = useState<FoodsBenefitsDataType[]>([])
+  const [tagOverviewPopupOpen, setTagOverviewPopupOpen] =
+    useState<boolean>(false)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
   const [openAddNewTagPopUp, setOpenAddNewTagPopUp] = useState<boolean>(false)
-  const { tags, loading, error } = useGetAllTags<FoodsBenefitsDataType>(
-    token,
-    "Benefit"
-  )
+  const { tags, loading, error, fetchTags } =
+    useGetAllTags<FoodsBenefitsDataType>(token, "Benefit")
+  const {
+    deleteTag,
+    loading: deleteLoading,
+    error: deleteError
+  } = useDeleteTag(token)
+  const [tagId, setTagId] = useState<number>(0)
+
+  // handle delete tag OverView
+  const handleDeleteTag = (tagId: number): void => {
+    setTagId(tagId)
+    setConfirmDeleteOpen(true)
+  }
+
+  // handle delete tag by id
+  const handleDeleteTagById = async (): Promise<void> => {
+    if (!tagId) {
+      toast.error("Tag ID is invalid.")
+      return
+    }
+    const result = await deleteTag(tagId)
+    if (result.success) {
+      toast.success(result.message)
+      setConfirmDeleteOpen(false)
+      fetchTags() // Refresh the data
+    } else {
+      toast.error("Failed to delete tag", {
+        description: result.message
+      setConfirmDeleteOpen(false)
+    }
+  }
+
+  // handle open delete confirmation popup
+  const handleOpenDeleteConfirmationPopup = (): void => {
+    setConfirmDeleteOpen(true)
+  }
+
+  // handle close delete confirmation popup
+  const handleCloseDeleteConfirmationPopup = (): void => {
+    setConfirmDeleteOpen(false)
+  }
 
   // handle open add food popup
   const handleOpenAddNewTagPopUp = (): void => {
@@ -106,9 +161,13 @@ export default function FoodsBenefitsPage({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem>Make a copy</DropdownMenuItem>
-            <DropdownMenuItem>Favorite</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                handleDeleteTag(row.tagId)
+              }}
+            >
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -158,7 +217,31 @@ export default function FoodsBenefitsPage({
         open={openAddNewTagPopUp}
         onClose={handleCloseAddNewTagPopUp}
         token={token}
+        category={"Benefit"}
+        getTags={fetchTags}
       />
+      {/* delete confirmation popup  */}
+      <AlertDialog
+        open={confirmDeleteOpen}
+        onOpenChange={handleCloseDeleteConfirmationPopup}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Tag</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this tag?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCloseDeleteConfirmationPopup}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTagById}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

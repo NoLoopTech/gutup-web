@@ -69,3 +69,18 @@ export const deleteFoodById = async (
     return error
   }
 }
+
+// delete tag by id
+export const deleteTagById = async (
+  token: string,
+  id: number
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.delete(`/food-tag/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response
+  } catch (error) {
+    return error
+  }
+}
