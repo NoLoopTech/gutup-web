@@ -105,12 +105,13 @@ export default function ShopPromotionTab({
     useDailyTipStore()
   const [isTranslating, setIsTranslating] = useState(false)
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
-  const { foods } = useFoodList(token)
+  const { foods: foodsList } = useFoodList(token)
   const [ingredientData, setIngredientData] = useState<Ingredient[]>([])
 
   const updateStoreWithIngredients = (updated: Ingredient[]) => {
     const mapped = updated.map(i => ({
       foodId: i.id,
+      name: i.name,
       dispalyStatus: i.displayStatus
     }))
     setTranslationField("shopPromotionData", "en", "shopPromoteFoods", mapped)
@@ -350,10 +351,34 @@ export default function ShopPromotionTab({
   }
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
+    console.log(data)
     toast("Form submitted", {
       description: JSON.stringify(data, null, 2)
     })
   }
+
+  useEffect(() => {
+    form.reset(translationsData.shopPromotionData[activeLang])
+
+    const foods =
+      translationsData.shopPromotionData[activeLang]?.shopPromoteFoods ?? []
+    const mappedFoods: Ingredient[] = foods.map(f => ({
+      id: f.foodId,
+      name: "", // You must map the ID to a name below
+      displayStatus: f.dispalyStatus
+    }))
+
+    // map name from `foods` list fetched from API
+    const enrichedFoods = mappedFoods.map(f => {
+      const foodInfo = foodsList.find(food => food.id === f.id)
+      return {
+        ...f,
+        name: foodInfo?.name ?? `Unknown (${f.id})`
+      }
+    })
+
+    setIngredientData(enrichedFoods)
+  }, [activeLang, form.reset, translationsData.shopPromotionData, foodsList])
 
   const ingredientColumns: Array<Column<Ingredient>> = [
     { header: "Ingredient Name", accessor: "name" },
@@ -695,7 +720,7 @@ export default function ShopPromotionTab({
               <SearchBar
                 title="Select Food"
                 placeholder="Search for food..."
-                dataList={foods}
+                dataList={foodsList}
                 onSelect={handleSelectFood}
               />
             </div>

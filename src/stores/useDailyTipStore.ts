@@ -5,6 +5,7 @@ import { createJSONStorage, persist } from "zustand/middleware"
 
 interface shopPromoteFoodsTypes {
   foodId: number
+  name: string
   dispalyStatus: boolean
 }
 
@@ -118,6 +119,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             shopPromoteFoods: [
               {
                 foodId: 0,
+                name: "",
                 dispalyStatus: false
               }
             ]
@@ -139,6 +141,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             shopPromoteFoods: [
               {
                 foodId: 0,
+                name: "",
                 dispalyStatus: false
               }
             ]
@@ -234,6 +237,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 shopPromoteFoods: [
                   {
                     foodId: 0,
+                    name: "",
                     dispalyStatus: false
                   }
                 ]
@@ -255,6 +259,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 shopPromoteFoods: [
                   {
                     foodId: 0,
+                    name: "",
                     dispalyStatus: false
                   }
                 ]
