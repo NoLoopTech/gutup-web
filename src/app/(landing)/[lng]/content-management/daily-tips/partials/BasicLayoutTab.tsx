@@ -36,6 +36,7 @@ import { format } from "date-fns"
 import { type translationsTypes } from "@/types/dailyTipTypes"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { useDailyTipStore } from "@/stores/useDailyTipStore"
+import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 
 interface Option {
   value: string
@@ -71,6 +72,7 @@ export default function BasicLayoutTab({
   const { activeLang, translationsData, setTranslationField } =
     useDailyTipStore()
   const [isTranslating, setIsTranslating] = useState(false)
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
 
   // Validation schema including inputs & textareas
   const FormSchema = z.object({
@@ -172,16 +174,40 @@ export default function BasicLayoutTab({
     setTranslationField("basicLayoutData", "fr", "dateselect", dateString)
   }
 
-  const handleImageSelect = (files: File[] | null) => {
+  const handleImageSelect = async (files: File[] | null) => {
     const file = files?.[0] ?? null
     if (file) {
-      const fileName = file.name
+      try {
+        setIsTranslating(true)
+        const imageUrl = await uploadImageToFirebase(file, "daily-tip")
 
-      form.setValue("image", fileName)
-      setTranslationField("basicLayoutData", "en", "image", fileName)
-      setTranslationField("basicLayoutData", "fr", "image", fileName)
+        form.setValue("image", imageUrl, {
+          shouldValidate: true,
+          shouldDirty: true
+        })
+        setTranslationField("basicLayoutData", "en", "image", imageUrl)
+        setTranslationField("basicLayoutData", "fr", "image", imageUrl)
+
+        setPreviewUrls([imageUrl]) // For single image preview
+      } catch (error) {
+        toast.error("Image upload failed. Please try again.")
+        console.error("Firebase upload error:", error)
+      } finally {
+        setIsTranslating(false)
+      }
     }
   }
+
+  useEffect(() => {
+    const existingUrl = translationsData.basicLayoutData[activeLang].image
+    if (existingUrl) {
+      setPreviewUrls([existingUrl])
+    } else {
+      setPreviewUrls([])
+    }
+
+    form.reset(translationsData.basicLayoutData[activeLang])
+  }, [activeLang, form.reset, translationsData.basicLayoutData])
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
     toast("You submitted the following values", {
@@ -423,6 +449,7 @@ export default function BasicLayoutTab({
                     <FormControl>
                       <ImageUploader
                         title={translations.selectImagesForYourFoodItem}
+                        previewUrls={previewUrls}
                         onChange={handleImageSelect}
                       />
                     </FormControl>
@@ -446,7 +473,7 @@ export default function BasicLayoutTab({
             <Button type="submit">{translations.save}</Button>
           </div>
         </form>
-      </Form>{" "}
+      </Form>
     </div>
   )
 }
