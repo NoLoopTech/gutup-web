@@ -1,9 +1,10 @@
 "use client"
 
 import React from "react"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { AddNewTag } from "@/app/api/foods"
 import {
   Select,
   SelectContent,
@@ -27,17 +28,15 @@ import { toast } from "sonner"
 interface Props {
   open: boolean
   onClose: () => void
+  token: string
+  getTags: () => void
+  category: string
 }
 interface Option {
   value: string
   label: string
 }
-// Dummy categories
-const categories: Option[] = [
-  { value: "breakfast", label: "Breakfast" },
-  { value: "lunch", label: "Lunch" },
-  { value: "dinner", label: "Dinner" }
-]
+
 // Schema
 const TagSchema = z.object({
   category: z.string().nonempty("Please select a category"),
@@ -47,18 +46,41 @@ const TagSchema = z.object({
     .min(2, "Tag name must be at least 2 characters")
 })
 
-export default function AddNewTagPopUp({ open, onClose }: Props): JSX.Element {
+export default function AddNewTagPopUp({
+  open,
+  onClose,
+  token,
+  getTags,
+  category
+}: Props): JSX.Element {
   const form = useForm<z.infer<typeof TagSchema>>({
     resolver: zodResolver(TagSchema),
     defaultValues: {
-      category: "",
+      category: category,
       tagName: ""
     }
   })
 
-  const onSubmit = (data: z.infer<typeof TagSchema>): void => {
-    toast("Tag added successfully!", {})
-    onClose()
+  const onSubmit = async (data: z.infer<typeof TagSchema>): Promise<void> => {
+    try {
+      const response = await AddNewTag(token, data)
+      if (response?.status === 200 || response?.status === 201) {
+        toast.success("Tag added successfully!", {
+          description: response.data.message
+        })
+        onClose()
+        getTags()
+        form.reset() // reset the form after success
+      } else {
+        toast.error("Failed to add tag", {
+          description: response.data.message || "Unexpected error occurred"
+        })
+      }
+    } catch (error: any) {
+      toast.error("Error adding tag", {
+        description: error?.response?.data?.message || error.message
+      })
+    }
   }
 
   return (
@@ -68,36 +90,7 @@ export default function AddNewTagPopUp({ open, onClose }: Props): JSX.Element {
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="flex flex-col gap-4">
               {/* Title */}
-              <h2 className="text-lg font-bold text-black">Add New Tag</h2>
-
-              {/* Category Field */}
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-black">Category</FormLabel>
-                    <FormControl>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <SelectTrigger className="w-full mt-1">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <DialogTitle> Add New Tag</DialogTitle>
 
               {/* Tag Name Field */}
               <FormField
