@@ -60,9 +60,11 @@ const shopcategory: Record<string, Option[]> = {
 }
 
 export default function FoodTab({
-  translations
+  translations,
+  onClose
 }: {
   translations: translationsTypes
+  onClose: () => void
 }): JSX.Element {
   const { activeLang, translationsData, setTranslationField } = useMoodStore()
   const { translateText } = useTranslation()
@@ -154,6 +156,7 @@ export default function FoodTab({
 
   const handleReset = () => {
     form.reset(translationsData.foodData[activeLang])
+    onClose()
   }
 
   const onSubmit = (data: z.infer<typeof FormSchema>): void => {

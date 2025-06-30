@@ -84,6 +84,7 @@ export default function AddDailyTipMainPopUp({
             {/* English Tab Content */}
             <TabsContent value={activeLang}>
               <AddDailyTipPopUp
+                onClose={onClose}
                 translations={{ ...defaultTranslations, ...translations }}
               />
             </TabsContent>

@@ -41,6 +41,10 @@ import { type translationsTypes } from "@/types/dailyTipTypes"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { useDailyTipStore } from "@/stores/useDailyTipStore"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  deleteImageFromFirebase,
+  uploadImageToFirebase
+} from "@/lib/firebaseImageUtils"
 
 interface Option {
   value: string
@@ -101,9 +105,11 @@ const ingredientColumns: Array<Column<Ingredient>> = [
 ]
 
 export default function ShopPromotionTab({
-  translations
+  translations,
+  onClose
 }: {
   translations: translationsTypes
+  onClose: () => void
 }): JSX.Element {
   const [page, setPage] = React.useState(1)
   const [pageSize, setPageSize] = React.useState(2)
@@ -112,6 +118,7 @@ export default function ShopPromotionTab({
   const { activeLang, translationsData, setTranslationField } =
     useDailyTipStore()
   const [isTranslating, setIsTranslating] = useState(false)
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
 
   // Validate only inputs and select
   const FormSchema = z.object({
@@ -184,17 +191,6 @@ export default function ShopPromotionTab({
     setTranslationField("shopPromotionData", "fr", "dateselect", dateString)
   }
 
-  const handleImageSelect = (files: File[] | null) => {
-    const file = files?.[0] ?? null
-    if (file) {
-      const fileName = file.name
-
-      form.setValue("image", fileName)
-      setTranslationField("shopPromotionData", "en", "image", fileName)
-      setTranslationField("shopPromotionData", "fr", "image", fileName)
-    }
-  }
-
   // handle change reason function
   const handleReasonsChange = (value: string) => {
     form.setValue("reason", value)
@@ -235,11 +231,75 @@ export default function ShopPromotionTab({
     setPage(1)
   }
 
-  const handleCancel = (
-    form: ReturnType<typeof useForm<z.infer<typeof FormSchema>>>
-  ): void => {
-    form.reset()
+  const handleImageSelect = async (files: File[] | null) => {
+    const file = files?.[0] ?? null
+    if (file) {
+      try {
+        setIsTranslating(true)
+        const imageUrl = await uploadImageToFirebase(file, "daily-tip")
+
+        form.setValue("image", imageUrl, {
+          shouldValidate: true,
+          shouldDirty: true
+        })
+        setTranslationField("shopPromotionData", "en", "image", imageUrl)
+        setTranslationField("shopPromotionData", "fr", "image", imageUrl)
+
+        setPreviewUrls([imageUrl]) // For single image preview
+      } catch (error) {
+        toast.error("Image upload failed. Please try again.")
+        console.error("Firebase upload error:", error)
+      } finally {
+        setIsTranslating(false)
+      }
+    }
   }
+
+  useEffect(() => {
+    const existingUrl = translationsData.shopPromotionData[activeLang].image
+    if (existingUrl) {
+      setPreviewUrls([existingUrl])
+    } else {
+      setPreviewUrls([])
+    }
+
+    form.reset(translationsData.shopPromotionData[activeLang])
+  }, [activeLang, form.reset, translationsData.shopPromotionData])
+
+  const handleCancel = async (): Promise<void> => {
+    //  Combine all possible image URLs (preview + stored)
+    const possibleImages = [
+      translationsData.basicLayoutData[activeLang]?.image,
+      translationsData.shopPromotionData?.[activeLang]?.image
+    ]
+    const uniqueImageUrls = Array.from(new Set(possibleImages)).filter(Boolean)
+
+    //  Delete images from Firebase
+    await Promise.all(
+      uniqueImageUrls.map(async url => {
+        try {
+          await deleteImageFromFirebase(url)
+        } catch (err) {
+          console.error("Image deletion failed:", url, err)
+        }
+      })
+    )
+
+    setTranslationField("basicLayoutData", "en", "image", "")
+    setTranslationField("basicLayoutData", "fr", "image", "")
+    setTranslationField("shopPromotionData", "en", "image", "")
+    setTranslationField("shopPromotionData", "fr", "image", "")
+
+    //  Remove session data
+    sessionStorage.removeItem("daily-tip-storage")
+
+    // Clear preview image state
+    setPreviewUrls([])
+
+    // Close the modal or section
+    onClose()
+  }
+
   function onSubmit(data: z.infer<typeof FormSchema>): void {
     toast("Form submitted", {
       description: JSON.stringify(data, null, 2)
@@ -612,6 +672,7 @@ export default function ShopPromotionTab({
                     <FormControl>
                       <ImageUploader
                         title={translations.selectImagesForYourFoodItem}
+                        previewUrls={previewUrls ? previewUrls : []}
                         onChange={handleImageSelect}
                       />
                     </FormControl>
@@ -626,8 +687,8 @@ export default function ShopPromotionTab({
           <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
             <Button
               variant="outline"
-              onClick={() => {
-                handleCancel(form)
+              onClick={async () => {
+                await handleCancel()
               }}
             >
               {translations.cancel}

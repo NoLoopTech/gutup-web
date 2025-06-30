@@ -36,6 +36,7 @@ import { type translationsTypes } from "@/types/dailyTipTypes"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { useDailyTipStore } from "@/stores/useDailyTipStore"
 import { Textarea } from "@/components/ui/textarea"
+import { deleteImageFromFirebase } from "@/lib/firebaseImageUtils"
 
 interface Option {
   value: string
@@ -56,9 +57,11 @@ const concerns: Record<string, Option[]> = {
 }
 
 export default function VideoTipTab({
-  translations
+  translations,
+  onClose
 }: {
   translations: translationsTypes
+  onClose: () => void
 }): JSX.Element {
   const { translateText } = useTranslation()
   const { activeLang, translationsData, setTranslationField } =
@@ -96,10 +99,36 @@ export default function VideoTipTab({
     form.reset(translationsData.videoTipData[activeLang])
   }, [activeLang, form.reset, translationsData.videoTipData])
 
-  const handleCancel = (
-    form: ReturnType<typeof useForm<z.infer<typeof FormSchema>>>
-  ): void => {
-    form.reset()
+  const handleCancel = async (): Promise<void> => {
+    // Collect unique image URLs
+    const imageUrls = [
+      translationsData.basicLayoutData[activeLang]?.image,
+      translationsData.shopPromotionData?.[activeLang]?.image
+    ].filter(
+      (url, index, arr): url is string => !!url && arr.indexOf(url) === index
+    )
+
+    //  Delete all images from Firebase
+    await Promise.all(
+      imageUrls.map(async url => {
+        try {
+          await deleteImageFromFirebase(url)
+        } catch (error) {
+          console.error(`Failed to delete image: ${url}`, error)
+        }
+      })
+    )
+
+    setTranslationField("basicLayoutData", "en", "image", "")
+    setTranslationField("basicLayoutData", "fr", "image", "")
+    setTranslationField("shopPromotionData", "en", "image", "")
+    setTranslationField("shopPromotionData", "fr", "image", "")
+
+    //  Remove session storage
+    sessionStorage.removeItem("daily-tip-storage")
+
+    // Close the form/modal
+    onClose()
   }
 
   const handleInputChange = (
@@ -342,8 +371,8 @@ export default function VideoTipTab({
           <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
             <Button
               variant="outline"
-              onClick={() => {
-                handleCancel(form)
+              onClick={async () => {
+                await handleCancel()
               }}
             >
               {translations.cancel}

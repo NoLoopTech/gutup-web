@@ -49,9 +49,11 @@ const moodOptions: Record<string, Option[]> = {
 }
 
 export default function QuoteTab({
-  translations
+  translations,
+  onClose
 }: {
   translations: translationsTypes
+  onClose: () => void
 }): JSX.Element {
   const { translateText } = useTranslation()
   const { activeLang, translationsData, setTranslationField } = useMoodStore()
@@ -138,6 +140,7 @@ export default function QuoteTab({
 
   const handleResetForm = () => {
     form.reset(translationsData.quoteData[activeLang])
+    onClose()
   }
 
   return (
