@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { DialogFooter, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -34,11 +34,17 @@ import { toast } from "sonner"
 import { type translationsTypes } from "@/types/storeTypes"
 import { useStoreStore } from "@/stores/useStoreStore"
 import { useTranslation } from "@/query/hooks/useTranslation"
+import { getAllFoods } from "@/app/api/foods"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
   { ssr: false }
 )
+// Define Food type if not imported from elsewhere
+interface Food {
+  id: number | string
+  name: string
+}
 
 interface Option {
   value: string
@@ -81,9 +87,11 @@ const storeTypeOptions: Record<string, Option[]> = {
 }
 
 export default function AddStorePopUpContent({
-  translations
+  translations,
+  token
 }: {
   translations: translationsTypes
+  token: string
 }): JSX.Element {
   const { translateText } = useTranslation()
   const { activeLang, storeData, setTranslationField } = useStoreStore() as any
@@ -91,6 +99,8 @@ export default function AddStorePopUpContent({
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [, setIsPremium] = React.useState(false)
+  const [foods, setFoods] = useState<Food[]>([])
+  const [, setSelected] = useState<Food | null>(null)
   // Validation schema using Zod
   const AddStoreSchema = z.object({
     storeName: z
@@ -147,6 +157,23 @@ export default function AddStorePopUpContent({
       message: translations.required
     })
   })
+
+  // fetch once on mount
+  useEffect(() => {
+    const fetchFoods = async (): Promise<void> => {
+      try {
+        const res = await getAllFoods(token)
+        if (res.status === 200) {
+          setFoods(res.data.foods)
+        } else {
+          console.error("Unexpected response:", res)
+        }
+      } catch (err) {
+        console.error("Failed to fetch foods:", err)
+      }
+    }
+    void fetchFoods()
+  }, [])
 
   // Form hook
   const form = useForm<z.infer<typeof AddStoreSchema>>({
@@ -206,30 +233,20 @@ export default function AddStorePopUpContent({
 
   const handleSubscriptionToggle = (value: boolean): void => {
     setIsPremium(value)
-
-    // Save to current language
     setTranslationField("storeData", activeLang, "subscriptionType", value)
 
-    // Also save to the opposite language
     const opp = activeLang === "en" ? "fr" : "en"
     setTranslationField("storeData", opp, "subscriptionType", value)
-
-    // Update the form value
     form.setValue("subscriptionType", value)
   }
 
   const handleTimeChange =
     (field: any, name: "timeFrom" | "timeTo") => (value: string) => {
       field.onChange(value)
-
-      // Save to current language
       setTranslationField("storeData", activeLang, name, value)
 
-      // Save to opposite language
       const opp = activeLang === "en" ? "fr" : "en"
       setTranslationField("storeData", opp, name, value)
-
-      // Update the form manually
       form.setValue(name, value)
     }
 
@@ -771,6 +788,10 @@ export default function AddStorePopUpContent({
                   <SearchBar
                     title={translations.selectAvailableIngredients}
                     placeholder={translations.searchForIngredients}
+                    dataList={foods.map(f => ({ id: f.id, name: f.name }))}
+                    onSelect={item => {
+                      setSelected({ id: String(item.id), name: item.name })
+                    }}
                   />
                 </div>
                 <div className="flex items-end h-full mt-7">
