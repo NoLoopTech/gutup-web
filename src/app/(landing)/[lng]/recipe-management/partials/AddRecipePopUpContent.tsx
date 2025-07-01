@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useRef } from "react"
+import React, { useRef, useState } from "react"
 import { DialogFooter, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -13,7 +13,9 @@ import { Button } from "@/components/ui/button"
 import { CustomTable } from "@/components/Shared/Table/CustomTable"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
+import { type RecipeFields } from "@/stores/useRecipeStore";
 import { CircleFadingPlus } from "lucide-react"
+import { useTranslation } from "@/query/hooks/useTranslation"
 import {
   Select,
   SelectContent,
@@ -34,6 +36,7 @@ import { toast } from "sonner"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { type translationsTypes } from "@/types/recipeTypes"
+import { useRecipeStore } from "@/stores/useRecipeStore"
 
 interface Ingredient {
   id: number
@@ -46,6 +49,40 @@ interface Option {
   value: string
   label: string
 }
+
+const categoryOptions: Record<string, Option[]> = {
+  en: [
+    { value: "fruits", label: "Fruits" },
+    { value: "vegetables", label: "Vegetables" },
+    { value: "dairy", label: "Dairy" },
+    { value: "grains", label: "Grains" }
+  ],
+  fr: [
+    { value: "fruits", label: "Fruits" },
+    { value: "légumes", label: "Légumes" },
+    { value: "produits laitiers", label: "Produits laitiers" },
+    { value: "céréales", label: "Céréales" }
+
+  ]
+}
+const seasonOptions: Record<string, Option[]> = {
+  en: [
+    { value: "spring", label: "Spring" },
+    { value: "summer", label: "Summer" },
+    { value: "autmn", label: "Autmn" },
+    { value: "winter", label: "Winter" }
+  ],
+  fr: [
+    { value: "printemps", label: "Printemps" },
+    { value: "été", label: "Eté" },
+    { value: "automne", label: "Automne" },
+    { value: "hiver", label: "Hiver" }
+
+  ]
+}
+
+
+
 
 // Define function for handling RichTextEditor changes
 const handleRichTextEditorChange = (field: any) => (val: string) => {
@@ -62,13 +99,27 @@ const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
   { ssr: false }
 )
+const translateToFrench = async (text: string): Promise<string> => {
+  // Dummy translation (replace with API call later)
+  return `[FR] ${text}`
+}
+
+
+
 
 export default function AddRecipePopUpContent({
   translations
 }: {
   translations: translationsTypes
 }): JSX.Element {
-  const selectionRef = useRef<RichTextEditorHandle>(null)
+  const selectionRef = useRef<RichTextEditorHandle>(null);
+  const { activeLang,  setTranslationField, allowMultiLang } = useRecipeStore()
+  const { translateText } = useTranslation()
+  const [isTranslating, setIsTranslating] = useState(false)
+  const handleSelectSync = (field: any, key: keyof RecipeFields) => (value: string) => {
+  field.onChange(value)
+  useRecipeStore.getState().setField("en", key, value)
+  autoTranslate(key, value)}
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
 
@@ -128,6 +179,15 @@ export default function AddRecipePopUpContent({
     })
   })
 
+
+const autoTranslate = async (field: keyof RecipeFields, value: string) => {
+  if (allowMultiLang) {
+    const translatedValue = await translateToFrench(value)
+    useRecipeStore.getState().setField("fr", field, translatedValue)
+  }
+}
+
+
   const onSubmit = (data: z.infer<typeof RecipeSchema>): void => {
     toast(translations.formSubmittedSuccessfully, {})
   }
@@ -136,7 +196,30 @@ export default function AddRecipePopUpContent({
   ): void => {
     form.reset()
   }
+ const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    fieldName: "name" | "preparation" | "rest" | "persons" |  "benefits"| "authorName"| "phone"
+  ) => {
+    const value = e.target.value
+    form.setValue(fieldName, value)
+    setTranslationField( activeLang, fieldName, value)
+  }
 
+const handleInputBlur = async (
+    value: string,
+    fieldName: keyof RecipeFields) => {
+    if (activeLang === "en" && value.trim()) {
+      try {
+        setIsTranslating(true)
+        const translated = await translateText(value)
+        setTranslationField( "fr", fieldName, translated)
+        console.log("translate",translated)
+        // await autoTranslate(fieldName, value)
+      } finally {
+        setIsTranslating(false)
+      }
+    }
+  }
   // Dummy data
   const ingredientData: Ingredient[] = []
 
@@ -229,6 +312,12 @@ export default function AddRecipePopUpContent({
   })
 
   return (
+    <div className="relative">
+      {isTranslating && (
+        <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
+          <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
+        </div>
+      )}
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pb-6">
@@ -243,8 +332,21 @@ export default function AddRecipePopUpContent({
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder={translations.enterFoodName}
-                      {...field}
+                    value={useRecipeStore((s) => s.translations[activeLang].name)}
+      onChange={(e) => {
+        const val = e.target.value
+        field.onChange(val)
+        setTranslationField(activeLang, "name", val)
+        if (activeLang === "en") autoTranslate("name", val)
+    
+            //           placeholder={translations.enterFoodName}
+            //           {...field}
+            //           onChange={(e) => {
+            // field.onChange(e) // react-hook-form
+            // const value = e.target.value
+            // useRecipeStore.getState().setField("en", "name", value)
+            // autoTranslate("name", value) // 👉 Auto sync to French
+          }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -262,10 +364,11 @@ export default function AddRecipePopUpContent({
                     {translations.category}
                   </FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="w-full mt-1">
+                    <Select onValueChange={handleSelectSync(field, "category")}
+                      value={field.value}>
+                       <SelectTrigger className="w-full mt-1">
                         <SelectValue
-                          placeholder={translations.selectCategory}
+                          placeholder={"Select Category"}
                         />
                       </SelectTrigger>
                       <SelectContent>
@@ -276,6 +379,8 @@ export default function AddRecipePopUpContent({
                             ] || option.label}{" "}
                           </SelectItem>
                         ))}
+                        {/* <SelectItem value="fruits">Fruits</SelectItem>
+                        <SelectItem value="vegetables">Vegetables</SelectItem> */}
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -335,7 +440,9 @@ export default function AddRecipePopUpContent({
                     <Input
                       placeholder={translations.howLongDoesItTakeToMake}
                       {...field}
-                    />
+                      onChange={e => handleInputChange(e, "preparation")}
+                    onBlur={() => handleInputBlur(field.value, "preparation")}
+                  />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -355,6 +462,8 @@ export default function AddRecipePopUpContent({
                     <Input
                       placeholder={translations.howLongToKeepItResting}
                       {...field}
+                      onChange={e => handleInputChange(e, "rest")}
+                    onBlur={() => handleInputBlur(field.value, "rest")}
                     />
                   </FormControl>
                   <FormMessage />
@@ -375,6 +484,8 @@ export default function AddRecipePopUpContent({
                     <Input
                       placeholder={translations.numberOfPeopleTheMealServes}
                       {...field}
+                      onChange={e => handleInputChange(e, "persons")}
+                    onBlur={() => handleInputBlur(field.value, "persons")}
                     />
                   </FormControl>
                   <FormMessage />
@@ -458,7 +569,7 @@ export default function AddRecipePopUpContent({
                   <FormControl>
                     <RichTextEditor
                       ref={selectionRef}
-                      value={field.value}
+                      // value={field.value}
                       onChange={handleRichTextEditorChange(field)}
                     />
                   </FormControl>
@@ -489,6 +600,8 @@ export default function AddRecipePopUpContent({
                       <Input
                         placeholder={translations.addAuthorName}
                         {...field}
+                        onChange={e => handleInputChange(e, "authorName")}
+                    onBlur={() => handleInputBlur(field.value, "authorName")}
                       />
                     </FormControl>
                     <FormMessage />
@@ -544,6 +657,8 @@ export default function AddRecipePopUpContent({
                       <Input
                         placeholder={translations.enterAuthorNumber}
                         {...field}
+                        onChange={e => handleInputChange(e, "phone")}
+                    onBlur={() => handleInputBlur(field.value, "phone")}
                       />
                     </FormControl>
                     <FormMessage />
@@ -648,5 +763,6 @@ export default function AddRecipePopUpContent({
         </DialogFooter>
       </form>
     </Form>
+    </div>
   )
 }
