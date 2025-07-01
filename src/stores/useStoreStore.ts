@@ -9,6 +9,7 @@ interface StoreField {
   storeLocation: string
   storeType: string
   shoplocation: string
+  subscriptionType: boolean
   timeFrom: string
   timeTo: string
   phone: string
@@ -51,6 +52,7 @@ const emptyFields: StoreField = {
   storeLocation: "",
   storeType: "",
   shoplocation: "",
+  subscriptionType: false,
   timeFrom: "",
   timeTo: "",
   phone: "",

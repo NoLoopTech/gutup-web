@@ -90,7 +90,7 @@ export default function AddStorePopUpContent({
   const [isTranslating, setIsTranslating] = useState(false)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
-  const [isPremium, setIsPremium] = React.useState(false)
+  const [, setIsPremium] = React.useState(false)
   // Validation schema using Zod
   const AddStoreSchema = z.object({
     storeName: z
@@ -101,6 +101,7 @@ export default function AddStorePopUpContent({
     storeLocation: z.string().min(1, translations.required),
     storeType: z.string().min(1, translations.pleaseselectaStoreType),
     shoplocation: z.string().min(1, translations.required),
+    subscriptionType: z.boolean().optional(),
     timeFrom: z.string().min(1, translations.required),
     timeTo: z.string().min(1, translations.required),
     phone: z
@@ -202,6 +203,36 @@ export default function AddStorePopUpContent({
       }
     }
   }
+
+  const handleSubscriptionToggle = (value: boolean): void => {
+    setIsPremium(value)
+
+    // Save to current language
+    setTranslationField("storeData", activeLang, "subscriptionType", value)
+
+    // Also save to the opposite language
+    const opp = activeLang === "en" ? "fr" : "en"
+    setTranslationField("storeData", opp, "subscriptionType", value)
+
+    // Update the form value
+    form.setValue("subscriptionType", value)
+  }
+
+  const handleTimeChange =
+    (field: any, name: "timeFrom" | "timeTo") => (value: string) => {
+      field.onChange(value)
+
+      // Save to current language
+      setTranslationField("storeData", activeLang, name, value)
+
+      // Save to opposite language
+      const opp = activeLang === "en" ? "fr" : "en"
+      setTranslationField("storeData", opp, name, value)
+
+      // Update the form manually
+      form.setValue(name, value)
+    }
+
   // Function to update select fields (category, season, country)
   const handleSelectChange = (
     fieldName: "category" | "storeType",
@@ -481,12 +512,26 @@ export default function AddStorePopUpContent({
               <Label className="text-black mb-1 block">
                 {translations.subscription}
               </Label>
-              <div className="flex items-center gap-4 mt-2">
-                <Switch checked={isPremium} onCheckedChange={setIsPremium} />
-                <Label className="text-Primary-300">
-                  {isPremium ? translations.premium : translations.freemium}
-                </Label>
-              </div>
+              <FormField
+                control={form.control}
+                name="subscriptionType"
+                render={({ field }) => (
+                  <div className="flex items-center gap-4 mt-2">
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={value => {
+                        field.onChange(value)
+                        handleSubscriptionToggle(value)
+                      }}
+                    />
+                    <Label className="text-Primary-300">
+                      {field.value
+                        ? translations.premium
+                        : translations.freemium}
+                    </Label>
+                  </div>
+                )}
+              />
             </div>
             <div className="flex flex-col gap-1">
               <Label>{translations.time}</Label>
@@ -495,6 +540,7 @@ export default function AddStorePopUpContent({
                   <Label htmlFor="time-from" className="text-xs text-gray-400">
                     {translations.from}
                   </Label>
+
                   <FormField
                     control={form.control}
                     name="timeFrom"
@@ -503,7 +549,13 @@ export default function AddStorePopUpContent({
                         <FormControl>
                           <Input
                             type="time"
-                            {...field}
+                            value={field.value}
+                            onChange={e => {
+                              handleTimeChange(
+                                field,
+                                "timeFrom"
+                              )(e.target.value)
+                            }}
                             className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                           />
                         </FormControl>
@@ -516,6 +568,7 @@ export default function AddStorePopUpContent({
                   <Label htmlFor="time-to" className="text-xs text-gray-400">
                     {translations.to}
                   </Label>
+
                   <FormField
                     control={form.control}
                     name="timeTo"
@@ -524,7 +577,10 @@ export default function AddStorePopUpContent({
                         <FormControl>
                           <Input
                             type="time"
-                            {...field}
+                            value={field.value}
+                            onChange={e => {
+                              handleTimeChange(field, "timeTo")(e.target.value)
+                            }}
                             className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                           />
                         </FormControl>
