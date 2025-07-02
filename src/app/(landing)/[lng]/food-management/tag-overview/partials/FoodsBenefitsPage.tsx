@@ -9,9 +9,25 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import { useState, type ReactElement } from "react"
+import { useState, useEffect } from "react"
+import { getAllTags } from "@/app/api/foods"
+import { deleteTagById } from "@/app/api/foods"
 import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
 import AddNewTagPopUp from "../../partials/AddNewTagPopUp"
+import { useGetAllTags } from "@/query/hooks/useGetAllTags"
+import { useDeleteTag } from "@/query/hooks/useDeleteTags"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -20,18 +36,68 @@ interface Column<T> {
   cell?: (row: T) => React.ReactNode
   className?: string
 }
-
 interface FoodsBenefitsDataType {
-  tag: string
-  activeOn: string
-  createdOn: string
-  status: string
+  tagId: number
+  category: string
+  count: string
+  status: boolean
 }
 
-export default function FoodsBenefitsPage(): ReactElement {
+export default function FoodsBenefitsPage({
+  token
+}: {
+  token: string
+}): JSX.Element {
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(10)
+  const [foodBenefits, setFoodBenefits] = useState<FoodsBenefitsDataType[]>([])
+  const [tagOverviewPopupOpen, setTagOverviewPopupOpen] =
+    useState<boolean>(false)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
   const [openAddNewTagPopUp, setOpenAddNewTagPopUp] = useState<boolean>(false)
+  const { tags, loading, error, fetchTags } =
+    useGetAllTags<FoodsBenefitsDataType>(token, "Benefit")
+  const {
+    deleteTag,
+    loading: deleteLoading,
+    error: deleteError
+  } = useDeleteTag(token)
+  const [tagId, setTagId] = useState<number>(0)
+
+  // handle delete tag OverView
+  const handleDeleteTag = (tagId: number): void => {
+    setTagId(tagId)
+    setConfirmDeleteOpen(true)
+  }
+
+  // handle delete tag by id
+  const handleDeleteTagById = async (): Promise<void> => {
+    if (!tagId) {
+      toast.error("Tag ID is invalid.")
+      return
+    }
+    const result = await deleteTag(tagId)
+    if (result.success) {
+      toast.success(result.message)
+      setConfirmDeleteOpen(false)
+      fetchTags() // Refresh the data
+    } else {
+      toast.error("Failed to delete tag", {
+        description: result.message
+      })
+      setConfirmDeleteOpen(false)
+    }
+  }
+
+  // handle open delete confirmation popup
+  const handleOpenDeleteConfirmationPopup = (): void => {
+    setConfirmDeleteOpen(true)
+  }
+
+  // handle close delete confirmation popup
+  const handleCloseDeleteConfirmationPopup = (): void => {
+    setConfirmDeleteOpen(false)
+  }
 
   // handle open add food popup
   const handleOpenAddNewTagPopUp = (): void => {
@@ -43,22 +109,26 @@ export default function FoodsBenefitsPage(): ReactElement {
     setOpenAddNewTagPopUp(false)
   }
 
+  useEffect(() => {
+    if (tags) {
+      setFoodBenefits(tags)
+    }
+    console.log("Tags updated2:", tags)
+  }, [tags])
+
   const columns: Array<Column<FoodsBenefitsDataType>> = [
     {
-      accessor: "tag",
+      accessor: "category",
       header: "Tag",
-      className: "w-40",
+      className: "w-40 capitalize",
       cell: (row: FoodsBenefitsDataType): React.ReactNode => (
-        <Badge variant={"outline"}>{row.tag}</Badge>
+        <Badge variant={"outline"}>{row.category}</Badge>
       )
     },
     {
-      accessor: "activeOn",
-      header: "Active On"
-    },
-    {
-      accessor: "createdOn",
-      header: "Created On"
+      accessor: "count",
+      header: "Active On",
+      cell: (row: FoodsBenefitsDataType) => <Label>{row.count} Items</Label>
     },
     {
       accessor: "status",
@@ -67,14 +137,12 @@ export default function FoodsBenefitsPage(): ReactElement {
       cell: (row: FoodsBenefitsDataType): React.ReactNode => (
         <Badge
           className={
-            row.status === "Active"
+            row.status
               ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700"
-              : row.status === "In Active"
-              ? "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
               : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700"
           }
         >
-          {row.status}
+          {row.status ? "Active" : "Inactive"}
         </Badge>
       )
     },
@@ -94,32 +162,21 @@ export default function FoodsBenefitsPage(): ReactElement {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem>Make a copy</DropdownMenuItem>
-            <DropdownMenuItem>Favorite</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                handleDeleteTag(row.tagId)
+              }}
+            >
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
     }
   ]
 
-  const data: FoodsBenefitsDataType[] = [
-    {
-      tag: "Carrot",
-      activeOn: "2025-05-16",
-      createdOn: "2025-05-16",
-      status: "Active"
-    },
-    {
-      tag: "Carrot",
-      activeOn: "2025-05-16",
-      createdOn: "2025-05-16",
-      status: "In Active"
-    }
-  ]
-
+  const data = foodBenefits
   const pageSizeOptions: number[] = [5, 10, 20]
-
   const totalItems: number = data.length
   const startIndex: number = (page - 1) * pageSize
   const endIndex: number = startIndex + pageSize
@@ -160,7 +217,32 @@ export default function FoodsBenefitsPage(): ReactElement {
       <AddNewTagPopUp
         open={openAddNewTagPopUp}
         onClose={handleCloseAddNewTagPopUp}
+        token={token}
+        category={"Benefit"}
+        getTags={fetchTags}
       />
+      {/* delete confirmation popup  */}
+      <AlertDialog
+        open={confirmDeleteOpen}
+        onOpenChange={handleCloseDeleteConfirmationPopup}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Tag</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this tag?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCloseDeleteConfirmationPopup}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTagById}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
