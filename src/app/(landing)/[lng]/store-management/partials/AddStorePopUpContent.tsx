@@ -35,6 +35,7 @@ import { type translationsTypes } from "@/types/storeTypes"
 import { useStoreStore } from "@/stores/useStoreStore"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { getAllFoods } from "@/app/api/foods"
+import { Trash } from "lucide-react"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -337,8 +338,41 @@ export default function AddStorePopUpContent({
       accessor: (row: AvailableItem) => (
         <Switch checked={row.display} className="scale-75" />
       )
+    },
+    {
+      header: "", // No header for delete column
+      accessor: (row: AvailableItem) => (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
+          onClick={() => {
+            handleDeleteAvailItem(row.id)
+          }}
+          title={translations.delete}
+        >
+          <Trash className="h-4 w-4 text-gray-500" />
+        </Button>
+      ),
+      id: "delete"
     }
   ]
+
+  // Delete handler for availData
+  const handleDeleteAvailItem = (id: number): void => {
+    const updated = availData.filter(item => item.id !== id)
+    setAvailData(updated)
+    form.setValue("availData", updated, { shouldValidate: true })
+    setTranslationField("storeData", activeLang, "availData", updated)
+    setTranslationField(
+      "storeData",
+      activeLang === "en" ? "fr" : "en",
+      "availData",
+      updated
+    )
+  }
+
   // Define functions to handle page changes
   const handlePageChange = (newPage: number): void => {
     setPage(newPage)
@@ -414,6 +448,8 @@ export default function AddStorePopUpContent({
       "availData",
       updated
     )
+    setSelectedCategory(null)
+    setCategoryInput("")
   }
 
   const handleImageUpload = (field: any) => (files: File[] | null) => {
@@ -851,7 +887,6 @@ export default function AddStorePopUpContent({
           </DialogTitle>
           <div className="flex flex-col gap-4 pt-4">
             <div className="flex flex-col sm:flex-row gap-2 items-center w-full">
-              {/* ─ Ingredient picker + add */}
               <div className="flex flex-row gap-2 items-center mb-2 flex-1">
                 <div className="flex-1">
                   <SearchBar
@@ -867,19 +902,19 @@ export default function AddStorePopUpContent({
                   />
                 </div>
                 <div className="flex items-end h-full mt-7">
-                  <Button onClick={handleAddIngredient}>
+                  <Button type="button" onClick={handleAddIngredient}>
                     {translations.add}
                   </Button>
                 </div>
               </div>
 
-              {/* ─ Category picker + add */}
               <div className="flex flex-row gap-2 items-center mb-2 flex-1">
                 <div className="flex-1">
                   <SearchBar
                     title={translations.selectAvailableCategories}
                     placeholder={translations.searchAvailableCategories}
                     dataList={categoryOptions[activeLang].map(o => ({
+                      // used category options till api
                       id: o.value,
                       name: o.label
                     }))}
@@ -892,14 +927,13 @@ export default function AddStorePopUpContent({
                   />
                 </div>
                 <div className="flex items-end h-full mt-7">
-                  <Button onClick={handleAddCategory}>
+                  <Button type="button" onClick={handleAddCategory}>
                     {translations.add}
                   </Button>
                 </div>
               </div>
             </div>
 
-            {/* ─ Your FormField + table stays exactly the same */}
             <FormField
               control={form.control}
               name="availData"
@@ -907,7 +941,10 @@ export default function AddStorePopUpContent({
                 <>
                   <CustomTable
                     columns={availColumns}
-                    data={availData}
+                    data={availData.slice(
+                      (page - 1) * pageSize,
+                      page * pageSize
+                    )}
                     page={page}
                     pageSize={pageSize}
                     totalItems={availData.length}
@@ -1003,6 +1040,7 @@ export default function AddStorePopUpContent({
           {/* Save and Cancel buttons */}
           <div className="fixed bottom-0 left-0 w-full bg-white border-t py-4 px-4 flex justify-between gap-2 z-50">
             <Button
+              type="button"
               variant="outline"
               onClick={() => {
                 handleCancel(form)

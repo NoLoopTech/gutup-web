@@ -1,4 +1,5 @@
 export interface translationsTypes {
+  delete: string | undefined
   addNewStore: string
   allowMultiLang: string
   english: string
