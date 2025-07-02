@@ -17,7 +17,6 @@ interface BasicLayoutFields {
   subDescriptionTwo: string
   concern: string
   image: string
-  dateselect: string
 }
 
 interface ShopPromotionFields {
@@ -33,7 +32,6 @@ interface ShopPromotionFields {
   instagram: string
   website: string
   image: string
-  dateselect: string
   shopPromoteFoods: shopPromoteFoodsTypes[]
 }
 
@@ -43,7 +41,6 @@ interface VideoTipFields {
   subTitle: string
   subDescription: string
   videoLink: string
-  dateselect: string
 }
 
 interface LangData<T> {
@@ -87,8 +84,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             subTitleTwo: "",
             subDescriptionTwo: "",
             concern: "",
-            image: "",
-            dateselect: ""
+            image: ""
           },
           fr: {
             title: "",
@@ -97,8 +93,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             subTitleTwo: "",
             subDescriptionTwo: "",
             concern: "",
-            image: "",
-            dateselect: ""
+            image: ""
           }
         },
         shopPromotionData: {
@@ -115,7 +110,6 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             instagram: "",
             website: "",
             image: "",
-            dateselect: "",
             shopPromoteFoods: [
               {
                 foodId: 0,
@@ -137,7 +131,6 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             instagram: "",
             website: "",
             image: "",
-            dateselect: "",
             shopPromoteFoods: [
               {
                 foodId: 0,
@@ -153,16 +146,14 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             title: "",
             subTitle: "",
             subDescription: "",
-            videoLink: "",
-            dateselect: ""
+            videoLink: ""
           },
           fr: {
             concern: "",
             title: "",
             subTitle: "",
             subDescription: "",
-            videoLink: "",
-            dateselect: ""
+            videoLink: ""
           }
         }
       },
@@ -205,8 +196,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 subTitleTwo: "",
                 subDescriptionTwo: "",
                 concern: "",
-                image: "",
-                dateselect: ""
+                image: ""
               },
               fr: {
                 title: "",
@@ -215,8 +205,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 subTitleTwo: "",
                 subDescriptionTwo: "",
                 concern: "",
-                image: "",
-                dateselect: ""
+                image: ""
               }
             },
             shopPromotionData: {
@@ -233,7 +222,6 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 instagram: "",
                 website: "",
                 image: "",
-                dateselect: "",
                 shopPromoteFoods: [
                   {
                     foodId: 0,
@@ -255,7 +243,6 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 instagram: "",
                 website: "",
                 image: "",
-                dateselect: "",
                 shopPromoteFoods: [
                   {
                     foodId: 0,
@@ -271,16 +258,14 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 title: "",
                 subTitle: "",
                 subDescription: "",
-                videoLink: "",
-                dateselect: ""
+                videoLink: ""
               },
               fr: {
                 concern: "",
                 title: "",
                 subTitle: "",
                 subDescription: "",
-                videoLink: "",
-                dateselect: ""
+                videoLink: ""
               }
             }
           }

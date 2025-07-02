@@ -36,10 +36,6 @@ import { format } from "date-fns"
 import { type translationsTypes } from "@/types/dailyTipTypes"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { useDailyTipStore } from "@/stores/useDailyTipStore"
-import {
-  deleteImageFromFirebase,
-  uploadImageToFirebase
-} from "@/lib/firebaseImageUtils"
 
 interface Option {
   value: string
@@ -67,17 +63,14 @@ const concerns: Record<string, Option[]> = {
 }
 
 export default function BasicLayoutTab({
-  translations,
-  onClose
+  translations
 }: {
   translations: translationsTypes
-  onClose: () => void
 }): JSX.Element {
   const { translateText } = useTranslation()
   const { activeLang, translationsData, setTranslationField } =
     useDailyTipStore()
   const [isTranslating, setIsTranslating] = useState(false)
-  const [previewUrls, setPreviewUrls] = useState<string[]>([])
 
   // Validation schema including inputs & textareas
   const FormSchema = z.object({
@@ -114,12 +107,17 @@ export default function BasicLayoutTab({
     concern: z
       .string({ required_error: translations.pleaseSelectAConcern })
       .nonempty(translations.pleaseSelectAConcern),
-    dateselect: z.string().nonempty(translations.required),
     image: z.string().nonempty(translations.required)
   })
 
+  const handleCancel = (
+    form: ReturnType<typeof useForm<z.infer<typeof FormSchema>>>
+  ): void => {
+    form.reset()
+  }
+
   const handleInputChange = (fieldName: FieldNames, value: string) => {
-    form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
+    form.setValue(fieldName, value)
     setTranslationField("basicLayoutData", activeLang, fieldName, value)
   }
 
@@ -143,7 +141,7 @@ export default function BasicLayoutTab({
   // Update form when lang changes
   useEffect(() => {
     form.reset(translationsData.basicLayoutData[activeLang])
-  }, [activeLang, form.reset, translationsData.basicLayoutData])
+  }, [form.reset, translationsData.basicLayoutData])
 
   // handle change concerns function
   const handleConcernsChange = (value: string) => {
@@ -165,82 +163,15 @@ export default function BasicLayoutTab({
     }
   }
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (!date) return
-    const dateString = date.toISOString()
-    form.setValue("dateselect", dateString)
-    setTranslationField("basicLayoutData", "en", "dateselect", dateString)
-    setTranslationField("basicLayoutData", "fr", "dateselect", dateString)
-  }
-
-  const handleImageSelect = async (files: File[] | null) => {
+  const handleImageSelect = (files: File[] | null) => {
     const file = files?.[0] ?? null
     if (file) {
-      try {
-        setIsTranslating(true)
-        const imageUrl = await uploadImageToFirebase(file, "daily-tip")
+      const fileName = file.name
 
-        form.setValue("image", imageUrl, {
-          shouldValidate: true,
-          shouldDirty: true
-        })
-        setTranslationField("basicLayoutData", "en", "image", imageUrl)
-        setTranslationField("basicLayoutData", "fr", "image", imageUrl)
-
-        setPreviewUrls([imageUrl]) // For single image preview
-      } catch (error) {
-        toast.error("Image upload failed. Please try again.")
-        console.error("Firebase upload error:", error)
-      } finally {
-        setIsTranslating(false)
-      }
+      form.setValue("image", fileName)
+      setTranslationField("basicLayoutData", "en", "image", fileName)
+      setTranslationField("basicLayoutData", "fr", "image", fileName)
     }
-  }
-
-  useEffect(() => {
-    const existingUrl = translationsData.basicLayoutData[activeLang].image
-    if (existingUrl) {
-      setPreviewUrls([existingUrl])
-    } else {
-      setPreviewUrls([])
-    }
-
-    form.reset(translationsData.basicLayoutData[activeLang])
-  }, [activeLang, form.reset, translationsData.basicLayoutData])
-
-  const handleCancel = async (): Promise<void> => {
-    //  Collect unique image URLs
-    const imageUrls = [
-      translationsData.basicLayoutData[activeLang]?.image,
-      translationsData.shopPromotionData?.[activeLang]?.image
-    ].filter(
-      (url, index, arr): url is string => !!url && arr.indexOf(url) === index
-    )
-
-    //  Delete all images from Firebase
-    await Promise.all(
-      imageUrls.map(async url => {
-        try {
-          await deleteImageFromFirebase(url)
-        } catch (error) {
-          console.error(`Failed to delete image: ${url}`, error)
-        }
-      })
-    )
-
-    setTranslationField("basicLayoutData", "en", "image", "")
-    setTranslationField("basicLayoutData", "fr", "image", "")
-    setTranslationField("shopPromotionData", "en", "image", "")
-    setTranslationField("shopPromotionData", "fr", "image", "")
-
-    //  Remove session storage
-    sessionStorage.removeItem("daily-tip-storage")
-
-    //  Clear preview image state
-    setPreviewUrls([])
-
-    // Close the form/modal
-    onClose()
   }
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
@@ -263,47 +194,6 @@ export default function BasicLayoutTab({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-4 text-black">
-            {/* Header */}
-            <div className="flex items-start lg:justify-end lg:-mt-[4.4rem]">
-              <div className="w-[25.5rem]">
-                <FormField
-                  control={form.control}
-                  name="dateselect"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>{translations.whenTobeDisplayed}</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            data-empty={!field}
-                            className="data-[empty=true]:text-muted-foreground w-[25.5rem] justify-between text-left font-normal"
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>{translations.pickADate}</span>
-                            )}
-                            <CalendarIcon className="ml-2 w-4 h-4 text-gray-500" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="p-0 w-auto">
-                          <Calendar
-                            mode="single"
-                            selected={
-                              field.value ? new Date(field.value) : undefined
-                            }
-                            onSelect={handleDateSelect}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
             {/* concern */}
             <div className="pt-4 pb-3">
               <FormField
@@ -483,7 +373,6 @@ export default function BasicLayoutTab({
                     <FormControl>
                       <ImageUploader
                         title={translations.selectImagesForYourFoodItem}
-                        previewUrls={previewUrls}
                         onChange={handleImageSelect}
                       />
                     </FormControl>
@@ -498,8 +387,8 @@ export default function BasicLayoutTab({
           <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
             <Button
               variant="outline"
-              onClick={async () => {
-                await handleCancel()
+              onClick={() => {
+                handleCancel(form)
               }}
             >
               {translations.cancel}
@@ -507,7 +396,7 @@ export default function BasicLayoutTab({
             <Button type="submit">{translations.save}</Button>
           </div>
         </form>
-      </Form>
+      </Form>{" "}
     </div>
   )
 }

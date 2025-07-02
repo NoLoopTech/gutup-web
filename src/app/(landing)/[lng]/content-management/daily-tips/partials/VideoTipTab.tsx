@@ -85,8 +85,7 @@ export default function VideoTipTab({
     videoLink: z
       .string()
       .nonempty(translations.required)
-      .url({ message: translations.invalidURLFormat }),
-    dateselect: z.string().nonempty(translations.required)
+      .url({ message: translations.invalidURLFormat })
   })
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -178,14 +177,6 @@ export default function VideoTipTab({
     }
   }
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (!date) return
-    const dateString = date.toISOString()
-    form.setValue("dateselect", dateString)
-    setTranslationField("videoTipData", "en", "dateselect", dateString)
-    setTranslationField("videoTipData", "fr", "dateselect", dateString)
-  }
-
   function onSubmit(data: z.infer<typeof FormSchema>): void {
     toast("Form submitted", {
       description: JSON.stringify(data, null, 2)
@@ -203,46 +194,6 @@ export default function VideoTipTab({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-4 text-black">
-            <div className="flex items-start lg:justify-end lg:-mt-[4.4rem]">
-              <div className="w-[25.5rem]">
-                <FormField
-                  control={form.control}
-                  name="dateselect"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>{translations.whenTobeDisplayed}</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            data-empty={!field}
-                            className="data-[empty=true]:text-muted-foreground w-[25.5rem] justify-between text-left font-normal"
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>{translations.pickADate}</span>
-                            )}
-                            <CalendarIcon className="ml-2 w-4 h-4 text-gray-500" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="p-0 w-auto">
-                          <Calendar
-                            mode="single"
-                            selected={
-                              field.value ? new Date(field.value) : undefined
-                            }
-                            onSelect={handleDateSelect}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
             {/* concern */}
             <div className="pt-4 pb-3">
               <FormField

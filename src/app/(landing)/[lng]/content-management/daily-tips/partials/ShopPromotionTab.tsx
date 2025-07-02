@@ -29,14 +29,6 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { toast } from "sonner"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
 import { type translationsTypes } from "@/types/dailyTipTypes"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { useDailyTipStore } from "@/stores/useDailyTipStore"
@@ -183,8 +175,7 @@ export default function ShopPromotionTab({
         })
       )
       .nonempty(translations.atLeastOneIngredientCategoryMustBeAdded),
-    image: z.string().nonempty(translations.required),
-    dateselect: z.string().nonempty(translations.required)
+    image: z.string().nonempty(translations.required)
   })
 
   const handleInputChange = (fieldName: FieldNames, value: string) => {
@@ -205,14 +196,6 @@ export default function ShopPromotionTab({
         setIsTranslating(false)
       }
     }
-  }
-
-  const handleDateSelect = (date: Date | undefined) => {
-    if (!date) return
-    const dateString = date.toISOString()
-    form.setValue("dateselect", dateString)
-    setTranslationField("shopPromotionData", "en", "dateselect", dateString)
-    setTranslationField("shopPromotionData", "fr", "dateselect", dateString)
   }
 
   // handle change reason function
@@ -442,79 +425,37 @@ export default function ShopPromotionTab({
               </div>
             </div>
 
-            <div className="flex flex-col gap-4 pt-2 md:flex-row">
-              <div className="w-full md:w-[25.5rem]">
-                <FormField
-                  control={form.control}
-                  name="dateselect"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>{translations.whenTobeDisplayed}</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            data-empty={!field}
-                            className="data-[empty=true]:text-muted-foreground w-[25.5rem] justify-between text-left font-normal"
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>{translations.pickADate}</span>
-                            )}
-                            <CalendarIcon className="ml-2 w-4 h-4 text-gray-500" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="p-0 w-auto">
-                          <Calendar
-                            mode="single"
-                            selected={
-                              field.value ? new Date(field.value) : undefined
-                            }
-                            onSelect={handleDateSelect}
+            {/* Reason */}
+            <div className="w-full md:w-[25.5rem] mt-[-0.3rem]">
+              <FormField
+                control={form.control}
+                name="reason"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{translations.reasonToDisplay}</FormLabel>
+                    <FormControl>
+                      <Select
+                        value={field.value}
+                        onValueChange={handleReasonsChange}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue
+                            placeholder={translations.selectReason}
                           />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              {/* Reason */}
-              <div className="w-full md:w-[25.5rem] mt-[-0.3rem]">
-                <FormField
-                  control={form.control}
-                  name="reason"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{translations.reasonToDisplay}</FormLabel>
-                      <FormControl>
-                        <Select
-                          value={field.value}
-                          onValueChange={handleReasonsChange}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue
-                              placeholder={translations.selectReason}
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {reason[activeLang].map(option => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {reason[activeLang].map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <div className="flex gap-4">
