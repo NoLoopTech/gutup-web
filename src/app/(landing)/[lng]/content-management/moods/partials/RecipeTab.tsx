@@ -48,9 +48,11 @@ const moodOptions: Record<string, Option[]> = {
 }
 
 export default function RecipeTab({
-  translations
+  translations,
+  onClose
 }: {
   translations: translationsTypes
+  onClose: () => void
 }): JSX.Element {
   const { activeLang, translationsData, setTranslationField } = useMoodStore()
   const { translateText } = useTranslation()
@@ -101,7 +103,7 @@ export default function RecipeTab({
     fieldName: "recipe" | "description"
   ) => {
     const value = e.target.value
-    form.setValue(fieldName, value)
+    form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
     setTranslationField("recipeData", activeLang, fieldName, value)
   }
 
@@ -122,6 +124,7 @@ export default function RecipeTab({
 
   const handleResetForm = () => {
     form.reset(translationsData.recipeData[activeLang])
+    onClose()
   }
 
   const onSubmit = (data: z.infer<typeof FormSchema>): void => {
@@ -223,7 +226,7 @@ export default function RecipeTab({
             <Button type="submit">{translations.save}</Button>
           </div>
         </form>
-      </Form>{" "}
+      </Form>
     </div>
   )
 }

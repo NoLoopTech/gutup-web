@@ -1,26 +1,77 @@
-import { Input } from "@/components/ui/input"
+import React, { useEffect, useState } from "react"
 import { Label } from "@/components/ui/label"
-import { Search } from "lucide-react"
-import React from "react"
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandItem,
+  CommandEmpty
+} from "@/components/ui/command"
+
+interface SearchItem {
+  id: number
+  name: string
+}
 
 interface SearchBarProps {
   title: string
   placeholder?: string
+  dataList: SearchItem[]
+  onSelect: (item: SearchItem) => void
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
   title,
-  placeholder = "Search..."
+  placeholder = "Search...",
+  dataList,
+  onSelect
 }) => {
+  const [searchValue, setSearchValue] = useState("")
+  const [filteredList, setFilteredList] = useState<SearchItem[]>([])
+
+  useEffect(() => {
+    if (!searchValue.trim()) {
+      setFilteredList([])
+      return
+    }
+
+    const filtered = dataList.filter(item =>
+      item.name.toLowerCase().includes(searchValue.toLowerCase())
+    )
+    setFilteredList(filtered)
+  }, [searchValue, dataList])
+
+  const handleSelect = (item: SearchItem) => {
+    onSelect(item)
+    setSearchValue("")
+    setFilteredList([])
+  }
+
   return (
-    <div className="grid w-full items-center gap-2">
-      <Label htmlFor="search" className="text-sm font-medium text-black">
+    <div className="w-full">
+      <Label className="block mb-1 text-sm font-medium text-black">
         {title}
       </Label>
-      <div className="relative w-full">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <Input id="search" placeholder={placeholder} className="pl-10 w-full" />
-      </div>
+      <Command className="rounded-md border shadow-sm">
+        <CommandInput
+          value={searchValue}
+          onValueChange={setSearchValue}
+          placeholder={placeholder}
+          className="pl-10"
+        />
+        <CommandList>
+          {filteredList.length > 0 &&
+            filteredList.map(item => (
+              <CommandItem
+                key={item.id}
+                value={item.name}
+                onSelect={() => handleSelect(item)}
+              >
+                {item.name} (ID: {item.id})
+              </CommandItem>
+            ))}
+        </CommandList>
+      </Command>
     </div>
   )
 }

@@ -84,6 +84,7 @@ export default function AddMoodMainPopUp({
             <TabsContent value={activeLang}>
               <AddMoodPopUp
                 translations={{ ...defaultTranslations, ...translations }}
+                onClose={onClose}
               />
             </TabsContent>
           </Tabs>
