@@ -108,14 +108,13 @@ export default function MoodsPage({ token }: { token: string }): JSX.Element {
 
         // clear store and session
         resetTranslations()
-
-        sessionStorage.removeItem("mood-storage")
       } else {
         toast.error("Failed to add mood")
       }
     } catch (error) {
       console.log(error)
     } finally {
+      sessionStorage.removeItem("mood-storage")
       setIsLoading(false)
     }
   }
