@@ -23,7 +23,6 @@ import {
   FormControl,
   FormMessage
 } from "@/components/ui/form"
-import { toast } from "sonner"
 import { type translationsTypes } from "@/types/moodsTypes"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { useTranslation } from "@/query/hooks/useTranslation"
@@ -61,10 +60,14 @@ const shopcategory: Record<string, Option[]> = {
 
 export default function FoodTab({
   translations,
-  onClose
+  onClose,
+  addFoodMood,
+  isLoading
 }: {
   translations: translationsTypes
   onClose: () => void
+  addFoodMood: () => void
+  isLoading: boolean
 }): JSX.Element {
   const { activeLang, translationsData, setTranslationField } = useMoodStore()
   const { translateText } = useTranslation()
@@ -160,9 +163,7 @@ export default function FoodTab({
   }
 
   const onSubmit = (data: z.infer<typeof FormSchema>): void => {
-    toast("Form submitted", {
-      description: JSON.stringify(data, null, 2)
-    })
+    addFoodMood()
   }
 
   return (
@@ -283,7 +284,16 @@ export default function FoodTab({
             <Button variant="outline" type="button" onClick={handleReset}>
               {translations.cancel}
             </Button>
-            <Button type="submit">{translations.save}</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex gap-2 items-center">
+                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                  {translations.save}
+                </div>
+              ) : (
+                translations.save
+              )}
+            </Button>{" "}
           </div>
         </form>
       </Form>

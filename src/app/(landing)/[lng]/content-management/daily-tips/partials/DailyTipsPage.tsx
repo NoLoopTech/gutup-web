@@ -28,7 +28,6 @@ interface DailyTipsDataType {
   title: string
   content: string
   dateCreated: string
-  datePublished: string
   status: string
   likes: number
   dislikes: number
@@ -75,10 +74,6 @@ export default function DailyTipsPage({
     {
       accessor: "dateCreated",
       header: "Date Created"
-    },
-    {
-      accessor: "datePublished",
-      header: "Date Published"
     },
     {
       accessor: "status",
@@ -146,7 +141,6 @@ export default function DailyTipsPage({
       title: "Stay Hydrated",
       content: "Main content of the tip",
       dateCreated: "2025-05-16",
-      datePublished: "2025-05-16",
       status: "Active",
       likes: 178,
       dislikes: 32
@@ -156,7 +150,6 @@ export default function DailyTipsPage({
       title: "Stay Cool",
       content: "Another tip",
       dateCreated: "2025-05-16",
-      datePublished: "2025-05-16",
       status: "Pending",
       likes: 178,
       dislikes: 32
