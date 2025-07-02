@@ -100,7 +100,12 @@ export default function AddStorePopUpContent({
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [, setIsPremium] = React.useState(false)
   const [foods, setFoods] = useState<Food[]>([])
-  const [, setSelected] = useState<Food | null>(null)
+  const [availData, setAvailData] = useState<AvailableItem[]>([])
+  const [selected, setSelected] = useState<Food | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [ingredientInput, setIngredientInput] = useState<string>("")
+  const [categoryInput, setCategoryInput] = useState<string>("")
+
   // Validation schema using Zod
   const AddStoreSchema = z.object({
     storeName: z
@@ -151,8 +156,8 @@ export default function AddStorePopUpContent({
       }
     ),
     availData: z
-      .array(z.unknown())
-      .nonempty(translations.atleastoneingredientcategorymustbeadded),
+      .array(z.any())
+      .min(1, translations.atleastoneingredientcategorymustbeadded),
     storeImage: z.custom<File | null>(val => val instanceof File, {
       message: translations.required
     })
@@ -161,19 +166,16 @@ export default function AddStorePopUpContent({
   // fetch once on mount
   useEffect(() => {
     const fetchFoods = async (): Promise<void> => {
-      try {
-        const res = await getAllFoods(token)
-        if (res.status === 200) {
-          setFoods(res.data.foods)
-        } else {
-          console.error("Unexpected response:", res)
-        }
-      } catch (err) {
-        console.error("Failed to fetch foods:", err)
+      const res = await getAllFoods(token)
+      if (res && res.status === 200) {
+        setFoods(res.data.foods)
+        console.log("Fetched foods:", res.data.foods)
+      } else {
+        console.error("Failed to fetch foods:", res)
       }
     }
     void fetchFoods()
-  }, [])
+  }, [token])
 
   // Form hook
   const form = useForm<z.infer<typeof AddStoreSchema>>({
@@ -183,6 +185,7 @@ export default function AddStorePopUpContent({
       category: storeData[activeLang]?.category || ""
     }
   })
+  console.log("Form default values:", form.getValues())
   // Update form when lang changes
   React.useEffect(() => {
     form.reset(storeData[activeLang])
@@ -301,9 +304,7 @@ export default function AddStorePopUpContent({
       }
     }
   }
-  //  table data for available ingredients and categories
-  const availData: AvailableItem[] = []
-
+  // table columns for available ingredients and categories
   const availColumns = [
     {
       header: translations.availableIngredientsAndCategories,
@@ -346,6 +347,73 @@ export default function AddStorePopUpContent({
   const handlePageSizeChange = (newSize: number): void => {
     setPageSize(newSize)
     setPage(1)
+  }
+
+  // Sync availData with form value (so table always shows latest data)
+  useEffect(() => {
+    const formAvailData = form.watch("availData")
+    if (Array.isArray(formAvailData) && formAvailData !== availData) {
+      setAvailData(formAvailData)
+    }
+  }, [form.watch("availData")])
+
+  // handler for “Add Ingredient”
+  const handleAddIngredient = (): void => {
+    const name = selected?.name ?? ingredientInput.trim()
+    if (!name) return
+
+    const entry: AvailableItem = {
+      id: selected ? Number(selected.id) : Date.now(),
+      name,
+      type: "Ingredient",
+      tags: ["InSystem"],
+      display: true,
+      quantity: "",
+      isMain: false,
+      status: "Active"
+    }
+
+    const updated = [...(form.getValues("availData") || []), entry]
+    setAvailData(updated)
+    form.setValue("availData", updated, { shouldValidate: true })
+    setTranslationField("storeData", activeLang, "availData", updated)
+    setTranslationField(
+      "storeData",
+      activeLang === "en" ? "fr" : "en",
+      "availData",
+      updated
+    )
+    // clear for next
+    setSelected(null)
+    setIngredientInput("")
+  }
+
+  // handler for “Add Category”
+  const handleAddCategory = (): void => {
+    const name = selectedCategory ?? categoryInput.trim()
+    if (!name) return
+
+    const entry: AvailableItem = {
+      id: selectedCategory ? Date.now() : Date.now(),
+      name,
+      type: "Category",
+      tags: ["InSystem"],
+      display: true,
+      quantity: "",
+      isMain: false,
+      status: "Active"
+    }
+
+    const updated = [...(form.getValues("availData") || []), entry]
+    setAvailData(updated)
+    form.setValue("availData", updated, { shouldValidate: true })
+    setTranslationField("storeData", activeLang, "availData", updated)
+    setTranslationField(
+      "storeData",
+      activeLang === "en" ? "fr" : "en",
+      "availData",
+      updated
+    )
   }
 
   const handleImageUpload = (field: any) => (files: File[] | null) => {
@@ -783,33 +851,55 @@ export default function AddStorePopUpContent({
           </DialogTitle>
           <div className="flex flex-col gap-4 pt-4">
             <div className="flex flex-col sm:flex-row gap-2 items-center w-full">
+              {/* ─ Ingredient picker + add */}
               <div className="flex flex-row gap-2 items-center mb-2 flex-1">
                 <div className="flex-1">
                   <SearchBar
                     title={translations.selectAvailableIngredients}
                     placeholder={translations.searchForIngredients}
                     dataList={foods.map(f => ({ id: f.id, name: f.name }))}
+                    value={ingredientInput}
+                    onInputChange={setIngredientInput}
                     onSelect={item => {
-                      setSelected({ id: String(item.id), name: item.name })
+                      setSelected(item)
+                      setIngredientInput(item.name)
                     }}
                   />
                 </div>
                 <div className="flex items-end h-full mt-7">
-                  <Button onClick={() => {}}>{translations.add}</Button>
+                  <Button onClick={handleAddIngredient}>
+                    {translations.add}
+                  </Button>
                 </div>
               </div>
+
+              {/* ─ Category picker + add */}
               <div className="flex flex-row gap-2 items-center mb-2 flex-1">
                 <div className="flex-1">
                   <SearchBar
                     title={translations.selectAvailableCategories}
                     placeholder={translations.searchAvailableCategories}
+                    dataList={categoryOptions[activeLang].map(o => ({
+                      id: o.value,
+                      name: o.label
+                    }))}
+                    value={categoryInput}
+                    onInputChange={setCategoryInput}
+                    onSelect={item => {
+                      setSelectedCategory(item.name)
+                      setCategoryInput(item.name)
+                    }}
                   />
                 </div>
                 <div className="flex items-end h-full mt-7">
-                  <Button onClick={() => {}}>{translations.add}</Button>
+                  <Button onClick={handleAddCategory}>
+                    {translations.add}
+                  </Button>
                 </div>
               </div>
             </div>
+
+            {/* ─ Your FormField + table stays exactly the same */}
             <FormField
               control={form.control}
               name="availData"
@@ -817,10 +907,7 @@ export default function AddStorePopUpContent({
                 <>
                   <CustomTable
                     columns={availColumns}
-                    data={availData.slice(
-                      (page - 1) * pageSize,
-                      page * pageSize
-                    )}
+                    data={availData}
                     page={page}
                     pageSize={pageSize}
                     totalItems={availData.length}
@@ -830,7 +917,7 @@ export default function AddStorePopUpContent({
                   />
                   {availData.length === 0 && (
                     <FormMessage className="text-red-500">
-                      At least one ingredient/category must be added.
+                      {translations.atleastoneingredientcategorymustbeadded}
                     </FormMessage>
                   )}
                 </>

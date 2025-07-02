@@ -12,50 +12,50 @@ export interface SearchBarItem {
 interface SearchBarProps {
   title: string
   placeholder?: string
-  dataList?: SearchBarItem[] // optional list for autocomplete
-  onSelect?: (item: SearchBarItem) => void // optional selection handler
+  dataList?: SearchBarItem[]
+  onSelect?: (item: SearchBarItem) => void
+  onInputChange?: (value: string) => void
+  value?: string
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
   title,
   placeholder = "Search...",
   dataList = [],
-  onSelect
+  onSelect,
+  onInputChange,
+  value
 }) => {
-  const [query, setQuery] = useState("")
+  const [internal, setInternal] = useState("")
+  const query = value !== undefined ? value : internal
   const [isOpen, setIsOpen] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
-  // only filter when the user has typed at least one character
+  // only filter once there's at least one character
   const filtered =
     onSelect && query.trim().length > 0
-      ? dataList.filter(item =>
-          item.name.toLowerCase().includes(query.toLowerCase())
-        )
+      ? dataList.filter(i => i.name.toLowerCase().includes(query.toLowerCase()))
       : []
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const val = e.target.value
-    setQuery(val)
-
-    // only open dropdown if there's at least one character
-    if (onSelect && val.trim().length > 0) {
-      setIsOpen(true)
-    } else {
-      setIsOpen(false)
-    }
+    const v = e.target.value
+    if (value === undefined) setInternal(v)
+    onInputChange?.(v)
+    if (onSelect && v.trim().length > 0) setIsOpen(true)
+    else setIsOpen(false)
   }
 
   const handleSelect = (item: SearchBarItem): void => {
-    setQuery(item.name)
-    setIsOpen(false)
+    if (value === undefined) setInternal(item.name)
+    onInputChange?.(item.name)
     onSelect?.(item)
+    setIsOpen(false)
   }
 
-  // close dropdown on outside click, only when autocomplete is enabled
+  // close on outside click
   useEffect(() => {
     if (!onSelect) return
-    const onClickOutside = (e: MouseEvent): void => {
+    const onClick = (e: MouseEvent): void => {
       if (
         wrapperRef.current &&
         !wrapperRef.current.contains(e.target as Node)
@@ -63,9 +63,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
         setIsOpen(false)
       }
     }
-    document.addEventListener("mousedown", onClickOutside)
+    document.addEventListener("mousedown", onClick)
     return () => {
-      document.removeEventListener("mousedown", onClickOutside)
+      document.removeEventListener("mousedown", onClick)
     }
   }, [onSelect])
 
