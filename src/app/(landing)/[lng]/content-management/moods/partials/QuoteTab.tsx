@@ -23,7 +23,6 @@ import {
   FormControl,
   FormMessage
 } from "@/components/ui/form"
-import { toast } from "sonner"
 import { type translationsTypes } from "@/types/moodsTypes"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { useTranslation } from "@/query/hooks/useTranslation"
@@ -50,10 +49,14 @@ const moodOptions: Record<string, Option[]> = {
 
 export default function QuoteTab({
   translations,
-  onClose
+  onClose,
+  addQuoteMood,
+  isLoading
 }: {
   translations: translationsTypes
   onClose: () => void
+  addQuoteMood: () => void
+  isLoading: boolean
 }): JSX.Element {
   const { translateText } = useTranslation()
   const { activeLang, translationsData, setTranslationField } = useMoodStore()
@@ -104,9 +107,13 @@ export default function QuoteTab({
   ) => {
     if (activeLang === "en" && value.trim()) {
       try {
-        setIsTranslating(true)
-        const translated = await translateText(value)
-        setTranslationField("quoteData", "fr", fieldName, translated)
+        if (fieldName === "author") {
+          setTranslationField("quoteData", "fr", fieldName, value)
+        } else {
+          setIsTranslating(true)
+          const translated = await translateText(value)
+          setTranslationField("quoteData", "fr", fieldName, translated)
+        }
       } finally {
         setIsTranslating(false)
       }
@@ -133,9 +140,7 @@ export default function QuoteTab({
   }
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
-    toast("Form submitted", {
-      description: JSON.stringify(data, null, 2)
-    })
+    addQuoteMood()
   }
 
   const handleResetForm = () => {
@@ -261,7 +266,16 @@ export default function QuoteTab({
             <Button variant="outline" type="button" onClick={handleResetForm}>
               {translations.cancel}
             </Button>
-            <Button type="submit">{translations.save}</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex gap-2 items-center">
+                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                  {translations.save}
+                </div>
+              ) : (
+                translations.save
+              )}
+            </Button>{" "}
           </div>
         </form>
       </Form>

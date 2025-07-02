@@ -10,8 +10,12 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import AddMoodMainPopUp from "./AddMoodMainPopUp"
+import { AddNewMood, getAllMoods } from "@/app/api/mood"
+import { useMoodStore } from "@/stores/useMoodStore"
+import { AddMoodRequestBody } from "@/types/moodsTypes"
+import { toast } from "sonner"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -26,14 +30,95 @@ interface MoodsDataType {
   title: string
   content: string
   dateCreated: string
-  datePublished: string
   status: string
 }
 
-export default function MoodsPage(): JSX.Element {
+export default function MoodsPage({ token }: { token: string }): JSX.Element {
   const [isOpenAddMood, setIsOpenAddMood] = useState<boolean>(false)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [moods, setMooods] = useState<MoodsDataType[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+
+  const {
+    allowMultiLang,
+    activeLang,
+    translationsData,
+    activeTab,
+    resetTranslations
+  } = useMoodStore()
+
+  // handle get users
+  const getMoods = async (): Promise<void> => {
+    try {
+      const response = await getAllMoods(token)
+      if (response.status === 200) {
+        const transformedData: MoodsDataType[] = response.data.map(
+          (item: any) => {
+            let title = ""
+            let content = ""
+
+            switch (item.layout) {
+              case "Recipe":
+                title = item.recipe?.recipe ?? ""
+                content = item.recipe?.description ?? ""
+                break
+              case "Food":
+                title = item.ingredient?.foodName ?? ""
+                content = item.ingredient?.description ?? ""
+                break
+              case "Quote":
+                title = item.quote?.quoteAuthor ?? ""
+                content = item.quote?.quoteDetail ?? ""
+                break
+            }
+
+            return {
+              mood: item.mood,
+              title,
+              content,
+              dateCreated: new Date(item.createdAt).toLocaleDateString(),
+              status: "Active"
+            }
+          }
+        )
+        setMooods(transformedData)
+      } else {
+        console.log(response)
+      }
+    } catch (error) {
+      console.error("Failed to fetch moods:", error)
+    }
+  }
+
+  const handleAddMood = async () => {
+    const requestBody: AddMoodRequestBody = {
+      allowMultiLang,
+      activeLang,
+      activeTab,
+      translationsData
+    }
+    try {
+      setIsLoading(true)
+      const response = await AddNewMood(token, requestBody)
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Mood added successfully")
+        setIsOpenAddMood(false)
+        getMoods()
+
+        // clear store and session
+        resetTranslations()
+
+        sessionStorage.removeItem("mood-storage")
+      } else {
+        toast.error("Failed to add mood")
+      }
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleOpenAddMood = (): void => {
     setIsOpenAddMood(true)
@@ -41,6 +126,11 @@ export default function MoodsPage(): JSX.Element {
   const handleCloseAddMood = (): void => {
     setIsOpenAddMood(false)
   }
+
+  useEffect(() => {
+    void getMoods()
+  }, [])
+
   const columns: Array<Column<MoodsDataType>> = [
     {
       accessor: "mood",
@@ -61,10 +151,6 @@ export default function MoodsPage(): JSX.Element {
     {
       accessor: "dateCreated",
       header: "Date Created"
-    },
-    {
-      accessor: "datePublished",
-      header: "Date Published"
     },
     {
       accessor: "status",
@@ -109,31 +195,12 @@ export default function MoodsPage(): JSX.Element {
     }
   ]
 
-  const data: MoodsDataType[] = [
-    {
-      mood: "Very Happy",
-      title: "Stay Hydrated",
-      content: "Main content of the tip",
-      dateCreated: "2025-05-16",
-      datePublished: "2025-05-16",
-      status: "Active"
-    },
-    {
-      mood: "Very Sad",
-      title: "Stay Cool",
-      content: "Another tip",
-      dateCreated: "2025-05-16",
-      datePublished: "2025-05-16",
-      status: "Pending"
-    }
-  ]
-
   const pageSizeOptions = [5, 10, 20]
 
-  const totalItems = data.length
+  const totalItems = moods.length
   const startIndex = (page - 1) * pageSize
   const endIndex = startIndex + pageSize
-  const paginatedData = data.slice(startIndex, endIndex)
+  const paginatedData = moods.slice(startIndex, endIndex)
 
   const handlePageChange = (newPage: number): void => {
     setPage(newPage)
@@ -146,7 +213,7 @@ export default function MoodsPage(): JSX.Element {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end mb-5 -mt-14">
+      <div className="flex justify-end -mt-14 mb-5">
         <Button onClick={handleOpenAddMood}>Add New</Button>
       </div>
 
@@ -162,7 +229,12 @@ export default function MoodsPage(): JSX.Element {
         onPageSizeChange={handlePageSizeChange}
       />
 
-      <AddMoodMainPopUp open={isOpenAddMood} onClose={handleCloseAddMood} />
+      <AddMoodMainPopUp
+        open={isOpenAddMood}
+        onClose={handleCloseAddMood}
+        addMood={handleAddMood}
+        isLoading={isLoading}
+      />
     </div>
   )
 }

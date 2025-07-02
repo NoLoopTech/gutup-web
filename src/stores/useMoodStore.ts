@@ -7,7 +7,7 @@ interface QuoteFields {
   mood: string
   author: string
   quote: string
-  share: boolean | undefined
+  share: boolean
 }
 
 interface FoodFields {
