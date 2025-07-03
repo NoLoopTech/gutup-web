@@ -393,19 +393,14 @@ export default function AddStorePopUpContent({
     }
   }, [form.watch("availData")])
 
+  // translated type/status using translations object
   const getTranslatedType = (type: string, lang: string): string => {
-    if (lang === "fr") {
-      if (type === "Ingredient") return "Ingrédient"
-      if (type === "Category") return "Catégorie"
-    }
-    return type
+    const key = type.toLowerCase()
+    return translations[key] || type
   }
   const getTranslatedStatus = (status: string, lang: string): string => {
-    if (lang === "fr") {
-      if (status === "Active") return translations.active
-      if (status === "Inactive") return translations.inactive
-    }
-    return status
+    const key = status.toLowerCase()
+    return translations[key] || status
   }
 
   // handler for “Add Ingredient”
