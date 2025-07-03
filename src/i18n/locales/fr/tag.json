@@ -1,0 +1,14 @@
+{
+  "addNewTag": "Ajouter une nouvelle étiquette",
+  "allowMultiLang": "Autoriser le multilingue",
+  "tagName": "Nom de l'étiquette",
+  "english": "Anglais",
+  "french": "Français",
+  "giveATagName": "Donnez un nom d'étiquette",
+  "cancel": "Annuler",
+  "save": "Enregistrer",
+
+  "pleaseSelectACategory": "Veuillez sélectionner une catégorie",
+  "required": "Requis",
+  "tagNameMustBeAtLeast2Characters": "Le nom de l'étiquette doit comporter au moins 2 caractères"
+}
