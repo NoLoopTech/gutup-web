@@ -1,4 +1,5 @@
 export interface translationsTypes {
+  [x: string]: string
   delete: string | undefined
   addNewStore: string
   allowMultiLang: string
@@ -69,6 +70,7 @@ export interface translationsTypes {
 }
 
 export const defaultTranslations: translationsTypes = {
+  delete: "",
   addNewStore: "",
   allowMultiLang: "",
   english: "",

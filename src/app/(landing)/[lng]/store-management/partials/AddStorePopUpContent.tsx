@@ -170,7 +170,6 @@ export default function AddStorePopUpContent({
       const res = await getAllFoods(token)
       if (res && res.status === 200) {
         setFoods(res.data.foods)
-        console.log("Fetched foods:", res.data.foods)
       } else {
         console.error("Failed to fetch foods:", res)
       }
@@ -186,7 +185,7 @@ export default function AddStorePopUpContent({
       category: storeData[activeLang]?.category || ""
     }
   })
-  console.log("Form default values:", form.getValues())
+
   // Update form when lang changes
   React.useEffect(() => {
     form.reset(storeData[activeLang])
@@ -313,9 +312,10 @@ export default function AddStorePopUpContent({
     },
     {
       header: translations.type,
-      accessor: (row: { type: string }) => (
+      accessor: (row: AvailableItem) => (
         <Badge className="bg-white text-black text-xs px-2 py-1 rounded-md border border-gray-100 hover:bg-white">
-          {row.type}
+          {translations[row.type?.toLowerCase() as keyof typeof translations] ||
+            row.type}
         </Badge>
       )
     },
@@ -329,7 +329,9 @@ export default function AddStorePopUpContent({
               : "bg-gray-200 text-black text-xs px-2 py-1 rounded-md border border-gray-500 hover:bg-gray-100 transition-colors"
           }
         >
-          {row.tags.includes("InSystem") ? "Active" : "Inactive"}
+          {translations[
+            row.status.toLowerCase() as keyof typeof translations
+          ] ?? row.status}
         </Badge>
       )
     },
@@ -383,7 +385,7 @@ export default function AddStorePopUpContent({
     setPage(1)
   }
 
-  // Sync availData with form value (so table always shows latest data)
+  // Sync availData with form value
   useEffect(() => {
     const formAvailData = form.watch("availData")
     if (Array.isArray(formAvailData) && formAvailData !== availData) {
@@ -391,8 +393,23 @@ export default function AddStorePopUpContent({
     }
   }, [form.watch("availData")])
 
+  const getTranslatedType = (type: string, lang: string): string => {
+    if (lang === "fr") {
+      if (type === "Ingredient") return "Ingrédient"
+      if (type === "Category") return "Catégorie"
+    }
+    return type
+  }
+  const getTranslatedStatus = (status: string, lang: string): string => {
+    if (lang === "fr") {
+      if (status === "Active") return translations.active
+      if (status === "Inactive") return translations.inactive
+    }
+    return status
+  }
+
   // handler for “Add Ingredient”
-  const handleAddIngredient = (): void => {
+  const handleAddIngredient = async (): Promise<void> => {
     const name = selected?.name ?? ingredientInput.trim()
     if (!name) return
 
@@ -407,28 +424,47 @@ export default function AddStorePopUpContent({
       status: "Active"
     }
 
+    // Update current lang
     const updated = [...(form.getValues("availData") || []), entry]
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
     setTranslationField("storeData", activeLang, "availData", updated)
-    setTranslationField(
-      "storeData",
-      activeLang === "en" ? "fr" : "en",
-      "availData",
-      updated
-    )
+
+    // Prepare translated entry for opposite lang
+    const oppLang = activeLang === "en" ? "fr" : "en"
+    let translatedName = name
+    try {
+      translatedName = await translateText(name)
+    } catch {
+      translatedName = name
+    }
+    const translatedType = getTranslatedType(entry.type, oppLang)
+    const translatedStatus = getTranslatedStatus(entry.status, oppLang)
+    const translatedEntry: AvailableItem = {
+      ...entry,
+      name: translatedName,
+      type: translatedType,
+      status: translatedStatus as "Active" | "Inactive"
+    }
+    // Only pass translated data to opposite lang
+    const oppUpdated = [
+      ...((storeData[oppLang]?.availData as AvailableItem[]) || []),
+      translatedEntry
+    ]
+    setTranslationField("storeData", oppLang, "availData", oppUpdated)
+
     // clear for next
     setSelected(null)
     setIngredientInput("")
   }
 
   // handler for “Add Category”
-  const handleAddCategory = (): void => {
+  const handleAddCategory = async (): Promise<void> => {
     const name = selectedCategory ?? categoryInput.trim()
     if (!name) return
 
     const entry: AvailableItem = {
-      id: selectedCategory ? Date.now() : Date.now(),
+      id: Date.now(),
       name,
       type: "Category",
       tags: ["InSystem"],
@@ -438,16 +474,35 @@ export default function AddStorePopUpContent({
       status: "Active"
     }
 
+    // Update current lang
     const updated = [...(form.getValues("availData") || []), entry]
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
     setTranslationField("storeData", activeLang, "availData", updated)
-    setTranslationField(
-      "storeData",
-      activeLang === "en" ? "fr" : "en",
-      "availData",
-      updated
-    )
+
+    // Prepare translated entry for opposite lang
+    const oppLang = activeLang === "en" ? "fr" : "en"
+    let translatedName = name
+    try {
+      translatedName = await translateText(name)
+    } catch {
+      translatedName = name
+    }
+    const translatedType = getTranslatedType(entry.type, oppLang)
+    const translatedStatus = getTranslatedStatus(entry.status, oppLang)
+    const translatedEntry: AvailableItem = {
+      ...entry,
+      name: translatedName,
+      type: translatedType,
+      status: translatedStatus as "Active" | "Inactive"
+    }
+    // Only pass translated data to opposite lang
+    const oppUpdated = [
+      ...((storeData[oppLang]?.availData as AvailableItem[]) || []),
+      translatedEntry
+    ]
+    setTranslationField("storeData", oppLang, "availData", oppUpdated)
+
     setSelectedCategory(null)
     setCategoryInput("")
   }
