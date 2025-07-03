@@ -29,7 +29,8 @@ interface TagStoreState {
 }
 
 const emptyTagFields: TagFields = {
-  tagName: ""
+  tagName: "",
+  category: ""
 }
 
 export const useTagStore = create<TagStoreState>()(
