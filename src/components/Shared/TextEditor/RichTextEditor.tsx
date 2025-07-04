@@ -9,6 +9,7 @@ import React, {
 import Quill from "quill"
 import "quill/dist/quill.snow.css" // Import Quill styles
 
+
 // Define the ref type for the RichTextEditor component
 export interface RichTextEditorHandle {
   getContent: () => string
@@ -17,10 +18,11 @@ interface RichTextEditorProps {
   onChange: (value: string) => void
   disabled?: boolean
   initialContent?: string
+  onBlur?: () => void
 }
 
 const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
-  ({ onChange, disabled = false, initialContent = "" }, ref) => {
+  ({ onChange, onBlur, disabled = false, initialContent = "" }, ref) => {
     const editorRef = useRef<HTMLDivElement>(null)
     const quillRef = useRef<Quill | null>(null)
 
@@ -51,9 +53,12 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
             onChange(quillRef.current.root.innerHTML)
           }
         })
+// Trigger onBlur when focus is lost
+        quillRef.current.root.addEventListener("blur", () => {
+          onBlur?.()
+        })
       }
-    }, [onChange, disabled])
-
+    }, [onChange, onBlur, disabled])
     // Set the initial content if provided
     useEffect(() => {
       if (

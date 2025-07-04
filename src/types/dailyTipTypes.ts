@@ -4,9 +4,9 @@ export interface translationsTypes {
   english: string
   french: string
   selectLayoutType: string
-  basiclayout: string
-  shoppromotion: string
-  videotip: string
+  basicForm: string
+  shopPromote: string
+  videoForm: string
   layoutSelection: string
   whenTobeDisplayed: string
   pickADate: string
@@ -83,9 +83,9 @@ export const defaultTranslations: translationsTypes = {
   english: "",
   french: "",
   selectLayoutType: "",
-  basiclayout: "",
-  shoppromotion: "",
-  videotip: "",
+  basicForm: "",
+  shopPromote: "",
+  videoForm: "",
   layoutSelection: "",
   whenTobeDisplayed: "",
   pickADate: "",

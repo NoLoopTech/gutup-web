@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useRef } from "react"
+import React, { useEffect, useState } from "react"
 import { DialogFooter, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -32,11 +32,20 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { type translationsTypes } from "@/types/storeTypes"
+import { useStoreStore } from "@/stores/useStoreStore"
+import { useTranslation } from "@/query/hooks/useTranslation"
+import { getAllFoods } from "@/app/api/foods"
+import { Trash } from "lucide-react"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
   { ssr: false }
 )
+// Define Food type if not imported from elsewhere
+interface Food {
+  id: number | string
+  name: string
+}
 
 interface Option {
   value: string
@@ -54,34 +63,50 @@ interface AvailableItem {
   isMain: boolean
 }
 
-const categories: Option[] = [
-  { value: "breakfast", label: "Breakfast" },
-  { value: "dinner", label: "Dinner" },
-  { value: "dairy", label: "Dairy" }
-]
-
-const storeType: Option[] = [
-  { value: "physical", label: "physical" },
-  { value: "online", label: "Online" }
-]
-
-// Define function for handling image upload changes
-const handleImageUpload = (field: any) => (files: File[] | null) => {
-  field.onChange(files && files.length > 0 ? files[0] : null)
+const categoryOptions: Record<string, Option[]> = {
+  en: [
+    { value: "breakfast", label: "Breakfast" },
+    { value: "dinner", label: "Dinner" },
+    { value: "dairy", label: "Dairy" }
+  ],
+  fr: [
+    { value: "breakfast", label: "Petit déjeuner" },
+    { value: "dinner", label: "Dîner" },
+    { value: "dairy", label: "Produits laitiers" }
+  ]
 }
-// Define function for handling RichTextEditor changes
-const handleRichTextEditorChange = (field: any) => (val: string) => {
-  field.onChange(val)
+
+const storeTypeOptions: Record<string, Option[]> = {
+  en: [
+    { value: "physical", label: "Physical" },
+    { value: "online", label: "Online" }
+  ],
+  fr: [
+    { value: "physical", label: "Physique" },
+    { value: "online", label: "En ligne" }
+  ]
 }
+
 export default function AddStorePopUpContent({
-  translations
+  translations,
+  token
 }: {
   translations: translationsTypes
+  token: string
 }): JSX.Element {
-  const aboutRef = useRef<any>(null)
+  const { translateText } = useTranslation()
+  const { activeLang, storeData, setTranslationField } = useStoreStore() as any
+  const [isTranslating, setIsTranslating] = useState(false)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
-  const [isPremium, setIsPremium] = React.useState(false)
+  const [, setIsPremium] = React.useState(false)
+  const [foods, setFoods] = useState<Food[]>([])
+  const [availData, setAvailData] = useState<AvailableItem[]>([])
+  const [selected, setSelected] = useState<Food | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [ingredientInput, setIngredientInput] = useState<string>("")
+  const [categoryInput, setCategoryInput] = useState<string>("")
+
   // Validation schema using Zod
   const AddStoreSchema = z.object({
     storeName: z
@@ -92,6 +117,7 @@ export default function AddStorePopUpContent({
     storeLocation: z.string().min(1, translations.required),
     storeType: z.string().min(1, translations.pleaseselectaStoreType),
     shoplocation: z.string().min(1, translations.required),
+    subscriptionType: z.boolean().optional(),
     timeFrom: z.string().min(1, translations.required),
     timeTo: z.string().min(1, translations.required),
     phone: z
@@ -131,54 +157,154 @@ export default function AddStorePopUpContent({
       }
     ),
     availData: z
-      .array(z.unknown())
-      .nonempty(translations.atleastoneingredientcategorymustbeadded),
+      .array(z.any())
+      .min(1, translations.atleastoneingredientcategorymustbeadded),
     storeImage: z.custom<File | null>(val => val instanceof File, {
       message: translations.required
     })
   })
-  const handleCancel = (
-    form: ReturnType<typeof useForm<z.infer<typeof AddStoreSchema>>>
-  ): void => {
-    form.reset()
-  }
-  const onSubmit = (data: z.infer<typeof AddStoreSchema>): void => {
-    toast(translations.formSubmittedSuccessfully, {})
-  }
-  // Define functions to handle page changes
-  const handlePageChange = (newPage: number): void => {
-    setPage(newPage)
-  }
 
-  const handlePageSizeChange = (newSize: number): void => {
-    setPageSize(newSize)
-    setPage(1)
-  }
+  // fetch once on mount
+  useEffect(() => {
+    const fetchFoods = async (): Promise<void> => {
+      const res = await getAllFoods(token)
+      if (res && res.status === 200) {
+        setFoods(res.data.foods)
+      } else {
+        console.error("Failed to fetch foods:", res)
+      }
+    }
+    void fetchFoods()
+  }, [token])
 
+  // Form hook
   const form = useForm<z.infer<typeof AddStoreSchema>>({
     resolver: zodResolver(AddStoreSchema),
     defaultValues: {
-      storeName: "",
-      category: "",
-      storeLocation: "",
-      storeType: "",
-      shoplocation: "",
-      timeFrom: "",
-      timeTo: "",
-      phone: "",
-      email: "",
-      mapsPin: "",
-      website: "",
-      facebook: "",
-      instagram: "",
-      about: "",
-      availData: [],
-      storeImage: null
+      ...storeData[activeLang],
+      category: storeData[activeLang]?.category || ""
     }
   })
-  //  table data for available ingredients and categories
-  const availData: AvailableItem[] = []
 
+  // Update form when lang changes
+  React.useEffect(() => {
+    form.reset(storeData[activeLang])
+  }, [activeLang, form.reset, storeData])
+
+  // Input change handler for fields that need translation
+  const handleInputChange = (
+    fieldName:
+      | "storeName"
+      | "storeLocation"
+      | "shoplocation"
+      | "phone"
+      | "email"
+      | "mapsPin"
+      | "website"
+      | "facebook"
+      | "instagram",
+    value: string
+  ): void => {
+    form.setValue(fieldName, value)
+    setTranslationField("storeData", activeLang, fieldName, value)
+  }
+
+  // Input blur handler for translation
+  const handleInputBlur = async (
+    fieldName:
+      | "storeName"
+      | "storeLocation"
+      | "shoplocation"
+      | "phone"
+      | "email"
+      | "mapsPin"
+      | "website"
+      | "facebook"
+      | "instagram",
+    value: string
+  ): Promise<void> => {
+    if (activeLang === "en" && value.trim()) {
+      try {
+        setIsTranslating(true)
+        const translated = await translateText(value)
+        setTranslationField("storeData", "fr", fieldName, translated)
+      } finally {
+        setIsTranslating(false)
+      }
+    }
+  }
+
+  const handleSubscriptionToggle = (value: boolean): void => {
+    setIsPremium(value)
+    setTranslationField("storeData", activeLang, "subscriptionType", value)
+
+    const opp = activeLang === "en" ? "fr" : "en"
+    setTranslationField("storeData", opp, "subscriptionType", value)
+    form.setValue("subscriptionType", value)
+  }
+
+  const handleTimeChange =
+    (field: any, name: "timeFrom" | "timeTo") => (value: string) => {
+      field.onChange(value)
+      setTranslationField("storeData", activeLang, name, value)
+
+      const opp = activeLang === "en" ? "fr" : "en"
+      setTranslationField("storeData", opp, name, value)
+      form.setValue(name, value)
+    }
+
+  // Function to update select fields (category, season, country)
+  const handleSelectChange = (
+    fieldName: "category" | "storeType",
+    value: string
+  ): void => {
+    form.setValue(fieldName, value)
+    setTranslationField("storeData", activeLang, fieldName, value)
+
+    // Get the correct options set
+    let optionsMap: Record<string, Option[]>
+    if (fieldName === "category") optionsMap = categoryOptions
+    else optionsMap = storeTypeOptions
+
+    const current = optionsMap[activeLang]
+    const oppositeLang = activeLang === "en" ? "fr" : "en"
+    const opposite = optionsMap[oppositeLang]
+
+    const index = current.findIndex(opt => opt.value === value)
+    if (index !== -1 && opposite[index]) {
+      setTranslationField(
+        "storeData",
+        oppositeLang,
+        fieldName,
+        opposite[index].value
+      )
+    }
+  }
+
+  const makeRichHandlers = (
+    fieldName: "about"
+  ): { onChange: (val: string) => void } => {
+    const onChange = (val: string): void => {
+      form.setValue(fieldName, val)
+      setTranslationField("storeData", activeLang, fieldName, val)
+    }
+    return { onChange }
+  }
+  const richTextFieldOnBlur = async (fieldName: "about"): Promise<void> => {
+    if (activeLang === "en") {
+      const val = form.getValues(fieldName)
+      if (typeof val === "string" && val.trim().length > 0) {
+        setIsTranslating(true)
+        try {
+          const translated = await translateText(val)
+          setTranslationField("storeData", "fr", fieldName, translated)
+        } finally {
+          setIsTranslating(false)
+        }
+      }
+    }
+  }
+  // table columns for available ingredients and categories
   const availColumns = [
     {
       header: translations.availableIngredientsAndCategories,
@@ -186,9 +312,10 @@ export default function AddStorePopUpContent({
     },
     {
       header: translations.type,
-      accessor: (row: { type: string }) => (
+      accessor: (row: AvailableItem) => (
         <Badge className="bg-white text-black text-xs px-2 py-1 rounded-md border border-gray-100 hover:bg-white">
-          {row.type}
+          {translations[row.type?.toLowerCase() as keyof typeof translations] ||
+            row.type}
         </Badge>
       )
     },
@@ -202,7 +329,9 @@ export default function AddStorePopUpContent({
               : "bg-gray-200 text-black text-xs px-2 py-1 rounded-md border border-gray-500 hover:bg-gray-100 transition-colors"
           }
         >
-          {row.tags.includes("InSystem") ? "Active" : "Inactive"}
+          {translations[
+            row.status.toLowerCase() as keyof typeof translations
+          ] ?? row.status}
         </Badge>
       )
     },
@@ -211,13 +340,194 @@ export default function AddStorePopUpContent({
       accessor: (row: AvailableItem) => (
         <Switch checked={row.display} className="scale-75" />
       )
+    },
+    {
+      header: "", // No header for delete column
+      accessor: (row: AvailableItem) => (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
+          onClick={() => {
+            handleDeleteAvailItem(row.id)
+          }}
+          title={translations.delete}
+        >
+          <Trash className="h-4 w-4 text-gray-500" />
+        </Button>
+      ),
+      id: "delete"
     }
   ]
+
+  // Delete handler for availData
+  const handleDeleteAvailItem = (id: number): void => {
+    const updated = availData.filter(item => item.id !== id)
+    setAvailData(updated)
+    form.setValue("availData", updated, { shouldValidate: true })
+    setTranslationField("storeData", activeLang, "availData", updated)
+    setTranslationField(
+      "storeData",
+      activeLang === "en" ? "fr" : "en",
+      "availData",
+      updated
+    )
+  }
+
+  // Define functions to handle page changes
+  const handlePageChange = (newPage: number): void => {
+    setPage(newPage)
+  }
+
+  const handlePageSizeChange = (newSize: number): void => {
+    setPageSize(newSize)
+    setPage(1)
+  }
+
+  // Sync availData with form value
+  useEffect(() => {
+    const formAvailData = form.watch("availData")
+    if (Array.isArray(formAvailData) && formAvailData !== availData) {
+      setAvailData(formAvailData)
+    }
+  }, [form.watch("availData")])
+
+  // translated type/status using translations object
+  const getTranslatedType = (type: string, lang: string): string => {
+    const key = type.toLowerCase()
+    return translations[key] || type
+  }
+  const getTranslatedStatus = (status: string, lang: string): string => {
+    const key = status.toLowerCase()
+    return translations[key] || status
+  }
+
+  // handler for “Add Ingredient”
+  const handleAddIngredient = async (): Promise<void> => {
+    const name = selected?.name ?? ingredientInput.trim()
+    if (!name) return
+
+    const entry: AvailableItem = {
+      id: selected ? Number(selected.id) : Date.now(),
+      name,
+      type: "Ingredient",
+      tags: ["InSystem"],
+      display: true,
+      quantity: "",
+      isMain: false,
+      status: "Active"
+    }
+
+    // Update current lang
+    const updated = [...(form.getValues("availData") || []), entry]
+    setAvailData(updated)
+    form.setValue("availData", updated, { shouldValidate: true })
+    setTranslationField("storeData", activeLang, "availData", updated)
+
+    // Prepare translated entry for opposite lang
+    const oppLang = activeLang === "en" ? "fr" : "en"
+    let translatedName = name
+    try {
+      translatedName = await translateText(name)
+    } catch {
+      translatedName = name
+    }
+    const translatedType = getTranslatedType(entry.type, oppLang)
+    const translatedStatus = getTranslatedStatus(entry.status, oppLang)
+    const translatedEntry: AvailableItem = {
+      ...entry,
+      name: translatedName,
+      type: translatedType,
+      status: translatedStatus as "Active" | "Inactive"
+    }
+    // Only pass translated data to opposite lang
+    const oppUpdated = [
+      ...((storeData[oppLang]?.availData as AvailableItem[]) || []),
+      translatedEntry
+    ]
+    setTranslationField("storeData", oppLang, "availData", oppUpdated)
+
+    // clear for next
+    setSelected(null)
+    setIngredientInput("")
+  }
+
+  // handler for “Add Category”
+  const handleAddCategory = async (): Promise<void> => {
+    const name = selectedCategory ?? categoryInput.trim()
+    if (!name) return
+
+    const entry: AvailableItem = {
+      id: Date.now(),
+      name,
+      type: "Category",
+      tags: ["InSystem"],
+      display: true,
+      quantity: "",
+      isMain: false,
+      status: "Active"
+    }
+
+    // Update current lang
+    const updated = [...(form.getValues("availData") || []), entry]
+    setAvailData(updated)
+    form.setValue("availData", updated, { shouldValidate: true })
+    setTranslationField("storeData", activeLang, "availData", updated)
+
+    // Prepare translated entry for opposite lang
+    const oppLang = activeLang === "en" ? "fr" : "en"
+    let translatedName = name
+    try {
+      translatedName = await translateText(name)
+    } catch {
+      translatedName = name
+    }
+    const translatedType = getTranslatedType(entry.type, oppLang)
+    const translatedStatus = getTranslatedStatus(entry.status, oppLang)
+    const translatedEntry: AvailableItem = {
+      ...entry,
+      name: translatedName,
+      type: translatedType,
+      status: translatedStatus as "Active" | "Inactive"
+    }
+    // Only pass translated data to opposite lang
+    const oppUpdated = [
+      ...((storeData[oppLang]?.availData as AvailableItem[]) || []),
+      translatedEntry
+    ]
+    setTranslationField("storeData", oppLang, "availData", oppUpdated)
+
+    setSelectedCategory(null)
+    setCategoryInput("")
+  }
+
+  const handleImageUpload = (field: any) => (files: File[] | null) => {
+    const file = files && files.length > 0 ? files[0] : null
+    field.onChange(file)
+    setTranslationField("storeData", activeLang, "storeImage", file)
+    const opp = activeLang === "en" ? "fr" : "en"
+    setTranslationField("storeData", opp, "storeImage", file)
+    form.setValue("storeImage", file)
+  }
+  const handleCancel = (
+    form: ReturnType<typeof useForm<z.infer<typeof AddStoreSchema>>>
+  ): void => {
+    form.reset()
+  }
+  const onSubmit = (data: z.infer<typeof AddStoreSchema>): void => {
+    toast(translations.formSubmittedSuccessfully, {})
+  }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="pb-6">
+          {isTranslating && (
+            <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
+              <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
+            </div>
+          )}
           {/* Store info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
             <div>
@@ -233,6 +543,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterStoreName}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("storeName", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("storeName", field.value)
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -251,8 +567,10 @@ export default function AddStorePopUpContent({
                     </FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={field.onChange}
                         value={field.value}
+                        onValueChange={value => {
+                          handleSelectChange("category", value)
+                        }}
                       >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue
@@ -260,11 +578,9 @@ export default function AddStorePopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {categories.map((option: Option) => (
+                          {categoryOptions[activeLang].map(option => (
                             <SelectItem key={option.value} value={option.value}>
-                              {translations[
-                                option.value.toLowerCase() as keyof translationsTypes
-                              ] || option.label}{" "}
+                              {option.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -288,6 +604,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterStoreLocation}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("storeLocation", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("storeLocation", field.value)
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -306,8 +628,10 @@ export default function AddStorePopUpContent({
                     </FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={field.onChange}
                         value={field.value}
+                        onValueChange={value => {
+                          handleSelectChange("storeType", value)
+                        }}
                       >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue
@@ -315,11 +639,9 @@ export default function AddStorePopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {storeType.map((option: Option) => (
+                          {storeTypeOptions[activeLang].map(option => (
                             <SelectItem key={option.value} value={option.value}>
-                              {translations[
-                                option.value.toLowerCase() as keyof translationsTypes
-                              ] || option.label}{" "}
+                              {option.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -343,6 +665,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterMapLocation}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("shoplocation", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("shoplocation", field.value)
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -355,12 +683,26 @@ export default function AddStorePopUpContent({
               <Label className="text-black mb-1 block">
                 {translations.subscription}
               </Label>
-              <div className="flex items-center gap-4 mt-2">
-                <Switch checked={isPremium} onCheckedChange={setIsPremium} />
-                <Label className="text-Primary-300">
-                  {isPremium ? translations.premium : translations.freemium}
-                </Label>
-              </div>
+              <FormField
+                control={form.control}
+                name="subscriptionType"
+                render={({ field }) => (
+                  <div className="flex items-center gap-4 mt-2">
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={value => {
+                        field.onChange(value)
+                        handleSubscriptionToggle(value)
+                      }}
+                    />
+                    <Label className="text-Primary-300">
+                      {field.value
+                        ? translations.premium
+                        : translations.freemium}
+                    </Label>
+                  </div>
+                )}
+              />
             </div>
             <div className="flex flex-col gap-1">
               <Label>{translations.time}</Label>
@@ -369,6 +711,7 @@ export default function AddStorePopUpContent({
                   <Label htmlFor="time-from" className="text-xs text-gray-400">
                     {translations.from}
                   </Label>
+
                   <FormField
                     control={form.control}
                     name="timeFrom"
@@ -377,7 +720,13 @@ export default function AddStorePopUpContent({
                         <FormControl>
                           <Input
                             type="time"
-                            {...field}
+                            value={field.value}
+                            onChange={e => {
+                              handleTimeChange(
+                                field,
+                                "timeFrom"
+                              )(e.target.value)
+                            }}
                             className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                           />
                         </FormControl>
@@ -390,6 +739,7 @@ export default function AddStorePopUpContent({
                   <Label htmlFor="time-to" className="text-xs text-gray-400">
                     {translations.to}
                   </Label>
+
                   <FormField
                     control={form.control}
                     name="timeTo"
@@ -398,7 +748,10 @@ export default function AddStorePopUpContent({
                         <FormControl>
                           <Input
                             type="time"
-                            {...field}
+                            value={field.value}
+                            onChange={e => {
+                              handleTimeChange(field, "timeTo")(e.target.value)
+                            }}
                             className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                           />
                         </FormControl>
@@ -431,6 +784,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterStoreNumber}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("phone", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("phone", field.value)
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -451,6 +810,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterStoreEmail}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("email", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("email", field.value)
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -471,6 +836,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterGoogleMapsLocation}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("mapsPin", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("mapsPin", field.value)
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -491,6 +862,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterFacebookUrl}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("facebook", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("facebook", field.value ?? "")
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -511,6 +888,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterInstagramUrl}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("instagram", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("instagram", field.value ?? "")
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -531,6 +914,12 @@ export default function AddStorePopUpContent({
                       <Input
                         placeholder={translations.enterWebsiteUrl}
                         {...field}
+                        onChange={e => {
+                          handleInputChange("website", e.target.value)
+                        }}
+                        onBlur={async () => {
+                          await handleInputBlur("website", field.value ?? "")
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -553,24 +942,48 @@ export default function AddStorePopUpContent({
                   <SearchBar
                     title={translations.selectAvailableIngredients}
                     placeholder={translations.searchForIngredients}
+                    dataList={foods.map(f => ({ id: f.id, name: f.name }))}
+                    value={ingredientInput}
+                    onInputChange={setIngredientInput}
+                    onSelect={item => {
+                      setSelected(item)
+                      setIngredientInput(item.name)
+                    }}
                   />
                 </div>
                 <div className="flex items-end h-full mt-7">
-                  <Button onClick={() => {}}>{translations.add}</Button>
+                  <Button type="button" onClick={handleAddIngredient}>
+                    {translations.add}
+                  </Button>
                 </div>
               </div>
+
               <div className="flex flex-row gap-2 items-center mb-2 flex-1">
                 <div className="flex-1">
                   <SearchBar
                     title={translations.selectAvailableCategories}
                     placeholder={translations.searchAvailableCategories}
+                    dataList={categoryOptions[activeLang].map(o => ({
+                      // used category options till api
+                      id: o.value,
+                      name: o.label
+                    }))}
+                    value={categoryInput}
+                    onInputChange={setCategoryInput}
+                    onSelect={item => {
+                      setSelectedCategory(item.name)
+                      setCategoryInput(item.name)
+                    }}
                   />
                 </div>
                 <div className="flex items-end h-full mt-7">
-                  <Button onClick={() => {}}>{translations.add}</Button>
+                  <Button type="button" onClick={handleAddCategory}>
+                    {translations.add}
+                  </Button>
                 </div>
               </div>
             </div>
+
             <FormField
               control={form.control}
               name="availData"
@@ -591,7 +1004,7 @@ export default function AddStorePopUpContent({
                   />
                   {availData.length === 0 && (
                     <FormMessage className="text-red-500">
-                      At least one ingredient/category must be added.
+                      {translations.atleastoneingredientcategorymustbeadded}
                     </FormMessage>
                   )}
                 </>
@@ -610,21 +1023,32 @@ export default function AddStorePopUpContent({
               <FormField
                 control={form.control}
                 name="about"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="block mb-2 text-black">
-                      {translations.aboutUs}
-                    </FormLabel>
-                    <FormControl>
-                      <RichTextEditor
-                        ref={aboutRef}
-                        value={field.value}
-                        onChange={handleRichTextEditorChange(field)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const { onChange } = makeRichHandlers("about")
+                  return (
+                    <FormItem className="relative">
+                      {isTranslating && (
+                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                          <span className="loader" />
+                        </div>
+                      )}
+                      <FormLabel>{translations.aboutUs}</FormLabel>
+                      <FormControl>
+                        <RichTextEditor
+                          initialContent={field.value}
+                          onChange={val => {
+                            onChange(val)
+                            field.onChange(val)
+                          }}
+                          onBlur={async () => {
+                            await richTextFieldOnBlur("about")
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
             </div>
           </div>
@@ -645,6 +1069,15 @@ export default function AddStorePopUpContent({
                     <ImageUploader
                       title={translations.selectImagesForYourStore}
                       onChange={handleImageUpload(field)}
+                      previewUrls={
+                        storeData[activeLang].storeImage
+                          ? [
+                              URL.createObjectURL(
+                                storeData[activeLang].storeImage as File
+                              )
+                            ]
+                          : []
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -657,6 +1090,7 @@ export default function AddStorePopUpContent({
           {/* Save and Cancel buttons */}
           <div className="fixed bottom-0 left-0 w-full bg-white border-t py-4 px-4 flex justify-between gap-2 z-50">
             <Button
+              type="button"
               variant="outline"
               onClick={() => {
                 handleCancel(form)

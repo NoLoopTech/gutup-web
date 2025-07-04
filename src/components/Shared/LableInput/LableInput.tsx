@@ -14,6 +14,8 @@ interface Props {
   name: string
   disable?: boolean
   width?: string
+  onChange?: (items: string[]) => void
+  onBlur?: () => void
 }
 
 export default function LableInput({
@@ -22,7 +24,9 @@ export default function LableInput({
   benefits = [],
   name,
   disable,
-  width = "w-64"
+  width = "w-64",
+  onChange,
+  onBlur
 }: Props): React.ReactElement {
   const {
     setValue,
@@ -33,18 +37,23 @@ export default function LableInput({
   const [items, setItems] = useState<string[]>(benefits)
   const [allbenefits, setAllBenefits] = useState<string[]>([])
 
-  const addItem = (input?: string): void => {
-    const trimmed = (input ?? value).trim()
+  const updateItems = (updatedItems: string[]): void => {
+    setItems(updatedItems)
+    setValue(name, updatedItems)
+    if (onChange) {
+      onChange(updatedItems)
+    }
+    void trigger(name)
+  }
+
+  const addItem = (): void => {
+    const trimmed = value.trim()
     if (!trimmed) return
 
     // Prevent duplicates and max length of 6 items
     if (!items.includes(trimmed) && items.length < 6) {
       const updatedItems = [...items, trimmed]
-      setItems(updatedItems)
-      setValue(name, updatedItems)
-
-      // Manually trigger validation
-      void trigger(name)
+      updateItems(updatedItems)
     }
 
     setValueState("") // Reset input field
@@ -52,11 +61,7 @@ export default function LableInput({
 
   const removeItem = (benefit: string): void => {
     const updatedItems = items.filter(b => b !== benefit)
-    setItems(updatedItems)
-    setValue(name, updatedItems)
-
-    // Manually trigger validation
-    void trigger(name)
+    updateItems(updatedItems)
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
@@ -85,6 +90,7 @@ export default function LableInput({
           }}
           onKeyDown={handleKeyDown}
           disabled={disable}
+          onBlur={onBlur}
         />
       )} */}
 

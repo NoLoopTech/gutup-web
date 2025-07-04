@@ -13,6 +13,7 @@ import {
   SelectValue
 } from "@/components/ui/select"
 import { type translationsTypes } from "@/types/dailyTipTypes"
+import { useDailyTipStore } from "@/stores/useDailyTipStore"
 
 // Tab option
 interface TabOption {
@@ -20,25 +21,29 @@ interface TabOption {
   label: string
 }
 
-type LayoutOption = "BasicLayout" | "ShopPromotion" | "VideoTip"
+type LayoutOption = "basicForm" | "shopPromote" | "videoForm"
 
 const tabOptions: TabOption[] = [
-  { value: "BasicLayout", label: "Basic Layout" },
-  { value: "ShopPromotion", label: "Shop Promotion" },
-  { value: "VideoTip", label: "Video Tip" }
+  { value: "basicForm", label: "Basic Layout" },
+  { value: "shopPromote", label: "Shop Promotion" },
+  { value: "videoForm", label: "Video Tip" }
 ]
 
 export default function AddDailyTipPopUp({
-  translations
+  translations,
+  onClose,
+  token
 }: {
   translations: translationsTypes
+  onClose: () => void
+  token: string
 }): JSX.Element {
-  const [activeTab, setActiveTab] = useState<LayoutOption>("BasicLayout")
+  const { activeTab, setActiveTab } = useDailyTipStore()
 
   return (
     <div>
       {/* Tab Selector using Input */}
-      <div className="mb-4 w-[25.4rem] relative">
+      <div className="mb-4 w-[25.4rem] relative z-20">
         <Label className="block mb-1 text-black">
           {translations.layoutSelection}
         </Label>
@@ -54,9 +59,8 @@ export default function AddDailyTipPopUp({
           <SelectContent>
             {tabOptions.map(opt => (
               <SelectItem key={opt.value} value={opt.value}>
-                {translations[
-                  opt.value.toLowerCase() as keyof translationsTypes
-                ] || opt.label}{" "}
+                {translations[opt.value as keyof translationsTypes] ||
+                  opt.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -65,14 +69,18 @@ export default function AddDailyTipPopUp({
 
       {/* Tab Content */}
       <div>
-        {activeTab === "BasicLayout" && (
-          <BasicLayoutTab translations={translations} />
+        {activeTab === "basicForm" && (
+          <BasicLayoutTab translations={translations} onClose={onClose} />
         )}
-        {activeTab === "ShopPromotion" && (
-          <ShopPromotionTab translations={translations} />
+        {activeTab === "shopPromote" && (
+          <ShopPromotionTab
+            translations={translations}
+            onClose={onClose}
+            token={token}
+          />
         )}
-        {activeTab === "VideoTip" && (
-          <VideoTipTab translations={translations} />
+        {activeTab === "videoForm" && (
+          <VideoTipTab translations={translations} onClose={onClose} />
         )}
       </div>
     </div>

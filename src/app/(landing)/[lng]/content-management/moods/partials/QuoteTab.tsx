@@ -12,7 +12,7 @@ import {
   SelectValue
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { useForm } from "react-hook-form"
+import { Resolver, useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
@@ -23,10 +23,10 @@ import {
   FormControl,
   FormMessage
 } from "@/components/ui/form"
-import { toast } from "sonner"
 import { type translationsTypes } from "@/types/moodsTypes"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { useTranslation } from "@/query/hooks/useTranslation"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface Option {
   value: string
@@ -48,9 +48,15 @@ const moodOptions: Record<string, Option[]> = {
 }
 
 export default function QuoteTab({
-  translations
+  translations,
+  onClose,
+  addQuoteMood,
+  isLoading
 }: {
   translations: translationsTypes
+  onClose: () => void
+  addQuoteMood: () => void
+  isLoading: boolean
 }): JSX.Element {
   const { translateText } = useTranslation()
   const { activeLang, translationsData, setTranslationField } = useMoodStore()
@@ -66,12 +72,23 @@ export default function QuoteTab({
     quote: z
       .string()
       .nonempty(translations.required)
-      .min(10, { message: translations.quoteMustBeAtLeast10Characters })
+      .min(10, { message: translations.quoteMustBeAtLeast10Characters }),
+    share: z
+      .boolean({ required_error: translations.required })
+      .default(false)
+      .refine(val => typeof val === "boolean", {
+        message: translations.required
+      })
   })
 
   const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: translationsData.quoteData[activeLang]
+    resolver: zodResolver(FormSchema) as Resolver<
+      z.infer<typeof FormSchema>,
+      any
+    >,
+    defaultValues: translationsData.quoteData[activeLang] as z.infer<
+      typeof FormSchema
+    >
   })
 
   // Update form when lang changes
@@ -80,7 +97,7 @@ export default function QuoteTab({
   }, [activeLang, form.reset, translationsData.quoteData])
 
   const handleInputChange = (fieldName: "author" | "quote", value: string) => {
-    form.setValue(fieldName, value)
+    form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
     setTranslationField("quoteData", activeLang, fieldName, value)
   }
 
@@ -90,9 +107,13 @@ export default function QuoteTab({
   ) => {
     if (activeLang === "en" && value.trim()) {
       try {
-        setIsTranslating(true)
-        const translated = await translateText(value)
-        setTranslationField("quoteData", "fr", fieldName, translated)
+        if (fieldName === "author") {
+          setTranslationField("quoteData", "fr", fieldName, value)
+        } else {
+          setIsTranslating(true)
+          const translated = await translateText(value)
+          setTranslationField("quoteData", "fr", fieldName, translated)
+        }
       } finally {
         setIsTranslating(false)
       }
@@ -119,13 +140,12 @@ export default function QuoteTab({
   }
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
-    toast("Form submitted", {
-      description: JSON.stringify(data, null, 2)
-    })
+    addQuoteMood()
   }
 
   const handleResetForm = () => {
     form.reset(translationsData.quoteData[activeLang])
+    onClose()
   }
 
   return (
@@ -213,12 +233,49 @@ export default function QuoteTab({
             )}
           />
 
+          <FormField
+            control={form.control}
+            name="share"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl className="flex gap-2 items-center">
+                  <Checkbox
+                    id="share-checkbox"
+                    checked={field.value}
+                    onCheckedChange={(checked: boolean) => {
+                      field.onChange(checked)
+                      setTranslationField("quoteData", "en", "share", checked)
+                      setTranslationField("quoteData", "fr", "share", checked)
+                    }}
+                  />{" "}
+                  <FormLabel
+                    htmlFor="share-checkbox"
+                    className="m-0 cursor-pointer"
+                  >
+                    {translations.share}
+                  </FormLabel>
+                </FormControl>
+
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {/* Action Buttons */}
           <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
             <Button variant="outline" type="button" onClick={handleResetForm}>
               {translations.cancel}
             </Button>
-            <Button type="submit">{translations.save}</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex gap-2 items-center">
+                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                  {translations.save}
+                </div>
+              ) : (
+                translations.save
+              )}
+            </Button>{" "}
           </div>
         </form>
       </Form>

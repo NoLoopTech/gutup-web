@@ -25,9 +25,15 @@ const tabOptions: { value: LayoutOption; label: string }[] = [
 ]
 
 export default function AddMoodPopUp({
-  translations
+  translations,
+  onClose,
+  addMood,
+  isLoading
 }: {
   translations: translationsTypes
+  onClose: () => void
+  addMood: () => void
+  isLoading: boolean
 }): JSX.Element {
   const { activeTab, setActiveTab } = useMoodStore()
 
@@ -61,9 +67,30 @@ export default function AddMoodPopUp({
 
       {/* Tab Content */}
       <div>
-        {activeTab === "Quote" && <QuoteTab translations={translations} />}
-        {activeTab === "Food" && <FoodTab translations={translations} />}
-        {activeTab === "Recipe" && <RecipeTab translations={translations} />}
+        {activeTab === "Quote" && (
+          <QuoteTab
+            translations={translations}
+            onClose={onClose}
+            addQuoteMood={addMood}
+            isLoading={isLoading}
+          />
+        )}
+        {activeTab === "Food" && (
+          <FoodTab
+            translations={translations}
+            onClose={onClose}
+            addFoodMood={addMood}
+            isLoading={isLoading}
+          />
+        )}
+        {activeTab === "Recipe" && (
+          <RecipeTab
+            translations={translations}
+            onClose={onClose}
+            addRecipeMood={addMood}
+            isLoading={isLoading}
+          />
+        )}
       </div>
     </div>
   )

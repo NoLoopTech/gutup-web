@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import AddStorePopUpContent from "./AddStorePopUpContent"
 import { loadLanguage } from "@/../../src/i18n/locales"
 import { defaultTranslations, type translationsTypes } from "@/types/storeTypes"
+import { useStoreStore } from "@/stores/useStoreStore"
 
 interface Props {
   open: boolean
@@ -15,25 +16,26 @@ interface Props {
 }
 
 export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
-  const [allowMultiLang, setAllowMultiLang] = useState(false)
-  const [activeTab, setActiveTab] = useState<"en" | "fr">("en")
+  const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
+    useStoreStore()
+
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
   )
   // Load translations based on the selected language
   useEffect(() => {
-    const loadTranslations = async () => {
-      const langData = await loadLanguage(activeTab, "store")
+    const loadTranslations = async (): Promise<void> => {
+      const langData = await loadLanguage(activeLang, "store")
       setTranslations(langData)
     }
 
-    loadTranslations()
-  }, [activeTab])
+    void loadTranslations()
+  }, [activeLang])
 
   // Language toggle handler
-  const handleLanguageToggle = (val: boolean) => {
+  const handleLanguageToggle = (val: boolean): void => {
     setAllowMultiLang(val)
-    if (!val) setActiveTab("en") // Default to English if multi-lang is disabled
+    if (!val) setActiveLang("en") // Default to English if multi-lang is disabled
   }
 
   return (
@@ -51,9 +53,9 @@ export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
           </DialogTitle>
 
           <Tabs
-            value={activeTab}
+            value={activeLang}
             onValueChange={val => {
-              setActiveTab(val as "en" | "fr") // Set active tab when switching
+              setActiveLang(val as "en" | "fr") // Set active tab when switching
             }}
             className="w-full"
           >

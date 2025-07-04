@@ -4,9 +4,9 @@
   "english": "English",
   "french": "French",
   "selectLayoutType": "Select Layout Type",
-  "basiclayout": "Basic Layout",
-  "shoppromotion": "Shop Promotion",
-  "videotip": "Video Tip",
+  "basicForm": "Basic Layout",
+  "shopPromote": "Shop Promotion",
+  "videoForm": "Video Tip",
   "layoutSelection": "Layout Selection",
   "whenTobeDisplayed": "When to be Displayed",
   "pickADate": "Pick a date",
@@ -20,7 +20,7 @@
   "subTitleTwo": "Sub Title Two",
   "subDescriptionTwo": "Sub Description Two",
   "uploadImages": "Upload Images",
-  "selectImagesForYourFoodItem": "Select Images for your food item",
+  "selectImagesForYourFoodItem": "Select Image for your daily tip",
   "save": "Save",
   "cancel": "Cancel",
   "shopName": "Shop Name",
@@ -45,7 +45,7 @@
   "selectFeaturedIngredients": "Select Featured Ingredients",
   "searchForIngredients": "Search for ingredients",
   "add": "Add",
-  "cantFindtheIngredientDescription":"Cant find the ingredient you want? Please add the food item first to select the ingredient",
+  "cantFindtheIngredientDescription": "Cant find the ingredient you want? Please add the food item first to select the ingredient",
   "enterTitle": "Enter title",
   "subTitle": "Sub Title",
   "enterSubTitle": "Enter sub title",
@@ -75,6 +75,4 @@
   "atLeastOneIngredientCategoryMustBeAdded": "At least one ingredient/category must be added.",
   "subTitlMustBeAtLeast2Characters": "Sub Title must be at least 2 characters",
   "subDescriptioMustBeAtLeast10Characters": "Sub Description must be at least 10 characters"
-
-
 }
