@@ -6,6 +6,7 @@ export interface translationsTypes {
   selectLayout: string
   selectLayoutType: string
   quote: string
+  share: string
   food: string
   recipe: string
   selectMood: string
@@ -46,6 +47,7 @@ export const defaultTranslations: translationsTypes = {
   selectLayout: "",
   selectLayoutType: "",
   quote: "",
+  share: "",
   food: "",
   recipe: "",
   selectMood: "",
@@ -76,4 +78,39 @@ export const defaultTranslations: translationsTypes = {
   descriptionMustBeAtLeast10Characters: "",
   foodNameMustBeAtLeast2Characters: "",
   pleaseSelectAShopCategory: ""
+}
+
+export type LanguageCode = "en" | "fr"
+
+interface QuoteData {
+  mood: string
+  author: string
+  quote: string
+  share: boolean
+}
+
+interface FoodData {
+  mood: string
+  foodName: string
+  description: string
+  shopCategory: string
+}
+
+interface RecipeData {
+  mood: string
+  recipe: string
+  description: string
+}
+
+interface TranslationsData {
+  quoteData: Record<LanguageCode, QuoteData>
+  foodData: Record<LanguageCode, FoodData>
+  recipeData: Record<LanguageCode, RecipeData>
+}
+
+export interface AddMoodRequestBody {
+  allowMultiLang: boolean
+  activeLang: LanguageCode
+  activeTab: "Quote" | "Food" | "Recipe"
+  translationsData: TranslationsData
 }

@@ -164,13 +164,13 @@ export default function AddRecipePopUpContent({
       header: translations.availableInIngredients,
       accessor: (row: Ingredient) =>
         row.tags.includes("InSystem") ? (
-          <Badge className="bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors">
+          <Badge className="px-2 py-1 text-xs text-black bg-green-200 rounded-md border border-green-500 transition-colors hover:bg-green-100">
             In the System
           </Badge>
         ) : (
           <Button
             variant="ghost"
-            className="text-secondary-blue text-xs px-2 py-1 flex items-center gap-1 hover:bg-transparent focus:bg-transparent active:bg-transparent"
+            className="flex gap-1 items-center px-2 py-1 text-xs text-secondary-blue hover:bg-transparent focus:bg-transparent active:bg-transparent"
             size="sm"
           >
             <CircleFadingPlus size={14} />
@@ -231,7 +231,7 @@ export default function AddRecipePopUpContent({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pb-6">
+        <div className="grid grid-cols-1 gap-4 pb-6 sm:grid-cols-2 md:grid-cols-3">
           <div>
             <FormField
               control={form.control}
@@ -263,7 +263,7 @@ export default function AddRecipePopUpContent({
                   </FormLabel>
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="w-full mt-1">
+                      <SelectTrigger className="mt-1 w-full">
                         <SelectValue
                           placeholder={translations.selectCategory}
                         />
@@ -295,7 +295,7 @@ export default function AddRecipePopUpContent({
                   </FormLabel>
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="w-full mt-1">
+                      <SelectTrigger className="mt-1 w-full">
                         <SelectValue placeholder={translations.selectSeason} />
                       </SelectTrigger>
                       <SelectContent>
@@ -321,7 +321,7 @@ export default function AddRecipePopUpContent({
         <DialogTitle className="pt-4">
           {translations.recipeAttributes}
         </DialogTitle>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 mb-4">
+        <div className="grid grid-cols-1 gap-4 pt-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
           <div>
             <FormField
               control={form.control}
@@ -409,9 +409,13 @@ export default function AddRecipePopUpContent({
             <SearchBar
               title={translations.selectYourIngredients}
               placeholder={translations.searchForIngredient}
+              dataList={[]}
+              onSelect={function (item: SearchItem): void {
+                throw new Error("Function not implemented.")
+              }}
             />
           </div>
-          <div className="flex items-end h-full mt-7">
+          <div className="flex items-end mt-7 h-full">
             <Button onClick={() => {}}>{translations.add}</Button>
           </div>
         </div>
@@ -473,9 +477,9 @@ export default function AddRecipePopUpContent({
 
         <DialogTitle>{translations.addAuthor}</DialogTitle>
 
-        <div className="flex flex-col sm:flex-row gap-8 mb-4 pt-4 items-start">
+        <div className="flex flex-col gap-8 items-start pt-4 mb-4 sm:flex-row">
           {/* Left: Author Inputs */}
-          <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid flex-1 grid-cols-1 gap-4 w-full sm:grid-cols-2">
             <div className="w-full">
               <FormField
                 control={form.control}
@@ -510,7 +514,7 @@ export default function AddRecipePopUpContent({
                         onValueChange={field.onChange}
                         value={field.value}
                       >
-                        <SelectTrigger className="w-full mt-1">
+                        <SelectTrigger className="mt-1 w-full">
                           <SelectValue
                             placeholder={translations.enterAuthorSpecialty}
                           />
@@ -593,7 +597,7 @@ export default function AddRecipePopUpContent({
             </div>
           </div>
           {/* Right: Image Uploader */}
-          <div className="w-full sm:w-2/5 ">
+          <div className="w-full sm:w-2/5">
             <FormField
               control={form.control}
               name="authorimage"
@@ -614,7 +618,7 @@ export default function AddRecipePopUpContent({
 
         <DialogTitle>{translations.uploadImages}</DialogTitle>
 
-        <div className="mt-6 pb-2 w-full sm:w-2/5">
+        <div className="pb-2 mt-6 w-full sm:w-2/5">
           <FormField
             control={form.control}
             name="foodimage"
@@ -634,7 +638,7 @@ export default function AddRecipePopUpContent({
         <Separator className="my-4" />
         <DialogFooter>
           {/* Save and Cancel buttons */}
-          <div className="fixed bottom-0 left-0 w-full bg-white border-t py-4 px-4 flex justify-between gap-2 z-50">
+          <div className="flex fixed bottom-0 left-0 z-50 gap-2 justify-between px-4 py-4 w-full bg-white border-t">
             <Button
               variant="outline"
               onClick={() => {

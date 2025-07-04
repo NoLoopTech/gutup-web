@@ -13,11 +13,15 @@ import { useMoodStore } from "@/stores/useMoodStore"
 interface Props {
   open: boolean
   onClose: () => void
+  addMood: () => void
+  isLoading: boolean
 }
 
 export default function AddMoodMainPopUp({
   open,
-  onClose
+  onClose,
+  addMood,
+  isLoading
 }: Props): JSX.Element {
   const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
     useMoodStore()
@@ -84,6 +88,9 @@ export default function AddMoodMainPopUp({
             <TabsContent value={activeLang}>
               <AddMoodPopUp
                 translations={{ ...defaultTranslations, ...translations }}
+                onClose={onClose}
+                addMood={addMood}
+                isLoading={isLoading}
               />
             </TabsContent>
           </Tabs>

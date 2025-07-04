@@ -28,13 +28,16 @@ interface DailyTipsDataType {
   title: string
   content: string
   dateCreated: string
-  datePublished: string
   status: string
   likes: number
   dislikes: number
 }
 
-export default function DailyTipsPage(): React.ReactElement {
+export default function DailyTipsPage({
+  token
+}: {
+  token: string
+}): React.ReactElement {
   const [isOpenAddTip, setIsOpenAddTip] = useState<boolean>(false)
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(10)
@@ -73,10 +76,6 @@ export default function DailyTipsPage(): React.ReactElement {
       header: "Date Created"
     },
     {
-      accessor: "datePublished",
-      header: "Date Published"
-    },
-    {
       accessor: "status",
       header: "Status",
       className: "w-40",
@@ -99,12 +98,12 @@ export default function DailyTipsPage(): React.ReactElement {
       header: "Engagement",
       className: "w-40",
       cell: (row: DailyTipsDataType) => (
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1 text-green-600">
+        <div className="flex gap-4 items-center">
+          <div className="flex gap-1 items-center text-green-600">
             <span>{row.likes}</span>
             <ThumbsUp size={16} />
           </div>
-          <div className="flex items-center gap-1 text-red-600">
+          <div className="flex gap-1 items-center text-red-600">
             <span>{row.dislikes}</span>
             <ThumbsDown size={16} />
           </div>
@@ -142,7 +141,6 @@ export default function DailyTipsPage(): React.ReactElement {
       title: "Stay Hydrated",
       content: "Main content of the tip",
       dateCreated: "2025-05-16",
-      datePublished: "2025-05-16",
       status: "Active",
       likes: 178,
       dislikes: 32
@@ -152,7 +150,6 @@ export default function DailyTipsPage(): React.ReactElement {
       title: "Stay Cool",
       content: "Another tip",
       dateCreated: "2025-05-16",
-      datePublished: "2025-05-16",
       status: "Pending",
       likes: 178,
       dislikes: 32
@@ -176,8 +173,8 @@ export default function DailyTipsPage(): React.ReactElement {
   }
 
   return (
-    <div className="space-y-4 ">
-      <div className="flex justify-end mb-5 -mt-14">
+    <div className="space-y-4">
+      <div className="flex justify-end -mt-14 mb-5">
         <Button onClick={handleOpenAddTip}>Add New</Button>
       </div>
       {/* user management table */}
@@ -192,7 +189,11 @@ export default function DailyTipsPage(): React.ReactElement {
         onPageSizeChange={handlePageSizeChange}
       />
 
-      <AddDailyTipMainPopUp open={isOpenAddTip} onClose={handleCloseAddTip} />
+      <AddDailyTipMainPopUp
+        open={isOpenAddTip}
+        onClose={handleCloseAddTip}
+        token={token}
+      />
     </div>
   )
 }

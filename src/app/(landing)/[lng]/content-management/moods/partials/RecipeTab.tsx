@@ -23,7 +23,6 @@ import {
   FormControl,
   FormMessage
 } from "@/components/ui/form"
-import { toast } from "sonner"
 import { type translationsTypes } from "@/types/moodsTypes"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { useTranslation } from "@/query/hooks/useTranslation"
@@ -48,9 +47,15 @@ const moodOptions: Record<string, Option[]> = {
 }
 
 export default function RecipeTab({
-  translations
+  translations,
+  onClose,
+  addRecipeMood,
+  isLoading
 }: {
   translations: translationsTypes
+  onClose: () => void
+  addRecipeMood: () => void
+  isLoading: boolean
 }): JSX.Element {
   const { activeLang, translationsData, setTranslationField } = useMoodStore()
   const { translateText } = useTranslation()
@@ -101,7 +106,7 @@ export default function RecipeTab({
     fieldName: "recipe" | "description"
   ) => {
     const value = e.target.value
-    form.setValue(fieldName, value)
+    form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
     setTranslationField("recipeData", activeLang, fieldName, value)
   }
 
@@ -122,12 +127,11 @@ export default function RecipeTab({
 
   const handleResetForm = () => {
     form.reset(translationsData.recipeData[activeLang])
+    onClose()
   }
 
   const onSubmit = (data: z.infer<typeof FormSchema>): void => {
-    toast("Recipe Submitted", {
-      description: JSON.stringify(data, null, 2)
-    })
+    addRecipeMood()
   }
 
   return (
@@ -220,10 +224,19 @@ export default function RecipeTab({
             <Button variant="outline" type="button" onClick={handleResetForm}>
               {translations.cancel}
             </Button>
-            <Button type="submit">{translations.save}</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex gap-2 items-center">
+                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                  {translations.save}
+                </div>
+              ) : (
+                translations.save
+              )}
+            </Button>
           </div>
         </form>
-      </Form>{" "}
+      </Form>
     </div>
   )
 }

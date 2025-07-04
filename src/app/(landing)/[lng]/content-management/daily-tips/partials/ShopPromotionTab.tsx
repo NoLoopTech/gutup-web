@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -29,60 +29,106 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { toast } from "sonner"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
 import { type translationsTypes } from "@/types/dailyTipTypes"
+import { useTranslation } from "@/query/hooks/useTranslation"
+import { useDailyTipStore } from "@/stores/useDailyTipStore"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  deleteImageFromFirebase,
+  uploadImageToFirebase
+} from "@/lib/firebaseImageUtils"
+import { useFoodList } from "@/query/hooks/useFoodList"
 
 interface Option {
   value: string
   label: string
 }
+
 interface Ingredient {
   id: number
   name: string
-  quantity: string
-  isMain: boolean
-  tags: string[]
+  displayStatus: boolean
 }
+
 interface Column<T> {
   header: string
   accessor: keyof T | ((row: T) => React.ReactNode)
 }
 
-const reason: Option[] = [
-  { value: "Stress", label: "Stress" },
-  { value: "Anxiety", label: "Anxiety" },
-  { value: "Depression", label: "Depression" }
-]
+type FieldNames =
+  | "reason"
+  | "shopName"
+  | "shopLocation"
+  | "subDescription"
+  | "shopCategory"
+  | "mobileNumber"
+  | "email"
+  | "mapsPin"
+  | "facebook"
+  | "instagram"
+  | "website"
 
-const ingredientColumns: Array<Column<Ingredient>> = [
-  { header: "Ingredient Name", accessor: "name" },
-  {
-    header: "Main Ingredient",
-    accessor: row => (
-      <Switch
-        checked={row.isMain}
-        className="scale-75"
-        style={{ minWidth: 28, minHeight: 16 }}
-      />
-    )
-  }
-]
+const reason: Record<string, Option[]> = {
+  en: [
+    { value: "stress", label: "Stress" },
+    { value: "anxiety", label: "Anxiety" },
+    { value: "depression", label: "Depression" }
+  ],
+  fr: [
+    { value: "stresser", label: "Stresser" },
+    { value: "anxiété", label: "Anxiété" },
+    { value: "dépression", label: "Dépression" }
+  ]
+}
 
 export default function ShopPromotionTab({
-  translations
+  translations,
+  onClose,
+  token
 }: {
   translations: translationsTypes
+  token: string
+  onClose: () => void
 }): JSX.Element {
   const [page, setPage] = React.useState(1)
   const [pageSize, setPageSize] = React.useState(2)
-  const [ingredientData] = React.useState<Ingredient[]>([])
+  const { translateText } = useTranslation()
+  const { activeLang, translationsData, setTranslationField } =
+    useDailyTipStore()
+  const [isTranslating, setIsTranslating] = useState(false)
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const { foods: foodsList } = useFoodList(token)
+  const [ingredientData, setIngredientData] = useState<Ingredient[]>([])
+
+  const updateStoreWithIngredients = (updated: Ingredient[]) => {
+    const mapped = updated.map(i => ({
+      foodId: i.id,
+      name: i.name,
+      dispalyStatus: i.displayStatus
+    }))
+    setTranslationField("shopPromotionData", "en", "shopPromoteFoods", mapped)
+    setTranslationField("shopPromotionData", "fr", "shopPromoteFoods", mapped)
+  }
+
+  const handleToggleStatus = (id: number, checked: boolean) => {
+    const updated = ingredientData.map(i =>
+      i.id === id ? { ...i, displayStatus: checked } : i
+    )
+    setIngredientData(updated)
+    form.setValue("ingredientData", updated as [Ingredient, ...Ingredient[]], {
+      shouldValidate: true
+    })
+    updateStoreWithIngredients(updated)
+  }
+
+  const handleRemoveIngredient = (id: number) => {
+    const updated = ingredientData.filter(i => i.id !== id)
+    setIngredientData(updated)
+    form.setValue("ingredientData", updated as [Ingredient, ...Ingredient[]], {
+      shouldValidate: true
+    })
+    updateStoreWithIngredients(updated)
+  }
 
   // Validate only inputs and select
   const FormSchema = z.object({
@@ -121,34 +167,67 @@ export default function ShopPromotionTab({
         message: translations.invalidWebsiteURL
       }),
     ingredientData: z
-      .array(z.unknown())
+      .array(
+        z.object({
+          id: z.number(),
+          name: z.string(),
+          displayStatus: z.boolean()
+        })
+      )
       .nonempty(translations.atLeastOneIngredientCategoryMustBeAdded),
-    image: z.custom<File | null>(val => val instanceof File, {
-      message: translations.required
-    }),
-    dateselect: z.date({
-      required_error: translations.required
-    })
+    image: z.string().nonempty(translations.required)
   })
+
+  const handleInputChange = (fieldName: FieldNames, value: string) => {
+    form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
+    setTranslationField("shopPromotionData", activeLang, fieldName, value)
+    if (fieldName !== "subDescription" || "shopCategory") {
+      setTranslationField("shopPromotionData", "fr", fieldName, value)
+    }
+  }
+
+  const handleInputBlur = async (fieldName: FieldNames, value: string) => {
+    if (activeLang === "en" && value.trim()) {
+      try {
+        setIsTranslating(true)
+        const translated = await translateText(value)
+        setTranslationField("shopPromotionData", "fr", fieldName, translated)
+      } finally {
+        setIsTranslating(false)
+      }
+    }
+  }
+
+  // handle change reason function
+  const handleReasonsChange = (value: string) => {
+    form.setValue("reason", value)
+    setTranslationField("shopPromotionData", activeLang, "reason", value)
+
+    const current = reason[activeLang]
+    const oppositeLang = activeLang === "en" ? "fr" : "en"
+    const opposite = reason[oppositeLang]
+
+    const index = current.findIndex(opt => opt.value === value)
+    if (index !== -1) {
+      setTranslationField(
+        "shopPromotionData",
+        oppositeLang,
+        "reason",
+        opposite[index].value
+      )
+    }
+  }
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: {
-      shopName: "",
-      reason: "",
-      shopLocation: "",
-      shopCategory: "",
-      subDescription: "",
-      mobileNumber: "",
-      email: "",
-      mapsPin: "",
-      facebook: "",
-      instagram: "",
-      website: "",
-      image: null,
-      dateselect: undefined
-    }
+    defaultValues: translationsData.shopPromotionData[activeLang]
   })
+
+  // Update form when lang changes
+  useEffect(() => {
+    form.reset(translationsData.shopPromotionData[activeLang])
+  }, [activeLang, form.reset, translationsData.shopPromotionData])
+
   // Define functions to handle page changes
   const handlePageChange = (newPage: number): void => {
     setPage(newPage)
@@ -158,83 +237,194 @@ export default function ShopPromotionTab({
     setPageSize(newSize)
     setPage(1)
   }
-  // Define function for handling image upload changes
-  const handleImageUpload = (field: any) => (files: File[] | null) => {
-    field.onChange(files && files.length > 0 ? files[0] : null)
+
+  const handleImageSelect = async (files: File[] | null) => {
+    const file = files?.[0] ?? null
+    if (file) {
+      try {
+        setIsTranslating(true)
+        const imageUrl = await uploadImageToFirebase(file, "daily-tip")
+
+        form.setValue("image", imageUrl, {
+          shouldValidate: true,
+          shouldDirty: true
+        })
+        setTranslationField("shopPromotionData", "en", "image", imageUrl)
+        setTranslationField("shopPromotionData", "fr", "image", imageUrl)
+
+        setPreviewUrls([imageUrl]) // For single image preview
+      } catch (error) {
+        toast.error("Image upload failed. Please try again.")
+        console.error("Firebase upload error:", error)
+      } finally {
+        setIsTranslating(false)
+      }
+    }
   }
-  const handleCancel = (
-    form: ReturnType<typeof useForm<z.infer<typeof FormSchema>>>
-  ): void => {
-    form.reset()
+
+  useEffect(() => {
+    const existingUrl = translationsData.shopPromotionData[activeLang].image
+    if (existingUrl) {
+      setPreviewUrls([existingUrl])
+    } else {
+      setPreviewUrls([])
+    }
+
+    form.reset(translationsData.shopPromotionData[activeLang])
+  }, [activeLang, form.reset, translationsData.shopPromotionData])
+
+  const handleCancel = async (): Promise<void> => {
+    //  Combine all possible image URLs (preview + stored)
+    const possibleImages = [
+      translationsData.basicLayoutData[activeLang]?.image,
+      translationsData.shopPromotionData?.[activeLang]?.image
+    ]
+    const uniqueImageUrls = Array.from(new Set(possibleImages)).filter(Boolean)
+
+    //  Delete images from Firebase
+    await Promise.all(
+      uniqueImageUrls.map(async url => {
+        try {
+          await deleteImageFromFirebase(url)
+        } catch (err) {
+          console.error("Image deletion failed:", url, err)
+        }
+      })
+    )
+
+    setTranslationField("basicLayoutData", "en", "image", "")
+    setTranslationField("basicLayoutData", "fr", "image", "")
+    setTranslationField("shopPromotionData", "en", "image", "")
+    setTranslationField("shopPromotionData", "fr", "image", "")
+
+    //  Remove session data
+    sessionStorage.removeItem("daily-tip-storage")
+
+    // Clear preview image state
+    setPreviewUrls([])
+
+    // Close the modal or section
+    onClose()
   }
+
+  const handleSelectFood = (item: {
+    id: number
+    name: string
+    displayStatus?: boolean
+  }) => {
+    const alreadyExists = ingredientData.some(i => i.id === item.id)
+    if (alreadyExists) {
+      toast.warning("Ingredient already added")
+      return
+    }
+
+    const newIngredient: Ingredient = {
+      id: item.id,
+      name: item.name,
+      displayStatus: item.displayStatus ?? false
+    }
+
+    const updated = [...ingredientData, newIngredient]
+    setIngredientData(updated)
+    form.setValue("ingredientData", updated as [Ingredient, ...Ingredient[]], {
+      shouldValidate: true
+    })
+
+    updateStoreWithIngredients(updated)
+  }
+
   function onSubmit(data: z.infer<typeof FormSchema>): void {
+    console.log(data)
     toast("Form submitted", {
       description: JSON.stringify(data, null, 2)
     })
   }
 
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="space-y-3 text-black">
-          {/* Shop Name */}
-          <div className="flex items-start lg:justify-end lg:-mt-[4.8rem]">
-            <div className="w-[25.5rem]">
-              <FormField
-                control={form.control}
-                name="shopName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{translations.shopName}</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={translations.enterShopName}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
+  useEffect(() => {
+    form.reset(translationsData.shopPromotionData[activeLang])
 
-          <div className="flex flex-col gap-4 md:flex-row pt-2">
-            <div className="w-full md:w-[25.5rem]">
-              <FormField
-                control={form.control}
-                name="dateselect"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>{translations.whenTobeDisplayed}</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          data-empty={!field}
-                          className="data-[empty=true]:text-muted-foreground w-[25.5rem] justify-between text-left font-normal"
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>{translations.pickADate}</span>
-                          )}
-                          <CalendarIcon className="ml-2 h-4 w-4 text-gray-500" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
+    const foods =
+      translationsData.shopPromotionData[activeLang]?.shopPromoteFoods ?? []
+    const mappedFoods: Ingredient[] = foods.map(f => ({
+      id: f.foodId,
+      name: "", // You must map the ID to a name below
+      displayStatus: f.dispalyStatus
+    }))
+
+    // map name from `foods` list fetched from API
+    const enrichedFoods = mappedFoods.map(f => {
+      const foodInfo = foodsList.find(food => food.id === f.id)
+      return {
+        ...f,
+        name: foodInfo?.name ?? `Unknown (${f.id})`
+      }
+    })
+
+    setIngredientData(enrichedFoods)
+  }, [activeLang, form.reset, translationsData.shopPromotionData, foodsList])
+
+  const ingredientColumns: Array<Column<Ingredient>> = [
+    { header: "Ingredient Name", accessor: "name" },
+    {
+      header: "Main Ingredient",
+      accessor: row => (
+        <Switch
+          checked={row.displayStatus}
+          onCheckedChange={checked => handleToggleStatus(row.id, checked)}
+          className="scale-75"
+          style={{ minWidth: 28, minHeight: 16 }}
+        />
+      )
+    },
+    {
+      header: "Action",
+      accessor: row => (
+        <Button
+          variant="ghost"
+          className="text-red-500 hover:underline"
+          onClick={() => handleRemoveIngredient(row.id)}
+        >
+          Remove
+        </Button>
+      )
+    }
+  ]
+
+  return (
+    <div className="relative">
+      {isTranslating && (
+        <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
+          <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
+        </div>
+      )}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="space-y-3 text-black">
+            {/* Shop Name */}
+            <div className="flex items-start lg:justify-end lg:-mt-[4.8rem]">
+              <div className="w-[25.5rem]">
+                <FormField
+                  control={form.control}
+                  name="shopName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{translations.shopName}</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={translations.enterShopName}
+                          {...field}
+                          onChange={e =>
+                            handleInputChange("shopName", e.target.value)
+                          }
                         />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
+
             {/* Reason */}
             <div className="w-full md:w-[25.5rem] mt-[-0.3rem]">
               <FormField
@@ -245,8 +435,8 @@ export default function ShopPromotionTab({
                     <FormLabel>{translations.reasonToDisplay}</FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={field.onChange}
                         value={field.value}
+                        onValueChange={handleReasonsChange}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue
@@ -254,11 +444,9 @@ export default function ShopPromotionTab({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {reason.map(opt => (
-                            <SelectItem key={opt.value} value={opt.value}>
-                              {translations[
-                                opt.value.toLowerCase() as keyof translationsTypes
-                              ] || opt.label}{" "}
+                          {reason[activeLang].map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -269,248 +457,285 @@ export default function ShopPromotionTab({
                 )}
               />
             </div>
-          </div>
 
-          <div className="flex gap-4">
-            {/* Location */}
-            <FormField
-              control={form.control}
-              name="shopLocation"
-              render={({ field }) => (
-                <FormItem className="flex-1 mb-1">
-                  <FormLabel>{translations.shopLocation}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={translations.enterShopLocation}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {/* Category */}
-            <FormField
-              control={form.control}
-              name="shopCategory"
-              render={({ field }) => (
-                <FormItem className="flex-1 mb-1">
-                  <FormLabel>{translations.shopCategory}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={translations.enterShopCategory}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Sub Description */}
-          <div className="pb-1">
-            <FormField
-              control={form.control}
-              name="subDescription"
-              render={({ field }) => (
-                <FormItem className="flex-1 mb-2">
-                  <FormLabel>{translations.subDescription}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={translations.describeInDetail}
-                      className="h-14"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <Separator />
-
-          {/* Store Contact */}
-          <div className="flex gap-6">
-            <FormField
-              control={form.control}
-              name="mobileNumber"
-              render={({ field }) => (
-                <FormItem className="flex-1 mb-1">
-                  <FormLabel>{translations.mobileNumber}</FormLabel>
-                  <FormControl>
-                    <Input placeholder="+123456789" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem className="flex-1 mb-1">
-                  <FormLabel>{translations.email}</FormLabel>
-                  <FormControl>
-                    <Input placeholder="example@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="mapsPin"
-              render={({ field }) => (
-                <FormItem className="flex-1 mb-1">
-                  <FormLabel>{translations.mapsPin}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={translations.enterGoogleMapsLocation}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="flex gap-6 pb-1">
-            <FormField
-              control={form.control}
-              name="facebook"
-              render={({ field }) => (
-                <FormItem className="flex-1 mb-1">
-                  <FormLabel>{translations.facebook}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={translations.enterFacebookURL}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="instagram"
-              render={({ field }) => (
-                <FormItem className="flex-1 mb-1">
-                  <FormLabel>{translations.instagram}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={translations.enterInstagramURL}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="website"
-              render={({ field }) => (
-                <FormItem className="flex-1 mb-1">
-                  <FormLabel>{translations.website}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={translations.enterWebsiteURL}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <Separator />
-
-          {/* Star Products */}
-          <div className="flex flex-row items-center gap-2 mb-4">
-            <SearchBar
-              title={translations.selectFeaturedIngredients}
-              placeholder={translations.searchForIngredients}
-            />
-            <Button className="mt-7" onClick={() => {}}>
-              {translations.add}
-            </Button>
-          </div>
-          <Label className="block text-gray-500">
-            {translations.cantFindtheIngredientDescription}
-          </Label>
-          <FormField
-            control={form.control}
-            name="ingredientData"
-            render={({ field }) => (
-              <>
-                <CustomTable
-                  columns={ingredientColumns}
-                  data={ingredientData.slice(
-                    (page - 1) * pageSize,
-                    page * pageSize
-                  )}
-                  page={page}
-                  pageSize={pageSize}
-                  totalItems={ingredientData.length}
-                  pageSizeOptions={[1, 5, 10]}
-                  onPageChange={handlePageChange}
-                  onPageSizeChange={handlePageSizeChange}
-                />
-                {ingredientData.length === 0 && (
-                  <FormMessage className="text-red-500">
-                    At least one ingredient/category must be added.
-                  </FormMessage>
+            <div className="flex gap-4">
+              {/* Location */}
+              <FormField
+                control={form.control}
+                name="shopLocation"
+                render={({ field }) => (
+                  <FormItem className="flex-1 mb-1">
+                    <FormLabel>{translations.shopLocation}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={translations.enterShopLocation}
+                        {...field}
+                        onChange={e =>
+                          handleInputChange("shopLocation", e.target.value)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </>
-            )}
-          />
+              />
+              {/* Category */}
+              <FormField
+                control={form.control}
+                name="shopCategory"
+                render={({ field }) => (
+                  <FormItem className="flex-1 mb-1">
+                    <FormLabel>{translations.shopCategory}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={translations.enterShopCategory}
+                        {...field}
+                        onChange={e =>
+                          handleInputChange("shopCategory", e.target.value)
+                        }
+                        onBlur={() =>
+                          handleInputBlur("shopCategory", field.value)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-          <Separator />
+            {/* Sub Description */}
+            <div className="pb-1">
+              <FormField
+                control={form.control}
+                name="subDescription"
+                render={({ field }) => (
+                  <FormItem className="flex-1 mb-2">
+                    <FormLabel>{translations.subDescription}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder={translations.describeInDetail}
+                        className="h-14"
+                        {...field}
+                        onChange={e =>
+                          handleInputChange("subDescription", e.target.value)
+                        }
+                        onBlur={() =>
+                          handleInputBlur("subDescription", field.value)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-          <div className="flex items-center justify-between mt-4 mb-4">
-            <h2 className="text-lg font-bold text-black">
-              {translations.uploadImages}
-            </h2>
-          </div>
+            <Separator />
 
-          {/* Image Uploader */}
-          <div className="w-full pb-8 sm:w-2/5">
+            {/* Store Contact */}
+            <div className="flex gap-6">
+              <FormField
+                control={form.control}
+                name="mobileNumber"
+                render={({ field }) => (
+                  <FormItem className="flex-1 mb-1">
+                    <FormLabel>{translations.mobileNumber}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="+123456789"
+                        {...field}
+                        onChange={e =>
+                          handleInputChange("mobileNumber", e.target.value)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="flex-1 mb-1">
+                    <FormLabel>{translations.email}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="example@example.com"
+                        {...field}
+                        onChange={e =>
+                          handleInputChange("email", e.target.value)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="mapsPin"
+                render={({ field }) => (
+                  <FormItem className="flex-1 mb-1">
+                    <FormLabel>{translations.mapsPin}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={translations.enterGoogleMapsLocation}
+                        {...field}
+                        onChange={e =>
+                          handleInputChange("mapsPin", e.target.value)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="flex gap-6 pb-1">
+              <FormField
+                control={form.control}
+                name="facebook"
+                render={({ field }) => (
+                  <FormItem className="flex-1 mb-1">
+                    <FormLabel>{translations.facebook}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={translations.enterFacebookURL}
+                        {...field}
+                        onChange={e =>
+                          handleInputChange("facebook", e.target.value)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="instagram"
+                render={({ field }) => (
+                  <FormItem className="flex-1 mb-1">
+                    <FormLabel>{translations.instagram}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={translations.enterInstagramURL}
+                        {...field}
+                        onChange={e =>
+                          handleInputChange("instagram", e.target.value)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="website"
+                render={({ field }) => (
+                  <FormItem className="flex-1 mb-1">
+                    <FormLabel>{translations.website}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={translations.enterWebsiteURL}
+                        {...field}
+                        onChange={e =>
+                          handleInputChange("website", e.target.value)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Select Featured Ingredients */}
+            <div className="flex flex-row gap-2 items-center mb-4">
+              <SearchBar
+                title="Select Food"
+                placeholder="Search for food..."
+                dataList={foodsList}
+                onSelect={handleSelectFood}
+              />
+            </div>
+
             <FormField
               control={form.control}
-              name="image"
+              name="ingredientData"
               render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <ImageUploader
-                      title={translations.selectImagesForYourFoodItem}
-                      onChange={handleImageUpload(field)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                <>
+                  <CustomTable
+                    columns={ingredientColumns}
+                    data={ingredientData.slice(
+                      (page - 1) * pageSize,
+                      page * pageSize
+                    )}
+                    page={page}
+                    pageSize={pageSize}
+                    totalItems={ingredientData.length}
+                    pageSizeOptions={[1, 5, 10]}
+                    onPageChange={handlePageChange}
+                    onPageSizeChange={handlePageSizeChange}
+                  />
+                  {ingredientData.length === 0 && (
+                    <FormMessage className="text-red-500">
+                      At least one ingredient/category must be added.
+                    </FormMessage>
+                  )}
+                </>
               )}
             />
-          </div>
-        </div>
 
-        {/* Buttons */}
-        <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
-          <Button
-            variant="outline"
-            onClick={() => {
-              handleCancel(form)
-            }}
-          >
-            {translations.cancel}
-          </Button>
-          <Button type="submit">{translations.save}</Button>
-        </div>
-      </form>
-    </Form>
+            <Separator />
+
+            <div className="flex justify-between items-center mt-4 mb-4">
+              <h2 className="text-lg font-bold text-black">
+                {translations.uploadImages}
+              </h2>
+            </div>
+
+            {/* Image Uploader */}
+            <div className="pb-8 w-full sm:w-2/5">
+              <FormField
+                control={form.control}
+                name="image"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <ImageUploader
+                        title={translations.selectImagesForYourFoodItem}
+                        previewUrls={previewUrls ? previewUrls : []}
+                        onChange={handleImageSelect}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                await handleCancel()
+              }}
+            >
+              {translations.cancel}
+            </Button>
+            <Button type="submit">{translations.save}</Button>
+          </div>
+        </form>
+      </Form>
+    </div>
   )
 }
