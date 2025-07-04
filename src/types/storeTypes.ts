@@ -1,4 +1,6 @@
 export interface translationsTypes {
+  [x: string]: string
+  delete: string
   addNewStore: string
   allowMultiLang: string
   english: string
@@ -55,6 +57,7 @@ export interface translationsTypes {
   dairy: string
   physical: string
   online: string
+  ingredient: string
 
   required: string
   mustbeatleast2characters: string
@@ -68,6 +71,7 @@ export interface translationsTypes {
 }
 
 export const defaultTranslations: translationsTypes = {
+  delete: "",
   addNewStore: "",
   allowMultiLang: "",
   english: "",
@@ -124,6 +128,7 @@ export const defaultTranslations: translationsTypes = {
   dairy: "",
   physical: "",
   online: "",
+  ingredient: "",
 
   required: "",
   mustbeatleast2characters: "",
