@@ -12,6 +12,7 @@ export interface Ingredient {
   availableInIngredient: string;
 }
 
+
 export interface RecipeFields {
   name: string;
   category: string;
@@ -49,6 +50,8 @@ export interface LangData<T> {
 }
 
 export interface RecipeStoreState {
+  fr: Record<string, unknown>;
+  en: Record<string, unknown>;
   allowMultiLang: boolean;
   activeLang: Lang;
   translations: LangData<RecipeFields>;

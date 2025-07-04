@@ -13,8 +13,8 @@ export const getAllFoods = async (token: string): Promise<any> => {
   }
 }
 
-// get all types
-export const getAllTags = async (
+// get all tags by category
+export const getAllTagsByCategory = async (
   token: string,
   category: string
 ): Promise<any> => {

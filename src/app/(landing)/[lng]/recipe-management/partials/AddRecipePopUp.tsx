@@ -35,6 +35,7 @@ export default function AddRecipePopUp({
     const loadTranslationsAsync = async () => {
       const langData = await loadLanguage(activeLang, "recipe")
       setTranslations(langData)
+      console.log("Language",langData)
     }
     loadTranslationsAsync()
   }, [activeLang])
@@ -48,7 +49,8 @@ export default function AddRecipePopUp({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
-        <div className="overflow-y-auto p-2 h-full">
+        <div className="overflow-y-auto p-2 h-full"   style={{scrollbarWidth: "none"}}>
+
 
           <DialogTitle>
             {translations.addNewRecipe || "Add New Recipe"}
