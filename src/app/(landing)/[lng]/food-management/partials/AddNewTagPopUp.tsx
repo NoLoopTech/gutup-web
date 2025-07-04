@@ -50,9 +50,7 @@ export default function AddNewTagPopUp({
   } = useTagStore()
 
   const { translateText } = useTranslation()
-
   const [isTranslating, setIsTranslating] = useState(false)
-
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
   )
@@ -82,6 +80,18 @@ export default function AddNewTagPopUp({
     }
     void loadTranslations()
   }, [activeLang])
+
+  // Update form values when active language or tagData changes
+  useEffect(() => {
+    const currentLangData = tagData[activeLang]
+    if (currentLangData) {
+      form.setValue("tagName", currentLangData.tagName || "")
+      form.setValue("category", currentLangData.category || category)
+    } else {
+      form.setValue("tagName", "")
+      form.setValue("category", category)
+    }
+  }, [activeLang, tagData, category, form])
 
   // Language toggle handler
   const handleLanguageToggle = (val: boolean): void => {
@@ -126,6 +136,9 @@ export default function AddNewTagPopUp({
         setIsTranslating(true)
         const translated = await translateText(value)
         setTranslationField("tagData", "fr", fieldName, translated)
+        const translatedCategory = await translateText(category)
+        setTranslationField("tagData", "fr", "category", translatedCategory)
+        setTranslationField("tagData", "en", "category", category)
       } finally {
         setIsTranslating(false)
       }
