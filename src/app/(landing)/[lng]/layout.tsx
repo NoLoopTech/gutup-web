@@ -11,6 +11,7 @@ import NextAuthProvider from "@/components/layout/NextAuthProvider"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/nextAuthOptions"
 import { redirect } from "next/navigation"
+import ClientSessionHandler from "@/components/layout/ClientSessionHandler"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -51,10 +52,13 @@ export default async function RootLayout({
               {/* Top Navigation Bar */}
               <NavBase />
 
+              {/* Client-side session handling */}
+              <ClientSessionHandler />
+
               {/* contents */}
               <div className="p-4 overflow-y-auto h-[88%]">{children}</div>
             </main>
-            <Toaster closeButton className="h-20 " theme="light" />
+            <Toaster closeButton className="h-20" theme="light" />
           </SidebarProvider>
         </NextAuthProvider>
       </body>

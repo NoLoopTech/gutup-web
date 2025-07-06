@@ -186,8 +186,6 @@ export default function MoodsPage({ token }: { token: string }): JSX.Element {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
             <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem>Make a copy</DropdownMenuItem>
-            <DropdownMenuItem>Favorite</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )

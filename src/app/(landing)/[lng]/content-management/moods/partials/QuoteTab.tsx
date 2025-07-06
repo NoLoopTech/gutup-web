@@ -59,7 +59,12 @@ export default function QuoteTab({
   isLoading: boolean
 }): JSX.Element {
   const { translateText } = useTranslation()
-  const { activeLang, translationsData, setTranslationField } = useMoodStore()
+  const {
+    activeLang,
+    translationsData,
+    setTranslationField,
+    resetTranslations
+  } = useMoodStore()
   const [isTranslating, setIsTranslating] = useState(false)
 
   // Schema
@@ -143,8 +148,12 @@ export default function QuoteTab({
     addQuoteMood()
   }
 
-  const handleResetForm = () => {
+  const handleResetForm = async () => {
     form.reset(translationsData.quoteData[activeLang])
+    // clear store and session
+    await resetTranslations()
+    sessionStorage.removeItem("mood-storage")
+
     onClose()
   }
 

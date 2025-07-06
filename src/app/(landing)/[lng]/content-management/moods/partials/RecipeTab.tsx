@@ -57,7 +57,12 @@ export default function RecipeTab({
   addRecipeMood: () => void
   isLoading: boolean
 }): JSX.Element {
-  const { activeLang, translationsData, setTranslationField } = useMoodStore()
+  const {
+    activeLang,
+    translationsData,
+    setTranslationField,
+    resetTranslations
+  } = useMoodStore()
   const { translateText } = useTranslation()
   const [isTranslating, setIsTranslating] = useState(false)
 
@@ -125,8 +130,12 @@ export default function RecipeTab({
     }
   }
 
-  const handleResetForm = () => {
+  const handleResetForm = async () => {
     form.reset(translationsData.recipeData[activeLang])
+    // clear store and session
+    await resetTranslations()
+    sessionStorage.removeItem("mood-storage")
+
     onClose()
   }
 

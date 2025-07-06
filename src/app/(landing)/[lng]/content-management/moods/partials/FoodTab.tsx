@@ -69,7 +69,12 @@ export default function FoodTab({
   addFoodMood: () => void
   isLoading: boolean
 }): JSX.Element {
-  const { activeLang, translationsData, setTranslationField } = useMoodStore()
+  const {
+    activeLang,
+    translationsData,
+    setTranslationField,
+    resetTranslations
+  } = useMoodStore()
   const { translateText } = useTranslation()
   const [isTranslating, setIsTranslating] = useState(false)
 
@@ -157,8 +162,12 @@ export default function FoodTab({
     }
   }
 
-  const handleReset = () => {
+  const handleReset = async () => {
     form.reset(translationsData.foodData[activeLang])
+    // clear store and session
+    await resetTranslations()
+    sessionStorage.removeItem("mood-storage")
+
     onClose()
   }
 
