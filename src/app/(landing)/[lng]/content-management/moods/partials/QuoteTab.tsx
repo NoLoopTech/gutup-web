@@ -36,14 +36,16 @@ interface Option {
 // Mood options per language
 const moodOptions: Record<string, Option[]> = {
   en: [
+    { value: "very happy", label: "Very Happy" },
     { value: "happy", label: "Happy" },
     { value: "angry", label: "Angry" },
     { value: "sad", label: "Sad" }
   ],
   fr: [
-    { value: "heureuse", label: "Heureuse" },
-    { value: "en colère", label: "En colère" },
-    { value: "triste", label: "Triste" }
+    { value: "very happy", label: "Très heureux" },
+    { value: "happy", label: "Heureuse" },
+    { value: "angry", label: "En colère" },
+    { value: "sad", label: "Triste" }
   ]
 }
 
