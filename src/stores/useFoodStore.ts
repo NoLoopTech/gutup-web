@@ -12,7 +12,8 @@ interface FoodFields {
   fat: string
   sugar: string
   benefits: string[]
-  image: File | null
+  image: string | null
+  imageName: string | null
   category: string
   season: string
   country: string
@@ -54,6 +55,7 @@ const emptyFields: FoodFields = {
   sugar: "",
   benefits: [],
   image: null,
+  imageName: null,
   category: "",
   season: "",
   country: "",
