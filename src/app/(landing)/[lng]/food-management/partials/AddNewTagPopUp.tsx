@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { AddNewTag } from "@/app/api/foods"
+import { AddNewTag } from "@/app/api/tags"
 import {
   Form,
   FormField,

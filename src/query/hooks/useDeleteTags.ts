@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { deleteTagById as deleteTagAPI } from "@/app/api/foods"
+import { deleteTagById as deleteTagAPI } from "@/app/api/tags"
 import { error } from "console"
 import { toast } from "sonner"
 

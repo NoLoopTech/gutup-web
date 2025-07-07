@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { getAllTags as fetchTagsAPI } from "@/app/api/foods"
+import { getAllTags as fetchTagsAPI } from "@/app/api/tags"
 
 interface TypesOfFoodsDataType {
   category: string

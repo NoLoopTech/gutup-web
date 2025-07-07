@@ -37,6 +37,7 @@ import { useTranslation } from "@/query/hooks/useTranslation"
 import { getAllFoods } from "@/app/api/foods"
 import { Trash } from "lucide-react"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
+import { getAllTags } from "@/app/api/tags"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -45,7 +46,8 @@ const RichTextEditor = dynamic(
 
 interface Food {
   id: number | string
-  name: string
+  name?: string
+  tagName?: string
 }
 
 interface Option {
@@ -102,6 +104,7 @@ export default function AddStorePopUpContent({
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [, setIsPremium] = React.useState(false)
   const [foods, setFoods] = useState<Food[]>([])
+  const [categoryTags, setCategoryTags] = useState<Food[]>([])
   const [availData, setAvailData] = useState<AvailableItem[]>([])
   const [selected, setSelected] = useState<Food | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -175,6 +178,24 @@ export default function AddStorePopUpContent({
       }
     }
     void fetchFoods()
+  }, [token])
+
+  useEffect(() => {
+    const fetchTags = async (): Promise<void> => {
+      try {
+        const res = await getAllTags(token, "Type")
+        if (res && res.status === 200 && Array.isArray(res.data)) {
+          setCategoryTags(res.data)
+        } else {
+          setCategoryTags([])
+          console.error("Failed to fetch tags or tags not an array:", res)
+        }
+      } catch (err) {
+        setCategoryTags([])
+        console.error("Error fetching tags:", err)
+      }
+    }
+    void fetchTags()
   }, [token])
 
   // Form hook
@@ -1007,7 +1028,10 @@ export default function AddStorePopUpContent({
                   <SearchBar
                     title={translations.selectAvailableIngredients}
                     placeholder={translations.searchForIngredients}
-                    dataList={foods.map(f => ({ id: f.id, name: f.name }))}
+                    dataList={foods.map(f => ({
+                      id: f.id,
+                      name: f.name ?? ""
+                    }))}
                     value={ingredientInput}
                     onInputChange={setIngredientInput}
                     onSelect={item => {
@@ -1028,10 +1052,9 @@ export default function AddStorePopUpContent({
                   <SearchBar
                     title={translations.selectAvailableCategories}
                     placeholder={translations.searchAvailableCategories}
-                    dataList={categoryOptions[activeLang].map(o => ({
-                      // used category options till api
-                      id: o.value,
-                      name: o.label
+                    dataList={categoryTags.map(tag => ({
+                      id: tag.id,
+                      name: tag.tagName ?? ""
                     }))}
                     value={categoryInput}
                     onInputChange={setCategoryInput}
