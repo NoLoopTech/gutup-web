@@ -54,12 +54,14 @@ export default function RecipeTab({
   translations,
   onClose,
   addRecipeMood,
-  isLoading
+  isLoading,
+  userName
 }: {
   translations: translationsTypes
   onClose: () => void
   addRecipeMood: () => void
   isLoading: boolean
+  userName: string
 }): JSX.Element {
   const {
     activeLang,
@@ -141,8 +143,11 @@ export default function RecipeTab({
     if (file) {
       try {
         setIsTranslating(true)
-        const imageUrl = await uploadImageToFirebase(file, "moods/recipe-tab")
-
+        const imageUrl = await uploadImageToFirebase(
+          file,
+          "moods/temp-recipe-tab",
+          `temp-recipe-mood-image-${userName}`
+        )
         form.setValue("image", imageUrl, {
           shouldValidate: true,
           shouldDirty: true

@@ -28,12 +28,14 @@ export default function AddMoodPopUp({
   translations,
   onClose,
   addMood,
-  isLoading
+  isLoading,
+  userName
 }: {
   translations: translationsTypes
   onClose: () => void
   addMood: () => void
   isLoading: boolean
+  userName: string
 }): JSX.Element {
   const { activeTab, setActiveTab } = useMoodStore()
 
@@ -81,6 +83,7 @@ export default function AddMoodPopUp({
             onClose={onClose}
             addFoodMood={addMood}
             isLoading={isLoading}
+            userName={userName}
           />
         )}
         {activeTab === "Recipe" && (
@@ -89,6 +92,7 @@ export default function AddMoodPopUp({
             onClose={onClose}
             addRecipeMood={addMood}
             isLoading={isLoading}
+            userName={userName}
           />
         )}
       </div>

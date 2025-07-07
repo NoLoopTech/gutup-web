@@ -67,12 +67,14 @@ export default function FoodTab({
   translations,
   onClose,
   addFoodMood,
-  isLoading
+  isLoading,
+  userName
 }: {
   translations: translationsTypes
   onClose: () => void
   addFoodMood: () => void
   isLoading: boolean
+  userName: string
 }): JSX.Element {
   const {
     activeLang,
@@ -131,7 +133,11 @@ export default function FoodTab({
     if (file) {
       try {
         setIsTranslating(true)
-        const imageUrl = await uploadImageToFirebase(file, "moods/food-tab")
+        const imageUrl = await uploadImageToFirebase(
+          file,
+          "moods/temp-food-tab",
+          `temp-food-mood-image-${userName}`
+        )
 
         form.setValue("image", imageUrl, {
           shouldValidate: true,

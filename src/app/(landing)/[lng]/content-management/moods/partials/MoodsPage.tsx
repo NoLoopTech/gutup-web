@@ -16,6 +16,7 @@ import { AddNewMood, getAllMoods } from "@/app/api/mood"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { AddMoodRequestBody } from "@/types/moodsTypes"
 import { toast } from "sonner"
+import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -33,7 +34,13 @@ interface MoodsDataType {
   status: string
 }
 
-export default function MoodsPage({ token }: { token: string }): JSX.Element {
+export default function MoodsPage({
+  token,
+  userName
+}: {
+  token: string
+  userName: string
+}): JSX.Element {
   const [isOpenAddMood, setIsOpenAddMood] = useState<boolean>(false)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -45,6 +52,7 @@ export default function MoodsPage({ token }: { token: string }): JSX.Element {
     activeLang,
     translationsData,
     activeTab,
+    setTranslationField,
     resetTranslations
   } = useMoodStore()
 
@@ -91,16 +99,65 @@ export default function MoodsPage({ token }: { token: string }): JSX.Element {
     }
   }
 
-  const handleAddMood = async () => {
-    const requestBody: AddMoodRequestBody = {
-      allowMultiLang,
-      activeLang,
-      activeTab,
-      translationsData
+  const uploadMoodImageAndSetUrl = async () => {
+    let imageFile: string | File | undefined = undefined
+
+    if (activeTab === "Food") {
+      imageFile = translationsData.foodData[activeLang].image
+    } else if (activeTab === "Recipe") {
+      imageFile = translationsData.recipeData[activeLang].image
     }
+
+    if (!imageFile) return
+
+    const folder = activeTab === "Food" ? "moods/food-tab" : "moods/recipe-tab"
+    const fileNamePrefix = activeTab === "Food" ? "food-image" : "recipe-image"
+    const fileName = `${fileNamePrefix}-${Date.now()}`
+
+    let fileToUpload: File | Blob
+
+    if (typeof imageFile === "string") {
+      // Convert data URL or blob URL to Blob
+      try {
+        const blob = await fetch(imageFile).then(res => res.blob())
+        fileToUpload = blob
+      } catch (err) {
+        console.error("Failed to convert string to Blob", err)
+        return
+      }
+    } else {
+      fileToUpload = imageFile
+    }
+
+    const uploadedUrl = await uploadImageToFirebase(
+      fileToUpload,
+      folder,
+      fileName
+    )
+
+    if (activeTab === "Food") {
+      setTranslationField("foodData", activeLang, "image", uploadedUrl)
+    } else if (activeTab === "Recipe") {
+      setTranslationField("recipeData", activeLang, "image", uploadedUrl)
+    }
+  }
+
+  const handleAddMood = async () => {
     try {
       setIsLoading(true)
+
+      // Upload and update image URL first
+      await uploadMoodImageAndSetUrl()
+
+      const requestBody: AddMoodRequestBody = {
+        allowMultiLang,
+        activeLang,
+        activeTab,
+        translationsData
+      }
+
       const response = await AddNewMood(token, requestBody)
+
       if (response.status === 200 || response.status === 201) {
         toast.success("Mood added successfully")
         setIsOpenAddMood(false)
@@ -231,6 +288,7 @@ export default function MoodsPage({ token }: { token: string }): JSX.Element {
         onClose={handleCloseAddMood}
         addMood={handleAddMood}
         isLoading={isLoading}
+        userName={userName}
       />
     </div>
   )

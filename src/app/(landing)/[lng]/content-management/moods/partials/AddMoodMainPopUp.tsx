@@ -15,13 +15,15 @@ interface Props {
   onClose: () => void
   addMood: () => void
   isLoading: boolean
+  userName: string
 }
 
 export default function AddMoodMainPopUp({
   open,
   onClose,
   addMood,
-  isLoading
+  isLoading,
+  userName
 }: Props): JSX.Element {
   const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
     useMoodStore()
@@ -91,6 +93,7 @@ export default function AddMoodMainPopUp({
                 onClose={onClose}
                 addMood={addMood}
                 isLoading={isLoading}
+                userName={userName}
               />
             </TabsContent>
           </Tabs>
