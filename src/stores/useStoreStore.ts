@@ -19,8 +19,9 @@ interface StoreField {
   facebook: string
   instagram: string
   about: string
-  availData: string[]
-  storeImage: File | null
+  availData: any[] // Changed from string[] to any[] to match AvailableItem[]
+  storeImage: string | null // Store as base64 string or Firebase URL
+  storeImageName: string | null // Store the original file name
 }
 
 interface LangData<T> {
@@ -40,7 +41,7 @@ interface StoreStoreState {
     section: "storeData",
     lang: "en" | "fr",
     field: keyof StoreField,
-    value: string | string[]
+    value: string | string[] | null
   ) => void
 
   resetForm: () => void
@@ -63,7 +64,8 @@ const emptyFields: StoreField = {
   instagram: "",
   about: "",
   availData: [],
-  storeImage: null
+  storeImage: null,
+  storeImageName: null
 }
 
 export const useStoreStore = create<StoreStoreState>()(

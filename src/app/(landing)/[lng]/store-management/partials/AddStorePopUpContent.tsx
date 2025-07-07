@@ -36,12 +36,13 @@ import { useStoreStore } from "@/stores/useStoreStore"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { getAllFoods } from "@/app/api/foods"
 import { Trash } from "lucide-react"
+import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
   { ssr: false }
 )
-// Define Food type if not imported from elsewhere
+
 interface Food {
   id: number | string
   name: string
@@ -106,6 +107,7 @@ export default function AddStorePopUpContent({
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [ingredientInput, setIngredientInput] = useState<string>("")
   const [categoryInput, setCategoryInput] = useState<string>("")
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
 
   // Validation schema using Zod
   const AddStoreSchema = z.object({
@@ -159,9 +161,7 @@ export default function AddStorePopUpContent({
     availData: z
       .array(z.any())
       .min(1, translations.atleastoneingredientcategorymustbeadded),
-    storeImage: z.custom<File | null>(val => val instanceof File, {
-      message: translations.required
-    })
+    storeImage: z.string().min(1, translations.required)
   })
 
   // fetch once on mount
@@ -182,14 +182,41 @@ export default function AddStorePopUpContent({
     resolver: zodResolver(AddStoreSchema),
     defaultValues: {
       ...storeData[activeLang],
-      category: storeData[activeLang]?.category || ""
+      category: storeData[activeLang]?.category || "",
+      storeImage: storeData[activeLang]?.storeImage || ""
     }
   })
 
   // Update form when lang changes
   React.useEffect(() => {
-    form.reset(storeData[activeLang])
-  }, [activeLang, form.reset, storeData])
+    const currentStoreData = storeData[activeLang]
+    const recreatePreview = async (): Promise<void> => {
+      if (currentStoreData?.storeImage) {
+        try {
+          if (currentStoreData.storeImage.startsWith("data:")) {
+            const response = await fetch(currentStoreData.storeImage)
+            const blob = await response.blob()
+            const previewUrl = URL.createObjectURL(blob)
+            setImagePreviewUrls([previewUrl])
+          } else {
+            setImagePreviewUrls([currentStoreData.storeImage])
+          }
+        } catch (error) {
+          console.error("Error creating preview from base64:", error)
+          setImagePreviewUrls([])
+        }
+      } else {
+        setImagePreviewUrls([])
+      }
+    }
+
+    form.reset({
+      ...currentStoreData,
+      storeImage: currentStoreData?.storeImage || ""
+    })
+
+    void recreatePreview()
+  }, [activeLang, form, storeData])
 
   // Input change handler for fields that need translation
   const handleInputChange = (
@@ -502,14 +529,52 @@ export default function AddStorePopUpContent({
     setCategoryInput("")
   }
 
-  const handleImageUpload = (field: any) => (files: File[] | null) => {
-    const file = files && files.length > 0 ? files[0] : null
-    field.onChange(file)
-    setTranslationField("storeData", activeLang, "storeImage", file)
-    const opp = activeLang === "en" ? "fr" : "en"
-    setTranslationField("storeData", opp, "storeImage", file)
-    form.setValue("storeImage", file)
+  const handleImageSelect = async (files: File[] | null): Promise<void> => {
+    const file = files?.[0] ?? null
+    if (file) {
+      try {
+        setIsTranslating(true)
+
+        // Upload image to Firebase
+        const imageUrl = await uploadImageToFirebase(file, "add-store")
+
+        // Convert file to base64 for session storage
+        const reader = new FileReader()
+        reader.onload = () => {
+          const base64String = reader.result as string
+
+          // Update form with the Firebase URL
+          form.setValue("storeImage", imageUrl, {
+            shouldValidate: true,
+            shouldDirty: true
+          })
+
+          // Store in session storage for both languages with base64 and filename
+          setTranslationField("storeData", "en", "storeImage", base64String)
+          setTranslationField("storeData", "fr", "storeImage", base64String)
+          setTranslationField("storeData", "en", "storeImageName", file.name)
+          setTranslationField("storeData", "fr", "storeImageName", file.name)
+
+          setImagePreviewUrls([imageUrl])
+        }
+        reader.readAsDataURL(file)
+      } catch (error) {
+        toast.error("Image upload failed. Please try again.")
+        console.error("Firebase upload error:", error)
+      } finally {
+        setIsTranslating(false)
+      }
+    } else {
+      // Handle file removal
+      form.setValue("storeImage", "")
+      setTranslationField("storeData", "en", "storeImage", null)
+      setTranslationField("storeData", "fr", "storeImage", null)
+      setTranslationField("storeData", "en", "storeImageName", null)
+      setTranslationField("storeData", "fr", "storeImageName", null)
+      setImagePreviewUrls([])
+    }
   }
+
   const handleCancel = (
     form: ReturnType<typeof useForm<z.infer<typeof AddStoreSchema>>>
   ): void => {
@@ -1068,16 +1133,8 @@ export default function AddStorePopUpContent({
                   <FormControl>
                     <ImageUploader
                       title={translations.selectImagesForYourStore}
-                      onChange={handleImageUpload(field)}
-                      previewUrls={
-                        storeData[activeLang].storeImage
-                          ? [
-                              URL.createObjectURL(
-                                storeData[activeLang].storeImage as File
-                              )
-                            ]
-                          : []
-                      }
+                      onChange={handleImageSelect}
+                      previewUrls={imagePreviewUrls}
                     />
                   </FormControl>
                   <FormMessage />
