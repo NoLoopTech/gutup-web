@@ -8,13 +8,11 @@ interface StoreField {
   category: string
   storeLocation: string
   storeType: string
-  shoplocation: string
   subscriptionType: boolean
   timeFrom: string
   timeTo: string
   phone: string
   email: string
-  mapsPin: string
   website: string
   facebook: string
   instagram: string
@@ -52,13 +50,11 @@ const emptyFields: StoreField = {
   category: "",
   storeLocation: "",
   storeType: "",
-  shoplocation: "",
   subscriptionType: false,
   timeFrom: "",
   timeTo: "",
   phone: "",
   email: "",
-  mapsPin: "",
   website: "",
   facebook: "",
   instagram: "",

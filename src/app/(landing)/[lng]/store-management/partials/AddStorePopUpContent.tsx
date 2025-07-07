@@ -121,7 +121,6 @@ export default function AddStorePopUpContent({
     category: z.string().min(1, translations.pleaseselectacategory),
     storeLocation: z.string().min(1, translations.required),
     storeType: z.string().min(1, translations.pleaseselectaStoreType),
-    shoplocation: z.string().min(1, translations.required),
     subscriptionType: z.boolean().optional(),
     timeFrom: z.string().min(1, translations.required),
     timeTo: z.string().min(1, translations.required),
@@ -135,7 +134,6 @@ export default function AddStorePopUpContent({
       .string()
       .nonempty(translations.required)
       .email(translations.pleaseenteravalidemail),
-    mapsPin: z.string().nonempty(translations.required),
     website: z
       .string()
       .url(translations.invalidurlformat)
@@ -244,10 +242,8 @@ export default function AddStorePopUpContent({
     fieldName:
       | "storeName"
       | "storeLocation"
-      | "shoplocation"
       | "phone"
       | "email"
-      | "mapsPin"
       | "website"
       | "facebook"
       | "instagram",
@@ -262,10 +258,8 @@ export default function AddStorePopUpContent({
     fieldName:
       | "storeName"
       | "storeLocation"
-      | "shoplocation"
       | "phone"
       | "email"
-      | "mapsPin"
       | "website"
       | "facebook"
       | "instagram",
@@ -738,58 +732,7 @@ export default function AddStorePopUpContent({
                 )}
               />
             </div>
-            <div>
-              <FormField
-                control={form.control}
-                name="shoplocation"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel className="block mb-1 text-black">
-                      {translations.storeMapLocation}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={translations.enterMapLocation}
-                        {...field}
-                        onChange={e => {
-                          handleInputChange("shoplocation", e.target.value)
-                        }}
-                        onBlur={async () => {
-                          await handleInputBlur("shoplocation", field.value)
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
 
-            <div>
-              <Label className="text-black mb-1 block">
-                {translations.subscription}
-              </Label>
-              <FormField
-                control={form.control}
-                name="subscriptionType"
-                render={({ field }) => (
-                  <div className="flex items-center gap-4 mt-2">
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={value => {
-                        field.onChange(value)
-                        handleSubscriptionToggle(value)
-                      }}
-                    />
-                    <Label className="text-Primary-300">
-                      {field.value
-                        ? translations.premium
-                        : translations.freemium}
-                    </Label>
-                  </div>
-                )}
-              />
-            </div>
             <div className="flex flex-col gap-1">
               <Label>{translations.time}</Label>
               <div className="flex gap-7 items-center">
@@ -813,7 +756,7 @@ export default function AddStorePopUpContent({
                                 "timeFrom"
                               )(e.target.value)
                             }}
-                            className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                            className="h-6 bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                           />
                         </FormControl>
                         <FormMessage />
@@ -838,7 +781,7 @@ export default function AddStorePopUpContent({
                             onChange={e => {
                               handleTimeChange(field, "timeTo")(e.target.value)
                             }}
-                            className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                            className=" h-6 bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                           />
                         </FormControl>
                         <FormMessage />
@@ -847,6 +790,32 @@ export default function AddStorePopUpContent({
                   />
                 </div>
               </div>
+            </div>
+            <div></div>
+            <div>
+              <Label className="text-black mb-1 block">
+                {translations.subscription}
+              </Label>
+              <FormField
+                control={form.control}
+                name="subscriptionType"
+                render={({ field }) => (
+                  <div className="flex items-center gap-4 mt-2">
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={value => {
+                        field.onChange(value)
+                        handleSubscriptionToggle(value)
+                      }}
+                    />
+                    <Label className="text-Primary-300">
+                      {field.value
+                        ? translations.premium
+                        : translations.freemium}
+                    </Label>
+                  </div>
+                )}
+              />
             </div>
           </div>
 
@@ -901,32 +870,6 @@ export default function AddStorePopUpContent({
                         }}
                         onBlur={async () => {
                           await handleInputBlur("email", field.value)
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div>
-              <FormField
-                control={form.control}
-                name="mapsPin"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel className="block mb-1 text-black">
-                      {translations.mapsPin}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={translations.enterGoogleMapsLocation}
-                        {...field}
-                        onChange={e => {
-                          handleInputChange("mapsPin", e.target.value)
-                        }}
-                        onBlur={async () => {
-                          await handleInputBlur("mapsPin", field.value)
                         }}
                       />
                     </FormControl>
