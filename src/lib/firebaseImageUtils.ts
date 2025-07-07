@@ -8,11 +8,18 @@ import {
 import { storage } from "@/lib/firebase"
 
 // Uploads a file to Firebase Storage and returns the download URL.
+// firebaseImageUtils.ts
 export const uploadImageToFirebase = async (
-  file: File,
-  folder: string
+  file: File | Blob | string,
+  folder: string,
+  fileName: string
 ): Promise<string> => {
-  const storageRef = ref(storage, `${folder}/${Date.now()}-${file.name}`)
+  if (typeof file === "string") {
+    // Already uploaded
+    return file
+  }
+
+  const storageRef = ref(storage, `${folder}/${fileName}`)
   await uploadBytes(storageRef, file)
   return await getDownloadURL(storageRef)
 }

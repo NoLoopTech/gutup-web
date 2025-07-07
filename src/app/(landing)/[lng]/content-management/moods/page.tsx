@@ -10,5 +10,5 @@ export default async function Moods(): Promise<any> {
     redirect("/login")
   }
 
-  return <MoodsPage token={session.apiToken} />
+  return <MoodsPage token={session.apiToken} userName={session.user.name} />
 }

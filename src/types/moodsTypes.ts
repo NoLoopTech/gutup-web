@@ -28,6 +28,7 @@ export interface translationsTypes {
   bakery: string
   dairy: string
   produce: string
+  selectImagesForYourFoodItem: string
 
   required: string
   pleaseSelectAMood: string
@@ -54,6 +55,7 @@ export const defaultTranslations: translationsTypes = {
   quoteAuthor: "",
   enterQuoteQuthor: "",
   addTheQuoteHereInDetails: "",
+  selectImagesForYourFoodItem: "",
   save: "",
   cancel: "",
   foodName: "",

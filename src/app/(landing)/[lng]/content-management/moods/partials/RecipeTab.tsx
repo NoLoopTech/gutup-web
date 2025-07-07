@@ -26,6 +26,9 @@ import {
 import { type translationsTypes } from "@/types/moodsTypes"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { useTranslation } from "@/query/hooks/useTranslation"
+import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
+import { toast } from "sonner"
+import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 
 interface Option {
   value: string
@@ -35,31 +38,40 @@ interface Option {
 // Mood options per language
 const moodOptions: Record<string, Option[]> = {
   en: [
+    { value: "very happy", label: "Very Happy" },
     { value: "happy", label: "Happy" },
     { value: "angry", label: "Angry" },
     { value: "sad", label: "Sad" }
   ],
   fr: [
-    { value: "heureuse", label: "Heureuse" },
-    { value: "en colère", label: "En colère" },
-    { value: "triste", label: "Triste" }
+    { value: "very happy", label: "Très heureux" },
+    { value: "happy", label: "Heureuse" },
+    { value: "angry", label: "En colère" },
+    { value: "sad", label: "Triste" }
   ]
 }
-
 export default function RecipeTab({
   translations,
   onClose,
   addRecipeMood,
-  isLoading
+  isLoading,
+  userName
 }: {
   translations: translationsTypes
   onClose: () => void
   addRecipeMood: () => void
   isLoading: boolean
+  userName: string
 }): JSX.Element {
-  const { activeLang, translationsData, setTranslationField } = useMoodStore()
+  const {
+    activeLang,
+    translationsData,
+    setTranslationField,
+    resetTranslations
+  } = useMoodStore()
   const { translateText } = useTranslation()
   const [isTranslating, setIsTranslating] = useState(false)
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
 
   const FormSchema = z.object({
     mood: z.string().nonempty(translations.pleaseSelectAMood),
@@ -70,7 +82,8 @@ export default function RecipeTab({
     description: z
       .string()
       .nonempty(translations.required)
-      .min(10, translations.descriptionMustBeAtLeast10Characters)
+      .min(10, translations.descriptionMustBeAtLeast10Characters),
+    image: z.string().nonempty(translations.required)
   })
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -125,8 +138,39 @@ export default function RecipeTab({
     }
   }
 
-  const handleResetForm = () => {
+  const handleImageSelect = async (files: File[] | null) => {
+    const file = files?.[0] ?? null
+    if (file) {
+      try {
+        setIsTranslating(true)
+        const imageUrl = await uploadImageToFirebase(
+          file,
+          "moods/temp-recipe-tab",
+          `temp-recipe-mood-image-${userName}`
+        )
+        form.setValue("image", imageUrl, {
+          shouldValidate: true,
+          shouldDirty: true
+        })
+        setTranslationField("recipeData", "en", "image", imageUrl)
+        setTranslationField("recipeData", "fr", "image", imageUrl)
+
+        setPreviewUrls([imageUrl]) // For single image preview
+      } catch (error) {
+        toast.error("Image upload failed. Please try again.")
+        console.error("Firebase upload error:", error)
+      } finally {
+        setIsTranslating(false)
+      }
+    }
+  }
+
+  const handleResetForm = async () => {
     form.reset(translationsData.recipeData[activeLang])
+    // clear store and session
+    await resetTranslations()
+    sessionStorage.removeItem("mood-storage")
+
     onClose()
   }
 
@@ -218,6 +262,26 @@ export default function RecipeTab({
               </FormItem>
             )}
           />
+
+          {/* Image Uploader */}
+          <div className="pb-8 w-full">
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <ImageUploader
+                      title={translations.selectImagesForYourFoodItem}
+                      previewUrls={previewUrls ? previewUrls : []}
+                      onChange={handleImageSelect}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           {/* Actions */}
           <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
