@@ -92,10 +92,12 @@ const storeTypeOptions: Record<string, Option[]> = {
 
 export default function AddStorePopUpContent({
   translations,
-  token
+  onAddStore,
+  isLoading
 }: {
   translations: translationsTypes
-  token: string
+  onAddStore?: () => Promise<void>
+  isLoading?: boolean
 }): JSX.Element {
   const { translateText } = useTranslation()
   const { activeLang, storeData, setTranslationField } = useStoreStore() as any
@@ -164,6 +166,10 @@ export default function AddStorePopUpContent({
       .min(1, translations.atleastoneingredientcategorymustbeadded),
     storeImage: z.string().min(1, translations.required)
   })
+
+  // Retrieve token
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : ""
 
   // fetch once on mount
   useEffect(() => {
@@ -301,7 +307,6 @@ export default function AddStorePopUpContent({
     value: string
   ): void => {
     form.setValue(fieldName, value)
-    setTranslationField("storeData", activeLang, fieldName, value)
 
     // Get the correct options set
     let optionsMap: Record<string, Option[]>
@@ -312,14 +317,15 @@ export default function AddStorePopUpContent({
     const oppositeLang = activeLang === "en" ? "fr" : "en"
     const opposite = optionsMap[oppositeLang]
 
+    // Find the selected option in current language
     const index = current.findIndex(opt => opt.value === value)
+
     if (index !== -1 && opposite[index]) {
-      setTranslationField(
-        "storeData",
-        oppositeLang,
-        fieldName,
-        opposite[index].value
-      )
+      // Store the value for current language
+      setTranslationField("storeData", activeLang, fieldName, value)
+
+      // Store the same value for opposite language (since value is same across languages)
+      setTranslationField("storeData", oppositeLang, fieldName, value)
     }
   }
 
@@ -551,7 +557,11 @@ export default function AddStorePopUpContent({
         setIsTranslating(true)
 
         // Upload image to Firebase
-        const imageUrl = await uploadImageToFirebase(file, "add-store")
+        const imageUrl = await uploadImageToFirebase(
+          file,
+          "add-store",
+          file.name
+        )
 
         // Convert file to base64 for session storage
         const reader = new FileReader()
@@ -595,8 +605,14 @@ export default function AddStorePopUpContent({
   ): void => {
     form.reset()
   }
-  const onSubmit = (data: z.infer<typeof AddStoreSchema>): void => {
-    toast(translations.formSubmittedSuccessfully, {})
+  const onSubmit = async (
+    data: z.infer<typeof AddStoreSchema>
+  ): Promise<void> => {
+    if (onAddStore) {
+      await onAddStore()
+    } else {
+      toast(translations.formSubmittedSuccessfully, {})
+    }
   }
 
   return (
@@ -848,6 +864,10 @@ export default function AddStorePopUpContent({
                       />
                     </FormControl>
                     <FormMessage />
+                    {/* Add a small informational note */}
+                    <div className="text-xs text-gray-500 mt-1">
+                      {translations.required}
+                    </div>
                   </FormItem>
                 )}
               />
@@ -874,6 +894,10 @@ export default function AddStorePopUpContent({
                       />
                     </FormControl>
                     <FormMessage />
+                    {/* Add a small informational note */}
+                    <div className="text-xs text-gray-500 mt-1">
+                      {translations.required}
+                    </div>
                   </FormItem>
                 )}
               />
@@ -1121,7 +1145,9 @@ export default function AddStorePopUpContent({
             >
               {translations.cancel}
             </Button>
-            <Button type="submit">{translations.save}</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Saving..." : translations.save}
+            </Button>
           </div>
         </DialogFooter>
       </form>

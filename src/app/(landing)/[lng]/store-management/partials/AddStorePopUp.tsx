@@ -13,9 +13,16 @@ import { useStoreStore } from "@/stores/useStoreStore"
 interface Props {
   open: boolean
   onClose: () => void
+  onAddStore?: () => Promise<void>
+  isLoading?: boolean
 }
 
-export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
+export default function AddStorePopUp({
+  open,
+  onClose,
+  onAddStore,
+  isLoading
+}: Props): JSX.Element {
   const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
     useStoreStore()
 
@@ -35,7 +42,7 @@ export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
   // Language toggle handler
   const handleLanguageToggle = (val: boolean): void => {
     setAllowMultiLang(val)
-    if (!val) setActiveLang("en") // Default to English if multi-lang is disabled
+    if (!val) setActiveLang("en")
   }
 
   return (
@@ -84,7 +91,14 @@ export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
             {/* English Tab Content */}
             <TabsContent value="en">
               <AddStorePopUpContent
-                translations={{ ...defaultTranslations, ...translations }}
+                translations={{
+                  ...defaultTranslations,
+                  ...Object.fromEntries(
+                    Object.entries(translations).map(([k, v]) => [k, v ?? ""])
+                  )
+                }}
+                onAddStore={onAddStore}
+                isLoading={isLoading}
               />
             </TabsContent>
 
@@ -92,7 +106,14 @@ export default function AddStorePopUp({ open, onClose }: Props): JSX.Element {
             {allowMultiLang && (
               <TabsContent value="fr">
                 <AddStorePopUpContent
-                  translations={{ ...defaultTranslations, ...translations }}
+                  translations={{
+                    ...defaultTranslations,
+                    ...Object.fromEntries(
+                      Object.entries(translations).map(([k, v]) => [k, v ?? ""])
+                    )
+                  }}
+                  onAddStore={onAddStore}
+                  isLoading={isLoading}
                 />
               </TabsContent>
             )}

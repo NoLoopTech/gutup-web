@@ -17,12 +17,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical, Store } from "lucide-react"
+import { MoreVertical } from "lucide-react"
 import { useState, useEffect, useMemo } from "react"
-import { getAllStores } from "@/app/api/store"
+import { AddNewStore, getAllStores } from "@/app/api/store"
 import { Badge } from "@/components/ui/badge"
 import AddStorePopUp from "./AddStorePopUp"
 import { Label } from "@/components/ui/label"
+import { useStoreStore } from "@/stores/useStoreStore"
+import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
+import {
+  transformStoreDataToApiRequest,
+  type translationsTypes,
+  defaultTranslations
+} from "@/types/storeTypes"
+import { toast } from "sonner"
+import { loadLanguage } from "@/../../src/i18n/locales"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -37,6 +46,7 @@ interface StoreManagementDataType {
   storeLocation: string
   storeType: string
   phoneNumber: string
+  email: string
   shopStatus: boolean
   ingredients: string
   subscriptionType: string
@@ -59,6 +69,28 @@ export default function StoreManagementPage({
   const [searchText, setSearchText] = useState<string>("")
   const [selectedLocation, setSelectedLocation] = useState<string>("")
   const [selectedStoreType, setSelectedStoreType] = useState<string>("")
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [translations, setTranslations] =
+    useState<translationsTypes>(defaultTranslations)
+
+  // Get store data from zustand store
+  const {
+    allowMultiLang,
+    activeLang,
+    storeData,
+    setTranslationField,
+    resetForm
+  } = useStoreStore()
+
+  // Load translations based on the current language
+  useEffect(() => {
+    const loadTranslations = async (): Promise<void> => {
+      const langData = await loadLanguage(activeLang, "store")
+      setTranslations(langData)
+    }
+
+    void loadTranslations()
+  }, [activeLang])
 
   // handle open add food popup
   const handleOpenAddStorePopUp = (): void => {
@@ -81,13 +113,30 @@ export default function StoreManagementPage({
   const getStores = async (): Promise<void> => {
     try {
       const response = await getAllStores(token)
-      if (response.status === 200) {
+      console.log("Get stores response:", response)
+
+      // Check if it's an error response
+      if (response?.statusCode === 404) {
+        console.error("Store endpoint not found:", response.message)
+        toast.error(
+          "Store API endpoint not found. Please check your backend configuration."
+        )
+        setStores([])
+        return
+      }
+
+      if (response?.status === 200 && response?.data) {
+        setStores(response.data)
+      } else if (response?.data && Array.isArray(response.data)) {
         setStores(response.data)
       } else {
-        console.warn("No stores found or wrong format:", response)
+        console.warn("No stores found or unexpected format:", response)
+        setStores([])
       }
     } catch (error) {
       console.error("Failed to fetch stores:", error)
+      toast.error("Failed to load stores")
+      setStores([])
     }
   }
 
@@ -95,7 +144,134 @@ export default function StoreManagementPage({
     void getStores()
   }, [])
 
-  const columns: Array<Column<StoreManagementDataType>> = [
+  const uploadStoreImageAndSetUrl = async (): Promise<string | undefined> => {
+    const imageFile: string | File | null | undefined =
+      storeData[activeLang].storeImage
+
+    if (!imageFile) return
+
+    const folder = "stores"
+    const fileNamePrefix = "store-image"
+    const fileName = `${fileNamePrefix}-${Date.now()}`
+
+    let fileToUpload: File | Blob
+
+    if (typeof imageFile === "string") {
+      // Convert data URL or blob URL to Blob
+      try {
+        const blob = await fetch(imageFile).then(async res => await res.blob())
+        fileToUpload = blob
+      } catch (err) {
+        console.error("Failed to convert string to Blob", err)
+        return
+      }
+    } else {
+      fileToUpload = imageFile
+    }
+
+    const uploadedUrl = await uploadImageToFirebase(
+      fileToUpload,
+      folder,
+      fileName
+    )
+
+    // Update the store image URL in the store
+    setTranslationField("storeData", activeLang, "storeImage", uploadedUrl)
+
+    return uploadedUrl
+  }
+
+  const handleAddStore = async (): Promise<void> => {
+    try {
+      setIsLoading(true)
+
+      // Upload image first and wait for it to complete
+      await uploadStoreImageAndSetUrl()
+
+      const requestBody = transformStoreDataToApiRequest(
+        storeData,
+        activeLang,
+        allowMultiLang
+      )
+
+      const existingPhone = stores.some(
+        store => store.phoneNumber === requestBody.phoneNumber
+      )
+      const existingEmail = stores.some(
+        store => store.email === requestBody.email
+      )
+
+      if (existingPhone && existingEmail) {
+        toast.error(translations.phoneEmailAlreadyExists)
+        return
+      } else if (existingPhone) {
+        toast.error(translations.phoneAlreadyExists)
+        return
+      } else if (existingEmail) {
+        toast.error(translations.emailAlreadyExists)
+        return
+      }
+
+      const response = await AddNewStore(token, requestBody)
+
+      if (
+        response?.success === true ||
+        response?.status === 200 ||
+        response?.status === 201 ||
+        response?.data
+      ) {
+        toast.success(
+          translations.formSubmittedSuccessfully || "Store added successfully"
+        )
+        setOpenAddStorePopUp(false)
+        await getStores()
+        resetForm()
+      } else {
+        console.error("Unexpected response structure:", response)
+        toast.error(translations.storeCreationFailed || "Failed to add store")
+      }
+    } catch (error: any) {
+      console.error("Error details:", {
+        message: error.message,
+        status: error?.response?.status,
+        data: error?.response?.data,
+        fullError: error
+      })
+
+      if (error?.response?.status === 409) {
+        const serverMessage = error.response.data?.message?.toLowerCase() || ""
+        let userFriendlyMessage = translations.phoneEmailAlreadyExists
+
+        if (
+          serverMessage.includes("phone") &&
+          serverMessage.includes("email")
+        ) {
+          userFriendlyMessage = translations.phoneEmailAlreadyExists
+        } else if (serverMessage.includes("phone")) {
+          userFriendlyMessage = translations.phoneAlreadyExists
+        } else if (serverMessage.includes("email")) {
+          userFriendlyMessage = translations.emailAlreadyExists
+        }
+
+        toast.error(userFriendlyMessage)
+      } else if (error?.response?.status === 400) {
+        const errorMessage =
+          error.response.data?.message || "Invalid data provided"
+        toast.error(errorMessage)
+      } else if (error?.response?.status === 401) {
+        toast.error("Authentication failed. Please login again.")
+      } else if (error?.response?.status === 500) {
+        toast.error("Server error. Please try again later.")
+      } else {
+        toast.error(translations.storeCreationFailed || "Something went wrong")
+      }
+    } finally {
+      sessionStorage.removeItem("store-store")
+      setIsLoading(false)
+    }
+  }
+
+  const columns: Column<StoreManagementDataType>[] = [
     {
       accessor: "storeName",
       header: "Store Name"
@@ -308,10 +484,12 @@ export default function StoreManagementPage({
         onPageSizeChange={handlePageSizeChange}
       />
 
-      {/* add food popup */}
+      {/* add store popup */}
       <AddStorePopUp
         open={openAddStorePopUp}
         onClose={handleCloseAddStorePopUp}
+        onAddStore={handleAddStore}
+        isLoading={isLoading}
       />
     </div>
   )
