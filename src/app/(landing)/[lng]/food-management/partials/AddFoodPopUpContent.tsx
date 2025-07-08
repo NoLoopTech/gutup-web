@@ -29,6 +29,7 @@ import { toast } from "sonner"
 import { type translationsTypes } from "@/types/foodTypes"
 import { useFoodStore } from "@/stores/useFoodStore"
 import { useTranslation } from "@/query/hooks/useTranslation"
+import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -90,6 +91,7 @@ export default function AddFoodPopUpContent({
   const { translateText } = useTranslation()
   const { activeLang, foodData, setTranslationField } = useFoodStore() as any
   const [isTranslating, setIsTranslating] = useState(false)
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
 
   // Define FoodSchema before using it in useForm
   const FoodSchema = z.object({
@@ -105,9 +107,7 @@ export default function AddFoodPopUpContent({
       .refine(arr => arr.some(item => item.trim().length > 0), {
         message: translations.pleaseenteratleastonebenefit
       }),
-    image: z.custom<File | null>(val => val instanceof File, {
-      message: translations.required
-    }),
+    image: z.string().optional(),
     selection: z.string().refine(
       val => {
         const plainText = val.replace(/<(.|\n)*?>/g, "").trim() // remove all tags
@@ -151,7 +151,8 @@ export default function AddFoodPopUpContent({
     resolver: zodResolver(FoodSchema),
     defaultValues: {
       ...foodData[activeLang],
-      category: foodData[activeLang]?.category || ""
+      category: foodData[activeLang]?.category || "",
+      image: foodData[activeLang]?.storeImage || ""
     }
   })
   // Update form when lang changes
@@ -283,14 +284,82 @@ export default function AddFoodPopUpContent({
       }
     }
   }
-  const handleImageUpload = (field: any) => (files: File[] | null) => {
-    const file = files && files.length > 0 ? files[0] : null
-    field.onChange(file)
-    setTranslationField("foodData", activeLang, "image", file)
-    const opp = activeLang === "en" ? "fr" : "en"
-    setTranslationField("foodData", opp, "image", file)
-    form.setValue("image", file)
+
+  // Update form when lang changes
+  React.useEffect(() => {
+    const currentStoreData = foodData[activeLang]
+    const recreatePreview = async (): Promise<void> => {
+      if (currentStoreData?.storeImage) {
+        try {
+          // Use the Firebase URL directly for preview
+          setImagePreviewUrls([currentStoreData.storeImage])
+        } catch (error) {
+          console.error("Error setting preview:", error)
+          setImagePreviewUrls([])
+        }
+      } else {
+        setImagePreviewUrls([])
+      }
+    }
+
+    form.reset({
+      ...currentStoreData,
+      image: currentStoreData?.storeImage || ""
+    })
+
+    void recreatePreview()
+  }, [activeLang, form, foodData])
+
+  const handleImageSelect = async (files: File[] | null): Promise<void> => {
+    const file = files?.[0] ?? null
+    if (file) {
+      try {
+        setIsTranslating(true)
+
+        // Upload image to Firebase
+        const imageUrl = await uploadImageToFirebase(file, "add-food")
+
+        // Convert file to base64 for session storage
+        const reader = new FileReader()
+        reader.onload = () => {
+          const base64String = reader.result as string
+
+          // Update form with the Firebase URL
+          form.setValue("image", imageUrl, {
+            shouldValidate: true,
+            shouldDirty: true
+          })
+
+          // Store in session storage for both languages with base64 for preview and Firebase URL for form
+          setTranslationField("foodData", "en", "image", base64String)
+          setTranslationField("foodData", "fr", "image", base64String)
+          setTranslationField("foodData", "en", "storeImage", imageUrl)
+          setTranslationField("foodData", "fr", "storeImage", imageUrl)
+          setTranslationField("foodData", "en", "imageName", file.name)
+          setTranslationField("foodData", "fr", "imageName", file.name)
+
+          setImagePreviewUrls([imageUrl])
+        }
+        reader.readAsDataURL(file)
+      } catch (error) {
+        toast.error("Image upload failed. Please try again.")
+        console.error("Firebase upload error:", error)
+      } finally {
+        setIsTranslating(false)
+      }
+    } else {
+      // Handle file removal
+      form.setValue("image", "")
+      setTranslationField("foodData", "en", "image", null)
+      setTranslationField("foodData", "fr", "image", null)
+      setTranslationField("foodData", "en", "storeImage", null)
+      setTranslationField("foodData", "fr", "storeImage", null)
+      setTranslationField("foodData", "en", "imageName", null)
+      setTranslationField("foodData", "fr", "imageName", null)
+      setImagePreviewUrls([])
+    }
   }
+
   // Submit handler
   const onSubmit = (): void => {
     toast(translations.formSubmittedSuccessfully, {})
@@ -766,16 +835,8 @@ export default function AddFoodPopUpContent({
                   <FormControl>
                     <ImageUploader
                       title={translations.selectImagesForYourFoodItem}
-                      onChange={handleImageUpload(field)}
-                      previewUrls={
-                        foodData[activeLang].image
-                          ? [
-                              URL.createObjectURL(
-                                foodData[activeLang].image as File
-                              )
-                            ]
-                          : []
-                      }
+                      onChange={handleImageSelect}
+                      previewUrls={imagePreviewUrls}
                     />
                   </FormControl>
                   <FormMessage />

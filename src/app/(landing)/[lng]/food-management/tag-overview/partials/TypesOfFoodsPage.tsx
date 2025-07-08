@@ -37,6 +37,7 @@ interface Column<T> {
 }
 
 interface TypesOfFoodsDataType {
+  tagName: ReactI18NextChildren | Iterable<ReactI18NextChildren>
   tagId: number
   category: string
   count: string
@@ -119,7 +120,7 @@ export default function TypesOfFoodsPage({
       header: "Tag",
       className: "w-40 capitalize",
       cell: (row: TypesOfFoodsDataType) => (
-        <Badge variant={"outline"}>{row.category}</Badge>
+        <Badge variant={"outline"}>{row.tagName}</Badge>
       )
     },
     {
