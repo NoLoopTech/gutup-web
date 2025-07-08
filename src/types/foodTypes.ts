@@ -102,3 +102,34 @@ export const defaultTranslations: translationsTypes = {
   pleaseenteratleastonebenefit: "",
   formSubmittedSuccessfully: ""
 }
+
+export interface CreateFoodDto {
+  name: string
+  nameFR: string
+  category: string
+  categoryFR: string
+  season: string
+  seasonFR: string
+  country: string
+  seasons?: string[]
+  attributes: {
+    fiber: number
+    proteins: number
+    vitamins: string
+    vitaminsFR: string
+    minerals: string
+    mineralsFR: string
+    fat: number
+    sugar: number
+  }
+  describe: {
+    selection: string
+    selectionFR: string
+    preparation: string
+    preparationFR: string
+    conservation: string
+    conservationFR: string
+  }
+  images: Array<{ image: string }>
+  healthBenefits: Array<{ healthBenefit: string; healthBenefitFR: string }>
+}

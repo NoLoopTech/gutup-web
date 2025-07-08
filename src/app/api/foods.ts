@@ -1,4 +1,5 @@
 import axiosInstance from "@/query/axios.instance"
+import type { CreateFoodDto } from "@/types/foodTypes"
 
 // get all foods
 export const getAllFoods = async (token: string): Promise<any> => {
@@ -45,6 +46,23 @@ export const getAllFoodsList = async (token: string): Promise<any> => {
     const response = await axiosInstance.get("/food/foodlist", {
       headers: { Authorization: `Bearer ${token}` }
     })
+    return response
+  } catch (error) {
+    return error
+  }
+}
+
+// post new food
+export const postNewFood = async (
+  token: string,
+  data: CreateFoodDto
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.post("/food", data, {
+      headers: { Authorization: `Bearer ${token}` }
+      
+    })
+    console.log("Token being sent:", token)
     return response
   } catch (error) {
     return error

@@ -1,11 +1,18 @@
 "use client"
 
-import React, { useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
+import { postNewFood } from "@/app/api/foods"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
-import dynamic from "next/dynamic"
 import LableInput from "@/components/Shared/LableInput/LableInput"
+import { Button } from "@/components/ui/button"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -13,23 +20,18 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormControl
-} from "@/components/ui/form"
-import { toast } from "sonner"
-import { type translationsTypes } from "@/types/foodTypes"
-import { useFoodStore } from "@/stores/useFoodStore"
-import { useTranslation } from "@/query/hooks/useTranslation"
+import { Separator } from "@/components/ui/separator"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
+import { useTranslation } from "@/query/hooks/useTranslation"
+import { useFoodStore } from "@/stores/useFoodStore"
+import { type CreateFoodDto, type translationsTypes } from "@/types/foodTypes"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useSession } from "next-auth/react"
+import dynamic from "next/dynamic"
+import React, { useState } from "react"
+import { useForm } from "react-hook-form"
+import { toast } from "sonner"
+import { z } from "zod"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -92,6 +94,7 @@ export default function AddFoodPopUpContent({
   const { activeLang, foodData, setTranslationField } = useFoodStore() as any
   const [isTranslating, setIsTranslating] = useState(false)
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
+  const { data: session } = useSession()
 
   // Define FoodSchema before using it in useForm
   const FoodSchema = z.object({
@@ -361,8 +364,59 @@ export default function AddFoodPopUpContent({
   }
 
   // Submit handler
-  const onSubmit = (): void => {
-    toast(translations.formSubmittedSuccessfully, {})
+  const onSubmit = async (
+    formData: z.infer<typeof FoodSchema>
+  ): Promise<void> => {
+    try {
+      const token = session?.apiToken // <-- use session token
+      // Map your form data to CreateFoodDto
+      const foodDto: CreateFoodDto = {
+        name: foodData.en.name,
+        nameFR: foodData.fr?.name ?? "",
+        category: foodData.en.category,
+        categoryFR: foodData.fr?.category ?? "",
+        season: foodData.en.season,
+        seasonFR: foodData.fr?.season ?? "",
+        country: foodData.en.country,
+        seasons: [], // Fill if you have months
+        attributes: {
+          fiber: Number(foodData.en.fiber) || 0,
+          proteins: Number(foodData.en.proteins) || 0,
+          vitamins: foodData.en.vitamins || "",
+          vitaminsFR: foodData.fr?.vitamins ?? "",
+          minerals: foodData.en.minerals || "",
+          mineralsFR: foodData.fr?.minerals ?? "",
+          fat: Number(foodData.en.fat) || 0,
+          sugar: Number(foodData.en.sugar) || 0
+        },
+        describe: {
+          selection: foodData.en.selection,
+          selectionFR: foodData.fr?.selection ?? "",
+          preparation: foodData.en.preparation,
+          preparationFR: foodData.fr?.preparation ?? "",
+          conservation: foodData.en.conservation,
+          conservationFR: foodData.fr?.conservation ?? ""
+        },
+        images: foodData.en.storeImage
+          ? [{ image: foodData.en.storeImage }]
+          : [],
+        healthBenefits: (foodData.en.benefits || []).map((b: string, i: number) => ({
+          healthBenefit: b,
+          healthBenefitFR: foodData.fr?.benefits?.[i] ?? ""
+        }))
+      }
+
+      const response = await postNewFood(token, foodDto)
+      if (response.status === 201 || response.status === 200) {
+        toast.success(translations.formSubmittedSuccessfully)
+        // Optionally reset form or close modal
+      } else {
+        toast.error("Failed to add food")
+      }
+    } catch (error) {
+      toast.error("Error adding food")
+      console.error(error)
+    }
   }
 
   // Cancel handler
@@ -376,11 +430,11 @@ export default function AddFoodPopUpContent({
     <div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
             <div>
               {isTranslating && (
-                <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
-                  <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60">
+                  <span className="w-10 h-10 border-t-4 border-blue-500 border-solid rounded-full animate-spin" />
                 </div>
               )}
               <FormField
@@ -692,8 +746,8 @@ export default function AddFoodPopUpContent({
           </div>
           <div className="w-[100%]">
             {isTranslating && (
-              <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
-                <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center bg-white/60">
+                <span className="w-10 h-10 border-t-4 border-blue-500 rounded-full animate-spin" />
               </div>
             )}
             <FormField
@@ -734,7 +788,7 @@ export default function AddFoodPopUpContent({
                   return (
                     <FormItem className="relative">
                       {isTranslating && (
-                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
                           <span className="loader" />
                         </div>
                       )}
@@ -766,7 +820,7 @@ export default function AddFoodPopUpContent({
                   return (
                     <FormItem className="relative">
                       {isTranslating && (
-                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
                           <span className="loader" />
                         </div>
                       )}
@@ -798,7 +852,7 @@ export default function AddFoodPopUpContent({
                   return (
                     <FormItem className="relative">
                       {isTranslating && (
-                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
                           <span className="loader" />
                         </div>
                       )}
@@ -823,7 +877,7 @@ export default function AddFoodPopUpContent({
             </div>
           </div>
 
-          <div className="w-full mt-6 sm:w-2/5 pb-12">
+          <div className="w-full pb-12 mt-6 sm:w-2/5">
             <h3 className="mb-4 text-lg font-semibold text-black">
               {translations.uploadImages}
             </h3>
@@ -846,7 +900,7 @@ export default function AddFoodPopUpContent({
           </div>
 
           {/* Save and Cancel buttons */}
-          <div className="fixed bottom-0 left-0 w-full bg-white border-t py-4 px-4 flex justify-between gap-2 z-50">
+          <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full gap-2 px-4 py-4 bg-white border-t">
             <Button
               variant="outline"
               onClick={() => {

@@ -1,8 +1,17 @@
 "use client"
 
+import { getAllFoods } from "@/app/api/foods"
 import { CustomTable } from "@/components/Shared/Table/CustomTable"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -11,21 +20,12 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu"
-import { MoreVertical } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
-import { Badge } from "@/components/ui/badge"
-import Image from "next/image"
-import AddFoodPopUp from "./AddFoodPopUp"
-import { getAllFoods } from "@/app/api/foods"
 import dayjs from "dayjs"
+import { MoreVertical } from "lucide-react"
+import Image from "next/image"
+import { useEffect, useMemo, useState } from "react"
+import AddFoodPopUp from "./AddFoodPopUp"
 import ViewFoodPopUp from "./ViewFoodPopUp"
-import { Label } from "@/components/ui/label"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -238,11 +238,18 @@ export default function FoodOverviewPage({
       header: "Health Benefits",
       cell: row => (
         <div className="flex flex-wrap gap-2">
-          {row.healthBenefits.map((benefit, index) => (
-            <Badge key={index} variant={"outline"}>
-              {benefit}
-            </Badge>
-          ))}
+          {Array.isArray(row.healthBenefits) &&
+          row.healthBenefits.length > 0 ? (
+            row.healthBenefits.map((benefit, index) => (
+              <Badge key={index} variant={"outline"}>
+                {typeof benefit === "string"
+                  ? benefit
+                  : benefit?.healthBenefit || benefit?.healthBenefitFR || "N/A"}
+              </Badge>
+            ))
+          ) : (
+            <Badge variant={"outline"}>No benefits listed</Badge>
+          )}
         </div>
       )
     },
@@ -313,7 +320,7 @@ export default function FoodOverviewPage({
   return (
     <div className="space-y-4">
       {/* Filters and Search */}
-      <div className="flex flex-wrap gap-2 justify-between">
+      <div className="flex flex-wrap justify-between gap-2">
         <div className="flex flex-wrap w-[80%] gap-2">
           <Input
             className="max-w-xs"
@@ -341,7 +348,7 @@ export default function FoodOverviewPage({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className="overflow-auto w-40 max-h-64"
+              className="w-40 overflow-auto max-h-64"
               style={{ scrollbarWidth: "none" }}
             >
               <DropdownMenuItem
@@ -437,7 +444,11 @@ export default function FoodOverviewPage({
       />
 
       {/* Add Food Popup */}
-      <AddFoodPopUp open={openAddFoodPopUp} onClose={handleCloseAddFoodPopUp} />
+      <AddFoodPopUp
+        open={openAddFoodPopUp}
+        onClose={handleCloseAddFoodPopUp}
+        getFoods={getFoods} // <-- pass the fetch function
+      />
 
       {/* View Food Details Popup */}
       <ViewFoodPopUp
