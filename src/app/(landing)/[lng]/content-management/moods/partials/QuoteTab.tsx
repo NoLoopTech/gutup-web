@@ -36,14 +36,16 @@ interface Option {
 // Mood options per language
 const moodOptions: Record<string, Option[]> = {
   en: [
+    { value: "very happy", label: "Very Happy" },
     { value: "happy", label: "Happy" },
     { value: "angry", label: "Angry" },
     { value: "sad", label: "Sad" }
   ],
   fr: [
-    { value: "heureuse", label: "Heureuse" },
-    { value: "en colère", label: "En colère" },
-    { value: "triste", label: "Triste" }
+    { value: "very happy", label: "Très heureux" },
+    { value: "happy", label: "Heureuse" },
+    { value: "angry", label: "En colère" },
+    { value: "sad", label: "Triste" }
   ]
 }
 
@@ -59,7 +61,12 @@ export default function QuoteTab({
   isLoading: boolean
 }): JSX.Element {
   const { translateText } = useTranslation()
-  const { activeLang, translationsData, setTranslationField } = useMoodStore()
+  const {
+    activeLang,
+    translationsData,
+    setTranslationField,
+    resetTranslations
+  } = useMoodStore()
   const [isTranslating, setIsTranslating] = useState(false)
 
   // Schema
@@ -143,8 +150,12 @@ export default function QuoteTab({
     addQuoteMood()
   }
 
-  const handleResetForm = () => {
+  const handleResetForm = async () => {
     form.reset(translationsData.quoteData[activeLang])
+    // clear store and session
+    await resetTranslations()
+    sessionStorage.removeItem("mood-storage")
+
     onClose()
   }
 

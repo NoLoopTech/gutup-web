@@ -3,6 +3,7 @@
 import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 
+
 interface QuoteFields {
   mood: string
   author: string
@@ -15,12 +16,14 @@ interface FoodFields {
   foodName: string
   description: string
   shopCategory: string
+  image: string
 }
 
 interface RecipeFields {
   mood: string
   recipe: string
   description: string
+  image: string
 }
 
 interface LangData<T> {
@@ -61,12 +64,24 @@ export const useMoodStore = create<MoodStoreState>()(
           fr: { mood: "", author: "", quote: "", share: false }
         },
         foodData: {
-          en: { mood: "", foodName: "", description: "", shopCategory: "" },
-          fr: { mood: "", foodName: "", description: "", shopCategory: "" }
+          en: {
+            mood: "",
+            foodName: "",
+            description: "",
+            shopCategory: "",
+            image: ""
+          },
+          fr: {
+            mood: "",
+            foodName: "",
+            description: "",
+            shopCategory: "",
+            image: ""
+          }
         },
         recipeData: {
-          en: { mood: "", recipe: "", description: "" },
-          fr: { mood: "", recipe: "", description: "" }
+          en: { mood: "", recipe: "", description: "", image: "" },
+          fr: { mood: "", recipe: "", description: "", image: "" }
         }
       },
 
@@ -104,12 +119,24 @@ export const useMoodStore = create<MoodStoreState>()(
               fr: { mood: "", author: "", quote: "", share: false }
             },
             foodData: {
-              en: { mood: "", foodName: "", description: "", shopCategory: "" },
-              fr: { mood: "", foodName: "", description: "", shopCategory: "" }
+              en: {
+                mood: "",
+                foodName: "",
+                description: "",
+                shopCategory: "",
+                image: ""
+              },
+              fr: {
+                mood: "",
+                foodName: "",
+                description: "",
+                shopCategory: "",
+                image: ""
+              }
             },
             recipeData: {
-              en: { mood: "", recipe: "", description: "" },
-              fr: { mood: "", recipe: "", description: "" }
+              en: { mood: "", recipe: "", description: "", image: "" },
+              fr: { mood: "", recipe: "", description: "", image: "" }
             }
           }
         })

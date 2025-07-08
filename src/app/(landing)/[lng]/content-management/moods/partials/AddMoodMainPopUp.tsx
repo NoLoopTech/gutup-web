@@ -10,18 +10,21 @@ import { loadLanguage } from "@/../../src/i18n/locales"
 import { defaultTranslations, type translationsTypes } from "@/types/moodsTypes"
 import { useMoodStore } from "@/stores/useMoodStore"
 
+
 interface Props {
   open: boolean
   onClose: () => void
   addMood: () => void
   isLoading: boolean
+  userName: string
 }
 
 export default function AddMoodMainPopUp({
   open,
   onClose,
   addMood,
-  isLoading
+  isLoading,
+  userName
 }: Props): JSX.Element {
   const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
     useMoodStore()
@@ -91,6 +94,7 @@ export default function AddMoodMainPopUp({
                 onClose={onClose}
                 addMood={addMood}
                 isLoading={isLoading}
+                userName={userName}
               />
             </TabsContent>
           </Tabs>
