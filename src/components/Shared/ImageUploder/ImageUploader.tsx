@@ -76,7 +76,8 @@ export default function ImageUploader({
       {imageList.length > 0 ? (
         <div className="">
           {/* Loop through all preview images and display them */}
-          {imageList.map((image, index) => (
+          {Array.isArray(imageList) &&
+          imageList.map((image, index) => (
             <div
               key={index}
               className="relative w-[100%] flex items-center justify-center h-48 overflow-hidden border border-gray-300 rounded-lg bg-gray-50"

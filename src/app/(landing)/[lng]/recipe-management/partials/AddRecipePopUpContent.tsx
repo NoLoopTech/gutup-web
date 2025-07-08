@@ -12,7 +12,9 @@ import { CustomTable } from "@/components/Shared/Table/CustomTable"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { type RecipeFields } from "@/stores/useRecipeStore"
-import { CircleFadingPlus } from "lucide-react"
+import LabelInput from "@/components/Shared/LableInput/LableInput"
+import { type Recipe } from "@/types/recipeTypes"
+import { Trash, CircleFadingPlus, MoreVertical } from "lucide-react"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import {
   Select,
@@ -33,14 +35,20 @@ import z from "zod"
 import { toast } from "sonner"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { type translationsTypes } from "@/types/recipeTypes"
 import { useRecipeStore } from "@/stores/useRecipeStore"
-
+import { type translationsTypes } from "@/types/storeTypes"
 import { getAllTagsByCategory } from "@/app/api/foods"
+import {
+  deleteImageFromFirebase,
+  uploadImageToFirebase
+} from "@/lib/firebaseImageUtils"
 
 interface Ingredient {
   id: number
   name: string
+  type: string
+  status: "Active" | "Inactive"
+  display: boolean
   quantity: string
   isMain: boolean
   tags: string[]
@@ -91,25 +99,7 @@ const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
   { ssr: false }
 )
-// const translateToFrench = async (text: string): Promise<string> => {
-//   // Find the French label for the selected English value from categoryOptions
-//   const enOption = categoryOptions.en.find(option => option.label.toLowerCase() === text.toLowerCase() || option.value.toLowerCase() === text.toLowerCase());
-//   console.log("translateToFrench called with text:", text, "enOption:", enOption)
-//   if (!enOption) return text; // fallback to original if not found
-//   const frOption = categoryOptions.fr.find(option => option.value === enOption.value);
-//   return frOption ? frOption.label : text;
 
-// }
-
-// const translateToFrench = async (text: string): Promise<string> => {
-//   // Find the French label for the selected English value from seasonsOptions
-//   const enOption = seasonOptions.en.find(option => option.label.toLowerCase() === text.toLowerCase() || option.value.toLowerCase() === text.toLowerCase());
-//   console.log("translateToFrench called with text:", text, "enOption:", enOption)
-//   if (!enOption) return text; // fallback to original if not found
-//   const frOption = seasonOptions.fr.find(option => option.value === enOption.value);
-//   return frOption ? frOption.label : text;
-
-// }
 const translateToFrench = async (
   text: string,
   options: Record<string, Option[]>
@@ -131,13 +121,21 @@ const translateToFrench = async (
 }
 
 export default function AddRecipePopUpContent({
-  translations
+  translations,
+  token
 }: {
   translations: translationsTypes
+  token: string
 }): JSX.Element {
   const { activeLang, setTranslationField, allowMultiLang } = useRecipeStore()
   const { translateText } = useTranslation()
   const [isTranslating, setIsTranslating] = useState(false)
+  const [foods, setFoods] = useState<Food[]>([])
+  const [ingredientData, setIngredientData] = useState<Ingredient[]>([])
+  const [selected, setSelected] = useState<Food | null>(null)
+  const [previewFoodUrls, setPreviewFoodUrls] = useState<string[]>([])
+  const [previewAuthorUrls, setPreviewAuthorUrls] = useState<string[]>([])
+  const [ingredientInput, setIngredientInput] = useState<string>("")
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
   // const [allBenefits, setAllBenefits] = useState<string[]>([])
@@ -204,13 +202,27 @@ export default function AddRecipePopUpContent({
         message: translations.required
       }
     ),
-    authorimage: z.custom<File | null>(val => val instanceof File, {
-      message: translations.required
-    }),
-    foodimage: z.custom<File | null>(val => val instanceof File, {
-      message: translations.required
-    })
+    // authorimage: z.custom<File | null>(val => val instanceof File, {
+    //   message: translations.required
+    // }),
+    // foodimage: z.custom<File | null>(val => val instanceof File, {
+    //   message: translations.required
+    // })
+    foodimage: z.string().min(1, { message: translations.required }),
+    authorimage: z.string().min(1, { message: translations.required })
   })
+
+  useEffect(() => {
+    const fetchFoods = async (): Promise<void> => {
+      const res = await getAllFoods(token)
+      if (res && res.status === 200) {
+        setFoods(res.data.foods)
+      } else {
+        console.error("Failed to fetch foods:", res)
+      }
+    }
+    void fetchFoods()
+  }, [token])
 
   const autoTranslateDropdown = async (
     field: keyof RecipeFields,
@@ -242,6 +254,7 @@ export default function AddRecipePopUpContent({
       | "persons"
       | "benefits"
       | "authorName"
+      | "authorCategory"
       | "phone"
       | "email"
       | "website"
@@ -287,48 +300,82 @@ export default function AddRecipePopUpContent({
       }
     }
   }
-  // Dummy data
-  const ingredientData: Ingredient[] = []
 
-  // Table columns
-  const ingredientColumns = [
-    {
-      header: translations.ingredientName,
-      accessor: "name" as const
-    },
-    {
-      header: translations.quantity,
-      accessor: "quantity" as const
-    },
-    {
-      header: translations.mainIngredient,
-      accessor: (row: Ingredient) => (
-        <Switch
-          checked={row.isMain}
-          className="scale-75"
-          style={{ minWidth: 28, minHeight: 16 }}
-        />
-      )
-    },
-    {
-      header: translations.availableInIngredients,
-      accessor: (row: Ingredient) =>
-        row.tags.includes("InSystem") ? (
-          <Badge className="bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors">
-            In the System
-          </Badge>
-        ) : (
-          <Button
-            variant="ghost"
-            className="text-secondary-blue text-xs px-2 py-1 flex items-center gap-1 hover:bg-transparent focus:bg-transparent active:bg-transparent"
-            size="sm"
-          >
-            <CircleFadingPlus size={14} />
-            Add to Ingredients
-          </Button>
-        )
+  const richTextFieldOnBlur = async (fieldName: "recipe"): Promise<void> => {
+    if (activeLang === "en") {
+      const val = form.getValues(fieldName)
+      if (typeof val === "string" && val.trim().length > 0) {
+        setIsTranslating(true)
+        try {
+          const translated = await translateText(val)
+          setTranslationField("fr", fieldName, translated)
+        } finally {
+          setIsTranslating(false)
+        }
+      } else if (Array.isArray(val) && val.length) {
+        setIsTranslating(true)
+        try {
+          const trArr = await Promise.all(
+            val.map(async v => await translateText(v))
+          )
+          setTranslationField("fr", fieldName, trArr)
+        } finally {
+          setIsTranslating(false)
+        }
+      }
     }
-  ]
+  }
+  const makeRichHandlers = (
+    fieldName: "recipe"
+  ): { onChange: (val: string) => void } => {
+    const onChange = (val: string): void => {
+      form.setValue(fieldName, val)
+      setTranslationField(activeLang, fieldName, val)
+    }
+    return { onChange }
+  }
+  // Dummy data
+  // const ingredientData: Ingredient[] = []
+
+  // // Table columns
+  // const ingredientColumns = [
+  //   {
+  //     header: translations.ingredientName,
+  //     accessor: "name" as const
+  //   },
+  //   {
+  //     header: translations.quantity,
+  //     accessor: "quantity" as const
+  //   },
+  //   {
+  //     header: translations.mainIngredient,
+  //     accessor: (row: Ingredient) => (
+  //       <Switch
+  //         checked={row.isMain}
+  //         className="scale-75"
+  //         style={{ minWidth: 28, minHeight: 16 }}
+  //       />
+  //     )
+  //   },
+  //   {
+  //     header: translations.availableInIngredients,
+  //     accessor: (row: Ingredient) =>
+  //       row.tags.includes("InSystem") ? (
+  //         <Badge className="bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors">
+  //           In the System
+  //         </Badge>
+  //       ) : (
+  //         <Button
+  //           variant="ghost"
+  //           className="text-secondary-blue text-xs px-2 py-1 flex items-center gap-1 hover:bg-transparent focus:bg-transparent active:bg-transparent"
+  //           size="sm"
+  //         >
+  //           <CircleFadingPlus size={14} />
+  //           Add to Ingredients
+  //         </Button>
+  //       )
+  //   }
+  // ]
   // Define functions to handle page changes
   const handlePageChange = (newPage: number): void => {
     setPage(newPage)
@@ -342,24 +389,6 @@ export default function AddRecipePopUpContent({
   const handleRecipeChange = (field: any) => (val: string) => {
     field.onChange(val)
   }
-
-  const categories: Option[] = [
-    { value: "fruits", label: "Fruits" },
-    { value: "vegetables", label: "Vegetables" },
-    { value: "dairy", label: "Dairy" },
-    { value: "grains", label: "Grains" }
-  ]
-  const seasons: Option[] = [
-    { value: "spring", label: "Spring" },
-    { value: "summer", label: "Summer" },
-    { value: "autumn", label: "Autumn" },
-    { value: "winter", label: "Winter" }
-  ]
-  const authorSpeality: Option[] = [
-    { value: "spring", label: "Spring" },
-    { value: "summer", label: "Summer" },
-    { value: "autumn", label: "Autumn" }
-  ]
   const form = useForm<z.infer<typeof RecipeSchema>>({
     resolver: zodResolver(RecipeSchema),
     defaultValues: {
@@ -381,6 +410,193 @@ export default function AddRecipePopUpContent({
       foodimage: null
     }
   })
+
+  // table columns for available ingredients and categories
+  const ingredientColumns = [
+    {
+      header: translations.ingredientName,
+      accessor: "name" as const
+    },
+    {
+      header: translations.type,
+      accessor: (row: Ingredient) => (
+        <Badge className="bg-white text-black text-xs px-2 py-1 rounded-md border border-gray-100 hover:bg-white">
+          {translations[row.type?.toLowerCase() as keyof typeof translations] ||
+            row.type}
+        </Badge>
+      )
+    },
+    {
+      header: translations.availabilityStatus,
+      accessor: (row: Ingredient) => (
+        <Badge
+          className={
+            row.tags.includes("InSystem")
+              ? "bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors"
+              : "bg-gray-200 text-black text-xs px-2 py-1 rounded-md border border-gray-500 hover:bg-gray-100 transition-colors"
+          }
+        >
+          {translations[
+            row.status.toLowerCase() as keyof typeof translations
+          ] ?? row.status}
+        </Badge>
+      )
+    },
+    {
+      header: translations.displayStatus,
+      accessor: (row: Ingredient) => (
+        <Switch checked={row.display} className="scale-75" />
+      )
+    },
+    {
+      header: "", // No header for delete column
+      accessor: (row: Ingredient) => (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
+          onClick={() => {
+            handleDeleteAvailItem(row.id)
+          }}
+          title={translations.delete}
+        >
+          <Trash className="h-4 w-4 text-gray-500" />
+        </Button>
+      ),
+      id: "delete"
+    }
+  ]
+
+  // Delete handler for ingredientData
+  const handleDeleteAvailItem = (id: number): void => {
+    const updated = ingredientData.filter(item => item.id !== id)
+    setIngredientData(updated)
+    form.setValue("ingredientData", updated, { shouldValidate: true })
+    setTranslationField(activeLang, "ingredientData", updated)
+    setTranslationField(
+      // "storeData",
+      activeLang === "en" ? "fr" : "en",
+      "ingredientData",
+      updated
+    )
+  }
+
+  // Sync ingredientData with form value
+  useEffect(() => {
+    const formIngredientData = form.watch("ingredientData")
+    if (
+      Array.isArray(formIngredientData) &&
+      formIngredientData !== ingredientData
+    ) {
+      setIngredientData(formIngredientData)
+    }
+  }, [form.watch("ingredientData")])
+
+  // translated type/status using translations object
+  const getTranslatedType = (type: string, lang: string): string => {
+    const key = type.toLowerCase()
+    return translations[key] || type
+  }
+  const getTranslatedStatus = (status: string, lang: string): string => {
+    const key = status.toLowerCase()
+    return translations[key] || status
+  }
+
+  // handler for “Add Ingredient”
+  const handleAddIngredient = async (): Promise<void> => {
+    const name = selected?.name ?? ingredientInput.trim()
+    if (!name) return
+
+    const entry: Ingredient = {
+      id: selected ? Number(selected.id) : Date.now(),
+      name,
+      type: "Ingredient",
+      tags: ["InSystem"],
+      display: true,
+      quantity: "",
+      isMain: false,
+      status: "Active"
+    }
+
+    // Update current lang
+    const updated = [...(form.getValues("ingredientData") || []), entry]
+    setIngredientData(updated)
+    form.setValue("ingredientData", updated, { shouldValidate: true })
+    setTranslationField(activeLang, "ingredientData", updated)
+
+    // Prepare translated entry for opposite lang
+    const oppLang = activeLang === "en" ? "fr" : "en"
+    let translatedName = name
+    try {
+      translatedName = await translateText(name)
+    } catch {
+      translatedName = name
+    }
+    const translatedType = getTranslatedType(entry.type, oppLang)
+    const translatedStatus = getTranslatedStatus(entry.status, oppLang)
+    const translatedEntry: Ingredient = {
+      ...entry,
+      name: translatedName,
+      type: translatedType,
+      status: translatedStatus as "Active" | "Inactive"
+    }
+    // Only pass translated data to opposite lang
+    const oppUpdated = [
+      ...(([oppLang]?.ingredientData as Ingredient[]) || []),
+      translatedEntry
+    ]
+    setTranslationField(oppLang, "ingredientData", oppUpdated)
+
+    // clear for next
+    setSelected(null)
+    setIngredientInput("")
+  }
+
+  // adds/removes benefits:
+  function handleBenefitsChange(vals: string[]): void {
+    form.setValue("benefits", vals)
+    setTranslationField(activeLang, "benefits", vals)
+  }
+
+  async function handleBenefitsBlur(): Promise<void> {
+    if (activeLang === "en") {
+      const vals = form.getValues("benefits")
+      if (vals.length) {
+        setIsTranslating(true)
+        try {
+          const trArr = await Promise.all(
+            vals.map(async v => await translateText(v))
+          )
+          setTranslationField("fr", "benefits", trArr)
+        } finally {
+          setIsTranslating(false)
+        }
+      }
+    }
+  }
+
+  const categories: Option[] = [
+    { value: "fruits", label: "Fruits" },
+    { value: "vegetables", label: "Vegetables" },
+    { value: "dairy", label: "Dairy" },
+    { value: "grains", label: "Grains" }
+  ]
+  const seasons: Option[] = [
+    { value: "spring", label: "Spring" },
+    { value: "summer", label: "Summer" },
+    { value: "autumn", label: "Autumn" },
+    { value: "winter", label: "Winter" }
+  ]
+
+  //  // Form hook
+  //   const form = useForm<z.infer<typeof RecipeSchema>>({
+  //     resolver: zodResolver(RecipeSchema),
+  //     defaultValues: {
+  //       ...storeData[activeLang],
+  //       category: storeData[activeLang]?.category || ""
+  //     }
+  //   })
   useEffect(() => {
     const fetchTags = async (): Promise<void> => {
       try {
@@ -436,6 +652,119 @@ export default function AddRecipePopUpContent({
       }
     })
   }, [activeLang])
+
+  const handleImageSelect = async (files: File[] | null) => {
+    const file = files?.[0] ?? null
+    if (file) {
+      try {
+        setIsTranslating(true)
+        const imageUrl = await uploadImageToFirebase(file, "recipes")
+
+        form.setValue("foodimage", imageUrl, {
+          shouldValidate: true,
+          shouldDirty: true
+        })
+        setTranslationField("en", "foodimage", imageUrl)
+        setTranslationField("fr", "foodimage", imageUrl)
+
+        setPreviewFoodUrls([imageUrl]) // For single image preview
+      } catch (error) {
+        toast.error("Image upload failed. Please try again.")
+        console.error("Firebase upload error:", error)
+      } finally {
+        setIsTranslating(false)
+      }
+    }
+  }
+  const handleImageSelectAuthor = async (files: File[] | null) => {
+    console.log("handleImageSelect called with files:", files)
+
+    const file = files?.[0] ?? null
+    if (file) {
+      try {
+        setIsTranslating(true)
+        const imageUrl = await uploadImageToFirebase(file, "author")
+        console.log("Uploaded food image URL:", imageUrl)
+
+        form.setValue("authorimage", imageUrl, {
+          shouldValidate: true,
+          shouldDirty: true
+        })
+
+        setTranslationField("en", "authorimage", imageUrl)
+        setTranslationField("fr", "authorimage", imageUrl)
+
+        setPreviewAuthorUrls([imageUrl]) // For single image preview
+      } catch (error) {
+        toast.error("Image upload failed. Please try again.")
+        console.error("Firebase upload error:", error)
+      } finally {
+        setIsTranslating(false)
+        console.log("No file selected for food image")
+      }
+    }
+  }
+
+  // useEffect(() => {
+  //   const langData = allowMultiLang[activeLang]
+  //   if (langData) {
+  //     const existingUrl = langData.foodimage
+  //     const existingAuthorUrl = langData.authorimage
+  //     const imageUrls = [existingUrl, existingAuthorUrl].filter(Boolean) // remove undefined/null
+
+  //     if (imageUrls.length > 0) {
+  //       setPreviewUrls([imageUrls])
+  //     } else {
+  //       setPreviewUrls([])
+  //     }
+  //     form.reset(langData)
+  //   }
+  // }, [activeLang, form.reset, allowMultiLang])
+  useEffect(() => {
+    const langData = allowMultiLang[activeLang]
+    if (langData) {
+      form.reset(langData)
+      if (langData.foodimage) setPreviewFoodUrls([langData.foodimage])
+      else setPreviewFoodUrls(imageUrls)
+
+      if (langData.authorimage) setPreviewAuthorUrls([langData.authorimage])
+      else setPreviewAuthorUrls(imageUrls)
+    }
+  }, [activeLang, form.reset, allowMultiLang])
+
+  const handleCancelImage = async (): Promise<void> => {
+    //  Combine all possible image URLs (preview + stored)
+    const possibleImages = [
+      allowMultiLang[activeLang]?.foodimage,
+      allowMultiLang[activeLang]?.authorimage
+    ]
+    const uniqueImageUrls = Array.from(new Set(possibleImages)).filter(Boolean)
+
+    //  Delete images from Firebase
+    await Promise.all(
+      uniqueImageUrls.map(async url => {
+        try {
+          await deleteImageFromFirebase(url)
+        } catch (err) {
+          console.error("Image deletion failed:", url, err)
+        }
+      })
+    )
+
+    setTranslationField("en", "foodimage", "")
+    setTranslationField("en", "authorimage", "")
+
+    //  Remove session data
+    sessionStorage.removeItem("recipe-storage")
+
+    // Clear preview image state
+    // setPreviewUrls([])
+    setPreviewFoodUrls([])
+    setPreviewAuthorUrls([])
+
+    // Close the modal or section
+    onClose()
+  }
 
   return (
     <div className="relative">
@@ -632,29 +961,30 @@ export default function AddRecipePopUpContent({
           </div>
           {/* Lable inputs for the health benefits */}
           <div className="w-[100%] ">
+            {isTranslating && (
+              <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
+                <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 animate-spin" />
+              </div>
+            )}
             <FormField
               control={form.control}
               name="benefits"
               render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel className="block mb-1 text-black">
-                    {translations.healthBenefits}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      title={translations.healthBenefits}
-                      placeholder={translations.addUpTo6FoodBenefitsOrLower}
-                      onChange={e => {
-                        handleInputChange(e, "benefits")
-                      }}
-                      // No onBlur for benefits since it's a string[]
-                      // benefits={field.value || []}
-                      // name="benefits"
-                      width="w-[32%]"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                <LabelInput
+                  title={translations.healthBenefits}
+                  placeholder={translations.healthBenefits}
+                  benefits={field.value || []}
+                  name="benefits"
+                  width="w-[32%]"
+                  onChange={(newArr: string[]) => {
+                    handleBenefitsChange(newArr)
+                    field.onChange(newArr)
+                  }}
+                  onBlur={() => {
+                    void handleBenefitsBlur()
+                    field.onBlur()
+                  }}
+                />
               )}
             />
           </div>
@@ -668,10 +998,19 @@ export default function AddRecipePopUpContent({
               <SearchBar
                 title={translations.selectYourIngredients}
                 placeholder={translations.searchForIngredient}
+                dataList={foods.map(f => ({ id: f.id, name: f.name }))}
+                value={ingredientInput}
+                onInputChange={setIngredientInput}
+                onSelect={item => {
+                  setSelected(item)
+                  setIngredientInput(item.name)
+                }}
               />
             </div>
             <div className="flex items-end h-full mt-7">
-              <Button onClick={() => {}}>{translations.add}</Button>
+              <Button type="button" onClick={handleAddIngredient}>
+                {translations.add}
+              </Button>
             </div>
           </div>
           <FormField
@@ -694,7 +1033,7 @@ export default function AddRecipePopUpContent({
                 />
                 {ingredientData.length === 0 && (
                   <FormMessage className="text-red-500">
-                    At least one ingredient/category must be added.
+                    {translations.availableInIngredients}
                   </FormMessage>
                 )}
               </>
@@ -709,23 +1048,34 @@ export default function AddRecipePopUpContent({
               <FormField
                 control={form.control}
                 name="recipe"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="block mb-2 text-black">
-                      {translations.recipe}
-                    </FormLabel>
-                    <FormControl>
-                      <RichTextEditor
-                        initialContent={field.value}
-                        onChange={handleRecipeChange(field)}
-                        // ref={selectionRef}
-                        // value={field.value}
-                        // onChange={handleRichTextEditorChange(field)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const { onChange } = makeRichHandlers("recipe")
+                  return (
+                    <FormItem>
+                      {isTranslating && (
+                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                          <span className="loader" />
+                        </div>
+                      )}
+                      <FormLabel className="block mb-2 text-black">
+                        {translations.recipe}
+                      </FormLabel>
+                      <FormControl>
+                        <RichTextEditor
+                          initialContent={field.value}
+                          onChange={val => {
+                            onChange(val)
+                            field.onChange(val)
+                          }}
+                          onBlur={async () => {
+                            await richTextFieldOnBlur("recipe")
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
             </div>
           </div>
@@ -774,28 +1124,14 @@ export default function AddRecipePopUpContent({
                         {translations.category}
                       </FormLabel>
                       <FormControl>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <SelectTrigger className="w-full mt-1">
-                            <SelectValue
-                              placeholder={translations.enterAuthorSpecialty}
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {authorSpeality.map((option: Option) => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {translations[
-                                  option.value.toLowerCase() as keyof translationsTypes
-                                ] || option.label}{" "}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Input
+                          placeholder={translations.enterAuthorSpecialty}
+                          {...field}
+                          onChange={e => handleInputChange(e, "authorCategory")}
+                          onBlur={() =>
+                            handleInputBlur(field.value, "authorCategory")
+                          }
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -900,7 +1236,8 @@ export default function AddRecipePopUpContent({
                     <FormControl>
                       <ImageUploader
                         title={translations.uploadAuthorImage}
-                        onChange={handleImageUpload(field)}
+                        previewUrls={previewAuthorUrls}
+                        onChange={handleImageSelectAuthor}
                       />
                     </FormControl>
                     <FormMessage />
@@ -921,7 +1258,8 @@ export default function AddRecipePopUpContent({
                   <FormControl>
                     <ImageUploader
                       title={translations.selectImagesForYourFoodItem}
-                      onChange={handleImageUpload(field)}
+                      previewUrls={previewFoodUrls}
+                      onChange={handleImageSelect}
                     />
                   </FormControl>
                   <FormMessage />

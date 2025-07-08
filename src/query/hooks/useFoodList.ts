@@ -18,6 +18,7 @@ export const useFoodList = (token: string) => {
       try {
         const foodList = await getAllFoodsList(token)
         setFoods(foodList.data)
+        console.log("Fetched foods:", foodList.data)
       } catch (err: any) {
         setError(err)
       } finally {
