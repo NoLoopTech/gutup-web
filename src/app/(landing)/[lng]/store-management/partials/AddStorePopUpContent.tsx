@@ -324,8 +324,12 @@ export default function AddStorePopUpContent({
       // Store the value for current language
       setTranslationField("storeData", activeLang, fieldName, value)
 
-      // Store the same value for opposite language (since value is same across languages)
-      setTranslationField("storeData", oppositeLang, fieldName, value)
+      setTranslationField(
+        "storeData",
+        oppositeLang,
+        fieldName,
+        opposite[index].label
+      )
     }
   }
 
@@ -674,11 +678,26 @@ export default function AddStorePopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {categoryOptions[activeLang].map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
+                          {categoryOptions[activeLang].map(option => {
+                            if (activeLang === "fr") {
+                              return (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.label}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              )
+                            }
+                            return (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            )
+                          })}
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -735,11 +754,26 @@ export default function AddStorePopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {storeTypeOptions[activeLang].map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
+                          {storeTypeOptions[activeLang].map(option => {
+                            if (activeLang === "fr") {
+                              return (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.label}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              )
+                            }
+                            return (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            )
+                          })}
                         </SelectContent>
                       </Select>
                     </FormControl>
