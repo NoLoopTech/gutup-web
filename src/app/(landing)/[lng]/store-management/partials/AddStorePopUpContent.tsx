@@ -36,15 +36,18 @@ import { useStoreStore } from "@/stores/useStoreStore"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { getAllFoods } from "@/app/api/foods"
 import { Trash } from "lucide-react"
+import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
+import { getAllTags } from "@/app/api/tags"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
   { ssr: false }
 )
-// Define Food type if not imported from elsewhere
+
 interface Food {
   id: number | string
-  name: string
+  name?: string
+  tagName?: string
 }
 
 interface Option {
@@ -101,11 +104,13 @@ export default function AddStorePopUpContent({
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [, setIsPremium] = React.useState(false)
   const [foods, setFoods] = useState<Food[]>([])
+  const [categoryTags, setCategoryTags] = useState<Food[]>([])
   const [availData, setAvailData] = useState<AvailableItem[]>([])
   const [selected, setSelected] = useState<Food | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [ingredientInput, setIngredientInput] = useState<string>("")
   const [categoryInput, setCategoryInput] = useState<string>("")
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
 
   // Validation schema using Zod
   const AddStoreSchema = z.object({
@@ -116,7 +121,6 @@ export default function AddStorePopUpContent({
     category: z.string().min(1, translations.pleaseselectacategory),
     storeLocation: z.string().min(1, translations.required),
     storeType: z.string().min(1, translations.pleaseselectaStoreType),
-    shoplocation: z.string().min(1, translations.required),
     subscriptionType: z.boolean().optional(),
     timeFrom: z.string().min(1, translations.required),
     timeTo: z.string().min(1, translations.required),
@@ -130,7 +134,6 @@ export default function AddStorePopUpContent({
       .string()
       .nonempty(translations.required)
       .email(translations.pleaseenteravalidemail),
-    mapsPin: z.string().nonempty(translations.required),
     website: z
       .string()
       .url(translations.invalidurlformat)
@@ -159,9 +162,7 @@ export default function AddStorePopUpContent({
     availData: z
       .array(z.any())
       .min(1, translations.atleastoneingredientcategorymustbeadded),
-    storeImage: z.custom<File | null>(val => val instanceof File, {
-      message: translations.required
-    })
+    storeImage: z.string().min(1, translations.required)
   })
 
   // fetch once on mount
@@ -177,29 +178,72 @@ export default function AddStorePopUpContent({
     void fetchFoods()
   }, [token])
 
+  useEffect(() => {
+    const fetchTags = async (): Promise<void> => {
+      try {
+        const res = await getAllTags(token, "Type")
+        if (res && res.status === 200 && Array.isArray(res.data)) {
+          setCategoryTags(res.data)
+        } else {
+          setCategoryTags([])
+          console.error("Failed to fetch tags or tags not an array:", res)
+        }
+      } catch (err) {
+        setCategoryTags([])
+        console.error("Error fetching tags:", err)
+      }
+    }
+    void fetchTags()
+  }, [token])
+
   // Form hook
   const form = useForm<z.infer<typeof AddStoreSchema>>({
     resolver: zodResolver(AddStoreSchema),
     defaultValues: {
       ...storeData[activeLang],
-      category: storeData[activeLang]?.category || ""
+      category: storeData[activeLang]?.category || "",
+      storeImage: storeData[activeLang]?.storeImage || ""
     }
   })
 
   // Update form when lang changes
   React.useEffect(() => {
-    form.reset(storeData[activeLang])
-  }, [activeLang, form.reset, storeData])
+    const currentStoreData = storeData[activeLang]
+    const recreatePreview = async (): Promise<void> => {
+      if (currentStoreData?.storeImage) {
+        try {
+          if (currentStoreData.storeImage.startsWith("data:")) {
+            const response = await fetch(currentStoreData.storeImage)
+            const blob = await response.blob()
+            const previewUrl = URL.createObjectURL(blob)
+            setImagePreviewUrls([previewUrl])
+          } else {
+            setImagePreviewUrls([currentStoreData.storeImage])
+          }
+        } catch (error) {
+          console.error("Error creating preview from base64:", error)
+          setImagePreviewUrls([])
+        }
+      } else {
+        setImagePreviewUrls([])
+      }
+    }
+
+    form.reset({
+      ...currentStoreData,
+      storeImage: currentStoreData?.storeImage || ""
+    })
+
+    void recreatePreview()
+  }, [activeLang, form, storeData])
 
   // Input change handler for fields that need translation
   const handleInputChange = (
     fieldName:
       | "storeName"
       | "storeLocation"
-      | "shoplocation"
       | "phone"
       | "email"
-      | "mapsPin"
       | "website"
       | "facebook"
       | "instagram",
@@ -214,10 +258,8 @@ export default function AddStorePopUpContent({
     fieldName:
       | "storeName"
       | "storeLocation"
-      | "shoplocation"
       | "phone"
       | "email"
-      | "mapsPin"
       | "website"
       | "facebook"
       | "instagram",
@@ -502,14 +544,52 @@ export default function AddStorePopUpContent({
     setCategoryInput("")
   }
 
-  const handleImageUpload = (field: any) => (files: File[] | null) => {
-    const file = files && files.length > 0 ? files[0] : null
-    field.onChange(file)
-    setTranslationField("storeData", activeLang, "storeImage", file)
-    const opp = activeLang === "en" ? "fr" : "en"
-    setTranslationField("storeData", opp, "storeImage", file)
-    form.setValue("storeImage", file)
+  const handleImageSelect = async (files: File[] | null): Promise<void> => {
+    const file = files?.[0] ?? null
+    if (file) {
+      try {
+        setIsTranslating(true)
+
+        // Upload image to Firebase
+        const imageUrl = await uploadImageToFirebase(file, "add-store")
+
+        // Convert file to base64 for session storage
+        const reader = new FileReader()
+        reader.onload = () => {
+          const base64String = reader.result as string
+
+          // Update form with the Firebase URL
+          form.setValue("storeImage", imageUrl, {
+            shouldValidate: true,
+            shouldDirty: true
+          })
+
+          // Store in session storage for both languages with base64 and filename
+          setTranslationField("storeData", "en", "storeImage", base64String)
+          setTranslationField("storeData", "fr", "storeImage", base64String)
+          setTranslationField("storeData", "en", "storeImageName", file.name)
+          setTranslationField("storeData", "fr", "storeImageName", file.name)
+
+          setImagePreviewUrls([imageUrl])
+        }
+        reader.readAsDataURL(file)
+      } catch (error) {
+        toast.error("Image upload failed. Please try again.")
+        console.error("Firebase upload error:", error)
+      } finally {
+        setIsTranslating(false)
+      }
+    } else {
+      // Handle file removal
+      form.setValue("storeImage", "")
+      setTranslationField("storeData", "en", "storeImage", null)
+      setTranslationField("storeData", "fr", "storeImage", null)
+      setTranslationField("storeData", "en", "storeImageName", null)
+      setTranslationField("storeData", "fr", "storeImageName", null)
+      setImagePreviewUrls([])
+    }
   }
+
   const handleCancel = (
     form: ReturnType<typeof useForm<z.infer<typeof AddStoreSchema>>>
   ): void => {
@@ -652,58 +732,7 @@ export default function AddStorePopUpContent({
                 )}
               />
             </div>
-            <div>
-              <FormField
-                control={form.control}
-                name="shoplocation"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel className="block mb-1 text-black">
-                      {translations.storeMapLocation}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={translations.enterMapLocation}
-                        {...field}
-                        onChange={e => {
-                          handleInputChange("shoplocation", e.target.value)
-                        }}
-                        onBlur={async () => {
-                          await handleInputBlur("shoplocation", field.value)
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
 
-            <div>
-              <Label className="text-black mb-1 block">
-                {translations.subscription}
-              </Label>
-              <FormField
-                control={form.control}
-                name="subscriptionType"
-                render={({ field }) => (
-                  <div className="flex items-center gap-4 mt-2">
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={value => {
-                        field.onChange(value)
-                        handleSubscriptionToggle(value)
-                      }}
-                    />
-                    <Label className="text-Primary-300">
-                      {field.value
-                        ? translations.premium
-                        : translations.freemium}
-                    </Label>
-                  </div>
-                )}
-              />
-            </div>
             <div className="flex flex-col gap-1">
               <Label>{translations.time}</Label>
               <div className="flex gap-7 items-center">
@@ -727,7 +756,7 @@ export default function AddStorePopUpContent({
                                 "timeFrom"
                               )(e.target.value)
                             }}
-                            className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                            className="h-6 bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                           />
                         </FormControl>
                         <FormMessage />
@@ -752,7 +781,7 @@ export default function AddStorePopUpContent({
                             onChange={e => {
                               handleTimeChange(field, "timeTo")(e.target.value)
                             }}
-                            className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                            className=" h-6 bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                           />
                         </FormControl>
                         <FormMessage />
@@ -761,6 +790,32 @@ export default function AddStorePopUpContent({
                   />
                 </div>
               </div>
+            </div>
+            <div></div>
+            <div>
+              <Label className="text-black mb-1 block">
+                {translations.subscription}
+              </Label>
+              <FormField
+                control={form.control}
+                name="subscriptionType"
+                render={({ field }) => (
+                  <div className="flex items-center gap-4 mt-2">
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={value => {
+                        field.onChange(value)
+                        handleSubscriptionToggle(value)
+                      }}
+                    />
+                    <Label className="text-Primary-300">
+                      {field.value
+                        ? translations.premium
+                        : translations.freemium}
+                    </Label>
+                  </div>
+                )}
+              />
             </div>
           </div>
 
@@ -815,32 +870,6 @@ export default function AddStorePopUpContent({
                         }}
                         onBlur={async () => {
                           await handleInputBlur("email", field.value)
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div>
-              <FormField
-                control={form.control}
-                name="mapsPin"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel className="block mb-1 text-black">
-                      {translations.mapsPin}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={translations.enterGoogleMapsLocation}
-                        {...field}
-                        onChange={e => {
-                          handleInputChange("mapsPin", e.target.value)
-                        }}
-                        onBlur={async () => {
-                          await handleInputBlur("mapsPin", field.value)
                         }}
                       />
                     </FormControl>
@@ -942,7 +971,10 @@ export default function AddStorePopUpContent({
                   <SearchBar
                     title={translations.selectAvailableIngredients}
                     placeholder={translations.searchForIngredients}
-                    dataList={foods.map(f => ({ id: f.id, name: f.name }))}
+                    dataList={foods.map(f => ({
+                      id: f.id,
+                      name: f.name ?? ""
+                    }))}
                     value={ingredientInput}
                     onInputChange={setIngredientInput}
                     onSelect={item => {
@@ -963,10 +995,9 @@ export default function AddStorePopUpContent({
                   <SearchBar
                     title={translations.selectAvailableCategories}
                     placeholder={translations.searchAvailableCategories}
-                    dataList={categoryOptions[activeLang].map(o => ({
-                      // used category options till api
-                      id: o.value,
-                      name: o.label
+                    dataList={categoryTags.map(tag => ({
+                      id: tag.id,
+                      name: tag.tagName ?? ""
                     }))}
                     value={categoryInput}
                     onInputChange={setCategoryInput}
@@ -1068,16 +1099,8 @@ export default function AddStorePopUpContent({
                   <FormControl>
                     <ImageUploader
                       title={translations.selectImagesForYourStore}
-                      onChange={handleImageUpload(field)}
-                      previewUrls={
-                        storeData[activeLang].storeImage
-                          ? [
-                              URL.createObjectURL(
-                                storeData[activeLang].storeImage as File
-                              )
-                            ]
-                          : []
-                      }
+                      onChange={handleImageSelect}
+                      previewUrls={imagePreviewUrls}
                     />
                   </FormControl>
                   <FormMessage />
