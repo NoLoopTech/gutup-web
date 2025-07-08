@@ -1146,7 +1146,14 @@ export default function AddStorePopUpContent({
               {translations.cancel}
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Saving..." : translations.save}
+              {isLoading ? (
+                <div className="flex gap-2 items-center">
+                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                  {translations.save}
+                </div>
+              ) : (
+                translations.save
+              )}
             </Button>
           </div>
         </DialogFooter>
