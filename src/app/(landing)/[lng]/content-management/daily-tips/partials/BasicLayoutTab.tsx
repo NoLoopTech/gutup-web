@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { Resolver, useForm } from "react-hook-form"
 import { z } from "zod"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -24,18 +24,12 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
-import { toast } from "sonner"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
 import { type translationsTypes } from "@/types/dailyTipTypes"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { useDailyTipStore } from "@/stores/useDailyTipStore"
+import { Checkbox } from "@/components/ui/checkbox"
+import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
+import { toast } from "sonner"
 
 interface Option {
   value: string
@@ -63,14 +57,25 @@ const concerns: Record<string, Option[]> = {
 }
 
 export default function BasicLayoutTab({
-  translations
+  translations,
+  onClose,
+  addDailyTip,
+  userName
 }: {
   translations: translationsTypes
+  onClose: () => void
+  addDailyTip: () => void
+  userName: string
 }): JSX.Element {
   const { translateText } = useTranslation()
-  const { activeLang, translationsData, setTranslationField } =
-    useDailyTipStore()
+  const {
+    activeLang,
+    translationsData,
+    setTranslationField,
+    resetTranslations
+  } = useDailyTipStore()
   const [isTranslating, setIsTranslating] = useState(false)
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
 
   // Validation schema including inputs & textareas
   const FormSchema = z.object({
@@ -107,14 +112,14 @@ export default function BasicLayoutTab({
     concern: z
       .string({ required_error: translations.pleaseSelectAConcern })
       .nonempty(translations.pleaseSelectAConcern),
-    image: z.string().nonempty(translations.required)
+    image: z.string().nonempty(translations.required),
+    share: z
+      .boolean({ required_error: translations.required })
+      .default(false)
+      .refine(val => typeof val === "boolean", {
+        message: translations.required
+      })
   })
-
-  const handleCancel = (
-    form: ReturnType<typeof useForm<z.infer<typeof FormSchema>>>
-  ): void => {
-    form.reset()
-  }
 
   const handleInputChange = (fieldName: FieldNames, value: string) => {
     form.setValue(fieldName, value)
@@ -134,8 +139,13 @@ export default function BasicLayoutTab({
   }
 
   const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: translationsData.basicLayoutData[activeLang]
+    resolver: zodResolver(FormSchema) as Resolver<
+      z.infer<typeof FormSchema>,
+      any
+    >,
+    defaultValues: translationsData.basicLayoutData[activeLang] as z.infer<
+      typeof FormSchema
+    >
   })
 
   // Update form when lang changes
@@ -163,25 +173,45 @@ export default function BasicLayoutTab({
     }
   }
 
-  const handleImageSelect = (files: File[] | null) => {
+  const handleImageSelect = async (files: File[] | null) => {
     const file = files?.[0] ?? null
     if (file) {
-      const fileName = file.name
+      try {
+        setIsTranslating(true)
+        const imageUrl = await uploadImageToFirebase(
+          file,
+          "daily-tip/temp-daily-tip",
+          `temp-daily-tip-image-${userName}`
+        )
 
-      form.setValue("image", fileName)
-      setTranslationField("basicLayoutData", "en", "image", fileName)
-      setTranslationField("basicLayoutData", "fr", "image", fileName)
+        form.setValue("image", imageUrl, {
+          shouldValidate: true,
+          shouldDirty: true
+        })
+        setTranslationField("basicLayoutData", "en", "image", imageUrl)
+        setTranslationField("basicLayoutData", "fr", "image", imageUrl)
+
+        setPreviewUrls([imageUrl]) // For single image preview
+      } catch (error) {
+        toast.error("Image upload failed. Please try again.")
+        console.error("Firebase upload error:", error)
+      } finally {
+        setIsTranslating(false)
+      }
     }
   }
 
+  const handleReset = async () => {
+    form.reset(translationsData.basicLayoutData[activeLang])
+    // clear store and session
+    await resetTranslations()
+    sessionStorage.removeItem("daily-tip-storage")
+
+    onClose()
+  }
+
   function onSubmit(data: z.infer<typeof FormSchema>): void {
-    toast("You submitted the following values", {
-      description: (
-        <pre className="mt-2 w-[320px] rounded-md bg-neutral-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      )
-    })
+    addDailyTip()
   }
 
   return (
@@ -356,6 +386,44 @@ export default function BasicLayoutTab({
               />
             </div>
 
+            <FormField
+              control={form.control}
+              name="share"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl className="flex gap-2 items-center">
+                    <Checkbox
+                      id="share-checkbox"
+                      checked={Boolean(field.value)}
+                      onCheckedChange={(checked: boolean) => {
+                        field.onChange(checked)
+                        setTranslationField(
+                          "basicLayoutData",
+                          "en",
+                          "share",
+                          checked
+                        )
+                        setTranslationField(
+                          "basicLayoutData",
+                          "fr",
+                          "share",
+                          checked
+                        )
+                      }}
+                    />{" "}
+                    <FormLabel
+                      htmlFor="share-checkbox"
+                      className="m-0 cursor-pointer"
+                    >
+                      {translations.share}
+                    </FormLabel>
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <Separator />
 
             <div className="flex justify-between items-center mt-4 mb-4">
@@ -385,12 +453,7 @@ export default function BasicLayoutTab({
 
           {/* Buttons */}
           <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
-            <Button
-              variant="outline"
-              onClick={() => {
-                handleCancel(form)
-              }}
-            >
+            <Button variant="outline" onClick={handleReset}>
               {translations.cancel}
             </Button>
             <Button type="submit">{translations.save}</Button>

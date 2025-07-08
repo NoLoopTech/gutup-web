@@ -11,9 +11,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical, ThumbsDown, ThumbsUp } from "lucide-react"
 import Image from "next/image"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import sampleImage from "@/../../public/images/sample-image.png"
 import AddDailyTipMainPopUp from "./AddDailyTipMainPopUp.tsx"
+import { AddNewDailyTips, getAllDailyTips } from "@/app/api/daily-tip"
+import { useDailyTipStore } from "@/stores/useDailyTipStore"
+import {
+  deleteImageFromFirebase,
+  uploadImageToFirebase
+} from "@/lib/firebaseImageUtils"
+import { toast } from "sonner"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -24,23 +31,38 @@ interface Column<T> {
 }
 
 interface DailyTipsDataType {
-  media: string
+  dailyTipsId: number
+  imageOrVideoUrl: string
   title: string
   content: string
   dateCreated: string
-  status: string
-  likes: number
-  dislikes: number
+  status: boolean
+  countLikes: number
+  countDisLikes: number
+  type: string
 }
 
 export default function DailyTipsPage({
-  token
+  token,
+  userName
 }: {
   token: string
+  userName: string
 }): React.ReactElement {
   const [isOpenAddTip, setIsOpenAddTip] = useState<boolean>(false)
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(10)
+  const [dailyTips, setDailyTips] = useState<DailyTipsDataType[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+
+  const {
+    allowMultiLang,
+    activeLang,
+    translationsData,
+    activeTab,
+    setTranslationField,
+    resetTranslations
+  } = useDailyTipStore()
 
   const handleOpenAddTip = (): void => {
     setIsOpenAddTip(true)
@@ -49,9 +71,186 @@ export default function DailyTipsPage({
     setIsOpenAddTip(false)
   }
 
+  const getDailyTips = async () => {
+    try {
+      const resposne = await getAllDailyTips(token)
+      if (resposne.status === 200) {
+        setDailyTips(resposne.data)
+      } else {
+        console.log("getDailyTips", resposne.data)
+      }
+    } catch (error) {
+      console.log("getDailyTips", error)
+    }
+  }
+
+  useEffect(() => {
+    void getDailyTips()
+  }, [])
+
+  const uploadDailyTipImageAndSetUrl = async (): Promise<string | null> => {
+    let imageFile: string | File | undefined = undefined
+
+    if (activeTab === "basicForm") {
+      imageFile = translationsData.basicLayoutData[activeLang].image
+    } else if (activeTab === "shopPromote") {
+      imageFile = translationsData.shopPromotionData[activeLang].image
+    }
+
+    if (!imageFile) return null
+
+    const folder =
+      activeTab === "basicForm"
+        ? "daily-tip/basic-form"
+        : "daily-tip/shop-promote"
+    const fileNamePrefix =
+      activeTab === "basicForm" ? "basic-form-image" : "shop-promote-image"
+    const fileName = `${fileNamePrefix}-${Date.now()}`
+
+    let fileToUpload: File | Blob
+
+    if (typeof imageFile === "string") {
+      // Convert data URL or blob URL to Blob
+      try {
+        const blob = await fetch(imageFile).then(res => res.blob())
+        fileToUpload = blob
+      } catch (err) {
+        console.error("Failed to convert string to Blob", err)
+        return null
+      }
+    } else {
+      fileToUpload = imageFile
+    }
+
+    const uploadedUrl = await uploadImageToFirebase(
+      fileToUpload,
+      folder,
+      fileName
+    )
+
+    if (activeTab === "basicForm") {
+      setTranslationField("basicLayoutData", activeLang, "image", uploadedUrl)
+    } else if (activeTab === "shopPromote") {
+      setTranslationField("shopPromotionData", activeLang, "image", uploadedUrl)
+    }
+
+    return uploadedUrl
+  }
+
+  const handleAddDailyTip = async () => {
+    // Get fresh state after image update
+    const {
+      allowMultiLang: currentAllowMultiLang,
+      activeLang: currentLang,
+      activeTab: currentTab,
+      translationsData: currentTranslations
+    } = useDailyTipStore.getState()
+
+    const requestBody = {
+      allowMultiLang: currentAllowMultiLang,
+      title:
+        currentTab === "basicForm"
+          ? currentTranslations.basicLayoutData.en.title
+          : currentTab === "videoForm"
+          ? currentTranslations.videoTipData.en.title
+          : "",
+      titleFR:
+        currentTab === "basicForm"
+          ? currentTranslations.basicLayoutData.fr.title
+          : currentTab === "videoForm"
+          ? currentTranslations.videoTipData.fr.title
+          : "",
+      type:
+        currentTab === "basicForm"
+          ? "basic"
+          : currentTab === "videoForm"
+          ? "video"
+          : "store",
+      typeFR:
+        currentTab === "basicForm"
+          ? "basic"
+          : currentTab === "videoForm"
+          ? "video"
+          : "store",
+      status: false,
+      basicForm: {
+        concern: currentTranslations.basicLayoutData.en.concern,
+        concernFR: currentTranslations.basicLayoutData.fr.concern,
+        subTitleOne: currentTranslations.basicLayoutData.en.subTitleOne,
+        subTitleOneFR: currentTranslations.basicLayoutData.fr.subTitleOne,
+        subDescOne: currentTranslations.basicLayoutData.en.subDescriptionOne,
+        subDescOneFR: currentTranslations.basicLayoutData.fr.subDescriptionOne,
+        subTitleTwo: currentTranslations.basicLayoutData.en.subTitleTwo,
+        subTitleTwoFR: currentTranslations.basicLayoutData.fr.subTitleTwo,
+        subDescTwo: currentTranslations.basicLayoutData.en.subDescriptionTwo,
+        subDescTwoFR: currentTranslations.basicLayoutData.fr.subDescriptionTwo,
+        share: currentTranslations.basicLayoutData.en.share,
+        image: currentTranslations.basicLayoutData.en.image
+      },
+      shopPromote: {
+        reason: currentTranslations.shopPromotionData.en.reason,
+        reasonFR: currentTranslations.shopPromotionData.fr.reason,
+        name: currentTranslations.shopPromotionData.en.shopName,
+        location: currentTranslations.shopPromotionData.en.shopLocation,
+        category: currentTranslations.shopPromotionData.en.shopCategory,
+        categoryFR: currentTranslations.shopPromotionData.fr.shopCategory,
+        desc: currentTranslations.shopPromotionData.en.subDescription,
+        descFR: currentTranslations.shopPromotionData.fr.subDescription,
+        phoneNumber: currentTranslations.shopPromotionData.en.mobileNumber,
+        email: currentTranslations.shopPromotionData.en.email,
+        mapsPin: currentTranslations.shopPromotionData.en.mapsPin,
+        facebook: currentTranslations.shopPromotionData.en.facebook,
+        instagram: currentTranslations.shopPromotionData.en.instagram,
+        website: currentTranslations.shopPromotionData.en.website,
+        image: currentTranslations.shopPromotionData.en.image,
+        shopPromoteFoods:
+          currentTranslations.shopPromotionData.en.shopPromoteFoods
+      },
+      videoForm: {
+        concern: currentTranslations.videoTipData.en.concern,
+        concernFR: currentTranslations.videoTipData.fr.concern,
+        subTitle: currentTranslations.videoTipData.en.subTitle,
+        subTitleFR: currentTranslations.videoTipData.fr.subTitle,
+        subDesc: currentTranslations.videoTipData.en.subDescription,
+        subDescFR: currentTranslations.videoTipData.fr.subDescription,
+        videoUrl: currentTranslations.videoTipData.en.videoLink
+      }
+    }
+
+    try {
+      setIsLoading(true)
+
+      let uploadedImageUrl: string | null = null
+
+      // Upload and update image URL first
+      uploadedImageUrl = await uploadDailyTipImageAndSetUrl()
+
+      const response = await AddNewDailyTips(token, requestBody)
+      console.log(response)
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Daily Tip added successfully")
+        setIsOpenAddTip(false)
+        getDailyTips()
+
+        // clear store and session
+        resetTranslations()
+      } else {
+        toast.error("Failed to add daily tip!")
+        if (uploadedImageUrl) {
+          await deleteImageFromFirebase(uploadedImageUrl)
+        }
+      }
+    } catch (error) {
+      console.log(error)
+    } finally {
+      sessionStorage.removeItem("daily-tip-storage")
+      setIsLoading(false)
+    }
+  }
+
   const columns: Array<Column<DailyTipsDataType>> = [
     {
-      accessor: "media",
+      accessor: "imageOrVideoUrl",
       header: "Media",
       cell: (row: DailyTipsDataType) => (
         <Image
@@ -82,14 +281,12 @@ export default function DailyTipsPage({
       cell: (row: DailyTipsDataType) => (
         <Badge
           className={
-            row.status === "Active"
+            row.status
               ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700"
-              : row.status === "Pending"
-              ? "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
-              : "bg-red-100 text-red-700 hover:bg-red-200 border border-red-700"
+              : "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
           }
         >
-          {row.status}
+          {row.status ? "Active" : "Inactive"}
         </Badge>
       )
     },
@@ -100,11 +297,11 @@ export default function DailyTipsPage({
       cell: (row: DailyTipsDataType) => (
         <div className="flex gap-4 items-center">
           <div className="flex gap-1 items-center text-green-600">
-            <span>{row.likes}</span>
+            <span>{row.countLikes}</span>
             <ThumbsUp size={16} />
           </div>
           <div className="flex gap-1 items-center text-red-600">
-            <span>{row.dislikes}</span>
+            <span>{row.countDisLikes}</span>
             <ThumbsDown size={16} />
           </div>
         </div>
@@ -135,33 +332,15 @@ export default function DailyTipsPage({
     }
   ]
 
-  const data: DailyTipsDataType[] = [
-    {
-      media: "/images/carrot.jpg", // public/images/carrot.jpg
-      title: "Stay Hydrated",
-      content: "Main content of the tip",
-      dateCreated: "2025-05-16",
-      status: "Active",
-      likes: 178,
-      dislikes: 32
-    },
-    {
-      media: "/images/carrot.jpg",
-      title: "Stay Cool",
-      content: "Another tip",
-      dateCreated: "2025-05-16",
-      status: "Pending",
-      likes: 178,
-      dislikes: 32
-    }
-  ]
-
   const pageSizeOptions: number[] = [5, 10, 20]
 
-  const totalItems: number = data.length
+  const totalItems: number = dailyTips.length
   const startIndex: number = (page - 1) * pageSize
   const endIndex: number = startIndex + pageSize
-  const paginatedData: DailyTipsDataType[] = data.slice(startIndex, endIndex)
+  const paginatedData: DailyTipsDataType[] = dailyTips.slice(
+    startIndex,
+    endIndex
+  )
 
   const handlePageChange = (newPage: number): void => {
     setPage(newPage)
@@ -193,6 +372,8 @@ export default function DailyTipsPage({
         open={isOpenAddTip}
         onClose={handleCloseAddTip}
         token={token}
+        userName={userName}
+        addDailyTip={handleAddDailyTip}
       />
     </div>
   )

@@ -16,7 +16,10 @@ import { AddNewMood, getAllMoods } from "@/app/api/mood"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { AddMoodRequestBody } from "@/types/moodsTypes"
 import { toast } from "sonner"
-import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
+import {
+  deleteImageFromFirebase,
+  uploadImageToFirebase
+} from "@/lib/firebaseImageUtils"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -99,7 +102,11 @@ export default function MoodsPage({
     }
   }
 
-  const uploadMoodImageAndSetUrl = async () => {
+  useEffect(() => {
+    void getMoods()
+  }, [])
+
+  const uploadMoodImageAndSetUrl = async (): Promise<string | null> => {
     let imageFile: string | File | undefined = undefined
 
     if (activeTab === "Food") {
@@ -108,7 +115,7 @@ export default function MoodsPage({
       imageFile = translationsData.recipeData[activeLang].image
     }
 
-    if (!imageFile) return
+    if (!imageFile) return null
 
     const folder = activeTab === "Food" ? "moods/food-tab" : "moods/recipe-tab"
     const fileNamePrefix = activeTab === "Food" ? "food-image" : "recipe-image"
@@ -123,7 +130,7 @@ export default function MoodsPage({
         fileToUpload = blob
       } catch (err) {
         console.error("Failed to convert string to Blob", err)
-        return
+        return null
       }
     } else {
       fileToUpload = imageFile
@@ -140,20 +147,31 @@ export default function MoodsPage({
     } else if (activeTab === "Recipe") {
       setTranslationField("recipeData", activeLang, "image", uploadedUrl)
     }
+
+    return uploadedUrl
   }
 
   const handleAddMood = async () => {
     try {
       setIsLoading(true)
+      let uploadedImageUrl: string | null = null
 
       // Upload and update image URL first
-      await uploadMoodImageAndSetUrl()
+      uploadedImageUrl = await uploadMoodImageAndSetUrl()
+
+      // Get fresh state after image update
+      const {
+        allowMultiLang: currentAllowMultiLang,
+        activeLang: currentLang,
+        activeTab: currentTab,
+        translationsData: currentTranslations
+      } = useMoodStore.getState()
 
       const requestBody: AddMoodRequestBody = {
-        allowMultiLang,
-        activeLang,
-        activeTab,
-        translationsData
+        allowMultiLang: currentAllowMultiLang,
+        activeLang: currentLang,
+        activeTab: currentTab,
+        translationsData: currentTranslations
       }
 
       const response = await AddNewMood(token, requestBody)
@@ -166,7 +184,10 @@ export default function MoodsPage({
         // clear store and session
         resetTranslations()
       } else {
-        toast.error("Failed to add mood")
+        toast.error("Failed to add mood!")
+        if (uploadedImageUrl) {
+          await deleteImageFromFirebase(uploadedImageUrl)
+        }
       }
     } catch (error) {
       console.log(error)
@@ -182,10 +203,6 @@ export default function MoodsPage({
   const handleCloseAddMood = (): void => {
     setIsOpenAddMood(false)
   }
-
-  useEffect(() => {
-    void getMoods()
-  }, [])
 
   const columns: Array<Column<MoodsDataType>> = [
     {

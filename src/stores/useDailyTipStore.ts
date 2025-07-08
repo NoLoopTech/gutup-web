@@ -17,6 +17,7 @@ interface BasicLayoutFields {
   subDescriptionTwo: string
   concern: string
   image: string
+  share: boolean
 }
 
 interface ShopPromotionFields {
@@ -84,7 +85,8 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             subTitleTwo: "",
             subDescriptionTwo: "",
             concern: "",
-            image: ""
+            image: "",
+            share: false
           },
           fr: {
             title: "",
@@ -93,7 +95,8 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             subTitleTwo: "",
             subDescriptionTwo: "",
             concern: "",
-            image: ""
+            image: "",
+            share: false
           }
         },
         shopPromotionData: {
@@ -110,13 +113,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             instagram: "",
             website: "",
             image: "",
-            shopPromoteFoods: [
-              {
-                foodId: 0,
-                name: "",
-                dispalyStatus: false
-              }
-            ]
+            shopPromoteFoods: []
           },
           fr: {
             reason: "",
@@ -131,13 +128,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             instagram: "",
             website: "",
             image: "",
-            shopPromoteFoods: [
-              {
-                foodId: 0,
-                name: "",
-                dispalyStatus: false
-              }
-            ]
+            shopPromoteFoods: []
           }
         },
         videoTipData: {
@@ -196,7 +187,8 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 subTitleTwo: "",
                 subDescriptionTwo: "",
                 concern: "",
-                image: ""
+                image: "",
+                share: false
               },
               fr: {
                 title: "",
@@ -205,7 +197,8 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 subTitleTwo: "",
                 subDescriptionTwo: "",
                 concern: "",
-                image: ""
+                image: "",
+                share: false
               }
             },
             shopPromotionData: {
@@ -222,13 +215,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 instagram: "",
                 website: "",
                 image: "",
-                shopPromoteFoods: [
-                  {
-                    foodId: 0,
-                    name: "",
-                    dispalyStatus: false
-                  }
-                ]
+                shopPromoteFoods: []
               },
               fr: {
                 reason: "",
@@ -243,13 +230,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 instagram: "",
                 website: "",
                 image: "",
-                shopPromoteFoods: [
-                  {
-                    foodId: 0,
-                    name: "",
-                    dispalyStatus: false
-                  }
-                ]
+                shopPromoteFoods: []
               }
             },
             videoTipData: {

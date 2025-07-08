@@ -24,14 +24,6 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { toast } from "sonner"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
 import { type translationsTypes } from "@/types/dailyTipTypes"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { useDailyTipStore } from "@/stores/useDailyTipStore"
@@ -58,14 +50,20 @@ const concerns: Record<string, Option[]> = {
 
 export default function VideoTipTab({
   translations,
-  onClose
+  onClose,
+  addDailyTip
 }: {
   translations: translationsTypes
   onClose: () => void
+  addDailyTip: () => void
 }): JSX.Element {
   const { translateText } = useTranslation()
-  const { activeLang, translationsData, setTranslationField } =
-    useDailyTipStore()
+  const {
+    activeLang,
+    translationsData,
+    setTranslationField,
+    resetTranslations
+  } = useDailyTipStore()
   const [isTranslating, setIsTranslating] = useState(false)
 
   // Validation schema for this page
@@ -123,6 +121,8 @@ export default function VideoTipTab({
     setTranslationField("shopPromotionData", "en", "image", "")
     setTranslationField("shopPromotionData", "fr", "image", "")
 
+    // clear store and session
+    await resetTranslations()
     //  Remove session storage
     sessionStorage.removeItem("daily-tip-storage")
 
@@ -178,9 +178,7 @@ export default function VideoTipTab({
   }
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
-    toast("Form submitted", {
-      description: JSON.stringify(data, null, 2)
-    })
+    addDailyTip()
   }
 
   return (
