@@ -113,7 +113,6 @@ export default function StoreManagementPage({
   const getStores = async (): Promise<void> => {
     try {
       const response = await getAllStores(token)
-      console.log("Get stores response:", response)
 
       // Check if it's an error response
       if (response?.statusCode === 404) {
