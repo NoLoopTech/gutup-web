@@ -115,6 +115,7 @@ export default function AddFoodPopUpContent({
   const [isTranslating, setIsTranslating] = useState(false)
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
   const { data: session } = useSession()
+  const [categoryOptionsApi, setCategoryOptionsApi] = useState<Option[]>([])
 
   // Define FoodSchema before using it in useForm
   const FoodSchema = z.object({
@@ -229,25 +230,17 @@ export default function AddFoodPopUpContent({
     form.setValue(fieldName, value)
     setTranslationField("foodData", activeLang, fieldName, value)
 
-    // Get the correct options set
-    let optionsMap: Record<string, Option[]>
-    if (fieldName === "category") optionsMap = categoryOptions
-    else if (fieldName === "season") optionsMap = seasonOptions
-    else optionsMap = countriesOptions
-
-    const current = optionsMap[activeLang]
-    const oppositeLang = activeLang === "en" ? "fr" : "en"
-    const opposite = optionsMap[oppositeLang]
-
-    const index = current.findIndex(opt => opt.value === value)
-    if (index !== -1 && opposite[index]) {
-      setTranslationField(
-        "foodData",
-        oppositeLang,
-        fieldName,
-        opposite[index].value
+    if (fieldName === "category") {
+      // Find the selected option
+      const selected = categoryOptionsApi.find(opt =>
+        (activeLang === "en" ? opt.valueEn : opt.valueFr) === value
       )
+      if (selected) {
+        setTranslationField("foodData", "en", "category", selected.valueEn)
+        setTranslationField("foodData", "fr", "category", selected.valueFr)
+      }
     }
+    // ...existing code for season/country...
   }
 
   const makeRichHandlers = (
@@ -443,9 +436,17 @@ export default function AddFoodPopUpContent({
   React.useEffect(() => {
     const fetchCategoryFoodType = async () => {
       if (!session?.apiToken) return
-      // Use "Benefit" or "Type" as required by your API
       const response = await getCatagoryFoodType(session.apiToken, "Type")
-      console.log("Category Food Type Response:", response)
+      if (response?.status === 200 && Array.isArray(response.data)) {
+        setCategoryOptionsApi(
+          response.data.map((item: any) => ({
+            valueEn: item.tagName,
+            valueFr: item.tagNameFr,
+            labelEn: item.tagName,
+            labelFr: item.tagNameFr
+          }))
+        )
+      }
     }
     fetchCategoryFoodType()
   }, [session?.apiToken])
@@ -515,9 +516,12 @@ export default function AddFoodPopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {categoryOptions[activeLang].map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
+                          {categoryOptionsApi.map(option => (
+                            <SelectItem
+                              key={activeLang === "en" ? option.valueEn : option.valueFr}
+                              value={activeLang === "en" ? option.valueEn : option.valueFr}
+                            >
+                              {activeLang === "en" ? option.labelEn : option.labelFr}
                             </SelectItem>
                           ))}
                         </SelectContent>
