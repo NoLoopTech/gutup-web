@@ -51,6 +51,7 @@ export default function AddNewTagPopUp({
 
   const { translateText } = useTranslation()
   const [isTranslating, setIsTranslating] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
   )
@@ -101,15 +102,23 @@ export default function AddNewTagPopUp({
 
   const onSubmit = async (data: z.infer<typeof TagSchema>): Promise<void> => {
     try {
-      // Use the latest form values
-      const response = await AddNewTag(token, data)
+      setIsLoading(true)
+      const response = await AddNewTag(token, {
+        ...data,
+        tagNameFr: tagData.fr?.tagName || ""
+      } as any)
       if (response?.status === 200 || response?.status === 201) {
         toast.success("Tag added successfully!", {
           description: response.data.message
         })
+        // Remove session storage
+        sessionStorage.removeItem("tag-store")
+        form.reset({
+          category,
+          tagName: ""
+        })
         onClose()
         getTags()
-        form.reset() // reset the form after success
       } else {
         toast.error("Failed to add tag", {
           description: response.data.message || "Unexpected error occurred"
@@ -119,6 +128,8 @@ export default function AddNewTagPopUp({
       toast.error("Error adding tag", {
         description: error?.response?.data?.message || error.message
       })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -145,6 +156,15 @@ export default function AddNewTagPopUp({
     }
   }
 
+  const handleReset = async (): Promise<void> => {
+    form.reset({
+      category,
+      tagName: ""
+    })
+    sessionStorage.removeItem("tag-store")
+
+    onClose()
+  }
   // Input blur handler for translation
   const renderForm = (): JSX.Element => (
     <Form {...form}>
@@ -183,10 +203,19 @@ export default function AddNewTagPopUp({
 
           {/* Buttons */}
           <div className="flex justify-between mt-4">
-            <Button variant="secondary" onClick={onClose}>
+            <Button variant="outline" type="button" onClick={handleReset}>
               {translations.cancel}
             </Button>
-            <Button>{translations.save}</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex gap-2 items-center">
+                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                  {translations.save}
+                </div>
+              ) : (
+                translations.save
+              )}
+            </Button>
           </div>
         </div>
       </form>
