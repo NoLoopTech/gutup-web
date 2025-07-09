@@ -99,6 +99,7 @@ export default function AddStorePopUp({
                 }}
                 onAddStore={onAddStore}
                 isLoading={isLoading}
+                onClose={onClose}
               />
             </TabsContent>
 
@@ -114,6 +115,7 @@ export default function AddStorePopUp({
                   }}
                   onAddStore={onAddStore}
                   isLoading={isLoading}
+                  onClose={onClose}
                 />
               </TabsContent>
             )}

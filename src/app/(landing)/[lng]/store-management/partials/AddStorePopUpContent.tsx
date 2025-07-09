@@ -233,14 +233,17 @@ const storeTypeOptions: Record<string, Option[]> = {
 export default function AddStorePopUpContent({
   translations,
   onAddStore,
-  isLoading
+  isLoading,
+  onClose
 }: {
   translations: translationsTypes
   onAddStore?: () => Promise<void>
   isLoading?: boolean
+  onClose?: () => void
 }): JSX.Element {
   const { translateText } = useTranslation()
-  const { activeLang, storeData, setTranslationField } = useStoreStore() as any
+  const { activeLang, storeData, setTranslationField, resetForm } =
+    useStoreStore() as any
   const [isTranslating, setIsTranslating] = useState(false)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
@@ -748,6 +751,13 @@ export default function AddStorePopUpContent({
     form: ReturnType<typeof useForm<z.infer<typeof AddStoreSchema>>>
   ): void => {
     form.reset()
+    // clear store and session
+    resetForm()
+    sessionStorage.removeItem("store-store")
+
+    if (onClose) {
+      onClose()
+    }
   }
   const onSubmit = async (
     data: z.infer<typeof AddStoreSchema>
