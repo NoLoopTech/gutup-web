@@ -86,9 +86,13 @@ const countriesOptions: Record<string, Option[]> = {
 }
 
 export default function AddFoodPopUpContent({
-  translations
+  translations,
+  onClose,
+  getFoods // <-- add this prop
 }: {
   translations: translationsTypes
+  onClose: () => void
+  getFoods: () => void // <-- add this prop type
 }): JSX.Element {
   const { translateText } = useTranslation()
   const { activeLang, foodData, setTranslationField } = useFoodStore() as any
@@ -368,7 +372,7 @@ export default function AddFoodPopUpContent({
     formData: z.infer<typeof FoodSchema>
   ): Promise<void> => {
     try {
-      const token = session?.apiToken // <-- use session token
+      const token = session?.apiToken
       // Map your form data to CreateFoodDto
       const foodDto: CreateFoodDto = {
         name: foodData.en.name,
@@ -409,7 +413,8 @@ export default function AddFoodPopUpContent({
       const response = await postNewFood(token, foodDto)
       if (response.status === 201 || response.status === 200) {
         toast.success(translations.formSubmittedSuccessfully)
-        // Optionally reset form or close modal
+        getFoods() // <-- refresh the food list
+        onClose()  // <-- close popup after refresh
       } else {
         toast.error("Failed to add food")
       }

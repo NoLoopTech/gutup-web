@@ -267,7 +267,7 @@ export default function MoodsPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end -mt-14 mb-5">
+      <div className="flex justify-end mb-5 -mt-14">
         <Button onClick={handleOpenAddMood}>Add New</Button>
       </div>
 
