@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
 import { useState, useEffect, useMemo } from "react"
-import { AddNewStore, getAllStores } from "@/app/api/store"
+import { AddNewStore, getAllStores, deleteStoreById } from "@/app/api/store"
 import { Badge } from "@/components/ui/badge"
 import AddStorePopUp from "./AddStorePopUp"
 import { Label } from "@/components/ui/label"
@@ -32,6 +32,16 @@ import {
 } from "@/types/storeTypes"
 import { toast } from "sonner"
 import { loadLanguage } from "@/../../src/i18n/locales"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -42,6 +52,7 @@ interface Column<T> {
 }
 
 interface StoreManagementDataType {
+  id?: number
   storeName: string
   storeLocation: string
   storeType: string
@@ -56,6 +67,17 @@ interface dataListTypes {
   value: string
   label: string
 }
+const locations: dataListTypes[] = [
+  { value: "Lagos", label: "Lagos" },
+  { value: "Abuja", label: "Abuja" },
+  { value: "Kano", label: "Kano" },
+  { value: "Kaduna", label: "Kaduna" }
+]
+
+const storeTypes: dataListTypes[] = [
+  { value: "Online", label: "Online" },
+  { value: "Physical", label: "Physical" }
+]
 
 export default function StoreManagementPage({
   token
@@ -70,6 +92,7 @@ export default function StoreManagementPage({
   const [selectedLocation, setSelectedLocation] = useState<string>("")
   const [selectedStoreType, setSelectedStoreType] = useState<string>("")
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
   const [translations, setTranslations] =
     useState<translationsTypes>(defaultTranslations)
 
@@ -270,6 +293,55 @@ export default function StoreManagementPage({
     }
   }
 
+  // handle delete store
+  const [storeId, setStoreId] = useState<number>(0)
+
+  const handleDeleteStore = (storeId: number): void => {
+    setStoreId(storeId)
+    setConfirmDeleteOpen(true)
+  }
+
+  const handleDeleteStoreById = async (): Promise<void> => {
+    try {
+      setIsLoading(true)
+      const response = await deleteStoreById(token, storeId)
+
+      // Check if response is an error object
+      if (response?.response?.status) {
+        // This is an error response
+        const errorMessage =
+          response.response?.data?.message || "Failed to delete store"
+        toast.error(errorMessage)
+        setConfirmDeleteOpen(false)
+        return
+      }
+
+      // Check for successful response
+      if (
+        response?.status === 200 ||
+        response?.status === 204 ||
+        response?.data
+      ) {
+        toast.success("Store deleted successfully")
+        setConfirmDeleteOpen(false)
+        await getStores() // Refresh the data
+      } else {
+        toast.error("Failed to delete store")
+        setConfirmDeleteOpen(false)
+      }
+    } catch (error) {
+      console.error("Error deleting store:", error)
+      toast.error("Failed to delete store")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // handle close delete confirmation popup
+  const handleCloseDeleteConfirmationPopup = (): void => {
+    setConfirmDeleteOpen(false)
+  }
+
   const columns: Column<StoreManagementDataType>[] = [
     {
       accessor: "storeName",
@@ -351,6 +423,15 @@ export default function StoreManagementPage({
             <DropdownMenuItem>Edit</DropdownMenuItem>
             <DropdownMenuItem>Make a copy</DropdownMenuItem>
             <DropdownMenuItem>Favorite</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                if (row.id) {
+                  handleDeleteStore(row.id)
+                }
+              }}
+            >
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -399,18 +480,6 @@ export default function StoreManagementPage({
     setSelectedLocation("")
     setSelectedStoreType("")
   }
-
-  const locations: dataListTypes[] = [
-    { value: "Lagos", label: "Lagos" },
-    { value: "Abuja", label: "Abuja" },
-    { value: "Kano", label: "Kano" },
-    { value: "Kaduna", label: "Kaduna" }
-  ]
-
-  const storeTypes: dataListTypes[] = [
-    { value: "Online", label: "Online" },
-    { value: "Physical", label: "Physical" }
-  ]
 
   return (
     <div className="space-y-4">
@@ -490,6 +559,28 @@ export default function StoreManagementPage({
         onAddStore={handleAddStore}
         isLoading={isLoading}
       />
+      {/* delete confirmation popup  */}
+      <AlertDialog
+        open={confirmDeleteOpen}
+        onOpenChange={handleCloseDeleteConfirmationPopup}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Store</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this store?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCloseDeleteConfirmationPopup}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteStoreById}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

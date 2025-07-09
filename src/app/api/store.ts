@@ -22,3 +22,18 @@ export const AddNewStore = async (
   })
   return response
 }
+
+// delete store by id
+export const deleteStoreById = async (
+  token: string,
+  id: number
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.delete(`/store/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response
+  } catch (error) {
+    return error
+  }
+}

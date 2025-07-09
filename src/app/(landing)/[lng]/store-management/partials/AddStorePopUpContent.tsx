@@ -767,6 +767,7 @@ export default function AddStorePopUpContent({
     } else {
       toast(translations.formSubmittedSuccessfully, {})
     }
+    sessionStorage.removeItem("store-store")
   }
 
   return (
