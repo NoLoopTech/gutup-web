@@ -1,6 +1,6 @@
 "use client"
 
-import { postNewFood } from "@/app/api/foods"
+import { getCatagoryFoodType, postNewFood } from "@/app/api/foods"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import LableInput from "@/components/Shared/LableInput/LableInput"
 import { Button } from "@/components/ui/button"
@@ -58,16 +58,32 @@ const categoryOptions: Record<string, Option[]> = {
 }
 const seasonOptions: Record<string, Option[]> = {
   en: [
-    { value: "spring", label: "Spring" },
-    { value: "summer", label: "Summer" },
-    { value: "autumn", label: "Autumn" },
-    { value: "winter", label: "Winter" }
+    { value: "january", label: "January" },
+    { value: "february", label: "February" },
+    { value: "march", label: "March" },
+    { value: "april", label: "April" },
+    { value: "may", label: "May" },
+    { value: "june", label: "June" },
+    { value: "july", label: "July" },
+    { value: "august", label: "August" },
+    { value: "september", label: "September" },
+    { value: "october", label: "October" },
+    { value: "november", label: "November" },
+    { value: "december", label: "December" }
   ],
   fr: [
-    { value: "spring", label: "Printemps" },
-    { value: "summer", label: "Été" },
-    { value: "autumn", label: "Automne" },
-    { value: "winter", label: "Hiver" }
+    { value: "january", label: "Janvier" },
+    { value: "february", label: "Février" },
+    { value: "march", label: "Mars" },
+    { value: "april", label: "Avril" },
+    { value: "may", label: "Mai" },
+    { value: "june", label: "Juin" },
+    { value: "july", label: "Juillet" },
+    { value: "august", label: "Août" },
+    { value: "september", label: "Septembre" },
+    { value: "october", label: "Octobre" },
+    { value: "november", label: "Novembre" },
+    { value: "december", label: "Décembre" }
   ]
 }
 const countriesOptions: Record<string, Option[]> = {
@@ -424,6 +440,16 @@ export default function AddFoodPopUpContent({
     }
   }
 
+  React.useEffect(() => {
+    const fetchCategoryFoodType = async () => {
+      if (!session?.apiToken) return
+      // Use "Benefit" or "Type" as required by your API
+      const response = await getCatagoryFoodType(session.apiToken, "Type")
+      console.log("Category Food Type Response:", response)
+    }
+    fetchCategoryFoodType()
+  }, [session?.apiToken])
+
   // Cancel handler
   const handleCancel = (
     form: ReturnType<typeof useForm<z.infer<typeof FoodSchema>>>
@@ -509,7 +535,7 @@ export default function AddFoodPopUpContent({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="block mb-1 text-black">
-                      {translations.season}
+                      {translations.month}
                     </FormLabel>
                     <FormControl>
                       <Select
@@ -520,7 +546,7 @@ export default function AddFoodPopUpContent({
                       >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue
-                            placeholder={translations.selectSeason}
+                            placeholder={translations.selectMonth}
                           />
                         </SelectTrigger>
                         <SelectContent>

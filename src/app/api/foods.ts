@@ -60,9 +60,23 @@ export const postNewFood = async (
   try {
     const response = await axiosInstance.post("/food", data, {
       headers: { Authorization: `Bearer ${token}` }
-      
     })
     console.log("Token being sent:", token)
+    return response
+  } catch (error) {
+    return error
+  }
+}
+
+// get category food type and benifit
+export const getCatagoryFoodType = async (
+  token: string,
+  category: string
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(`/food-tag/category/${category}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
     return response
   } catch (error) {
     return error
