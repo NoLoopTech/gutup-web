@@ -25,7 +25,7 @@ export const getFoodsById = async (token: string, id: number): Promise<any> => {
   }
 }
 
-// delete user by id
+// delete food by id
 export const deleteFoodById = async (
   token: string,
   id: number
@@ -34,9 +34,13 @@ export const deleteFoodById = async (
     const response = await axiosInstance.delete(`/food/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-    return response
-  } catch (error) {
-    return error
+    return response.data // Return only the data, not the whole response
+  } catch (error: any) {
+    // Return a consistent error object
+    return {
+      error: true,
+      message: error?.response?.data?.message || error.message || "Delete failed"
+    }
   }
 }
 

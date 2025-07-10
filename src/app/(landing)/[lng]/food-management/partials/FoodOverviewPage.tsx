@@ -1,6 +1,6 @@
 "use client"
 
-import { getAllFoods } from "@/app/api/foods"
+import { deleteFoodById, getAllFoods } from "@/app/api/foods"
 import { CustomTable } from "@/components/Shared/Table/CustomTable"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select"
 import dayjs from "dayjs"
 import { MoreVertical } from "lucide-react"
+import { useSession } from "next-auth/react"
 import Image from "next/image"
 import { useEffect, useMemo, useState } from "react"
 import AddFoodPopUp from "./AddFoodPopUp"
@@ -62,11 +63,10 @@ interface FoodOverviewDataType {
   attributes: FoodAttributesTypes
 }
 
-export default function FoodOverviewPage({
-  token
-}: {
-  token: string
-}): React.ReactElement {
+export default function FoodOverviewPage(): React.ReactElement {
+  const { data: session } = useSession()
+  const token = session?.apiToken
+
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [openAddFoodPopUp, setOpenAddFoodPopUp] = useState(false)
@@ -81,6 +81,7 @@ export default function FoodOverviewPage({
 
   // Function to fetch all foods from API
   const getFoods = async (): Promise<void> => {
+    if (!token) return
     try {
       const response = await getAllFoods(token)
       if (response.status === 200) {
@@ -311,11 +312,34 @@ export default function FoodOverviewPage({
             >
               View
             </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-red-600"
+              onClick={() => {
+                handleDeleteFood(row.id)
+              }}
+            >
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
     }
   ]
+
+  // Add this function:
+  const handleDeleteFood = async (id: number) => {
+    if (!token) {
+      alert("No token found. Please login again.")
+      return
+    }
+    if (!window.confirm("Are you sure you want to delete this food?")) return
+    const response = await deleteFoodById(token, id)
+    if (!response.error) {
+      await getFoods()
+    } else {
+      alert(response.message || "Failed to delete food.")
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -461,3 +485,4 @@ export default function FoodOverviewPage({
     </div>
   )
 }
+
