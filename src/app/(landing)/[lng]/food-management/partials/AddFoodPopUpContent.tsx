@@ -434,12 +434,14 @@ export default function AddFoodPopUpContent({
   }
 
   React.useEffect(() => {
-    const fetchCategoryFoodType = async () => {
+    const fetchCategoryAndBenefit = async (): Promise<void> => {
       if (!session?.apiToken) return
-      const response = await getCatagoryFoodType(session.apiToken, "Type")
-      if (response?.status === 200 && Array.isArray(response.data)) {
+
+      // Fetch Type
+      const typeResponse = await getCatagoryFoodType(session.apiToken, "Type")
+      if (typeResponse?.status === 200 && Array.isArray(typeResponse.data)) {
         setCategoryOptionsApi(
-          response.data.map((item: any) => ({
+          typeResponse.data.map((item: any) => ({
             valueEn: item.tagName,
             valueFr: item.tagNameFr,
             labelEn: item.tagName,
@@ -447,8 +449,14 @@ export default function AddFoodPopUpContent({
           }))
         )
       }
+      console.log("Type category response:", typeResponse)
+
+      // Fetch Benefit
+      const benefitResponse = await getCatagoryFoodType(session.apiToken, "Benefit")
+      console.log("Benefit category response:", benefitResponse)
     }
-    fetchCategoryFoodType()
+
+    void fetchCategoryAndBenefit()
   }, [session?.apiToken])
 
   // Cancel handler
