@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { type RecipeFields } from "@/stores/useRecipeStore"
 import LabelInput from "@/components/Shared/LableInput/LableInput"
 import { type Recipe } from "@/types/recipeTypes"
+import { getAllFoods } from "@/app/api/foods"
 import { Trash, CircleFadingPlus, MoreVertical } from "lucide-react"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import {
@@ -35,18 +36,21 @@ import z from "zod"
 import { toast } from "sonner"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import {
+  type AddRecipeRequestBody,
+  type translationsTypes
+} from "@/types/recipeTypes"
 import { useRecipeStore } from "@/stores/useRecipeStore"
-import { type translationsTypes } from "@/types/storeTypes"
-import { getAllTagsByCategory } from "@/app/api/foods"
+// import { getAllTagsByCategory } from "@/app/api/foods"
 import {
   deleteImageFromFirebase,
   uploadImageToFirebase
 } from "@/lib/firebaseImageUtils"
+import { addNewRecipe } from "@/app/api/recipe"
 
 interface Ingredient {
   id: number
-  name: string
-  type: string
+  ingredientName: string
   status: "Active" | "Inactive"
   display: boolean
   quantity: string
@@ -60,16 +64,24 @@ interface Option {
 
 const categoryOptions: Record<string, Option[]> = {
   en: [
-    { value: "fruits", label: "Fruits" },
-    { value: "vegetables", label: "Vegetables" },
-    { value: "dairy", label: "Dairy" },
-    { value: "grains", label: "Grains" }
+    { value: "breakfast", label: "Breakfast" },
+    { value: "lunch", label: "Lunch" },
+    { value: "snack", label: "Snack" },
+    { value: "dinner", label: "Dinner" },
+    { value: "drink", label: "Drink" },
+    { value: "sauce", label: "Sauce" },
+    { value: "condiments", label: "Condiments" },
+    { value: "aperitive", label: "Aperitive" }
   ],
   fr: [
-    { value: "fruits", label: "Fruits" },
-    { value: "vegetables", label: "Légumes" },
-    { value: "dairy", label: "Produits laitiers" },
-    { value: "grains", label: "Céréales" }
+    { value: "breakfast", label: "Petit déjeuner" },
+    { value: "lunch", label: "Déjeuner" },
+    { value: "snack", label: "Collation" },
+    { value: "dinner", label: "Dîner" },
+    { value: "drink", label: "Boisson" },
+    { value: "sauce", label: "Sauce" },
+    { value: "condiments", label: "Condiments" },
+    { value: "aperitive", label: "Apéritif" }
   ]
 }
 const seasonOptions: Record<string, Option[]> = {
@@ -86,8 +98,6 @@ const seasonOptions: Record<string, Option[]> = {
     { value: "winter", label: "Hiver" }
   ]
 }
-
-// Define function for handling RichTextEditor changes
 
 // Define function for handling image upload changes
 const handleImageUpload = (field: any) => (files: File[] | null) => {
@@ -130,6 +140,7 @@ export default function AddRecipePopUpContent({
   const { activeLang, setTranslationField, allowMultiLang } = useRecipeStore()
   const { translateText } = useTranslation()
   const [isTranslating, setIsTranslating] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [foods, setFoods] = useState<Food[]>([])
   const [ingredientData, setIngredientData] = useState<Ingredient[]>([])
   const [selected, setSelected] = useState<Food | null>(null)
@@ -170,7 +181,8 @@ export default function AddRecipePopUpContent({
         message: translations.pleaseenteratleastonebenefit
       }),
     ingredientData: z
-      .array(z.unknown())
+      // .array(z.unknown())
+      .array(z.any())
       .nonempty(translations.atleastoneingredientcategorymustbeadded),
     authorName: z
       .string()
@@ -202,12 +214,7 @@ export default function AddRecipePopUpContent({
         message: translations.required
       }
     ),
-    // authorimage: z.custom<File | null>(val => val instanceof File, {
-    //   message: translations.required
-    // }),
-    // foodimage: z.custom<File | null>(val => val instanceof File, {
-    //   message: translations.required
-    // })
+
     foodimage: z.string().min(1, { message: translations.required }),
     authorimage: z.string().min(1, { message: translations.required })
   })
@@ -245,6 +252,97 @@ export default function AddRecipePopUpContent({
   ): void => {
     form.reset()
   }
+
+  // save recipe popup content
+  const handleAddRecipe = async (): Promise<void> => {
+    try {
+      setIsLoading(true)
+
+      // Upload and update image URL first
+      // await uploadRecipeImageAndSetUrl()
+
+      // Get translations from store
+      const { translations } = useRecipeStore.getState()
+      // Get images from form (implement upload logic as needed)
+      const foodImageFile = form.getValues("foodimage")
+      const authorImageFile = form.getValues("authorimage")
+
+      const requestBody: AddRecipeRequestBody = {
+        name: translations.en.name,
+        nameFR: translations.fr.name,
+        category: translations.en.category,
+        categoryFR: translations.fr.category,
+        season: translations.en.season,
+        seasonFR: translations.fr.season,
+        isActive: true, // or set as needed
+        attribute: {
+          preparation: translations.en.preparation,
+          preparationFR: translations.fr.preparation,
+          rest: translations.en.rest,
+          restFR: translations.fr.rest,
+          persons: Number(translations.en.persons) || 0
+        },
+        describe: {
+          description: translations.en.recipe || "",
+          descriptionFR: translations.fr.recipe || ""
+        },
+        images: foodImageFile ? [{ imageUrl: foodImageFile }] : [],
+
+        healthBenefits: (translations.en.benefits || []).map(
+          (benefit: string, idx: number) => ({
+            healthBenefit: benefit,
+            healthBenefitFR: translations.fr.benefits?.[idx] || ""
+          })
+        ),
+
+        author: {
+          authorName: translations.en.authorName,
+          authorCategory: translations.en.authorCategory,
+          authorCategoryFR: translations.fr.authorCategory,
+          authorPhone: translations.en.phone,
+          authorEmail: translations.en.email,
+          authorWebsite: translations.en.website,
+          authorImage: authorImageFile
+        },
+
+        ingredients: (translations.en.ingredientData || []).map(
+          (ing: any, idx: number) => {
+            const frIngredient = translations.fr.ingredientData?.[idx]
+
+            return {
+              ingredientName: ing.ingredientName,
+              ingredientNameFR:
+                frIngredient?.ingredientName || ing.ingredientName, // fallback to EN
+              quantity: ing.quantity || "",
+              quantityFR: frIngredient?.quantity || ing.quantity || "", // fallback to EN
+              mainIngredient: ing.isMain,
+              foodId: ing.foodId || 0,
+              available: ing.available || false
+            }
+          }
+        )
+      }
+      console.log("check healthbenefits", requestBody)
+
+      // Replace AddNewwRecipe with your actual API call for recipes
+      const response = await addNewRecipe(token, requestBody)
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Recipe added successfully")
+
+        // clear store and session
+        translations()
+      } else {
+        toast.error("Failed to add recipe")
+      }
+    } catch (error) {
+      console.log(error)
+    } finally {
+      sessionStorage.removeItem("recipe-storage")
+      setIsLoading(false)
+    }
+  }
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     fieldName:
@@ -334,48 +432,6 @@ export default function AddRecipePopUpContent({
     }
     return { onChange }
   }
-  // Dummy data
-  // const ingredientData: Ingredient[] = []
-
-  // // Table columns
-  // const ingredientColumns = [
-  //   {
-  //     header: translations.ingredientName,
-  //     accessor: "name" as const
-  //   },
-  //   {
-  //     header: translations.quantity,
-  //     accessor: "quantity" as const
-  //   },
-  //   {
-  //     header: translations.mainIngredient,
-  //     accessor: (row: Ingredient) => (
-  //       <Switch
-  //         checked={row.isMain}
-  //         className="scale-75"
-  //         style={{ minWidth: 28, minHeight: 16 }}
-  //       />
-  //     )
-  //   },
-  //   {
-  //     header: translations.availableInIngredients,
-  //     accessor: (row: Ingredient) =>
-  //       row.tags.includes("InSystem") ? (
-  //         <Badge className="bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors">
-  //           In the System
-  //         </Badge>
-  //       ) : (
-  //         <Button
-  //           variant="ghost"
-  //           className="text-secondary-blue text-xs px-2 py-1 flex items-center gap-1 hover:bg-transparent focus:bg-transparent active:bg-transparent"
-  //           size="sm"
-  //         >
-  //           <CircleFadingPlus size={14} />
-  //           Add to Ingredients
-  //         </Button>
-  //       )
-  //   }
-  // ]
   // Define functions to handle page changes
   const handlePageChange = (newPage: number): void => {
     setPage(newPage)
@@ -415,19 +471,20 @@ export default function AddRecipePopUpContent({
   const ingredientColumns = [
     {
       header: translations.ingredientName,
-      accessor: "name" as const
+      accessor: "ingredientName" as const
     },
     {
-      header: translations.type,
+      header: translations.quantity,
       accessor: (row: Ingredient) => (
         <Badge className="bg-white text-black text-xs px-2 py-1 rounded-md border border-gray-100 hover:bg-white">
-          {translations[row.type?.toLowerCase() as keyof typeof translations] ||
-            row.type}
+          {translations[
+            row.quantity?.toLowerCase() as keyof typeof translations
+          ] || row.quantity}
         </Badge>
       )
     },
     {
-      header: translations.availabilityStatus,
+      header: translations.availableInIngredients,
       accessor: (row: Ingredient) => (
         <Badge
           className={
@@ -443,7 +500,7 @@ export default function AddRecipePopUpContent({
       )
     },
     {
-      header: translations.displayStatus,
+      header: translations.mainIngredient,
       accessor: (row: Ingredient) => (
         <Switch checked={row.display} className="scale-75" />
       )
@@ -457,7 +514,7 @@ export default function AddRecipePopUpContent({
           size="icon"
           className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
           onClick={() => {
-            handleDeleteAvailItem(row.id)
+            handleDeleteIngredientData(row.id)
           }}
           title={translations.delete}
         >
@@ -469,7 +526,7 @@ export default function AddRecipePopUpContent({
   ]
 
   // Delete handler for ingredientData
-  const handleDeleteAvailItem = (id: number): void => {
+  const handleDeleteIngredientData = (id: number): void => {
     const updated = ingredientData.filter(item => item.id !== id)
     setIngredientData(updated)
     form.setValue("ingredientData", updated, { shouldValidate: true })
@@ -489,18 +546,18 @@ export default function AddRecipePopUpContent({
       Array.isArray(formIngredientData) &&
       formIngredientData !== ingredientData
     ) {
-      setIngredientData(formIngredientData)
+      setIngredientData(formIngredientData as Ingredient[])
     }
   }, [form.watch("ingredientData")])
 
   // translated type/status using translations object
   const getTranslatedType = (type: string, lang: string): string => {
     const key = type.toLowerCase()
-    return translations[key] || type
+    return translations[key as keyof translationsTypes] || type
   }
   const getTranslatedStatus = (status: string, lang: string): string => {
     const key = status.toLowerCase()
-    return translations[key] || status
+    return translations[key as keyof translationsTypes] || status
   }
 
   // handler for “Add Ingredient”
@@ -510,13 +567,14 @@ export default function AddRecipePopUpContent({
 
     const entry: Ingredient = {
       id: selected ? Number(selected.id) : Date.now(),
-      name,
-      type: "Ingredient",
+      ingredientName: name,
+      // type: "Ingredient",
       tags: ["InSystem"],
       display: true,
       quantity: "",
       isMain: false,
-      status: "Active"
+      status: "Active",
+      type: "Ingredient"
     }
 
     // Update current lang
@@ -527,6 +585,7 @@ export default function AddRecipePopUpContent({
 
     // Prepare translated entry for opposite lang
     const oppLang = activeLang === "en" ? "fr" : "en"
+
     let translatedName = name
     try {
       translatedName = await translateText(name)
@@ -537,15 +596,28 @@ export default function AddRecipePopUpContent({
     const translatedStatus = getTranslatedStatus(entry.status, oppLang)
     const translatedEntry: Ingredient = {
       ...entry,
-      name: translatedName,
-      type: translatedType,
+      ingredientName: translatedName,
+      quantity: translatedType,
       status: translatedStatus as "Active" | "Inactive"
     }
     // Only pass translated data to opposite lang
-    const oppUpdated = [
-      ...(([oppLang]?.ingredientData as Ingredient[]) || []),
-      translatedEntry
-    ]
+    // const oppUpdated = [
+    //   ...(([oppLang]?.ingredientData as Ingredient[]) || []),
+    //   translatedEntry
+    // ]
+    // setTranslationField(oppLang, "ingredientData", oppUpdated)
+
+    // Get existing translated ingredientData from form state
+    const existingTranslatedData =
+      (form.getValues(`${oppLang}.ingredientData`) as Ingredient[]) || []
+
+    // Add new translated ingredient
+    const oppUpdated = [...existingTranslatedData, translatedEntry]
+
+    // Update form and state for the opposite language
+    form.setValue(`${oppLang}.ingredientData`, oppUpdated, {
+      shouldValidate: true
+    })
     setTranslationField(oppLang, "ingredientData", oppUpdated)
 
     // clear for next
@@ -560,6 +632,7 @@ export default function AddRecipePopUpContent({
   }
 
   async function handleBenefitsBlur(): Promise<void> {
+    console.log("Blur triggered")
     if (activeLang === "en") {
       const vals = form.getValues("benefits")
       if (vals.length) {
@@ -589,14 +662,6 @@ export default function AddRecipePopUpContent({
     { value: "winter", label: "Winter" }
   ]
 
-  //  // Form hook
-  //   const form = useForm<z.infer<typeof RecipeSchema>>({
-  //     resolver: zodResolver(RecipeSchema),
-  //     defaultValues: {
-  //       ...storeData[activeLang],
-  //       category: storeData[activeLang]?.category || ""
-  //     }
-  //   })
   useEffect(() => {
     const fetchTags = async (): Promise<void> => {
       try {
@@ -704,22 +769,6 @@ export default function AddRecipePopUpContent({
       }
     }
   }
-
-  // useEffect(() => {
-  //   const langData = allowMultiLang[activeLang]
-  //   if (langData) {
-  //     const existingUrl = langData.foodimage
-  //     const existingAuthorUrl = langData.authorimage
-  //     const imageUrls = [existingUrl, existingAuthorUrl].filter(Boolean) // remove undefined/null
-
-  //     if (imageUrls.length > 0) {
-  //       setPreviewUrls([imageUrls])
-  //     } else {
-  //       setPreviewUrls([])
-  //     }
-  //     form.reset(langData)
-  //   }
-  // }, [activeLang, form.reset, allowMultiLang])
   useEffect(() => {
     const langData = allowMultiLang[activeLang]
     if (langData) {
@@ -757,8 +806,6 @@ export default function AddRecipePopUpContent({
     //  Remove session data
     sessionStorage.removeItem("recipe-storage")
 
-    // Clear preview image state
-    // setPreviewUrls([])
     setPreviewFoodUrls([])
     setPreviewAuthorUrls([])
 
@@ -820,7 +867,7 @@ export default function AddRecipePopUpContent({
                           <SelectValue placeholder={"Select Category"} />
                         </SelectTrigger>
                         <SelectContent>
-                          {categories.map((option: Option) => (
+                          {categoryOptions[activeLang].map((option: Option) => (
                             <SelectItem key={option.value} value={option.value}>
                               {translations[
                                 option.value.toLowerCase() as keyof translationsTypes
@@ -998,7 +1045,7 @@ export default function AddRecipePopUpContent({
               <SearchBar
                 title={translations.selectYourIngredients}
                 placeholder={translations.searchForIngredient}
-                dataList={foods.map(f => ({ id: f.id, name: f.name }))}
+                dataList={foods.map(f => ({ id: f.id, name: f.name ?? "" }))}
                 value={ingredientInput}
                 onInputChange={setIngredientInput}
                 onSelect={item => {
@@ -1279,7 +1326,14 @@ export default function AddRecipePopUpContent({
               >
                 {translations.cancel}
               </Button>
-              <Button type="submit">{translations.save}</Button>
+              <Button
+                type="submit"
+                onClick={() => {
+                  handleAddRecipe()
+                }}
+              >
+                {translations.save}
+              </Button>
             </div>
           </DialogFooter>
         </form>

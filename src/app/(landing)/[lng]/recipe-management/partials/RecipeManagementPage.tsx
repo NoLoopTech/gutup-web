@@ -17,16 +17,29 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
 import { MoreVertical } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import AddRecipePopup from "./AddRecipePopUp"
 import { getAllRecipes } from "@/app/api/recipe"
+import { deleteRecipeById } from "@/app/api/recipe"
+import { useDeleteRecipe } from "@/query/hooks/useDeleteRecipes"
 import { Label } from "@/components/ui/label"
 import dayjs from "dayjs"
 import ViewRecipePopUp from "./ViewRecipePopUp"
 
+import { useGetAllRecipeClients } from "@/query/hooks/useGetAllRecipeClients"
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
   header?: string
@@ -62,31 +75,76 @@ export default function RecipeManagementPage({
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [openAddRecipePopUp, setOpenAddRecipePopUp] = useState(false)
-  const [recipes, seRecipes] = useState<RecipeDataType[]>([])
+  const [recipes, setRecipes] = useState<RecipeDataType[]>([])
   const [searchText, setSearchText] = useState<string>("")
   const [selectedCategory, setSelectedCategory] = useState<string>("")
   const [selectedPersons, setSelectedPersons] = useState<string>("")
   const [selectedBenefit, setSelectedBenefit] = useState<string>("")
   const [viewRecipe, setViewRecipe] = useState<boolean>(false)
   const [viewRecipeId, setViewRecipeId] = useState<number>(0)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
+  const {
+    deleteRecipe,
+    loading: deleteLoading,
+    error: deleteError
+  } = useDeleteRecipe(token)
+  const [recipeId, setRecipeId] = useState<number>(0)
+
+  const { clients, loading, error, fetchRecipeClients } =
+    useGetAllRecipeClients<RecipeDataType>(token)
 
   // handle get users
-  const getRecipes = async (): Promise<void> => {
-    try {
-      const response = await getAllRecipes(token)
-      if (response.status === 200) {
-        seRecipes(response.data)
-      } else {
-        console.log(response)
-      }
-    } catch (error) {
-      console.error("Failed to fetch users:", error)
+  // const getRecipes = async (): Promise<void> => {
+  //   try {
+  //     const response = await getAllRecipes(token)
+  //     if (response.status === 200) {
+  //       seRecipes(response.data)
+  //     } else {
+  //       console.log(response)
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to fetch users:", error)
+  //   }
+  // }
+
+  // useEffect(() => {
+  //   void getRecipes()
+  // }, [])
+
+  // handle delete recipe OverView
+  const handleDeleteRecipe = (recipeId: number): void => {
+    setRecipeId(recipeId)
+    setConfirmDeleteOpen(true)
+  }
+
+  // handle delete recipe by id
+  const handleDeleteRecipeById = async (): Promise<void> => {
+    if (!recipeId) {
+      toast.error("Recipe ID is invalid.")
+      return
+    }
+    const result = await deleteRecipe(recipeId)
+    if (result.success) {
+      toast.success(result.message)
+      setConfirmDeleteOpen(false)
+      fetchTags() // Refresh the data
+    } else {
+      toast.error("Failed to delete tag", {
+        description: result.message
+      })
+      setConfirmDeleteOpen(false)
     }
   }
 
-  useEffect(() => {
-    void getRecipes()
-  }, [])
+  // handle open delete confirmation popup
+  const handleOpenDeleteConfirmationPopup = (): void => {
+    setConfirmDeleteOpen(true)
+  }
+
+  // handle close delete confirmation popup
+  const handleCloseDeleteConfirmationPopup = (): void => {
+    setConfirmDeleteOpen(false)
+  }
 
   // handle open add Recipe popup
   const handleOpenAddRecipePopUp = (): void => {
@@ -113,6 +171,16 @@ export default function RecipeManagementPage({
   ): void => {
     setSearchText(e.target.value)
   }
+
+  useEffect(() => {
+    // console.log("step 1")
+    if (clients) {
+      // console.log("step 2 : true")
+      setRecipes(clients)
+      console.log("clients : ", clients)
+    }
+    // console.log("step 2 : false")
+  }, [clients])
 
   const columns: Array<Column<RecipeDataType>> = [
     {
@@ -148,32 +216,33 @@ export default function RecipeManagementPage({
         <Label className="text-gray-500">{row.persons} Servings</Label>
       )
     },
-    {
-      accessor: "ingredients",
-      header: "Main Ingredients",
-      cell: (row: RecipeDataType) => (
-        <div className="flex flex-wrap gap-2">
-          {row.ingredients.map((ingredient, idx) => (
-            <Badge key={`${ingredient}-${idx}`} variant={"outline"}>
-              {ingredient}
-            </Badge>
-          ))}
-        </div>
-      )
-    },
-    {
-      accessor: "healthBenefits",
-      header: "Health Benefits",
-      cell: (row: RecipeDataType) => (
-        <div className="flex flex-wrap gap-2">
-          {row.healthBenefits.map((benefit, idx) => (
-            <Badge key={`${benefit}-${idx}`} variant={"outline"}>
-              {benefit}
-            </Badge>
-          ))}
-        </div>
-      )
-    },
+    // {
+    //   accessor: "ingredients",
+    //   header: "Main Ingredients",
+    //   cell: (row: RecipeDataType) => (
+    //     <div className="flex flex-wrap gap-2">
+    //       {row.ingredients.map((ingredient, idx) => (
+    //         <Badge key={`${ingredient}-${idx}`} variant={"outline"}>
+    //           {ingredient}
+    //         </Badge>
+    //       ))}
+    //     </div>
+    //   )
+    // },
+    // {
+    //   accessor: "healthBenefits",
+    //   header: "Health Benefits",
+    //   cell: (row: RecipeDataType) => (
+    //     <div className="flex flex-wrap gap-2">
+    //       {row.healthBenefits.map((benefit, idx) => (
+    //         <Badge key={`${benefit}-${idx}`} variant={"outline"}>
+    //           {benefit}
+    //         </Badge>
+    //       ))}
+    //     </div>
+    //   )
+    // },
+
     {
       accessor: "createdAt",
       header: "Date Added",
@@ -213,6 +282,13 @@ export default function RecipeManagementPage({
           <DropdownMenuContent align="end" className="w-32">
             <DropdownMenuItem onClick={() => handleOpenViewRecipePopUp(row.id)}>
               View
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                handleDeleteRecipe(row.id)
+              }}
+            >
+              Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -284,10 +360,14 @@ export default function RecipeManagementPage({
   }
 
   const categories: dataListTypes[] = [
-    { value: "Breakfast", label: "Breakfast" },
-    { value: "Lunch", label: "Lunch" },
-    { value: "Dinner", label: "Dinner" },
-    { value: "Italian", label: "Italian" }
+    { value: "breakfast", label: "Breakfast" },
+    { value: "lunch", label: "Lunch" },
+    { value: "snack", label: "Snack" },
+    { value: "dinner", label: "Dinner" },
+    { value: "drink", label: "Drink" },
+    { value: "sauce", label: "Sauce" },
+    { value: "condiments", label: "Condiments" },
+    { value: "aperitive", label: "Aperitive" }
   ]
 
   // genarate score points
@@ -393,6 +473,29 @@ export default function RecipeManagementPage({
         open={openAddRecipePopUp}
         onClose={handleCloseAddRecipePopUp}
       />
+
+      {/* delete confirmation popup  */}
+      <AlertDialog
+        open={confirmDeleteOpen}
+        onOpenChange={handleCloseDeleteConfirmationPopup}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this recipe?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCloseDeleteConfirmationPopup}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteRecipeById}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* view recipe pupup */}
       <ViewRecipePopUp

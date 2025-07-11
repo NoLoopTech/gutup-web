@@ -102,6 +102,7 @@ export default function LableInput({
             value={value}
             onChange={e => setValueState(e.target.value)}
             onKeyDown={handleKeyDown}
+            onBlur={onBlur} // ✅ Blur event is now forwarded
             disabled={disable}
           />
 
@@ -150,3 +151,81 @@ export default function LableInput({
     </div>
   )
 }
+
+// import React, { useState } from "react"
+// import { Input } from "@/components/ui/input"
+// import { Label } from "@/components/ui/label"
+// import { X } from "lucide-react"
+
+// interface Props {
+//   title: string
+//   placeholder: string
+//   benefits: string[]
+//   name: string
+//   width?: string
+//   disable?: boolean
+//   onChange?: (items: string[]) => void
+//   onBlur?: () => void
+// }
+
+// export default function LabelInput({
+//   title,
+//   placeholder,
+//   benefits,
+//   name,
+//   width = "w-full",
+//   disable = false,
+//   onChange,
+//   onBlur
+// }: Props): React.ReactElement {
+//   const [value, setValue] = useState("")
+
+//   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+//     if ((e.key === "Enter" || e.key === ",") && value.trim()) {
+//       e.preventDefault()
+//       const newBenefits = [...benefits, value.trim()]
+//       setValue("")
+//       onChange?.(newBenefits)
+//     }
+//   }
+
+//   const handleRemove = (index: number) => {
+//     const updated = benefits.filter((_, i) => i !== index)
+//     onChange?.(updated)
+//   }
+
+//   return (
+//     <div className={`flex flex-col gap-1 ${width}`}>
+//       <Label className="mb-1">{title}</Label>
+
+//       <div className="flex flex-wrap gap-1 border rounded px-2 py-1 min-h-[42px] items-center">
+//         {benefits.map((item, idx) => (
+//           <div
+//             key={idx}
+//             className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-sm flex items-center gap-1"
+//           >
+//             {item}
+//             {!disable && (
+//               <X
+//                 size={14}
+//                 className="cursor-pointer"
+//                 onClick={() => handleRemove(idx)}
+//               />
+//             )}
+//           </div>
+//         ))}
+
+//         {!disable && (
+//           <Input
+//             value={value}
+//             placeholder={placeholder}
+//             className="border-none focus-visible:ring-0 focus-visible:ring-offset-0 w-auto"
+//             onChange={(e) => setValue(e.target.value)}
+//             onKeyDown={handleKeyDown}
+//             onBlur={onBlur} // ✅ Forwarded here
+//           />
+//         )}
+//       </div>
+//     </div>
+//   )
+// }

@@ -1,4 +1,5 @@
 export interface translationsTypes {
+  displayStatus: any
   addNewRecipe: string
   allowMultiLang: string
   english: string
@@ -13,7 +14,7 @@ export interface translationsTypes {
   howLongDoesItTakeToMake: string
   rest: string
   howLongToKeepItResting: string
-  persons: string
+  persons: number
   numberOfPeopleTheMealServes: string
   healthBenefits: string
   addUpTo6FoodBenefitsOrLower: string
@@ -135,4 +136,66 @@ export const defaultTranslations: translationsTypes = {
   pleaseenteravalidemail: "",
   invalidurlformat: "",
   formSubmittedSuccessfully: ""
+}
+
+export type LanguageCode = "en" | "fr"
+
+export interface Author {
+  authorName: string
+  authorCategory: string
+  authorCategoryFR: string
+  authorPhone: string
+  authorEmail: string
+  authorWebsite: string
+  authorImage: string
+}
+
+export interface RecipeImage {
+  imageUrl: string
+}
+
+// export interface HealthBenefit {
+//   healthBenefit: string[]
+//   healthBenefitFR: string[]
+// }
+
+export interface Ingredient {
+  ingredientName: string
+  ingredientNameFR: string
+  quantity: string
+  quantityFR: string
+  mainIngredient: boolean
+  foodId: number
+  available: boolean
+}
+
+export interface Attribute {
+  preparation: string
+  preparationFR: string
+  rest: string
+  restFR: string
+  persons: number
+}
+
+export interface Describe {
+  description: string
+  descriptionFR: string
+}
+
+export interface AddRecipeRequestBody {
+  name: string
+  nameFR: string
+  category: string
+  categoryFR: string
+  season: string
+  seasonFR: string
+  isActive: boolean
+  attribute: Attribute
+  describe: Describe
+  images: RecipeImage[]
+  healthBenefit: string[]
+  healthBenefitFR: string[]
+  // healthBenefits: HealthBenefit[]
+  author: Author
+  ingredients: Ingredient[]
 }
