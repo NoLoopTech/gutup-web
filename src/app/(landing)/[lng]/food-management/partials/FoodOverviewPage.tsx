@@ -5,11 +5,16 @@ import { CustomTable } from "@/components/Shared/Table/CustomTable"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu"
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -91,6 +96,8 @@ export default function FoodOverviewPage(): React.ReactElement {
   const [viewFood, setViewFood] = useState(false)
   const [foodId, setFoodId] = useState(0)
   const [selectedMonths, setSelectedMonths] = useState<string[]>([])
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  const [foodIdToDelete, setFoodIdToDelete] = useState<number | null>(null)
 
   // Function to fetch all foods from API
   const getFoods = async (): Promise<void> => {
@@ -328,7 +335,7 @@ export default function FoodOverviewPage(): React.ReactElement {
             <DropdownMenuItem
               className="text-red-600"
               onClick={() => {
-                handleDeleteFood(row.id)
+                handleAskDeleteFood(row.id)
               }}
             >
               Delete
@@ -339,19 +346,23 @@ export default function FoodOverviewPage(): React.ReactElement {
     }
   ]
 
-  // Add this function:
-  const handleDeleteFood = async (id: number) => {
-    if (!token) {
-      alert("No token found. Please login again.")
-      return
-    }
-    if (!window.confirm("Are you sure you want to delete this food?")) return
-    const response = await deleteFoodById(token, id)
+  // Show confirmation dialog instead of window.confirm
+  const handleAskDeleteFood = (id: number) => {
+    setFoodIdToDelete(id)
+    setConfirmDeleteOpen(true)
+  }
+
+  // Actually delete after confirmation
+  const handleDeleteFood = async () => {
+    if (!token || !foodIdToDelete) return
+    const response = await deleteFoodById(token, foodIdToDelete)
     if (!response.error) {
       await getFoods()
     } else {
       alert(response.message || "Failed to delete food.")
     }
+    setConfirmDeleteOpen(false)
+    setFoodIdToDelete(null)
   }
 
   return (
@@ -495,6 +506,28 @@ export default function FoodOverviewPage(): React.ReactElement {
         foodId={foodId}
         getFoods={getFoods}
       />
+
+      {/* Delete confirmation popup */}
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Food</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this food?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => setConfirmDeleteOpen(false)}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteFood}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

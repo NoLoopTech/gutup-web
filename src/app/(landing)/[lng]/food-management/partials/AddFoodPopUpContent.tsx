@@ -462,7 +462,7 @@ export default function AddFoodPopUpContent({
   }, [session?.apiToken])
 
   React.useEffect(() => {
-    const fetchBenefitTags = async () => {
+    const fetchBenefitTags = async (): Promise<void> => {
       if (!session?.apiToken) return
       const benefitResponse = await getCatagoryFoodType(session.apiToken, "Benefit")
       if (benefitResponse?.status === 200 && Array.isArray(benefitResponse.data)) {
