@@ -72,6 +72,19 @@ export default function FoodOverviewPage(): React.ReactElement {
   const [openAddFoodPopUp, setOpenAddFoodPopUp] = useState(false)
   const [foods, setFoods] = useState<FoodOverviewDataType[]>([])
   const [searchText, setSearchText] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+
+  // Debounce searchText for real-time search
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchText)
+    }, 300) // 300ms debounce
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [searchText])
+
   const [category, setCategory] = useState("")
   const [nutritional, setNutritional] = useState("")
   const [season, setSeason] = useState("")
@@ -136,7 +149,7 @@ export default function FoodOverviewPage(): React.ReactElement {
 
   // Static categories for filtering foods
   const categories: dataListTypes[] = [
-    { value: "Fruit", label: "Fruit" },
+    { value: "Fruits", label: "Fruit" },
     { value: "Vegetables", label: "Vegetables" },
     { value: "Meat", label: "Meat" },
     { value: "Dairy", label: "Dairy" }
@@ -173,7 +186,7 @@ export default function FoodOverviewPage(): React.ReactElement {
     return foods.filter(food => {
       const nameMatch = food.name
         .toLowerCase()
-        .includes(searchText.toLowerCase())
+        .includes(debouncedSearch.toLowerCase())
       const categoryMatch = category ? food.category === category : true
       const seasonMatch = selectedMonths.length
         ? selectedMonths.some(month => food.season === month)
@@ -198,7 +211,7 @@ export default function FoodOverviewPage(): React.ReactElement {
 
       return nameMatch && categoryMatch && nutritionalMatch && seasonMatch
     })
-  }, [foods, searchText, category, nutritional, season, selectedMonths])
+  }, [foods, debouncedSearch, category, nutritional, season, selectedMonths])
 
   const totalItems = filteredFoods.length
 
