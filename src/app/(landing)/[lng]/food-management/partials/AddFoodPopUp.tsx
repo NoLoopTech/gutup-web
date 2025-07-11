@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useFoodStore } from "@/stores/useFoodStore"
-import { defaultTranslations, type translationsTypes } from "@/types/foodTypes"
+import { type translationsTypes } from "@/types/foodTypes"
 import { useEffect, useState } from "react"
 import AddFoodPopUpContent from "./AddFoodPopUpContent"
 
@@ -39,8 +39,14 @@ export default function AddFoodPopUp({ open, onClose, getFoods }: Props): JSX.El
     if (!val) setActiveLang("en") // Default to English if multi-lang is disabled
   }
 
+  // Wrap the onClose to clear session key
+  const handleClose = () => {
+    sessionStorage.removeItem("food-store")
+    onClose()
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
         <div
           className="h-full p-2 overflow-y-auto"
@@ -92,18 +98,18 @@ export default function AddFoodPopUp({ open, onClose, getFoods }: Props): JSX.El
             {/* Render each tab’s content component */}
             <TabsContent value="en">
               <AddFoodPopUpContent
-                translations={{ ...defaultTranslations, ...translations }}
-                onClose={onClose}
-                getFoods={getFoods} // <-- pass down
+                translations={translations}
+                onClose={handleClose}
+                getFoods={getFoods}
               />
             </TabsContent>
 
             {allowMultiLang && (
               <TabsContent value="fr">
                 <AddFoodPopUpContent
-                  translations={{ ...defaultTranslations, ...translations }}
-                  onClose={onClose}
-                  getFoods={getFoods} // <-- pass down
+                  translations={translations}
+                  onClose={handleClose}
+                  getFoods={getFoods}
                 />
               </TabsContent>
             )}

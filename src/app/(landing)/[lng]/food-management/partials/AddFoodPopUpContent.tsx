@@ -423,8 +423,9 @@ export default function AddFoodPopUpContent({
       const response = await postNewFood(token, foodDto)
       if (response.status === 201 || response.status === 200) {
         toast.success(translations.formSubmittedSuccessfully)
-        getFoods() // <-- refresh the food list
-        onClose()  // <-- close popup after refresh
+        getFoods() 
+        sessionStorage.removeItem("food-store") 
+        onClose()  
       } else {
         toast.error("Failed to add food")
       }
@@ -992,6 +993,8 @@ export default function AddFoodPopUpContent({
               variant="outline"
               onClick={() => {
                 handleCancel(form)
+                sessionStorage.removeItem("food-store") // Remove session key on cancel
+                onClose()
               }}
             >
               {translations.cancel}
