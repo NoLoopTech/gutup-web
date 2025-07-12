@@ -60,12 +60,14 @@ export default function BasicLayoutTab({
   translations,
   onClose,
   addDailyTip,
-  userName
+  userName,
+  isLoading
 }: {
   translations: translationsTypes
   onClose: () => void
   addDailyTip: () => void
   userName: string
+  isLoading: boolean
 }): JSX.Element {
   const { translateText } = useTranslation()
   const {
@@ -456,7 +458,16 @@ export default function BasicLayoutTab({
             <Button variant="outline" onClick={handleReset}>
               {translations.cancel}
             </Button>
-            <Button type="submit">{translations.save}</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex gap-2 items-center">
+                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                  {translations.save}
+                </div>
+              ) : (
+                translations.save
+              )}
+            </Button>{" "}
           </div>
         </form>
       </Form>{" "}

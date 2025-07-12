@@ -7,6 +7,7 @@ export interface translationsTypes {
   selectLayoutType: string
   quote: string
   share: string
+  Mood: string
   food: string
   recipe: string
   selectMood: string
@@ -71,6 +72,7 @@ export const defaultTranslations: translationsTypes = {
   bakery: "",
   dairy: "",
   produce: "",
+  Mood: "",
 
   required: "",
   pleaseSelectAMood: "",

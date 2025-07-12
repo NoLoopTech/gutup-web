@@ -52,12 +52,12 @@ const moodOptions: Record<string, Option[]> = {
 export default function QuoteTab({
   translations,
   onClose,
-  addQuoteMood,
+  EditQuoteMood,
   isLoading
 }: {
   translations: translationsTypes
   onClose: () => void
-  addQuoteMood: () => void
+  EditQuoteMood: () => void
   isLoading: boolean
 }): JSX.Element {
   const { translateText } = useTranslation()
@@ -147,7 +147,7 @@ export default function QuoteTab({
   }
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
-    addQuoteMood()
+    EditQuoteMood()
   }
 
   const handleResetForm = async () => {
@@ -233,7 +233,7 @@ export default function QuoteTab({
                 <FormLabel>{translations.quote}</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder={translations.addTheQuoteHereInDetails}
+                    placeholder={translations.EditTheQuoteHereInDetails}
                     {...field}
                     onChange={e => handleInputChange("quote", e.target.value)}
                     onBlur={() => handleInputBlur("quote", field.value)}
@@ -286,7 +286,7 @@ export default function QuoteTab({
               ) : (
                 translations.save
               )}
-            </Button>
+            </Button>{" "}
           </div>
         </form>
       </Form>

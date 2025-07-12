@@ -56,7 +56,6 @@ export default function DailyTipsPage({
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const {
-    allowMultiLang,
     activeLang,
     translationsData,
     activeTab,
@@ -374,6 +373,7 @@ export default function DailyTipsPage({
         token={token}
         userName={userName}
         addDailyTip={handleAddDailyTip}
+        isLoading={isLoading}
       />
     </div>
   )

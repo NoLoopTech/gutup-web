@@ -86,13 +86,15 @@ export default function ShopPromotionTab({
   onClose,
   token,
   userName,
-  addDailyTip
+  addDailyTip,
+  isLoading
 }: {
   translations: translationsTypes
   token: string
   onClose: () => void
   userName: string
   addDailyTip: () => void
+  isLoading: boolean
 }): JSX.Element {
   const [page, setPage] = React.useState(1)
   const [pageSize, setPageSize] = React.useState(2)
@@ -588,25 +590,6 @@ export default function ShopPromotionTab({
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="mapsPin"
-                render={({ field }) => (
-                  <FormItem className="flex-1 mb-1">
-                    <FormLabel>{translations.mapsPin}</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={translations.enterGoogleMapsLocation}
-                        {...field}
-                        onChange={e =>
-                          handleInputChange("mapsPin", e.target.value)
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
 
             <div className="flex gap-6 pb-1">
@@ -747,7 +730,16 @@ export default function ShopPromotionTab({
             >
               {translations.cancel}
             </Button>
-            <Button type="submit">{translations.save}</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex gap-2 items-center">
+                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                  {translations.save}
+                </div>
+              ) : (
+                translations.save
+              )}
+            </Button>{" "}
           </div>
         </form>
       </Form>

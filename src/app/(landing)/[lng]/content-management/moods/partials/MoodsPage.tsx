@@ -20,6 +20,7 @@ import {
   deleteImageFromFirebase,
   uploadImageToFirebase
 } from "@/lib/firebaseImageUtils"
+import EditMoodMainPopUp from "./EditMoodMainPopup"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -30,6 +31,7 @@ interface Column<T> {
 }
 
 interface MoodsDataType {
+  id: number
   mood: string
   title: string
   content: string
@@ -45,6 +47,8 @@ export default function MoodsPage({
   userName: string
 }): JSX.Element {
   const [isOpenAddMood, setIsOpenAddMood] = useState<boolean>(false)
+  const [isOpenEditMood, setIsOpenEditMood] = useState<boolean>(false)
+  const [selectedMoodId, setSelectedMoodId] = useState<number>(0)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [moods, setMooods] = useState<MoodsDataType[]>([])
@@ -85,6 +89,7 @@ export default function MoodsPage({
             }
 
             return {
+              id: item.id,
               mood: item.mood,
               title,
               content,
@@ -197,11 +202,21 @@ export default function MoodsPage({
     }
   }
 
+  // add popup open and close handlers
   const handleOpenAddMood = (): void => {
     setIsOpenAddMood(true)
   }
   const handleCloseAddMood = (): void => {
     setIsOpenAddMood(false)
+  }
+
+  // edit popup open and close handlers
+  const handleOpenEditMood = (id: number): void => {
+    setIsOpenEditMood(true)
+    setSelectedMoodId(id)
+  }
+  const handleCloseEditMood = (): void => {
+    setIsOpenEditMood(false)
   }
 
   const columns: Array<Column<MoodsDataType>> = [
@@ -259,7 +274,9 @@ export default function MoodsPage({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleOpenEditMood(row.id)}>
+              Edit
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -306,6 +323,18 @@ export default function MoodsPage({
         addMood={handleAddMood}
         isLoading={isLoading}
         userName={userName}
+      />
+
+      <EditMoodMainPopUp
+        open={isOpenEditMood}
+        onClose={handleCloseEditMood}
+        EditMood={function (): void {
+          throw new Error("Function not implemented.")
+        }}
+        isLoading={false}
+        userName={userName}
+        token={token}
+        moodId={selectedMoodId}
       />
     </div>
   )

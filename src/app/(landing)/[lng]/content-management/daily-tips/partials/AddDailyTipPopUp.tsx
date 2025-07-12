@@ -34,13 +34,15 @@ export default function AddDailyTipPopUp({
   onClose,
   token,
   userName,
-  addDailyTip
+  addDailyTip,
+  isLoading
 }: {
   translations: translationsTypes
   onClose: () => void
   token: string
   userName: string
   addDailyTip: () => void
+  isLoading: boolean
 }): JSX.Element {
   const { activeTab, setActiveTab } = useDailyTipStore()
 
@@ -79,6 +81,7 @@ export default function AddDailyTipPopUp({
             onClose={onClose}
             addDailyTip={addDailyTip}
             userName={userName}
+            isLoading={isLoading}
           />
         )}
         {activeTab === "shopPromote" && (
@@ -88,6 +91,7 @@ export default function AddDailyTipPopUp({
             token={token}
             userName={userName}
             addDailyTip={addDailyTip}
+            isLoading={isLoading}
           />
         )}
         {activeTab === "videoForm" && (
@@ -95,6 +99,7 @@ export default function AddDailyTipPopUp({
             translations={translations}
             onClose={onClose}
             addDailyTip={addDailyTip}
+            isLoading={isLoading}
           />
         )}
       </div>

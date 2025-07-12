@@ -19,6 +19,7 @@ interface Props {
   token: string
   userName: string
   addDailyTip: () => void
+  isLoading: boolean
 }
 
 export default function AddDailyTipMainPopUp({
@@ -26,7 +27,8 @@ export default function AddDailyTipMainPopUp({
   onClose,
   token,
   userName,
-  addDailyTip
+  addDailyTip,
+  isLoading
 }: Props): JSX.Element {
   const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
     useDailyTipStore()
@@ -95,6 +97,7 @@ export default function AddDailyTipMainPopUp({
                 token={token}
                 userName={userName}
                 addDailyTip={addDailyTip}
+                isLoading={isLoading}
               />
             </TabsContent>
           </Tabs>
