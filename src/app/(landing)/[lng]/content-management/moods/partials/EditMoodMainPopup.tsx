@@ -124,8 +124,8 @@ export default function EditMoodMainPopUp({
             data.quote.quoteDetailFR
           )
 
-          setTranslationField("quoteData", "en", "share", data.data.quote.share)
-          setTranslationField("quoteData", "fr", "share", data.data.quote.share)
+          setTranslationField("quoteData", "en", "share", data.quote.share)
+          setTranslationField("quoteData", "fr", "share", data.quote.share)
         } else if (data.layout === "Recipe") {
           setTranslationField("recipeData", "en", "mood", data.mood)
           setTranslationField("recipeData", "fr", "mood", data.moodFR)
