@@ -228,14 +228,6 @@ export default function MoodsPage({
         (activeTab === "Food" && updatedTranslations.foodData[activeLang].image)
 
       if (isImageChanged) {
-        // ✅ Save previous image URL
-        const currentImage =
-          activeTab === "Recipe"
-            ? useMoodStore.getState().translationsData.recipeData[activeLang]
-                .image
-            : useMoodStore.getState().translationsData.foodData[activeLang]
-                .image
-
         // 📤 Upload new image
         uploadedImageUrl = await uploadMoodImageAndSetUrl()
       }
