@@ -58,13 +58,14 @@ export default function MoodsPage({
   const [previousImageUrl, setPreviousImageUrl] = useState<string | null>(null)
 
   const {
-    allowMultiLang,
     activeLang,
     translationsData,
     activeTab,
     setTranslationField,
     resetTranslations
   } = useMoodStore()
+
+  const { setUpdatedField, resetUpdatedStore } = useUpdatedTranslationStore()
 
   // handle get users
   const getMoods = async (): Promise<void> => {
@@ -157,8 +158,10 @@ export default function MoodsPage({
 
     if (activeTab === "Food") {
       setTranslationField("foodData", activeLang, "image", uploadedUrl)
+      setUpdatedField("foodData", activeLang, "image", uploadedUrl)
     } else if (activeTab === "Recipe") {
       setTranslationField("recipeData", activeLang, "image", uploadedUrl)
+      setUpdatedField("recipeData", activeLang, "image", uploadedUrl)
     }
 
     return uploadedUrl
@@ -196,6 +199,7 @@ export default function MoodsPage({
 
         // clear store and session
         resetTranslations()
+        resetUpdatedStore()
       } else {
         toast.error("Failed to add mood!")
         if (uploadedImageUrl) {
@@ -206,6 +210,8 @@ export default function MoodsPage({
       console.log(error)
     } finally {
       sessionStorage.removeItem("mood-storage")
+      sessionStorage.removeItem("updated-mood-fields")
+
       setIsLoading(false)
     }
   }
@@ -235,6 +241,8 @@ export default function MoodsPage({
       // 📦 Prepare request body
       const { translationsData: finalUpdatedTranslations } =
         useUpdatedTranslationStore.getState()
+
+      console.log("final Updated Translations", finalUpdatedTranslations)
 
       const requestBody: AddMoodRequestBody = {
         translationsData: finalUpdatedTranslations
@@ -351,6 +359,8 @@ export default function MoodsPage({
       )
     }
   ]
+
+  console.log("previousImageUrl", previousImageUrl)
 
   const pageSizeOptions = [5, 10, 20]
 
