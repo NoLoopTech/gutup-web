@@ -299,8 +299,14 @@ export default function MoodsPage({
     setIsOpenEditMood(true)
     setSelectedMoodId(id)
   }
-  const handleCloseEditMood = (): void => {
+  const handleCloseEditMood = async (): Promise<void> => {
+    setSelectedMoodId(0)
     setIsOpenEditMood(false)
+
+    // clear store and session
+    await resetTranslations()
+    await resetUpdatedStore()
+    sessionStorage.removeItem("updated-mood-fields")
   }
 
   // handle delete mood
