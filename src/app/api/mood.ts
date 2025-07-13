@@ -55,3 +55,18 @@ export const updateNewMood = async (
     return error
   }
 }
+
+// delete user by id
+export const deleteMoodById = async (
+  token: string,
+  id: number
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.delete(`/mood/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response
+  } catch (error) {
+    return error
+  }
+}

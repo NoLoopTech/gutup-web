@@ -49,7 +49,6 @@ export default function EditMoodMainPopUp({
       const response = await getMoodById(token, moodId)
       if (response.status === 200) {
         const data = response.data
-        console.log(response.data)
 
         setAllowMultiLang(data.allowMultiLang)
         setActiveTab(data.layout)

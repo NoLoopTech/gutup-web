@@ -12,7 +12,12 @@ import {
 import { MoreVertical } from "lucide-react"
 import { useEffect, useState } from "react"
 import AddMoodMainPopUp from "./AddMoodMainPopUp"
-import { addNewMood, getAllMoods, updateNewMood } from "@/app/api/mood"
+import {
+  addNewMood,
+  deleteMoodById,
+  getAllMoods,
+  updateNewMood
+} from "@/app/api/mood"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { AddMoodRequestBody } from "@/types/moodsTypes"
 import { toast } from "sonner"
@@ -22,6 +27,16 @@ import {
 } from "@/lib/firebaseImageUtils"
 import EditMoodMainPopUp from "./EditMoodMainPopup"
 import { useUpdatedTranslationStore } from "@/stores/useUpdatedTranslationStore"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -56,6 +71,7 @@ export default function MoodsPage({
   const [moods, setMooods] = useState<MoodsDataType[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [previousImageUrl, setPreviousImageUrl] = useState<string | null>(null)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
 
   const {
     activeLang,
@@ -287,6 +303,34 @@ export default function MoodsPage({
     setIsOpenEditMood(false)
   }
 
+  // handle delete mood
+  const handleDeleteMood = async (): Promise<void> => {
+    try {
+      const response = await deleteMoodById(token, selectedMoodId)
+      console.log(response)
+      if (response.status === 200 || response.status === 201) {
+        toast.success(response.data.message)
+        getMoods()
+      } else {
+        console.log("failed to delete mood : ", response)
+        toast.error("Failed to delete mood!")
+      }
+    } catch (error) {
+      console.log("failed to delete mood : ", error)
+    }
+  }
+
+  // handle open delete confirmation popup
+  const handleOpenDeleteConfirmationPopup = (id: number): void => {
+    setSelectedMoodId(id)
+    setConfirmDeleteOpen(true)
+  }
+
+  // handle close delete confirmation popup
+  const handleCloseDeleteConfirmationPopup = (): void => {
+    setConfirmDeleteOpen(false)
+  }
+
   const columns: Array<Column<MoodsDataType>> = [
     {
       accessor: "mood",
@@ -350,7 +394,11 @@ export default function MoodsPage({
             >
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem>Delete</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleOpenDeleteConfirmationPopup(row.id)}
+            >
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -408,6 +456,29 @@ export default function MoodsPage({
         token={token}
         moodId={selectedMoodId}
       />
+
+      {/* delete confirmation popup  */}
+      <AlertDialog
+        open={confirmDeleteOpen}
+        onOpenChange={handleCloseDeleteConfirmationPopup}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Mood</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this mood?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCloseDeleteConfirmationPopup}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteMood}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
