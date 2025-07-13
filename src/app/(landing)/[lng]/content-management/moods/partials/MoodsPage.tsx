@@ -12,7 +12,7 @@ import {
 import { MoreVertical } from "lucide-react"
 import { useEffect, useState } from "react"
 import AddMoodMainPopUp from "./AddMoodMainPopUp"
-import { AddNewMood, getAllMoods } from "@/app/api/mood"
+import { addNewMood, getAllMoods, updateNewMood } from "@/app/api/mood"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { AddMoodRequestBody } from "@/types/moodsTypes"
 import { toast } from "sonner"
@@ -21,6 +21,7 @@ import {
   uploadImageToFirebase
 } from "@/lib/firebaseImageUtils"
 import EditMoodMainPopUp from "./EditMoodMainPopup"
+import { useUpdatedTranslationStore } from "@/stores/useUpdatedTranslationStore"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -37,6 +38,7 @@ interface MoodsDataType {
   content: string
   dateCreated: string
   status: string
+  image?: string
 }
 
 export default function MoodsPage({
@@ -53,6 +55,7 @@ export default function MoodsPage({
   const [pageSize, setPageSize] = useState(10)
   const [moods, setMooods] = useState<MoodsDataType[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [previousImageUrl, setPreviousImageUrl] = useState<string | null>(null)
 
   const {
     allowMultiLang,
@@ -72,15 +75,19 @@ export default function MoodsPage({
           (item: any) => {
             let title = ""
             let content = ""
+            let image = ""
 
             switch (item.layout) {
               case "Recipe":
                 title = item.recipe?.recipe ?? ""
                 content = item.recipe?.description ?? ""
+                image = item.recipe?.image ?? ""
                 break
               case "Food":
                 title = item.ingredient?.foodName ?? ""
                 content = item.ingredient?.description ?? ""
+                image = item.ingredient?.image ?? ""
+
                 break
               case "Quote":
                 title = item.quote?.quoteAuthor ?? ""
@@ -94,7 +101,8 @@ export default function MoodsPage({
               title,
               content,
               dateCreated: new Date(item.createdAt).toLocaleDateString(),
-              status: "Active"
+              status: "Active",
+              image
             }
           }
         )
@@ -179,7 +187,7 @@ export default function MoodsPage({
         translationsData: currentTranslations
       }
 
-      const response = await AddNewMood(token, requestBody)
+      const response = await addNewMood(token, requestBody)
 
       if (response.status === 200 || response.status === 201) {
         toast.success("Mood added successfully")
@@ -198,6 +206,70 @@ export default function MoodsPage({
       console.log(error)
     } finally {
       sessionStorage.removeItem("mood-storage")
+      setIsLoading(false)
+    }
+  }
+
+  // handle update mood
+  const handleUpdateMood = async () => {
+    try {
+      setIsLoading(true)
+
+      const { activeTab, activeLang } = useMoodStore.getState()
+      const { translationsData: updatedTranslations } =
+        useUpdatedTranslationStore.getState()
+
+      let uploadedImageUrl: string | null = null
+
+      // 🔍 Check if image was updated (only for Recipe or Food)
+      const isImageChanged =
+        (activeTab === "Recipe" &&
+          updatedTranslations.recipeData[activeLang].image) ||
+        (activeTab === "Food" && updatedTranslations.foodData[activeLang].image)
+
+      if (isImageChanged) {
+        // ✅ Save previous image URL
+        const currentImage =
+          activeTab === "Recipe"
+            ? useMoodStore.getState().translationsData.recipeData[activeLang]
+                .image
+            : useMoodStore.getState().translationsData.foodData[activeLang]
+                .image
+
+        // 📤 Upload new image
+        uploadedImageUrl = await uploadMoodImageAndSetUrl()
+      }
+
+      // 📦 Prepare request body
+      const { translationsData: finalUpdatedTranslations } =
+        useUpdatedTranslationStore.getState()
+
+      const requestBody: AddMoodRequestBody = {
+        translationsData: finalUpdatedTranslations
+      }
+
+      // 📡 Submit updated data
+      const response = await updateNewMood(token, selectedMoodId, requestBody)
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Mood updated successfully")
+        setIsOpenEditMood(false)
+        getMoods()
+
+        // 🗑️ Delete old image from Firebase if it exists
+        if (previousImageUrl) {
+          await deleteImageFromFirebase(previousImageUrl)
+          setPreviousImageUrl(null)
+        }
+      } else {
+        toast.error("Failed to update mood!")
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error("Something went wrong during update!")
+    } finally {
+      sessionStorage.removeItem("mood-storage")
+      sessionStorage.removeItem("updated-mood-fields")
       setIsLoading(false)
     }
   }
@@ -274,7 +346,12 @@ export default function MoodsPage({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem onClick={() => handleOpenEditMood(row.id)}>
+            <DropdownMenuItem
+              onClick={() => {
+                handleOpenEditMood(row.id)
+                setPreviousImageUrl(row.image || "")
+              }}
+            >
               Edit
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -328,10 +405,8 @@ export default function MoodsPage({
       <EditMoodMainPopUp
         open={isOpenEditMood}
         onClose={handleCloseEditMood}
-        EditMood={function (): void {
-          throw new Error("Function not implemented.")
-        }}
-        isLoading={false}
+        EditMood={handleUpdateMood}
+        isLoading={isLoading}
         userName={userName}
         token={token}
         moodId={selectedMoodId}

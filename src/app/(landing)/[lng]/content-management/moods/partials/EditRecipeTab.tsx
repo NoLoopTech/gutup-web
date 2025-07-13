@@ -29,6 +29,7 @@ import { useTranslation } from "@/query/hooks/useTranslation"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { toast } from "sonner"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
+import { useUpdatedTranslationStore } from "@/stores/useUpdatedTranslationStore"
 
 interface Option {
   value: string
@@ -50,7 +51,7 @@ const moodOptions: Record<string, Option[]> = {
     { value: "sad", label: "Triste" }
   ]
 }
-export default function RecipeTab({
+export default function EditRecipeTab({
   translations,
   onClose,
   EditRecipeMood,
@@ -69,9 +70,19 @@ export default function RecipeTab({
     setTranslationField,
     resetTranslations
   } = useMoodStore()
+  const {
+    translationsData: updatedTranslations,
+    setUpdatedField,
+    resetUpdatedStore
+  } = useUpdatedTranslationStore()
+
   const { translateText } = useTranslation()
   const [isTranslating, setIsTranslating] = useState(false)
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
+
+  const hasRecipeUpdates =
+    Object.keys(updatedTranslations.recipeData.en).length > 0 ||
+    Object.keys(updatedTranslations.recipeData.fr).length > 0
 
   const FormSchema = z.object({
     mood: z.string().nonempty(translations.pleaseSelectAMood),
@@ -98,6 +109,7 @@ export default function RecipeTab({
   const handleMoodChange = (value: string) => {
     form.setValue("mood", value)
     setTranslationField("recipeData", activeLang, "mood", value)
+    setUpdatedField("recipeData", activeLang, "mood", value)
 
     const current = moodOptions[activeLang]
     const oppositeLang = activeLang === "en" ? "fr" : "en"
@@ -111,6 +123,7 @@ export default function RecipeTab({
         "mood",
         opposite[index].value
       )
+      setUpdatedField("recipeData", oppositeLang, "mood", opposite[index].value)
     }
   }
 
@@ -121,6 +134,7 @@ export default function RecipeTab({
     const value = e.target.value
     form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
     setTranslationField("recipeData", activeLang, fieldName, value)
+    setUpdatedField("recipeData", activeLang, fieldName, value)
   }
 
   const handleInputBlur = async (
@@ -132,6 +146,7 @@ export default function RecipeTab({
         setIsTranslating(true)
         const translated = await translateText(value)
         setTranslationField("recipeData", "fr", fieldName, translated)
+        setUpdatedField("recipeData", "fr", fieldName, translated)
       } finally {
         setIsTranslating(false)
       }
@@ -154,6 +169,8 @@ export default function RecipeTab({
         })
         setTranslationField("recipeData", "en", "image", imageUrl)
         setTranslationField("recipeData", "fr", "image", imageUrl)
+        setUpdatedField("recipeData", "en", "image", imageUrl)
+        setUpdatedField("recipeData", "fr", "image", imageUrl)
 
         setPreviewUrls([imageUrl]) // For single image preview
       } catch (error) {
@@ -169,7 +186,10 @@ export default function RecipeTab({
     form.reset(translationsData.recipeData[activeLang])
     // clear store and session
     await resetTranslations()
+    await resetUpdatedStore()
+
     sessionStorage.removeItem("mood-storage")
+    sessionStorage.removeItem("updated-mood-fields")
 
     onClose()
   }
@@ -252,7 +272,7 @@ export default function RecipeTab({
                 <FormLabel>{translations.description}</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder={translations.EditDetailsInHere}
+                    placeholder={translations.addDetailsInHere}
                     {...field}
                     onChange={e => handleInputChange(e, "description")}
                     onBlur={() => handleInputBlur(field.value, "description")}
@@ -273,7 +293,11 @@ export default function RecipeTab({
                   <FormControl>
                     <ImageUploader
                       title={translations.selectImagesForYourFoodItem}
-                      previewUrls={previewUrls ? previewUrls : []}
+                      previewUrls={
+                        previewUrls.length > 0
+                          ? previewUrls
+                          : [translationsData.recipeData.en.image]
+                      }
                       onChange={handleImageSelect}
                     />
                   </FormControl>
@@ -288,7 +312,7 @@ export default function RecipeTab({
             <Button variant="outline" type="button" onClick={handleResetForm}>
               {translations.cancel}
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || !hasRecipeUpdates}>
               {isLoading ? (
                 <div className="flex gap-2 items-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />

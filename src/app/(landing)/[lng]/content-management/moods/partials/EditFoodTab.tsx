@@ -29,6 +29,7 @@ import { useTranslation } from "@/query/hooks/useTranslation"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { toast } from "sonner"
+import { useUpdatedTranslationStore } from "@/stores/useUpdatedTranslationStore"
 
 interface Option {
   value: string
@@ -63,7 +64,7 @@ const shopcategory: Record<string, Option[]> = {
   ]
 }
 
-export default function FoodTab({
+export default function EditFoodTab({
   translations,
   onClose,
   EditFoodMood,
@@ -82,9 +83,20 @@ export default function FoodTab({
     setTranslationField,
     resetTranslations
   } = useMoodStore()
+  const {
+    translationsData: updatedTranslations,
+    setUpdatedField,
+    resetUpdatedStore
+  } = useUpdatedTranslationStore()
+
   const { translateText } = useTranslation()
   const [isTranslating, setIsTranslating] = useState(false)
+
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
+
+  const hasFoodUpdates =
+    Object.keys(updatedTranslations.foodData.en).length > 0 ||
+    Object.keys(updatedTranslations.foodData.fr).length > 0
 
   const FormSchema = z.object({
     mood: z.string().nonempty(translations.pleaseSelectAMood),
@@ -112,6 +124,7 @@ export default function FoodTab({
   const handleMoodChange = (value: string) => {
     form.setValue("mood", value)
     setTranslationField("foodData", activeLang, "mood", value)
+    setUpdatedField("foodData", activeLang, "mood", value)
 
     const current = moodOptions[activeLang]
     const oppositeLang = activeLang === "en" ? "fr" : "en"
@@ -125,6 +138,7 @@ export default function FoodTab({
         "mood",
         opposite[index].value
       )
+      setUpdatedField("foodData", oppositeLang, "mood", opposite[index].value)
     }
   }
 
@@ -146,6 +160,9 @@ export default function FoodTab({
         setTranslationField("foodData", "en", "image", imageUrl)
         setTranslationField("foodData", "fr", "image", imageUrl)
 
+        setUpdatedField("foodData", "en", "image", imageUrl)
+        setUpdatedField("foodData", "fr", "image", imageUrl)
+
         setPreviewUrls([imageUrl]) // For single image preview
       } catch (error) {
         toast.error("Image upload failed. Please try again.")
@@ -159,6 +176,7 @@ export default function FoodTab({
   const handleShopCategoryChange = (value: string) => {
     form.setValue("shopCategory", value)
     setTranslationField("foodData", activeLang, "shopCategory", value)
+    setUpdatedField("foodData", activeLang, "shopCategory", value)
 
     const current = shopcategory[activeLang]
     const oppositeLang = activeLang === "en" ? "fr" : "en"
@@ -167,6 +185,12 @@ export default function FoodTab({
     const index = current.findIndex(opt => opt.value === value)
     if (index !== -1) {
       setTranslationField(
+        "foodData",
+        oppositeLang,
+        "shopCategory",
+        opposite[index].value
+      )
+      setUpdatedField(
         "foodData",
         oppositeLang,
         "shopCategory",
@@ -182,6 +206,7 @@ export default function FoodTab({
     const value = e.target.value
     form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
     setTranslationField("foodData", activeLang, fieldName, value)
+    setUpdatedField("foodData", activeLang, fieldName, value)
   }
 
   const handleInputBlur = async (
@@ -193,6 +218,7 @@ export default function FoodTab({
         setIsTranslating(true)
         const translated = await translateText(value)
         setTranslationField("foodData", "fr", fieldName, translated)
+        setUpdatedField("foodData", "fr", fieldName, translated)
       } finally {
         setIsTranslating(false)
       }
@@ -203,7 +229,9 @@ export default function FoodTab({
     form.reset(translationsData.foodData[activeLang])
     // clear store and session
     await resetTranslations()
+    await resetUpdatedStore()
     sessionStorage.removeItem("mood-storage")
+    sessionStorage.removeItem("updated-mood-fields")
 
     onClose()
   }
@@ -281,7 +309,7 @@ export default function FoodTab({
                 <FormLabel>{translations.description}</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder={translations.EditDetailsInHere}
+                    placeholder={translations.addDetailsInHere}
                     {...field}
                     onChange={e => handleInputChange(e, "description")}
                     onBlur={() => handleInputBlur(field.value, "description")}
@@ -335,7 +363,11 @@ export default function FoodTab({
                   <FormControl>
                     <ImageUploader
                       title={translations.selectImagesForYourFoodItem}
-                      previewUrls={previewUrls ? previewUrls : []}
+                      previewUrls={
+                        previewUrls.length > 0
+                          ? previewUrls
+                          : [translationsData.foodData.en.image]
+                      }
                       onChange={handleImageSelect}
                     />
                   </FormControl>
@@ -350,7 +382,7 @@ export default function FoodTab({
             <Button variant="outline" type="button" onClick={handleReset}>
               {translations.cancel}
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || !hasFoodUpdates}>
               {isLoading ? (
                 <div className="flex gap-2 items-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />

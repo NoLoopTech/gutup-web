@@ -18,6 +18,7 @@ const ClientSessionHandler = () => {
       if (pathname !== "/content-management/moods/") {
         await resetTranslations()
         sessionStorage.removeItem("mood-storage")
+        sessionStorage.removeItem("updated-mood-fields")
       }
 
       // Check if the current path is not '/content-management/daily-tips/'

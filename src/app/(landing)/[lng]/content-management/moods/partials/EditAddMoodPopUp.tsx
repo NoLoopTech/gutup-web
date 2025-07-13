@@ -2,9 +2,6 @@
 
 import React from "react"
 import { Label } from "@/components/ui/label"
-import QuoteTab from "./QuoteTab"
-import FoodTab from "./FoodTab"
-import RecipeTab from "./RecipeTab"
 import {
   Select,
   SelectContent,
@@ -14,6 +11,9 @@ import {
 } from "@/components/ui/select"
 import { type translationsTypes } from "@/types/moodsTypes"
 import { useMoodStore } from "@/stores/useMoodStore"
+import EditQuoteTab from "./EditQuoteTab"
+import EditFoodTab from "./EditFoodTab"
+import EditRecipeTab from "./EditRecipeTab"
 
 // Tab option
 type LayoutOption = "Quote" | "Food" | "Recipe"
@@ -51,6 +51,7 @@ export default function EditMoodPopUp({
           onValueChange={(val: string) => {
             setActiveTab(val as LayoutOption)
           }}
+          disabled
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder={translations.selectLayoutType} />
@@ -70,7 +71,7 @@ export default function EditMoodPopUp({
       {/* Tab Content */}
       <div>
         {activeTab === "Quote" && (
-          <QuoteTab
+          <EditQuoteTab
             translations={translations}
             onClose={onClose}
             EditQuoteMood={EditMood}
@@ -78,7 +79,7 @@ export default function EditMoodPopUp({
           />
         )}
         {activeTab === "Food" && (
-          <FoodTab
+          <EditFoodTab
             translations={translations}
             onClose={onClose}
             EditFoodMood={EditMood}
@@ -87,7 +88,7 @@ export default function EditMoodPopUp({
           />
         )}
         {activeTab === "Recipe" && (
-          <RecipeTab
+          <EditRecipeTab
             translations={translations}
             onClose={onClose}
             EditRecipeMood={EditMood}

@@ -87,34 +87,34 @@ export const defaultTranslations: translationsTypes = {
 export type LanguageCode = "en" | "fr"
 
 interface QuoteData {
-  mood: string
-  author: string
-  quote: string
-  share: boolean
+  mood?: string
+  author?: string
+  quote?: string
+  share?: boolean
 }
 
 interface FoodData {
-  mood: string
-  foodName: string
-  description: string
-  shopCategory: string
+  mood?: string
+  foodName?: string
+  description?: string
+  shopCategory?: string
 }
 
 interface RecipeData {
-  mood: string
-  recipe: string
-  description: string
+  mood?: string
+  recipe?: string
+  description?: string
 }
 
 interface TranslationsData {
-  quoteData: Record<LanguageCode, QuoteData>
-  foodData: Record<LanguageCode, FoodData>
-  recipeData: Record<LanguageCode, RecipeData>
+  quoteData?: Record<LanguageCode, QuoteData>
+  foodData?: Record<LanguageCode, FoodData>
+  recipeData?: Record<LanguageCode, RecipeData>
 }
 
 export interface AddMoodRequestBody {
-  allowMultiLang: boolean
-  activeLang: LanguageCode
-  activeTab: "Quote" | "Food" | "Recipe"
+  allowMultiLang?: boolean
+  activeLang?: LanguageCode
+  activeTab?: "Quote" | "Food" | "Recipe"
   translationsData: TranslationsData
 }

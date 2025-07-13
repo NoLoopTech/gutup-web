@@ -35,7 +35,8 @@ export default function EditMoodMainPopUp({
     setAllowMultiLang,
     activeLang,
     setActiveLang,
-    setTranslationField
+    setTranslationField,
+    setActiveTab
   } = useMoodStore()
 
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
@@ -51,22 +52,53 @@ export default function EditMoodMainPopUp({
         console.log(response.data)
 
         setAllowMultiLang(data.allowMultiLang)
+        setActiveTab(data.layout)
 
         if (data.layout === "Food") {
           setTranslationField("foodData", "en", "mood", data.mood)
-          setTranslationField("foodData", "en", "foodName", data.foodName)
-          setTranslationField("foodData", "en", "description", data.description)
+          setTranslationField("foodData", "fr", "mood", data.moodFR)
+          setTranslationField(
+            "foodData",
+            "en",
+            "foodName",
+            data.ingredient.foodName
+          )
+          setTranslationField(
+            "foodData",
+            "fr",
+            "foodName",
+            data.ingredient.foodNameFR
+          )
+
+          setTranslationField(
+            "foodData",
+            "en",
+            "description",
+            data.ingredient.description
+          )
+          setTranslationField(
+            "foodData",
+            "fr",
+            "description",
+            data.ingredient.descriptionFR
+          )
           setTranslationField(
             "foodData",
             "en",
             "shopCategory",
-            data.shopCategory
+            data.ingredient.foodCategory
           )
-          setTranslationField("foodData", "en", "image", data.image)
+          setTranslationField(
+            "foodData",
+            "fr",
+            "shopCategory",
+            data.ingredient.foodCategoryFR
+          )
+          setTranslationField("foodData", "en", "image", data.ingredient.image)
+          setTranslationField("foodData", "fr", "image", data.ingredient.image)
         } else if (data.layout === "Quote") {
           setTranslationField("quoteData", "en", "mood", data.mood)
           setTranslationField("quoteData", "fr", "mood", data.moodFR)
-
           setTranslationField(
             "quoteData",
             "en",
@@ -97,14 +129,29 @@ export default function EditMoodMainPopUp({
           setTranslationField("quoteData", "fr", "share", data.data.quote.share)
         } else if (data.layout === "Recipe") {
           setTranslationField("recipeData", "en", "mood", data.mood)
-          setTranslationField("recipeData", "en", "recipe", data.recipe)
+          setTranslationField("recipeData", "fr", "mood", data.moodFR)
+          setTranslationField("recipeData", "en", "recipe", data.recipe.recipe)
+          setTranslationField(
+            "recipeData",
+            "fr",
+            "recipe",
+            data.recipe.recipeFR
+          )
+
           setTranslationField(
             "recipeData",
             "en",
             "description",
-            data.description
+            data.recipe.description
           )
-          setTranslationField("recipeData", "en", "image", data.image)
+          setTranslationField(
+            "recipeData",
+            "fr",
+            "description",
+            data.recipe.descriptionFR
+          )
+          setTranslationField("recipeData", "en", "image", data.recipe.image)
+          setTranslationField("recipeData", "fr", "image", data.recipe.image)
         }
       } else {
         console.log("Error:", response.data)
@@ -166,6 +213,7 @@ export default function EditMoodMainPopUp({
                   id="multi-lang"
                   checked={allowMultiLang}
                   onCheckedChange={handleLanguageToggle}
+                  disabled
                 />
                 <Label htmlFor="multi-lang" className="text-Primary-300">
                   {translations.allowMultiLang}
