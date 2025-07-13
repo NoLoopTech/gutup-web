@@ -14,8 +14,6 @@ export default function ContentTabs(): JSX.Element {
   const pathname = usePathname()
   const activeTab = pathToTabValueMap[pathname] || "daily-tips"
 
-  console.log(activeTab)
-
   return (
     <Tabs value={activeTab} className="mb-4">
       <TabsList className="h-10">
