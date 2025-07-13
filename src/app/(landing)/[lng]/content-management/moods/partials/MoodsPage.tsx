@@ -108,8 +108,6 @@ export default function MoodsPage({
           }
         )
         setMooods(transformedData)
-      } else {
-        console.log(response)
       }
     } catch (error) {
       console.error("Failed to fetch moods:", error)
@@ -242,8 +240,6 @@ export default function MoodsPage({
       const { translationsData: finalUpdatedTranslations } =
         useUpdatedTranslationStore.getState()
 
-      console.log("final Updated Translations", finalUpdatedTranslations)
-
       const requestBody: AddMoodRequestBody = {
         translationsData: finalUpdatedTranslations
       }
@@ -354,13 +350,12 @@ export default function MoodsPage({
             >
               Edit
             </DropdownMenuItem>
+            <DropdownMenuItem>Delete</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
     }
   ]
-
-  console.log("previousImageUrl", previousImageUrl)
 
   const pageSizeOptions = [5, 10, 20]
 
