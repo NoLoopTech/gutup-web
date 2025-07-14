@@ -748,6 +748,7 @@ export default function AddStorePopUpContent({
       onClose()
     }
   }
+  
   const onSubmit = async (
     data: z.infer<typeof AddStoreSchema>
   ): Promise<void> => {
@@ -756,6 +757,8 @@ export default function AddStorePopUpContent({
     } else {
       toast(translations.formSubmittedSuccessfully, {})
     }
+    // Clear session after successful submission
+    resetForm()
     sessionStorage.removeItem("store-store")
   }
 

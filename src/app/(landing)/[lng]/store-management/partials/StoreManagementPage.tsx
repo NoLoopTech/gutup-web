@@ -118,6 +118,8 @@ export default function StoreManagementPage({
 
   // handle close add food popup
   const handleCloseAddStorePopUp = (): void => {
+    resetForm()
+    sessionStorage.removeItem("store-store")
     setOpenAddStorePopUp(false)
   }
 
@@ -255,6 +257,7 @@ export default function StoreManagementPage({
         setOpenAddStorePopUp(false)
         await getStores()
         resetForm()
+        sessionStorage.removeItem("store-store")
       } else {
         console.error("Unexpected response structure:", response)
         toast.error(translations.storeCreationFailed || "Failed to add store")
@@ -262,7 +265,6 @@ export default function StoreManagementPage({
     } catch (error) {
       toast.error("System error. Please try again later.")
     } finally {
-      sessionStorage.removeItem("store-store")
       setIsLoading(false)
     }
   }
