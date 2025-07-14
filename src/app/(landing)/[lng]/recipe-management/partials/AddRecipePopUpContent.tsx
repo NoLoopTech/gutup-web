@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { type RecipeFields } from "@/stores/useRecipeStore"
 import LabelInput from "@/components/Shared/LableInput/LableInput"
 import { type Recipe } from "@/types/recipeTypes"
+import { getAllTagsByCategory } from "@/app/api/tags"
 import { getAllFoods } from "@/app/api/foods"
 import { Trash, CircleFadingPlus, MoreVertical } from "lucide-react"
 import { useTranslation } from "@/query/hooks/useTranslation"
@@ -47,6 +48,7 @@ import {
   uploadImageToFirebase
 } from "@/lib/firebaseImageUtils"
 import { addNewRecipe } from "@/app/api/recipe"
+
 
 interface Ingredient {
   id: number
@@ -150,6 +152,29 @@ export default function AddRecipePopUpContent({
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
   // const [allBenefits, setAllBenefits] = useState<string[]>([])
+
+  const [healthBenefitSuggestions, setHealthBenefitSuggestions] = useState<
+    string[]
+  >([])
+
+  useEffect(() => {
+    const fetchHealthTags = async () => {
+      try {
+        
+        const res = await getAllTagsByCategory(token, "Benefit")
+        const tags = res?.data;
+
+        if (Array.isArray(tags)) {
+          console.log("tags", tags)
+          setHealthBenefitSuggestions(tags.map((tag: any) => tag.category))
+        }
+      } catch (error) {
+        console.error("Error fetching health benefit tags:", error)
+      }
+    }
+
+    void fetchHealthTags()
+  }, [token]);
 
   const handleSelectSync =
     (field: any, key: keyof RecipeFields) => async (value: string) => {
@@ -1023,6 +1048,7 @@ export default function AddRecipePopUpContent({
                   benefits={field.value || []}
                   name="benefits"
                   width="w-[32%]"
+                  suggestions={healthBenefitSuggestions} // ✅ Make sure it's spelled correctly!
                   onChange={(newArr: string[]) => {
                     handleBenefitsChange(newArr)
                     field.onChange(newArr)

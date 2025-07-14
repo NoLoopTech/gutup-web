@@ -39,7 +39,7 @@ import { Label } from "@/components/ui/label"
 import dayjs from "dayjs"
 import ViewRecipePopUp from "./ViewRecipePopUp"
 
-import { useGetAllRecipeClients } from "@/query/hooks/useGetAllRecipeClients"
+import { useGetAllRecipes } from "@/query/hooks/useGetAllRecipes"
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
   header?: string
@@ -90,8 +90,8 @@ export default function RecipeManagementPage({
   } = useDeleteRecipe(token)
   const [recipeId, setRecipeId] = useState<number>(0)
 
-  const { clients, loading, error, fetchRecipeClients } =
-    useGetAllRecipeClients<RecipeDataType>(token)
+  const { clients, loading, error, fetchRecipes } =
+    useGetAllRecipes<RecipeDataType>(token)
 
   // handle get users
   // const getRecipes = async (): Promise<void> => {
@@ -472,6 +472,7 @@ export default function RecipeManagementPage({
       <AddRecipePopup
         open={openAddRecipePopUp}
         onClose={handleCloseAddRecipePopUp}
+        token={token}
       />
 
       {/* delete confirmation popup  */}

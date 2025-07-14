@@ -19,9 +19,10 @@ import { useSession } from "next-auth/react"
 interface Props {
   open: boolean
   onClose: () => void
+  token: string
 }
 
-export default function AddRecipePopUp({ open, onClose }: Props): JSX.Element {
+export default function AddRecipePopUp({ open, onClose, token }: Props): JSX.Element {
   const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
     useRecipeStore()
 
@@ -29,10 +30,10 @@ export default function AddRecipePopUp({ open, onClose }: Props): JSX.Element {
     {}
   )
   // const session =  getServerSession(authOptions)
-   const { data: session, status } = useSession()
 
   // Load translations when activeLang changes
   useEffect(() => {
+    console.log("TOKEN RECEIVED:", token)
     const loadTranslationsAsync = async () => {
       const langData = await loadLanguage(activeLang, "recipe")
       setTranslations(langData)
@@ -86,7 +87,10 @@ export default function AddRecipePopUp({ open, onClose }: Props): JSX.Element {
             <TabsContent value={activeLang}>
               <AddRecipePopUpContent
                 translations={{ ...defaultTranslations, ...translations }}
-                token={"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFiY0BleGFtcGxlLmNvbSIsInN1YiI6MSwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzUxOTY1MDUwLCJleHAiOjE3NTQxMjUwNTB9.49Y1xbK5QqIHiTyoBFzOSCPoZ1WWHwTBx51QCDS8StU"}
+                // token={
+                //   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFiY0BleGFtcGxlLmNvbSIsInN1YiI6MSwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzUxOTY1MDUwLCJleHAiOjE3NTQxMjUwNTB9.49Y1xbK5QqIHiTyoBFzOSCPoZ1WWHwTBx51QCDS8StU"
+                // }
+                token={token}
               />
             </TabsContent>
           </Tabs>

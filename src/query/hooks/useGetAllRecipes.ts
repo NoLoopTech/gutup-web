@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { getAllRecipeClients as fetchRecipeClientsAPI } from "@/app/api/recipe"
+import { getAllRecipes as fetchRecipesAPI } from "@/app/api/recipe"
 
 
 interface RecipeDataType {
@@ -16,7 +16,7 @@ interface RecipeDataType {
   ingredients: string[]
 }
 
-export function useGetAllRecipeClients<T>(token: string) {
+export function useGetAllRecipes<T>(token: string) {
   const [clients, setClients] = useState<T[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -38,10 +38,10 @@ export function useGetAllRecipeClients<T>(token: string) {
   //   }
   // }
 
-  const fetchRecipeClients = async () => {
+  const fetchRecipes = async () => {
     try {
-      const response = await fetchRecipeClientsAPI(token)
-      console.log("response from recipe clients", response)
+      const response = await fetchRecipesAPI(token)
+      console.log("response from recipe", response)
       if (response.status === 200) {
         // Ensure ingredients is always an array
         const updatedData = response.data.map((clients: RecipeDataType) => ({
@@ -63,8 +63,8 @@ export function useGetAllRecipeClients<T>(token: string) {
 
   useEffect(() => {
     if (!token) return
-    fetchRecipeClients()
+    fetchRecipes()
   }, [token])
 
-  return { clients, loading, error, fetchRecipeClients }
+  return { clients, loading, error, fetchRecipes }
 }

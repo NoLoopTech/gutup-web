@@ -14,6 +14,7 @@ interface Props {
   name: string
   disable?: boolean
   width?: string
+  suggestions: string[]
   onChange?: (items: string[]) => void
   onBlur?: () => void
 }
@@ -25,6 +26,7 @@ export default function LableInput({
   name,
   disable,
   width = "w-64",
+  suggestions = [],
   onChange,
   onBlur
 }: Props): React.ReactElement {
@@ -37,6 +39,12 @@ export default function LableInput({
   const [items, setItems] = useState<string[]>(benefits)
   const [allbenefits, setAllBenefits] = useState<string[]>([])
 
+   useEffect(() => {
+    if (suggestions) {
+      setAllBenefits(suggestions)
+    }
+  }, [suggestions])
+
   const updateItems = (updatedItems: string[]): void => {
     setItems(updatedItems)
     setValue(name, updatedItems)
@@ -46,18 +54,30 @@ export default function LableInput({
     void trigger(name)
   }
 
-  const addItem = (): void => {
-    const trimmed = value.trim()
+  // const addItem = (): void => {
+  //   const trimmed = value.trim()
+  //   if (!trimmed) return
+
+  //   // Prevent duplicates and max length of 6 items
+  //   if (!items.includes(trimmed) && items.length < 6) {
+  //     const updatedItems = [...items, trimmed]
+  //     updateItems(updatedItems)
+  //   }
+
+  //   setValueState("") // Reset input field
+  // }
+
+  const addItem = (custom?: string): void => {
+    const trimmed = (custom ?? value).trim()
     if (!trimmed) return
 
-    // Prevent duplicates and max length of 6 items
     if (!items.includes(trimmed) && items.length < 6) {
-      const updatedItems = [...items, trimmed]
-      updateItems(updatedItems)
+      updateItems([...items, trimmed])
     }
 
-    setValueState("") // Reset input field
+    setValueState("")
   }
+
 
   const removeItem = (benefit: string): void => {
     const updatedItems = items.filter(b => b !== benefit)
@@ -71,10 +91,14 @@ export default function LableInput({
     }
   }
 
-  const filteredAllBenefits = allbenefits.filter(
-    tag =>
-      tag.toLowerCase().includes(value.toLowerCase()) && !items.includes(tag)
+  const filteredAllBenefits = allbenefits.filter(tag =>
+    typeof tag === "string" &&
+    tag.toLowerCase().trim().includes(value.toLowerCase().trim()) &&
+    !items.includes(tag)
   )
+
+ 
+
 
   return (
     <div className="col-span-1 w-full sm:col-span-2 md:col-span-1">
