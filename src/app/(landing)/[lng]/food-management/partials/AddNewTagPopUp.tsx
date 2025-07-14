@@ -147,8 +147,7 @@ export default function AddNewTagPopUp({
         setIsTranslating(true)
         const translated = await translateText(value)
         setTranslationField("tagData", "fr", fieldName, translated)
-        const translatedCategory = await translateText(category)
-        setTranslationField("tagData", "fr", "category", translatedCategory)
+        setTranslationField("tagData", "fr", "category", category)
         setTranslationField("tagData", "en", "category", category)
       } finally {
         setIsTranslating(false)
