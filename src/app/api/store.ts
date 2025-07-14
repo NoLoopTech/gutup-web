@@ -37,3 +37,15 @@ export const deleteStoreById = async (
     return error
   }
 }
+
+// get store by id
+export const getStoreById = async (token: string, id: number): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(`/store/admin/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response
+  } catch (error) {
+    return error
+  }
+}

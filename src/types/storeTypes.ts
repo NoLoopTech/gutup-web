@@ -2,6 +2,7 @@ export interface translationsTypes {
   [x: string]: string
   delete: string
   addNewStore: string
+  viewStoreDetails: string
   allowMultiLang: string
   english: string
   french: string
@@ -77,6 +78,7 @@ export interface translationsTypes {
 export const defaultTranslations: translationsTypes = {
   delete: "",
   addNewStore: "",
+  viewStoreDetails: "",
   allowMultiLang: "",
   english: "",
   french: "",

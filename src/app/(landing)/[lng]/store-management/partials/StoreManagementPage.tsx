@@ -42,6 +42,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog"
+import ViewStorePopUp from "./ViewStorePopUp"
+
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -93,6 +95,9 @@ export default function StoreManagementPage({
   const [selectedStoreType, setSelectedStoreType] = useState<string>("")
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
+  const [viewStoreOpen, setViewStoreOpen] = useState<boolean>(false)
+  const [, setSelectedStoreForView] = useState<StoreManagementDataType | null>(null)
+  const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null)
   const [translations, setTranslations] =
     useState<translationsTypes>(defaultTranslations)
 
@@ -342,6 +347,20 @@ export default function StoreManagementPage({
     setConfirmDeleteOpen(false)
   }
 
+  // handle view store
+  const handleViewStore = (store: StoreManagementDataType): void => {
+    setSelectedStoreForView(store)
+    setSelectedStoreId(store.id ?? null)
+    setViewStoreOpen(true)
+  }
+
+  // handle close view store popup
+  const handleCloseViewStorePopup = (): void => {
+    setViewStoreOpen(false)
+    setSelectedStoreForView(null)
+    setSelectedStoreId(null)
+  }
+
   const columns: Column<StoreManagementDataType>[] = [
     {
       accessor: "storeName",
@@ -420,6 +439,13 @@ export default function StoreManagementPage({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
+            <DropdownMenuItem
+              onClick={() => {
+                handleViewStore(row)
+              }}
+            >
+              View
+            </DropdownMenuItem>
             <DropdownMenuItem>Edit</DropdownMenuItem>
             <DropdownMenuItem>Make a copy</DropdownMenuItem>
             <DropdownMenuItem>Favorite</DropdownMenuItem>
@@ -559,6 +585,15 @@ export default function StoreManagementPage({
         onAddStore={handleAddStore}
         isLoading={isLoading}
       />
+
+      {/* view store popup */}
+      <ViewStorePopUp
+        open={viewStoreOpen}
+        onClose={handleCloseViewStorePopup}
+        storeId={selectedStoreId}
+        token={token}
+      />
+
       {/* delete confirmation popup  */}
       <AlertDialog
         open={confirmDeleteOpen}
