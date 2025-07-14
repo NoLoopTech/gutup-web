@@ -44,7 +44,6 @@ import {
 } from "@/components/ui/alert-dialog"
 import ViewStorePopUp from "./ViewStorePopUp"
 
-
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
   header?: string
@@ -96,8 +95,11 @@ export default function StoreManagementPage({
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
   const [viewStoreOpen, setViewStoreOpen] = useState<boolean>(false)
-  const [, setSelectedStoreForView] = useState<StoreManagementDataType | null>(null)
+  const [, setSelectedStoreForView] = useState<StoreManagementDataType | null>(
+    null
+  )
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null)
+  const [storeId, setStoreId] = useState<number>(0)
   const [translations, setTranslations] =
     useState<translationsTypes>(defaultTranslations)
 
@@ -141,17 +143,6 @@ export default function StoreManagementPage({
   const getStores = async (): Promise<void> => {
     try {
       const response = await getAllStores(token)
-
-      // Check if it's an error response
-      if (response?.statusCode === 404) {
-        console.error("Store endpoint not found:", response.message)
-        toast.error(
-          "Store API endpoint not found. Please check your backend configuration."
-        )
-        setStores([])
-        return
-      }
-
       if (response?.status === 200 && response?.data) {
         setStores(response.data)
       } else if (response?.data && Array.isArray(response.data)) {
@@ -241,12 +232,7 @@ export default function StoreManagementPage({
 
       const response = await AddNewStore(token, requestBody)
 
-      if (
-        response?.success === true ||
-        response?.status === 200 ||
-        response?.status === 201 ||
-        response?.data
-      ) {
+      if (response?.data) {
         toast.success(
           translations.formSubmittedSuccessfully || "Store added successfully"
         )
@@ -257,49 +243,13 @@ export default function StoreManagementPage({
         console.error("Unexpected response structure:", response)
         toast.error(translations.storeCreationFailed || "Failed to add store")
       }
-    } catch (error: any) {
-      console.error("Error details:", {
-        message: error.message,
-        status: error?.response?.status,
-        data: error?.response?.data,
-        fullError: error
-      })
-
-      if (error?.response?.status === 409) {
-        const serverMessage = error.response.data?.message?.toLowerCase() || ""
-        let userFriendlyMessage = translations.phoneEmailAlreadyExists
-
-        if (
-          serverMessage.includes("phone") &&
-          serverMessage.includes("email")
-        ) {
-          userFriendlyMessage = translations.phoneEmailAlreadyExists
-        } else if (serverMessage.includes("phone")) {
-          userFriendlyMessage = translations.phoneAlreadyExists
-        } else if (serverMessage.includes("email")) {
-          userFriendlyMessage = translations.emailAlreadyExists
-        }
-
-        toast.error(userFriendlyMessage)
-      } else if (error?.response?.status === 400) {
-        const errorMessage =
-          error.response.data?.message || "Invalid data provided"
-        toast.error(errorMessage)
-      } else if (error?.response?.status === 401) {
-        toast.error("Authentication failed. Please login again.")
-      } else if (error?.response?.status === 500) {
-        toast.error("Server error. Please try again later.")
-      } else {
-        toast.error(translations.storeCreationFailed || "Something went wrong")
-      }
+    } catch (error) {
+      toast.error("System error. Please try again later.")
     } finally {
       sessionStorage.removeItem("store-store")
       setIsLoading(false)
     }
   }
-
-  // handle delete store
-  const [storeId, setStoreId] = useState<number>(0)
 
   const handleDeleteStore = (storeId: number): void => {
     setStoreId(storeId)
@@ -313,7 +263,6 @@ export default function StoreManagementPage({
 
       // Check if response is an error object
       if (response?.response?.status) {
-        // This is an error response
         const errorMessage =
           response.response?.data?.message || "Failed to delete store"
         toast.error(errorMessage)
@@ -322,14 +271,10 @@ export default function StoreManagementPage({
       }
 
       // Check for successful response
-      if (
-        response?.status === 200 ||
-        response?.status === 204 ||
-        response?.data
-      ) {
+      if (response?.data) {
         toast.success("Store deleted successfully")
         setConfirmDeleteOpen(false)
-        await getStores() // Refresh the data
+        await getStores()
       } else {
         toast.error("Failed to delete store")
         setConfirmDeleteOpen(false)
