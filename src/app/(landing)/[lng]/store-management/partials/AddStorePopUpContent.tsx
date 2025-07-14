@@ -697,33 +697,29 @@ export default function AddStorePopUpContent({
       try {
         setIsTranslating(true)
 
-        // Upload image to Firebase
-        const imageUrl = await uploadImageToFirebase(
+        const token =
+          typeof window !== "undefined"
+            ? localStorage.getItem("token") ?? ""
+            : ""
+        const userName = token ? "user" : "anonymous"
+
+        const tempImageUrl = await uploadImageToFirebase(
           file,
-          "add-store",
-          file.name
+          "stores/temp-store-images",
+          `temp-store-image-${userName}-${Date.now()}`
         )
 
-        // Convert file to base64 for session storage
-        const reader = new FileReader()
-        reader.onload = () => {
-          const base64String = reader.result as string
+        form.setValue("storeImage", tempImageUrl, {
+          shouldValidate: true,
+          shouldDirty: true
+        })
 
-          // Update form with the Firebase URL
-          form.setValue("storeImage", imageUrl, {
-            shouldValidate: true,
-            shouldDirty: true
-          })
+        setTranslationField("storeData", "en", "storeImage", tempImageUrl)
+        setTranslationField("storeData", "fr", "storeImage", tempImageUrl)
+        setTranslationField("storeData", "en", "storeImageName", file.name)
+        setTranslationField("storeData", "fr", "storeImageName", file.name)
 
-          // Store in session storage for both languages with base64 and filename
-          setTranslationField("storeData", "en", "storeImage", base64String)
-          setTranslationField("storeData", "fr", "storeImage", base64String)
-          setTranslationField("storeData", "en", "storeImageName", file.name)
-          setTranslationField("storeData", "fr", "storeImageName", file.name)
-
-          setImagePreviewUrls([imageUrl])
-        }
-        reader.readAsDataURL(file)
+        setImagePreviewUrls([tempImageUrl])
       } catch (error) {
         toast.error("Image upload failed. Please try again.")
         console.error("Firebase upload error:", error)
@@ -731,12 +727,11 @@ export default function AddStorePopUpContent({
         setIsTranslating(false)
       }
     } else {
-      // Handle file removal
       form.setValue("storeImage", "")
-      setTranslationField("storeData", "en", "storeImage", null)
-      setTranslationField("storeData", "fr", "storeImage", null)
-      setTranslationField("storeData", "en", "storeImageName", null)
-      setTranslationField("storeData", "fr", "storeImageName", null)
+      setTranslationField("storeData", "en", "storeImage", "")
+      setTranslationField("storeData", "fr", "storeImage", "")
+      setTranslationField("storeData", "en", "storeImageName", "")
+      setTranslationField("storeData", "fr", "storeImageName", "")
       setImagePreviewUrls([])
     }
   }
