@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
 import { useState, useEffect, useMemo } from "react"
-import { AddNewStore, getAllStores, deleteStoreById } from "@/app/api/store"
+import { AddNewStore, getAllStores, deleteStoreById, updateStoreById } from "@/app/api/store"
 import { Badge } from "@/components/ui/badge"
 import AddStorePopUp from "./AddStorePopUp"
 import { Label } from "@/components/ui/label"
@@ -44,6 +44,7 @@ import {
   AlertDialogTitle
 } from "@/components/ui/alert-dialog"
 import ViewStorePopUp from "./ViewStorePopUp"
+import EditStorePopUp from "./EditStorePopUp"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -84,6 +85,7 @@ export default function StoreManagementPage({
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
   const [viewStoreOpen, setViewStoreOpen] = useState<boolean>(false)
+  const [editStoreOpen, setEditStoreOpen] = useState<boolean>(false)
   const [, setSelectedStoreForView] = useState<StoreManagementDataType | null>(
     null
   )
@@ -214,9 +216,12 @@ export default function StoreManagementPage({
             : item.name,
           type: item.type.toLowerCase(),
           typeFR: allowMultiLang
-            ? item.type.toLowerCase() === "ingredient"
-              ? "ingrédient"
-              : "catégorie"
+            ? storeData.fr?.availData?.find(
+                (frItem: any) => frItem.id === item.id
+              )?.type?.toLowerCase() ||
+              (item.type.toLowerCase() === "ingredient"
+                ? "ingrédient"
+                : "catégorie")
             : item.type.toLowerCase(),
           availability: item.status === "Active",
           display: item.display
@@ -224,6 +229,12 @@ export default function StoreManagementPage({
 
       const requestBody = {
         ...transformedData,
+        descriptionFR: allowMultiLang
+          ? storeData.fr?.about || transformedData.description
+          : transformedData.description,
+        categoryFR: allowMultiLang
+          ? storeData.fr?.category || transformedData.category
+          : transformedData.category,
         ingAndCatData,
         categories: [],
         ingredients: [],
@@ -324,6 +335,77 @@ export default function StoreManagementPage({
     setSelectedStoreId(null)
   }
 
+  // handle edit store
+  const handleEditStore = (store: StoreManagementDataType): void => {
+    setSelectedStoreId(store.id ?? null)
+    setEditStoreOpen(true)
+  }
+
+  // handle close edit store popup
+  const handleCloseEditStorePopup = (): void => {
+    setEditStoreOpen(false)
+    setSelectedStoreId(null)
+  }
+
+  // handle update store
+  const handleUpdateStore = async (): Promise<void> => {
+    if (!selectedStoreId) return
+
+    try {
+      setIsLoading(true)
+
+      // Get current store and build update request
+      const transformedData = transformStoreDataToApiRequest(
+        storeData,
+        activeLang,
+        allowMultiLang
+      )
+
+      // Transform availData to ingAndCatData format
+      const ingAndCatData =
+        storeData[activeLang]?.availData?.map((item: any) => ({
+          name: item.name,
+          nameFR: allowMultiLang
+            ? storeData.fr?.availData?.find(
+                (frItem: any) => frItem.id === item.id
+              )?.name || item.name
+            : item.name,
+          type: item.type.toLowerCase(),
+          typeFR: allowMultiLang
+            ? item.type.toLowerCase() === "ingredient"
+              ? "ingrédient"
+              : "catégorie"
+            : item.type.toLowerCase(),
+          availability: item.status === "Active",
+          display: item.display
+        })) || []
+
+      const requestBody = {
+        ...transformedData,
+        ingAndCatData,
+        allowMultiLang
+      }
+
+      const response = await updateStoreById(token, selectedStoreId, requestBody)
+
+      if (response?.data) {
+        toast.success("Store updated successfully")
+        setEditStoreOpen(false)
+        await getStores()
+        resetForm()
+        sessionStorage.removeItem("store-store")
+      } else {
+        console.error("Unexpected response structure:", response)
+        toast.error("Failed to update store")
+      }
+    } catch (error) {
+      console.error("Error updating store:", error)
+      toast.error("System error. Please try again later.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const columns: Column<StoreManagementDataType>[] = [
     {
       accessor: "storeName",
@@ -409,7 +491,13 @@ export default function StoreManagementPage({
             >
               View
             </DropdownMenuItem>
-            <DropdownMenuItem>Edit</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                handleEditStore(row)
+              }}
+            >
+              Edit
+            </DropdownMenuItem>
             <DropdownMenuItem>Make a copy</DropdownMenuItem>
             <DropdownMenuItem>Favorite</DropdownMenuItem>
             <DropdownMenuItem
@@ -553,6 +641,16 @@ export default function StoreManagementPage({
       <ViewStorePopUp
         open={viewStoreOpen}
         onClose={handleCloseViewStorePopup}
+        storeId={selectedStoreId}
+        token={token}
+      />
+
+      {/* edit store popup */}
+      <EditStorePopUp
+        open={editStoreOpen}
+        onClose={handleCloseEditStorePopup}
+        onUpdateStore={handleUpdateStore}
+        isLoading={isLoading}
         storeId={selectedStoreId}
         token={token}
       />

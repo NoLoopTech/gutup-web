@@ -49,3 +49,23 @@ export const getStoreById = async (token: string, id: number): Promise<any> => {
     return error
   }
 }
+
+// update store by id
+export const updateStoreById = async (
+  token: string,
+  storeId: number,
+  requestBody: AddStoreRequestBody
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.patch(
+      `/store/${storeId}`,
+      requestBody,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    )
+    return response
+  } catch (error) {
+    return error
+  }
+}
