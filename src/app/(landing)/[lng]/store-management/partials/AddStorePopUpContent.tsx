@@ -415,13 +415,7 @@ export default function AddStorePopUpContent({
     value: string
   ): Promise<void> => {
     if (activeLang === "en" && value.trim()) {
-      try {
-        setIsTranslating(true)
-        const translated = await translateText(value)
-        setTranslationField("storeData", "fr", fieldName, translated)
-      } finally {
-        setIsTranslating(false)
-      }
+      setTranslationField("storeData", "fr", fieldName, value)
     }
   }
 
