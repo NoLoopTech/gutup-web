@@ -163,6 +163,31 @@ export interface CategoryIngredientItem {
   display: boolean
 }
 
+// Add interface for IngAndCatData
+export interface IngAndCatDataType {
+  id: number
+  name: string
+  nameFR: string
+  type: string
+  typeFR: string
+  availability: boolean
+  display: boolean
+}
+
+// Add interface for Store Management Data Type
+export interface StoreManagementDataType {
+  id?: number
+  storeName: string
+  storeLocation: string
+  storeType: string
+  phoneNumber: string
+  email: string
+  shopStatus: boolean
+  ingredients: string
+  subscriptionType: string
+  ingAndCatData?: IngAndCatDataType[]
+}
+
 // Define the API request body interface according to swagger
 export interface AddStoreRequestBody {
   storeName: string
@@ -235,7 +260,6 @@ export function transformStoreDataToApiRequest(
       } else if (item.type?.toLowerCase() === "ingredient") {
         ingredients.push(transformedItem)
       } else {
-        // Default to category if type is not specified
         categories.push(transformedItem)
       }
     })

@@ -28,7 +28,8 @@ import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import {
   transformStoreDataToApiRequest,
   type translationsTypes,
-  defaultTranslations
+  defaultTranslations,
+  type StoreManagementDataType
 } from "@/types/storeTypes"
 import { toast } from "sonner"
 import { loadLanguage } from "@/../../src/i18n/locales"
@@ -50,18 +51,6 @@ interface Column<T> {
   id?: string
   cell?: (row: T) => React.ReactNode
   className?: string
-}
-
-interface StoreManagementDataType {
-  id?: number
-  storeName: string
-  storeLocation: string
-  storeType: string
-  phoneNumber: string
-  email: string
-  shopStatus: boolean
-  ingredients: string
-  subscriptionType: string
 }
 
 interface dataListTypes {
@@ -206,12 +195,36 @@ export default function StoreManagementPage({
       // Upload image first and wait for it to complete
       await uploadStoreImageAndSetUrl()
 
+      const transformedData = transformStoreDataToApiRequest(
+        storeData,
+        activeLang,
+        allowMultiLang
+      )
+
+      // Transform availData to ingAndCatData format
+      const ingAndCatData =
+        storeData[activeLang]?.availData?.map((item: any) => ({
+          name: item.name,
+          nameFR: allowMultiLang
+            ? storeData.fr?.availData?.find(
+                (frItem: any) => frItem.id === item.id
+              )?.name || item.name
+            : item.name,
+          type: item.type.toLowerCase(),
+          typeFR: allowMultiLang
+            ? item.type.toLowerCase() === "ingredient"
+              ? "ingrédient"
+              : "catégorie"
+            : item.type.toLowerCase(),
+          availability: item.status === "Active",
+          display: item.display
+        })) || []
+
       const requestBody = {
-        ...transformStoreDataToApiRequest(
-          storeData,
-          activeLang,
-          allowMultiLang
-        ),
+        ...transformedData,
+        ingAndCatData,
+        categories: [],
+        ingredients: [],
         allowMultiLang
       }
 
@@ -351,7 +364,7 @@ export default function StoreManagementPage({
       header: "Products Available",
       cell: (row: StoreManagementDataType) => (
         <Label className="text-gray-500">
-          {row.ingredients?.length || 0} Available
+          {row.ingAndCatData?.length ?? 0} Available
         </Label>
       )
     },
