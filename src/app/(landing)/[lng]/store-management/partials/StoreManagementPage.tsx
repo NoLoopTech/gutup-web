@@ -206,11 +206,14 @@ export default function StoreManagementPage({
       // Upload image first and wait for it to complete
       await uploadStoreImageAndSetUrl()
 
-      const requestBody = transformStoreDataToApiRequest(
-        storeData,
-        activeLang,
+      const requestBody = {
+        ...transformStoreDataToApiRequest(
+          storeData,
+          activeLang,
+          allowMultiLang
+        ),
         allowMultiLang
-      )
+      }
 
       const existingPhone = stores.some(
         store => store.phoneNumber === requestBody.phoneNumber
@@ -348,7 +351,7 @@ export default function StoreManagementPage({
       header: "Products Available",
       cell: (row: StoreManagementDataType) => (
         <Label className="text-gray-500">
-          {row.ingredients.length} Available
+          {row.ingredients?.length || 0} Available
         </Label>
       )
     },
