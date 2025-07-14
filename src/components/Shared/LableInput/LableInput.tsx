@@ -111,7 +111,10 @@ export default function LableInput({
                 <div
                   key={item}
                   className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => addItem(item)}
+                  onClick={() => {
+                    setValueState(item)
+                    addItem()
+                  }}
                 >
                   {item}
                 </div>

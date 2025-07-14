@@ -11,7 +11,9 @@ import { Label } from "@/components/ui/label"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { Button } from "@/components/ui/button"
 import { CustomTable } from "@/components/Shared/Table/CustomTable"
-import SearchBar from "@/components/Shared/SearchBar/SearchBar"
+import SearchBar, {
+  SearchBarItem
+} from "@/components/Shared/SearchBar/SearchBar"
 import { Switch } from "@/components/ui/switch"
 import {
   Select,
@@ -325,21 +327,18 @@ export default function ShopPromotionTab({
     onClose()
   }
 
-  const handleSelectFood = (item: {
-    id: number
-    name: string
-    displayStatus?: boolean
-  }) => {
-    const alreadyExists = ingredientData.some(i => i.id === item.id)
+  const handleSelectFood = (item: SearchBarItem) => {
+    const itemId = typeof item.id === "string" ? parseInt(item.id, 10) : item.id
+    const alreadyExists = ingredientData.some(i => i.id === itemId)
     if (alreadyExists) {
       toast.warning("Ingredient already added")
       return
     }
 
     const newIngredient: Ingredient = {
-      id: item.id,
+      id: itemId,
       name: item.name,
-      displayStatus: item.displayStatus ?? false
+      displayStatus: false
     }
 
     const updated = [...ingredientData, newIngredient]

@@ -50,3 +50,18 @@ export const getAllFoodsList = async (token: string): Promise<any> => {
     return error
   }
 }
+
+// get all tags by category
+export const getAllTagsByCategory = async (
+  token: string,
+  category: string
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(`/tags/category/${category}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response
+  } catch (error) {
+    return error
+  }
+}
