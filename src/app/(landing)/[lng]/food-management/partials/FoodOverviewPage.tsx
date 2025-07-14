@@ -2,8 +2,6 @@
 
 import { deleteFoodById, getAllFoods } from "@/app/api/foods"
 import { CustomTable } from "@/components/Shared/Table/CustomTable"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,6 +12,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -275,9 +275,21 @@ export default function FoodOverviewPage(): React.ReactElement {
       )
     },
     {
-      accessor: "season",
+      accessor: "seasons",
       header: "Month",
-      cell: row => <Badge variant={"outline"}>{row.season}</Badge>
+      cell: row => (
+        <div className="flex flex-wrap gap-1">
+          {Array.isArray(row.seasons) && row.seasons.length > 0 ? (
+            row.seasons.map((seasonObj, idx) => (
+              <Badge key={idx} variant="outline">
+                {seasonObj.season || seasonObj.season}
+              </Badge>
+            ))
+          ) : (
+            <Badge variant="outline">No season</Badge>
+          )}
+        </div>
+      )
     },
     {
       accessor: "recipesCount",

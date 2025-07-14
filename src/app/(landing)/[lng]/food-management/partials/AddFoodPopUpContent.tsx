@@ -392,7 +392,13 @@ export default function AddFoodPopUpContent({
         season: foodData.en.season,
         seasonFR: foodData.fr?.season ?? "",
         country: foodData.en.country,
-        seasons: [], // Fill if you have months
+        seasons: foodData.en.season
+          ? [{
+              foodId: 0,
+              season: foodData.en.season,
+              seasonFR: foodData.fr?.season ?? ""
+            }]
+          : [],
         attributes: {
           fiber: Number(foodData.en.fiber) || 0,
           proteins: Number(foodData.en.proteins) || 0,
