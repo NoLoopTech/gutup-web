@@ -508,6 +508,7 @@ export default function EditStorePopUpContent({
           }
 
           setIsDataLoaded(true)
+          setHasChanges(false) // Ensure no changes initially after data load
         } else {
           toast.error("Failed to load store data")
         }
@@ -556,10 +557,10 @@ export default function EditStorePopUpContent({
 
   // Watch for form changes
   useEffect(() => {
+    if (!isDataLoaded) return // Don't watch changes until data is loaded
+    
     const subscription = form.watch(() => {
-      if (isDataLoaded) {
-        setHasChanges(true)
-      }
+      setHasChanges(true)
     })
     return () => {
       subscription.unsubscribe()
@@ -1393,7 +1394,7 @@ export default function EditStorePopUpContent({
             <Button type="button" variant="outline" onClick={handleCancel}>
               {translations.cancel}
             </Button>
-            <Button type="submit" disabled={isLoading ?? !hasChanges}>
+            <Button type="submit" disabled={(isLoading ?? false) || !hasChanges}>
               {isLoading ? (
                 <div className="flex gap-2 items-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
