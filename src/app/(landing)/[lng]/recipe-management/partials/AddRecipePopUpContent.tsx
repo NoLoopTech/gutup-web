@@ -16,6 +16,8 @@ import LabelInput from "@/components/Shared/LableInput/LableInput"
 // import { type Recipe } from "@/types/recipeTypes"
 import { getAllTagsByCategory } from "@/app/api/tags"
 import { getAllFoods } from "@/app/api/foods"
+
+
 import { Trash } from "lucide-react"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import {
@@ -49,6 +51,12 @@ import {
 } from "@/lib/firebaseImageUtils"
 import { addNewRecipe } from "@/app/api/recipe"
 
+
+interface Food {
+  id: number
+  name: string
+}
+
 interface Ingredient {
   id: number
   ingredientName: string
@@ -57,6 +65,7 @@ interface Ingredient {
   quantity: string
   isMain: boolean
   tags: string[]
+  type: string
 }
 interface Option {
   value: string
@@ -101,9 +110,9 @@ const seasonOptions: Record<string, Option[]> = {
 }
 
 // Define function for handling image upload changes
-const handleImageUpload = (field: any) => (files: File[] | null) => {
-  field.onChange(files && files.length > 0 ? files[0] : null)
-}
+// const handleImageUpload = (field: any) => (files: File[] | null) => {
+//   field.onChange(files && files.length > 0 ? files[0] : null)
+// }
 
 // Dynamically load RichTextEditor with SSR disabled
 const RichTextEditor = dynamic(
@@ -141,7 +150,7 @@ export default function AddRecipePopUpContent({
   const { activeLang, setTranslationField, allowMultiLang } = useRecipeStore()
   const { translateText } = useTranslation()
   const [isTranslating, setIsTranslating] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  // const [isLoading, setIsLoading] = useState(false)
   const [foods, setFoods] = useState<Food[]>([])
   const [ingredientData, setIngredientData] = useState<Ingredient[]>([])
   const [selected, setSelected] = useState<Food | null>(null)
@@ -278,7 +287,7 @@ export default function AddRecipePopUpContent({
   // save recipe popup content
   const handleAddRecipe = async (): Promise<void> => {
     try {
-      setIsLoading(true)
+      // setIsLoading(true)
 
       // Upload and update image URL first
       // await uploadRecipeImageAndSetUrl()
@@ -310,12 +319,8 @@ export default function AddRecipePopUpContent({
         },
         images: foodImageFile ? [{ imageUrl: foodImageFile }] : [],
 
-        healthBenefits: (translations.en.benefits || []).map(
-          (benefit: string, idx: number) => ({
-            healthBenefit: benefit,
-            healthBenefitFR: translations.fr.benefits?.[idx] || ""
-          })
-        ),
+        healthBenefit: translations.en.benefits || [],
+        healthBenefitFR: translations.fr.benefits || [],
 
         author: {
           authorName: translations.en.authorName,
@@ -353,7 +358,9 @@ export default function AddRecipePopUpContent({
         toast.success("Recipe added successfully")
 
         // clear store and session
-        translations()
+        form.reset()
+        // Optionally, clear the recipe store fields if needed:
+        // useRecipeStore.getState().resetFields?.()
       } else {
         toast.error("Failed to add recipe")
       }
@@ -361,7 +368,7 @@ export default function AddRecipePopUpContent({
       console.log(error)
     } finally {
       sessionStorage.removeItem("recipe-storage")
-      setIsLoading(false)
+      // setIsLoading(false)
     }
   }
 
@@ -425,6 +432,31 @@ export default function AddRecipePopUpContent({
     }
   }
 
+  // const richTextFieldOnBlur = async (fieldName: "recipe"): Promise<void> => {
+  //   if (activeLang === "en") {
+  //     const val = form.getValues(fieldName)
+  //     if (typeof val === "string" && val.trim().length > 0) {
+  //       setIsTranslating(true)
+  //       try {
+  //         const translated = await translateText(val)
+  //         setTranslationField("fr", fieldName, translated)
+  //       } finally {
+  //         setIsTranslating(false)
+  //       }
+  //     } else if (Array.isArray(val) && val.length) {
+  //       setIsTranslating(true)
+  //       try {
+  //         const trArr = await Promise.all(
+  //           val.map(async v => await translateText(v))
+  //         )
+  //         setTranslationField("fr", fieldName, trArr)
+  //       } finally {
+  //         setIsTranslating(false)
+  //       }
+  //     }
+  //   }
+  // }
+
   const richTextFieldOnBlur = async (fieldName: "recipe"): Promise<void> => {
     if (activeLang === "en") {
       const val = form.getValues(fieldName)
@@ -436,19 +468,10 @@ export default function AddRecipePopUpContent({
         } finally {
           setIsTranslating(false)
         }
-      } else if (Array.isArray(val) && val.length) {
-        setIsTranslating(true)
-        try {
-          const trArr = await Promise.all(
-            val.map(async v => await translateText(v))
-          )
-          setTranslationField("fr", fieldName, trArr)
-        } finally {
-          setIsTranslating(false)
-        }
       }
     }
   }
+
   const makeRichHandlers = (
     fieldName: "recipe"
   ): { onChange: (val: string) => void } => {
@@ -468,9 +491,10 @@ export default function AddRecipePopUpContent({
     setPage(1)
   }
 
-  const handleRecipeChange = (field: any) => (val: string) => {
-    field.onChange(val)
-  }
+  // const handleRecipeChange = (field: any) => (val: string) => {
+  //   field.onChange(val)
+  // }
+
   const form = useForm<z.infer<typeof RecipeSchema>>({
     resolver: zodResolver(RecipeSchema),
     defaultValues: {
@@ -488,8 +512,8 @@ export default function AddRecipePopUpContent({
       email: "",
       website: "",
       recipe: "",
-      authorimage: null,
-      foodimage: null
+      authorimage: undefined,
+      foodimage: undefined
     }
   })
 

@@ -90,7 +90,7 @@ export default function RecipeManagementPage({
   const [selectedBenefit, setSelectedBenefit] = useState<string>("")
   const [viewRecipe, setViewRecipe] = useState<boolean>(false)
   const [viewRecipeId, setViewRecipeId] = useState<number>(0)
-  const [openEditRecipePopUp, setOpenEditRecipePopUp] = useState<boolean>(false)
+  // const [openEditRecipePopUp, setOpenEditRecipePopUp] = useState<boolean>(false)
   const [editRecipeData, setEditRecipeData] = useState<RecipeDataType | null>(
     null
   )
