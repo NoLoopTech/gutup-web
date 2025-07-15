@@ -40,6 +40,10 @@ const RichTextEditor = dynamic(
 interface Option {
   value: string
   label: string
+  valueEn?: string
+  valueFr?: string
+  labelEn?: string
+  labelFr?: string
 }
 // Define category options for each language
 const seasonOptions: Record<string, Option[]> = {
@@ -498,6 +502,8 @@ export default function AddFoodPopUpContent({
       if (typeResponse?.status === 200 && Array.isArray(typeResponse.data)) {
         setCategoryOptionsApi(
           typeResponse.data.map((item: any) => ({
+            value: activeLang === "en" ? item.tagName : item.tagNameFr,
+            label: activeLang === "en" ? item.tagName : item.tagNameFr,
             valueEn: item.tagName,
             valueFr: item.tagNameFr,
             labelEn: item.tagName,
@@ -606,21 +612,8 @@ export default function AddFoodPopUpContent({
                         </SelectTrigger>
                         <SelectContent>
                           {categoryOptionsApi.map(option => (
-                            <SelectItem
-                              key={
-                                activeLang === "en"
-                                  ? option.valueEn
-                                  : option.valueFr
-                              }
-                              value={
-                                activeLang === "en"
-                                  ? option.valueEn
-                                  : option.valueFr
-                              }
-                            >
-                              {activeLang === "en"
-                                ? option.labelEn
-                                : option.labelFr}
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -931,8 +924,8 @@ export default function AddFoodPopUpContent({
                     const idxFr = (foodData.fr.benefits || []).indexOf(
                       removed.tagNameFr
                     )
-                    let enBenefits = [...(foodData.en.benefits || [])]
-                    let frBenefits = [...(foodData.fr.benefits || [])]
+                    const enBenefits = [...(foodData.en.benefits || [])]
+                    const frBenefits = [...(foodData.fr.benefits || [])]
                     if (idxEn > -1) {
                       enBenefits.splice(idxEn, 1)
                       frBenefits.splice(idxEn, 1)
