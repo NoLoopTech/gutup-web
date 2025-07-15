@@ -12,8 +12,6 @@ import {
   defaultTranslations,
   type translationsTypes
 } from "@/types/recipeTypes"
-// import { getServerSession } from "next-auth"
-// import { authOptions } from "@/lib/nextAuthOptions"
 import { useSession } from "next-auth/react"
 
 interface Props {
@@ -22,28 +20,29 @@ interface Props {
   token: string
 }
 
-export default function AddRecipePopUp({ open, onClose, token }: Props): JSX.Element {
+export default function AddRecipePopUp({
+  open,
+  onClose,
+  token
+}: Props): JSX.Element {
   const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
     useRecipeStore()
 
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
   )
-  // const session =  getServerSession(authOptions)
-
-  // Load translations when activeLang changes
   useEffect(() => {
     console.log("TOKEN RECEIVED:", token)
-    const loadTranslationsAsync = async () => {
+    const loadTranslationsAsync = async (): Promise<void> => {
       const langData = await loadLanguage(activeLang, "recipe")
       setTranslations(langData)
       console.log("Language", langData)
     }
-    loadTranslationsAsync()
+    void loadTranslationsAsync()
   }, [activeLang])
 
   // Language toggle handler
-  const handleLanguageToggle = (val: boolean) => {
+  const handleLanguageToggle = (val: boolean): void => {
     setAllowMultiLang(val)
     if (!val) setActiveLang("en") // Default to English when disabled
   }
@@ -56,12 +55,14 @@ export default function AddRecipePopUp({ open, onClose, token }: Props): JSX.Ele
           style={{ scrollbarWidth: "none" }}
         >
           <DialogTitle>
-            {translations.addNewRecipe || "Add New Recipe"}
+            {translations.addNewRecipe ?? "Add New Recipe"}
           </DialogTitle>
 
           <Tabs
             value={activeLang}
-            onValueChange={val => setActiveLang(val as "en" | "fr")}
+            onValueChange={val => {
+              setActiveLang(val as "en" | "fr")
+            }}
             className="w-full"
           >
             <div className="flex flex-col gap-4 justify-between items-start mt-4 mb-6 sm:flex-row sm:items-center">
@@ -87,9 +88,6 @@ export default function AddRecipePopUp({ open, onClose, token }: Props): JSX.Ele
             <TabsContent value={activeLang}>
               <AddRecipePopUpContent
                 translations={{ ...defaultTranslations, ...translations }}
-                // token={
-                //   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFiY0BleGFtcGxlLmNvbSIsInN1YiI6MSwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzUxOTY1MDUwLCJleHAiOjE3NTQxMjUwNTB9.49Y1xbK5QqIHiTyoBFzOSCPoZ1WWHwTBx51QCDS8StU"
-                // }
                 token={token}
               />
             </TabsContent>

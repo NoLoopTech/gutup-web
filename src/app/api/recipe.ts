@@ -71,3 +71,39 @@ export const deleteRecipeById = async (
     return error
   }
 }
+
+
+// // Edit new Recipe
+// export const EditRecipe = async (
+//   token: string,
+//   requestBody: AddRecipeRequestBody
+// ): Promise<any> => {
+//   try {
+//     console.log("check token ", token)
+//     const response = await axiosInstance.patch(`/recipe/${id}`, requestBody, {
+//       headers: { Authorization: `Bearer ${token}` }
+//     })
+//     return response
+//   } catch (error) {
+//     return error
+//   }
+// }
+
+
+// Update Recipe using PATCH
+export const updateRecipe = async (
+  token: string,
+  recipeId: number,
+  requestBody: AddRecipeRequestBody
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.patch(`/recipe/${recipeId}`, requestBody, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response;
+  } catch (error) {
+    console.error("Failed to update recipe:", error);
+    return error;
+  }
+};
+

@@ -1,6 +1,6 @@
 "use client"
 
-import { HealthBenefit } from "@/types/recipeTypes"
+import { type HealthBenefit } from "@/types/recipeTypes"
 import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 
@@ -199,17 +199,17 @@ export const useRecipeStore = create<RecipeStoreState>()(
           }
         })),
 
-      setErrors: (errors: ValidationErrors) => set({ errors }),
+      setErrors: (errors: ValidationErrors) => { set({ errors }); },
 
-      resetErrors: () => set({ errors: {} }),
+      resetErrors: () => { set({ errors: {} }); },
 
       resetRecipe: () =>
-        set(() => ({
+        { set(() => ({
           translations: {
             en: { ...emptyRecipe },
             fr: { ...emptyRecipe }
           }
-        }))
+        })); }
     }),
     {
       name: "recipe-storage",

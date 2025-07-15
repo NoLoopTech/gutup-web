@@ -13,10 +13,10 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { type RecipeFields } from "@/stores/useRecipeStore"
 import LabelInput from "@/components/Shared/LableInput/LableInput"
-import { type Recipe } from "@/types/recipeTypes"
+// import { type Recipe } from "@/types/recipeTypes"
 import { getAllTagsByCategory } from "@/app/api/tags"
 import { getAllFoods } from "@/app/api/foods"
-import { Trash, CircleFadingPlus, MoreVertical } from "lucide-react"
+import { Trash } from "lucide-react"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import {
   Select,
@@ -48,7 +48,6 @@ import {
   uploadImageToFirebase
 } from "@/lib/firebaseImageUtils"
 import { addNewRecipe } from "@/app/api/recipe"
-
 
 interface Ingredient {
   id: number
@@ -158,11 +157,10 @@ export default function AddRecipePopUpContent({
   >([])
 
   useEffect(() => {
-    const fetchHealthTags = async () => {
+    const fetchHealthTags = async (): Promise<void> => {
       try {
-        
         const res = await getAllTagsByCategory(token, "Benefit")
-        const tags = res?.data;
+        const tags = res?.data
 
         if (Array.isArray(tags)) {
           console.log("tags", tags)
@@ -174,14 +172,13 @@ export default function AddRecipePopUpContent({
     }
 
     void fetchHealthTags()
-  }, [token]);
+  }, [token])
 
   const handleSelectSync =
     (field: any, key: keyof RecipeFields) => async (value: string) => {
       field.onChange(value)
       useRecipeStore.getState().setField("en", key, value)
       if ((key === "category" || key === "season") && allowMultiLang) {
-        // const translatedValue = await translateToFrench(value)
         const options = key === "category" ? categoryOptions : seasonOptions
         const translatedValue = await translateToFrench(value, options)
         useRecipeStore.getState().setField("fr", key, translatedValue)
@@ -383,6 +380,10 @@ export default function AddRecipePopUpContent({
       | "website"
   ): void => {
     const value = e.target.value
+    console.log(
+      "Active Language While Typing:",
+      useRecipeStore.getState().activeLang
+    )
     form.setValue(fieldName, value)
     setTranslationField(activeLang, fieldName, value)
     console.log(
@@ -625,12 +626,6 @@ export default function AddRecipePopUpContent({
       quantity: translatedType,
       status: translatedStatus as "Active" | "Inactive"
     }
-    // Only pass translated data to opposite lang
-    // const oppUpdated = [
-    //   ...(([oppLang]?.ingredientData as Ingredient[]) || []),
-    //   translatedEntry
-    // ]
-    // setTranslationField(oppLang, "ingredientData", oppUpdated)
 
     // Get existing translated ingredientData from form state
     const existingTranslatedData =
@@ -1173,7 +1168,9 @@ export default function AddRecipePopUpContent({
                         <Input
                           placeholder={translations.addAuthorName}
                           {...field}
-                          onChange={e => handleInputChange(e, "authorName")}
+                          onChange={e => {
+                            handleInputChange(e, "authorName")
+                          }}
                           onBlur={() =>
                             handleInputBlurWithoutTranslate(
                               field.value,
@@ -1200,7 +1197,9 @@ export default function AddRecipePopUpContent({
                         <Input
                           placeholder={translations.enterAuthorSpecialty}
                           {...field}
-                          onChange={e => handleInputChange(e, "authorCategory")}
+                          onChange={e => {
+                            handleInputChange(e, "authorCategory")
+                          }}
                           onBlur={() =>
                             handleInputBlur(field.value, "authorCategory")
                           }
@@ -1355,7 +1354,7 @@ export default function AddRecipePopUpContent({
               <Button
                 type="submit"
                 onClick={() => {
-                  handleAddRecipe()
+                  void handleAddRecipe()
                 }}
               >
                 {translations.save}

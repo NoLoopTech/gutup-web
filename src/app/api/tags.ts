@@ -1,5 +1,4 @@
 import axiosInstance from "@/query/axios.instance"
-
 // get all types
 export const getAllTags = async (
   token: string,
@@ -14,7 +13,6 @@ export const getAllTags = async (
     return error
   }
 }
-
 // get all types by category
 export const getAllTagsByCategory = async (
   token: string,

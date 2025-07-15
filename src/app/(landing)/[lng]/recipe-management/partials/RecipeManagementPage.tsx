@@ -32,20 +32,27 @@ import { useEffect, useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import AddRecipePopup from "./AddRecipePopUp"
-import { getAllRecipes } from "@/app/api/recipe"
-import { deleteRecipeById } from "@/app/api/recipe"
+// import { getAllRecipes, deleteRecipeById } from "@/app/api/recipe"
 import { useDeleteRecipe } from "@/query/hooks/useDeleteRecipes"
 import { Label } from "@/components/ui/label"
 import dayjs from "dayjs"
 import ViewRecipePopUp from "./ViewRecipePopUp"
 
 import { useGetAllRecipes } from "@/query/hooks/useGetAllRecipes"
+import { getAllTagsByCategory } from "@/app/api/tags"
+import { toast } from "sonner"
+// import EditRecipePopUp from "./EditRecipePopUp"
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
   header?: string
   id?: string
   cell?: (row: T) => React.ReactNode
   className?: string
+}
+
+interface HealthBenefitItem {
+  healthBenefit: string
+  healthBenefitFR: string
 }
 
 interface RecipeDataType {
@@ -55,7 +62,8 @@ interface RecipeDataType {
   createdAt: string
   isActive: boolean
   images: string[]
-  healthBenefits: string[]
+  // healthBenefits: string[]
+  healthBenefits: HealthBenefitItem[]
   preparation: string
   rest: string
   persons: number
@@ -82,6 +90,10 @@ export default function RecipeManagementPage({
   const [selectedBenefit, setSelectedBenefit] = useState<string>("")
   const [viewRecipe, setViewRecipe] = useState<boolean>(false)
   const [viewRecipeId, setViewRecipeId] = useState<number>(0)
+  const [openEditRecipePopUp, setOpenEditRecipePopUp] = useState<boolean>(false)
+  const [editRecipeData, setEditRecipeData] = useState<RecipeDataType | null>(
+    null
+  )
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
   const {
     deleteRecipe,
@@ -92,6 +104,9 @@ export default function RecipeManagementPage({
 
   const { clients, loading, error, fetchRecipes } =
     useGetAllRecipes<RecipeDataType>(token)
+  const [healthBenefitTypes, setHealthBenefitTypes] = useState<dataListTypes[]>(
+    []
+  )
 
   // handle get users
   // const getRecipes = async (): Promise<void> => {
@@ -110,6 +125,18 @@ export default function RecipeManagementPage({
   // useEffect(() => {
   //   void getRecipes()
   // }, [])
+
+  // const handleOpenEditRecipePopUp = (recipe: RecipeDataType): void => {
+  //   console.log("byeeee")
+  //   setEditRecipeData(recipe) // Set the recipe data to be edited
+  //   setOpenEditRecipePopUp(true) // Open the popup
+  // }
+
+  // const handleOpenEditRecipePopUp = (id: number): void => {
+  //   setViewRecipeId(id)
+  //   setViewRecipe(false)
+  //   setOpenEditRecipePopUp(true)
+  // }
 
   // handle delete recipe OverView
   const handleDeleteRecipe = (recipeId: number): void => {
@@ -181,6 +208,42 @@ export default function RecipeManagementPage({
     }
     // console.log("step 2 : false")
   }, [clients])
+
+  interface TagType {
+    tagId: number
+    category: string
+    count: number
+    status: boolean
+  }
+
+  interface HealthBenefitItem {
+    healthBenefit: string
+    healthBenefitFR: string
+  }
+
+  useEffect(() => {
+    const fetchHealthTags = async (): Promise<void> => {
+      try {
+        const res = await getAllTagsByCategory(token, "Benefit")
+        const tags = res?.data
+
+        if (Array.isArray(tags)) {
+          console.log("tags2", tags)
+          setHealthBenefitTypes(
+            tags.map((tag: TagType) => ({
+              value: tag.category,
+              label: tag.category
+            }))
+          )
+          console.log("healthBenefitTypes", healthBenefitTypes)
+        }
+      } catch (error) {
+        console.error("Error fetching health benefit tags:", error)
+      }
+    }
+
+    void fetchHealthTags()
+  }, [token])
 
   const columns: Array<Column<RecipeDataType>> = [
     {
@@ -280,9 +343,20 @@ export default function RecipeManagementPage({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem onClick={() => handleOpenViewRecipePopUp(row.id)}>
+            <DropdownMenuItem
+              onClick={() => {
+                handleOpenViewRecipePopUp(row.id)
+              }}
+            >
               View
             </DropdownMenuItem>
+            {/* <DropdownMenuItem
+              onClick={() => {
+                handleOpenEditRecipePopUp(row.id)
+              }}
+            >
+              Edit
+            </DropdownMenuItem> */}
             <DropdownMenuItem
               onClick={() => {
                 handleDeleteRecipe(row.id)
@@ -310,7 +384,13 @@ export default function RecipeManagementPage({
         selectedCategory === "" || recipe.category === selectedCategory
       const benefitMatch =
         selectedBenefit === "" ||
-        recipe.healthBenefits.includes(selectedBenefit)
+        recipe.healthBenefits.some(
+          (b: { healthBenefit: string }) => b.healthBenefit === selectedBenefit
+        )
+      console.log("Checking recipe:", recipe.name)
+      console.log("Health benefits:", recipe.healthBenefits)
+      console.log("Selected:", selectedBenefit)
+      console.log("Matched:", recipe.healthBenefits.includes(selectedBenefit))
 
       return nameMatch && categoryMatch && scoreMatch && benefitMatch
     })
@@ -345,9 +425,10 @@ export default function RecipeManagementPage({
     setSelectedPersons(value)
   }
 
-  // handle Score change
+  // handle Benefit change
   const handleBenefitChange = (value: string): void => {
     setSelectedBenefit(value)
+    console.log("selectedBenefit", value)
   }
 
   // handle clear search values
@@ -432,7 +513,7 @@ export default function RecipeManagementPage({
             </SelectTrigger>
             <SelectContent className="max-h-40">
               <SelectGroup>
-                {healthBenefits.map(item => (
+                {healthBenefitTypes.map(item => (
                   <SelectItem key={item.value} value={item.value.toString()}>
                     {item.label}
                   </SelectItem>
@@ -475,6 +556,14 @@ export default function RecipeManagementPage({
         token={token}
       />
 
+      {/* <EditRecipePopUp
+        open={openEditRecipePopUp}
+        onClose={() => setOpenEditRecipePopUp(false)}
+        // recipeData={editRecipeData}
+        recipeId={viewRecipeId}
+        token={token}
+      /> */}
+
       {/* delete confirmation popup  */}
       <AlertDialog
         open={confirmDeleteOpen}
@@ -507,4 +596,7 @@ export default function RecipeManagementPage({
       />
     </div>
   )
+}
+function fetchTags() {
+  throw new Error("Function not implemented.")
 }
