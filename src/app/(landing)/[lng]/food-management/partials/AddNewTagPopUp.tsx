@@ -165,22 +165,23 @@ export default function AddNewTagPopUp({
     onClose()
   }
 
-  const handleClosePopup = (): void => {
-    form.reset({
-      category,
-      tagName: ""
-    })
-    setTranslationField("tagData", "en", "tagName", "")
-    setTranslationField("tagData", "fr", "tagName", "")
-    setTranslationField("tagData", "en", "category", category)
-    setTranslationField("tagData", "fr", "category", category)
+  const handleClosePopup = (isOpen: boolean): void => {
+    if (!isOpen) {
+      sessionStorage.removeItem("tag-store")
+      form.reset({
+        category,
+        tagName: ""
+      })
+      // Clear all tag data
+      setTranslationField("tagData", "en", "tagName", "")
+      setTranslationField("tagData", "fr", "tagName", "")
+      setTranslationField("tagData", "en", "category", "")
+      setTranslationField("tagData", "fr", "category", "")
+      setActiveLang("en")
+      setAllowMultiLang(false)
 
-    sessionStorage.removeItem("tag-store")
-
-    setActiveLang("en")
-    setAllowMultiLang(false)
-
-    onClose()
+      onClose()
+    }
   }
   // Input blur handler for translation
   const renderForm = (): JSX.Element => (
