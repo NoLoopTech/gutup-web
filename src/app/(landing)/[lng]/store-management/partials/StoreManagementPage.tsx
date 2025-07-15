@@ -216,12 +216,9 @@ export default function StoreManagementPage({
             : item.name,
           type: item.type.toLowerCase(),
           typeFR: allowMultiLang
-            ? storeData.fr?.availData?.find(
-                (frItem: any) => frItem.id === item.id
-              )?.type?.toLowerCase() ||
-              (item.type.toLowerCase() === "ingredient"
-                ? "ingrédient"
-                : "catégorie")
+            ? item.type.toLowerCase() === "ingredient"
+              ? "ingrédient"
+              : "catégorie"
             : item.type.toLowerCase(),
           availability: item.status === "Active",
           display: item.display
@@ -229,12 +226,6 @@ export default function StoreManagementPage({
 
       const requestBody = {
         ...transformedData,
-        descriptionFR: allowMultiLang
-          ? storeData.fr?.about || transformedData.description
-          : transformedData.description,
-        categoryFR: allowMultiLang
-          ? storeData.fr?.category || transformedData.category
-          : transformedData.category,
         ingAndCatData,
         categories: [],
         ingredients: [],
