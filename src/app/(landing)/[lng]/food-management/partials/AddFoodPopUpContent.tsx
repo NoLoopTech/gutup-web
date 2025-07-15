@@ -42,20 +42,6 @@ interface Option {
   label: string
 }
 // Define category options for each language
-const categoryOptions: Record<string, Option[]> = {
-  en: [
-    { value: "fruits", label: "Fruits" },
-    { value: "vegetables", label: "Vegetables" },
-    { value: "dairy", label: "Dairy" },
-    { value: "grains", label: "Grains" }
-  ],
-  fr: [
-    { value: "fruits", label: "Fruits" },
-    { value: "vegetables", label: "Légumes" },
-    { value: "dairy", label: "Produits laitiers" },
-    { value: "grains", label: "Céréales" }
-  ]
-}
 const seasonOptions: Record<string, Option[]> = {
   en: [
     { value: "January", label: "January" },
@@ -117,7 +103,7 @@ export default function AddFoodPopUpContent({
   const { data: session } = useSession()
   const [categoryOptionsApi, setCategoryOptionsApi] = useState<Option[]>([])
   const [benefitTags, setBenefitTags] = useState<
-    { tagName: string; tagNameFr: string }[]
+    Array<{ tagName: string; tagNameFr: string }>
   >([])
 
   // Define FoodSchema before using it in useForm
@@ -488,7 +474,7 @@ export default function AddFoodPopUpContent({
         )
       }
 
-      const response = await postNewFood(token, foodDto)
+      const response = await postNewFood(token ?? "", foodDto)
       if (response.status === 201 || response.status === 200) {
         toast.success(translations.formSubmittedSuccessfully)
         getFoods()
@@ -551,7 +537,7 @@ export default function AddFoodPopUpContent({
         )
       }
     }
-    fetchBenefitTags()
+    void fetchBenefitTags()
   }, [session?.apiToken])
 
   // Cancel handler
