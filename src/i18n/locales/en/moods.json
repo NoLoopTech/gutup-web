@@ -29,6 +29,7 @@
   "bakery": "Bakery",
   "dairy": "Dairy",
   "produce": "Produce",
+  "Mood": "Mood",
 
   "required": "Required",
   "pleaseSelectAMood": "Please select a mood",

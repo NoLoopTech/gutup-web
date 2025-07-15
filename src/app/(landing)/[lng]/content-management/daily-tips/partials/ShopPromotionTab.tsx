@@ -11,7 +11,9 @@ import { Label } from "@/components/ui/label"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { Button } from "@/components/ui/button"
 import { CustomTable } from "@/components/Shared/Table/CustomTable"
-import SearchBar from "@/components/Shared/SearchBar/SearchBar"
+import SearchBar, {
+  SearchBarItem
+} from "@/components/Shared/SearchBar/SearchBar"
 import { Switch } from "@/components/ui/switch"
 import {
   Select,
@@ -84,20 +86,30 @@ const reason: Record<string, Option[]> = {
 export default function ShopPromotionTab({
   translations,
   onClose,
-  token
+  token,
+  userName,
+  addDailyTip,
+  isLoading
 }: {
   translations: translationsTypes
   token: string
   onClose: () => void
+  userName: string
+  addDailyTip: () => void
+  isLoading: boolean
 }): JSX.Element {
   const [page, setPage] = React.useState(1)
   const [pageSize, setPageSize] = React.useState(2)
   const { translateText } = useTranslation()
-  const { activeLang, translationsData, setTranslationField } =
-    useDailyTipStore()
+  const {
+    activeLang,
+    translationsData,
+    setTranslationField,
+    resetTranslations
+  } = useDailyTipStore()
   const [isTranslating, setIsTranslating] = useState(false)
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
-  const { foods: foodsList } = useFoodList(token)
+  const { foods: foodsList = [] } = useFoodList(token)
   const [ingredientData, setIngredientData] = useState<Ingredient[]>([])
 
   const updateStoreWithIngredients = (updated: Ingredient[]) => {
@@ -243,7 +255,11 @@ export default function ShopPromotionTab({
     if (file) {
       try {
         setIsTranslating(true)
-        const imageUrl = await uploadImageToFirebase(file, "daily-tip")
+        const imageUrl = await uploadImageToFirebase(
+          file,
+          "daily-tip/temp-daily-tip",
+          `temp-daily-tip-image-${userName}`
+        )
 
         form.setValue("image", imageUrl, {
           shouldValidate: true,
@@ -303,25 +319,26 @@ export default function ShopPromotionTab({
     // Clear preview image state
     setPreviewUrls([])
 
+    // clear store and session
+    await resetTranslations()
+    sessionStorage.removeItem("daily-tip-storage")
+
     // Close the modal or section
     onClose()
   }
 
-  const handleSelectFood = (item: {
-    id: number
-    name: string
-    displayStatus?: boolean
-  }) => {
-    const alreadyExists = ingredientData.some(i => i.id === item.id)
+  const handleSelectFood = (item: SearchBarItem) => {
+    const itemId = typeof item.id === "string" ? parseInt(item.id, 10) : item.id
+    const alreadyExists = ingredientData.some(i => i.id === itemId)
     if (alreadyExists) {
       toast.warning("Ingredient already added")
       return
     }
 
     const newIngredient: Ingredient = {
-      id: item.id,
+      id: itemId,
       name: item.name,
-      displayStatus: item.displayStatus ?? false
+      displayStatus: false
     }
 
     const updated = [...ingredientData, newIngredient]
@@ -334,10 +351,7 @@ export default function ShopPromotionTab({
   }
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
-    console.log(data)
-    toast("Form submitted", {
-      description: JSON.stringify(data, null, 2)
-    })
+    addDailyTip()
   }
 
   useEffect(() => {
@@ -347,13 +361,15 @@ export default function ShopPromotionTab({
       translationsData.shopPromotionData[activeLang]?.shopPromoteFoods ?? []
     const mappedFoods: Ingredient[] = foods.map(f => ({
       id: f.foodId,
-      name: "", // You must map the ID to a name below
+      name: "",
       displayStatus: f.dispalyStatus
     }))
 
     // map name from `foods` list fetched from API
     const enrichedFoods = mappedFoods.map(f => {
-      const foodInfo = foodsList.find(food => food.id === f.id)
+      const foodInfo = Array.isArray(foodsList)
+        ? foodsList.find(food => food.id === f.id)
+        : undefined
       return {
         ...f,
         name: foodInfo?.name ?? `Unknown (${f.id})`
@@ -573,25 +589,6 @@ export default function ShopPromotionTab({
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="mapsPin"
-                render={({ field }) => (
-                  <FormItem className="flex-1 mb-1">
-                    <FormLabel>{translations.mapsPin}</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={translations.enterGoogleMapsLocation}
-                        {...field}
-                        onChange={e =>
-                          handleInputChange("mapsPin", e.target.value)
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
 
             <div className="flex gap-6 pb-1">
@@ -702,7 +699,7 @@ export default function ShopPromotionTab({
             </div>
 
             {/* Image Uploader */}
-            <div className="pb-8 w-full sm:w-2/5">
+            <div className="pb-8 w-full">
               <FormField
                 control={form.control}
                 name="image"
@@ -732,7 +729,16 @@ export default function ShopPromotionTab({
             >
               {translations.cancel}
             </Button>
-            <Button type="submit">{translations.save}</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex gap-2 items-center">
+                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                  {translations.save}
+                </div>
+              ) : (
+                translations.save
+              )}
+            </Button>{" "}
           </div>
         </form>
       </Form>

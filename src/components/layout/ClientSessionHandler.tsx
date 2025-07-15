@@ -5,10 +5,12 @@
 import { useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { useMoodStore } from "@/stores/useMoodStore"
+import { useDailyTipStore } from "@/stores/useDailyTipStore"
 
 const ClientSessionHandler = () => {
   const pathname = usePathname()
   const { resetTranslations } = useMoodStore()
+  const { resetTranslations: dailyTipResetTranslations } = useDailyTipStore()
 
   useEffect(() => {
     const handleCheckPath = async () => {
@@ -16,6 +18,13 @@ const ClientSessionHandler = () => {
       if (pathname !== "/content-management/moods/") {
         await resetTranslations()
         sessionStorage.removeItem("mood-storage")
+        sessionStorage.removeItem("updated-mood-fields")
+      }
+
+      // Check if the current path is not '/content-management/daily-tips/'
+      if (pathname !== "/content-management/daily-tips/") {
+        await dailyTipResetTranslations()
+        sessionStorage.removeItem("daily-tip-storage")
       }
     }
 

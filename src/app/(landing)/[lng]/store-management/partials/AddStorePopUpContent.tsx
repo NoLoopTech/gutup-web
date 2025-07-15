@@ -70,15 +70,155 @@ const categoryOptions: Record<string, Option[]> = {
   en: [
     { value: "breakfast", label: "Breakfast" },
     { value: "dinner", label: "Dinner" },
-    { value: "dairy", label: "Dairy" }
+    { value: "dairy", label: "Dairy" },
+    { value: "farmers-market", label: "Farmers' market" },
+    { value: "farm", label: "Farm" },
+    { value: "farm-vending-machine", label: "Farm vending machine" },
+    { value: "local-cooperative", label: "Local cooperative" },
+    {
+      value: "direct-from-farm-livestock",
+      label: "Direct-from-farm livestock"
+    },
+    { value: "pick-your-own-farm", label: "Pick-your-own farm" },
+    { value: "farm-drive-thru", label: "Farm drive-thru" },
+    { value: "microfarm", label: "Microfarm" },
+    { value: "farm-baskets", label: "Farm baskets" },
+    { value: "greengrocer", label: "Greengrocer" },
+    { value: "grocery-store", label: "Grocery store" },
+    { value: "organic-store", label: "Organic store" },
+    { value: "vegan-store", label: "Vegan store" },
+    { value: "bulk-grocery", label: "Bulk grocery" },
+    { value: "zero-waste-store", label: "Zero-waste store" },
+    { value: "parapharmacy", label: "Parapharmacy" },
+    { value: "pharmacy", label: "Pharmacy" },
+    { value: "herbalist-shop", label: "Herbalist shop" },
+    { value: "diet-store", label: "Diet store" },
+    { value: "ayurvedic-store", label: "Ayurvedic store" },
+    { value: "butcher", label: "Butcher" },
+    { value: "cheese-store", label: "Cheese store" },
+    { value: "creamery", label: "Creamery" },
+    { value: "bakery", label: "Bakery" },
+    { value: "fishmonger", label: "Fishmonger" },
+    { value: "oil-mill", label: "Oil mill" },
+    { value: "beekeeper", label: "Beekeeper" },
+    { value: "coffee-roaster", label: "Coffee roaster" },
+    { value: "brewery", label: "Brewery" },
+    { value: "pastry-shop", label: "Pastry shop" },
+    { value: "chocolate-factory", label: "Chocolate factory" },
+    { value: "organic-marketplace", label: "Organic marketplace" },
+    { value: "ethical-marketplace", label: "Ethical marketplace" },
+    { value: "direct-sales-platform", label: "Direct sales platform" },
+    { value: "online-organic-store", label: "Online organic store" },
+    { value: "online-bulk-store", label: "Online bulk store" },
+    { value: "online-superfood-store", label: "Online superfood store" },
+    { value: "farm-basket-platform", label: "Farm basket delivery platform" },
+    { value: "dietary-supplements", label: "Dietary supplements" },
+    { value: "superfood-producer", label: "Superfood producer" },
+    { value: "legume-grower", label: "Legume grower" },
+    { value: "oilseed-producer", label: "Oilseed producer" },
+    { value: "cereal-producer", label: "Cereal producer" },
+    { value: "tofu-producer", label: "Tofu producer" },
+    { value: "spice-producer", label: "Spice producer" },
+    { value: "spirulina-farmer", label: "Spirulina farmer" },
+    { value: "mushroom-grower", label: "Mushroom grower" },
+    { value: "medicinal-herb-grower", label: "Medicinal herb grower" },
+    { value: "aromatic-plant-grower", label: "Aromatic plant grower" },
+    { value: "dried-fruit-producer", label: "Dried fruit producer" },
+    { value: "craft-beverage-producer", label: "Craft beverage producer" },
+    { value: "sprouted-seed-producer", label: "Sprouted seed producer" },
+    { value: "vinegar-maker", label: "Vinegar maker" },
+    {
+      value: "plant-based-beverage-producer",
+      label: "Plant-based beverage producer"
+    },
+    { value: "kefir-kombucha-brewer", label: "Kefir / Kombucha brewer" },
+    { value: "seaweed-producer", label: "Seaweed producer" },
+    {
+      value: "fermented-products-producer",
+      label: "Fermented products producer"
+    }
   ],
   fr: [
     { value: "breakfast", label: "Petit déjeuner" },
     { value: "dinner", label: "Dîner" },
-    { value: "dairy", label: "Produits laitiers" }
+    { value: "dairy", label: "Produits laitiers" },
+    { value: "farmers-market", label: "Marché de producteurs" },
+    { value: "farm", label: "Ferme" },
+    { value: "farm-vending-machine", label: "Distributeur automatique" },
+    { value: "local-cooperative", label: "Coopérative locale" },
+    { value: "direct-from-farm-livestock", label: "Élevage fermier" },
+    { value: "pick-your-own-farm", label: "Cueillette à la ferme" },
+    { value: "farm-drive-thru", label: "Drive fermier" },
+    { value: "microfarm", label: "Microferme" },
+    { value: "farm-baskets", label: "Paniers" },
+    { value: "greengrocer", label: "Primeur" },
+    { value: "grocery-store", label: "Épicerie de quartier" },
+    { value: "organic-store", label: "Magasin bio" },
+    { value: "vegan-store", label: "Magasin végan" },
+    { value: "bulk-grocery", label: "Épicerie vrac" },
+    { value: "zero-waste-store", label: "Épicerie zéro déchet" },
+    { value: "parapharmacy", label: "Parapharmacie" },
+    { value: "pharmacy", label: "Pharmacie" },
+    { value: "herbalist-shop", label: "Herboristerie" },
+    { value: "diet-store", label: "Magasin diététique" },
+    { value: "ayurvedic-store", label: "Magasin ayurvédique" },
+    { value: "butcher", label: "Boucherie" },
+    { value: "cheese-store", label: "Fromagerie" },
+    { value: "creamery", label: "Crèmerie" },
+    { value: "bakery", label: "Boulangerie" },
+    { value: "fishmonger", label: "Poissonnerie" },
+    { value: "oil-mill", label: "Huilerie" },
+    { value: "beekeeper", label: "Apiculteur" },
+    { value: "coffee-roaster", label: "Torréfacteur" },
+    { value: "brewery", label: "Brasserie" },
+    { value: "pastry-shop", label: "Pâtisserie" },
+    { value: "chocolate-factory", label: "Chocolaterie" },
+    { value: "organic-marketplace", label: "Marketplace bio" },
+    { value: "ethical-marketplace", label: "Marketplace éthique" },
+    { value: "direct-sales-platform", label: "Plateforme de vente directe" },
+    { value: "online-organic-store", label: "Magasin bio en ligne" },
+    { value: "online-bulk-store", label: "Vente en ligne de vrac" },
+    {
+      value: "online-superfood-store",
+      label: "Vente en ligne de super-aliments"
+    },
+    { value: "farm-basket-platform", label: "Plateforme de paniers" },
+    { value: "dietary-supplements", label: "Compléments alimentaires" },
+    { value: "superfood-producer", label: "Producteur de super-aliment" },
+    { value: "legume-grower", label: "Producteur de légumineuses" },
+    { value: "oilseed-producer", label: "Producteur d’oléagineux" },
+    { value: "cereal-producer", label: "Producteur de céréales" },
+    { value: "tofu-producer", label: "Producteur de tofu" },
+    { value: "spice-producer", label: "Producteur d’épices" },
+    { value: "spirulina-farmer", label: "Producteur de spiruline" },
+    { value: "mushroom-grower", label: "Producteur de champignons" },
+    {
+      value: "medicinal-herb-grower",
+      label: "Producteur de plantes médicinales"
+    },
+    {
+      value: "aromatic-plant-grower",
+      label: "Producteur de plantes aromatiques"
+    },
+    { value: "dried-fruit-producer", label: "Producteur de fruits secs" },
+    {
+      value: "craft-beverage-producer",
+      label: "Producteur de boissons artisanales"
+    },
+    { value: "sprouted-seed-producer", label: "Producteur de graines germées" },
+    { value: "vinegar-maker", label: "Producteur de vinaigre" },
+    {
+      value: "plant-based-beverage-producer",
+      label: "Producteur de boissons végétales"
+    },
+    { value: "kefir-kombucha-brewer", label: "Producteur de kéfir / kombucha" },
+    { value: "seaweed-producer", label: "Producteur d’algues" },
+    {
+      value: "fermented-products-producer",
+      label: "Producteur de produits fermentés"
+    }
   ]
 }
-
 const storeTypeOptions: Record<string, Option[]> = {
   en: [
     { value: "physical", label: "Physical" },
@@ -92,13 +232,18 @@ const storeTypeOptions: Record<string, Option[]> = {
 
 export default function AddStorePopUpContent({
   translations,
-  token
+  onAddStore,
+  isLoading,
+  onClose
 }: {
   translations: translationsTypes
-  token: string
+  onAddStore?: () => Promise<void>
+  isLoading?: boolean
+  onClose?: () => void
 }): JSX.Element {
   const { translateText } = useTranslation()
-  const { activeLang, storeData, setTranslationField } = useStoreStore() as any
+  const { activeLang, storeData, setTranslationField, resetForm } =
+    useStoreStore() as any
   const [isTranslating, setIsTranslating] = useState(false)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
@@ -164,6 +309,10 @@ export default function AddStorePopUpContent({
       .min(1, translations.atleastoneingredientcategorymustbeadded),
     storeImage: z.string().min(1, translations.required)
   })
+
+  // Retrieve token
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : ""
 
   // fetch once on mount
   useEffect(() => {
@@ -266,13 +415,7 @@ export default function AddStorePopUpContent({
     value: string
   ): Promise<void> => {
     if (activeLang === "en" && value.trim()) {
-      try {
-        setIsTranslating(true)
-        const translated = await translateText(value)
-        setTranslationField("storeData", "fr", fieldName, translated)
-      } finally {
-        setIsTranslating(false)
-      }
+      setTranslationField("storeData", "fr", fieldName, value)
     }
   }
 
@@ -301,7 +444,6 @@ export default function AddStorePopUpContent({
     value: string
   ): void => {
     form.setValue(fieldName, value)
-    setTranslationField("storeData", activeLang, fieldName, value)
 
     // Get the correct options set
     let optionsMap: Record<string, Option[]>
@@ -312,13 +454,18 @@ export default function AddStorePopUpContent({
     const oppositeLang = activeLang === "en" ? "fr" : "en"
     const opposite = optionsMap[oppositeLang]
 
+    // Find the selected option in current language
     const index = current.findIndex(opt => opt.value === value)
+
     if (index !== -1 && opposite[index]) {
+      // Store the value for current language
+      setTranslationField("storeData", activeLang, fieldName, value)
+
       setTranslationField(
         "storeData",
         oppositeLang,
         fieldName,
-        opposite[index].value
+        opposite[index].label
       )
     }
   }
@@ -551,7 +698,11 @@ export default function AddStorePopUpContent({
         setIsTranslating(true)
 
         // Upload image to Firebase
-        const imageUrl = await uploadImageToFirebase(file, "add-store")
+        const imageUrl = await uploadImageToFirebase(
+          file,
+          "add-store",
+          file.name
+        )
 
         // Convert file to base64 for session storage
         const reader = new FileReader()
@@ -594,9 +745,23 @@ export default function AddStorePopUpContent({
     form: ReturnType<typeof useForm<z.infer<typeof AddStoreSchema>>>
   ): void => {
     form.reset()
+    // clear store and session
+    resetForm()
+    sessionStorage.removeItem("store-store")
+
+    if (onClose) {
+      onClose()
+    }
   }
-  const onSubmit = (data: z.infer<typeof AddStoreSchema>): void => {
-    toast(translations.formSubmittedSuccessfully, {})
+  const onSubmit = async (
+    data: z.infer<typeof AddStoreSchema>
+  ): Promise<void> => {
+    if (onAddStore) {
+      await onAddStore()
+    } else {
+      toast(translations.formSubmittedSuccessfully, {})
+    }
+    sessionStorage.removeItem("store-store")
   }
 
   return (
@@ -658,11 +823,26 @@ export default function AddStorePopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {categoryOptions[activeLang].map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
+                          {categoryOptions[activeLang].map(option => {
+                            if (activeLang === "fr") {
+                              return (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.label}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              )
+                            }
+                            return (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            )
+                          })}
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -719,11 +899,26 @@ export default function AddStorePopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {storeTypeOptions[activeLang].map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
+                          {storeTypeOptions[activeLang].map(option => {
+                            if (activeLang === "fr") {
+                              return (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.label}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              )
+                            }
+                            return (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            )
+                          })}
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -848,6 +1043,10 @@ export default function AddStorePopUpContent({
                       />
                     </FormControl>
                     <FormMessage />
+                    {/* Add a small informational note */}
+                    <div className="text-xs text-gray-500 mt-1">
+                      {translations.required}
+                    </div>
                   </FormItem>
                 )}
               />
@@ -874,6 +1073,10 @@ export default function AddStorePopUpContent({
                       />
                     </FormControl>
                     <FormMessage />
+                    {/* Add a small informational note */}
+                    <div className="text-xs text-gray-500 mt-1">
+                      {translations.required}
+                    </div>
                   </FormItem>
                 )}
               />
@@ -1121,7 +1324,16 @@ export default function AddStorePopUpContent({
             >
               {translations.cancel}
             </Button>
-            <Button type="submit">{translations.save}</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex gap-2 items-center">
+                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                  {translations.save}
+                </div>
+              ) : (
+                translations.save
+              )}
+            </Button>
           </div>
         </DialogFooter>
       </form>

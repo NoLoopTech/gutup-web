@@ -12,11 +12,31 @@ import {
 import { MoreVertical } from "lucide-react"
 import { useEffect, useState } from "react"
 import AddMoodMainPopUp from "./AddMoodMainPopUp"
-import { AddNewMood, getAllMoods } from "@/app/api/mood"
+import {
+  addNewMood,
+  deleteMoodById,
+  getAllMoods,
+  updateNewMood
+} from "@/app/api/mood"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { AddMoodRequestBody } from "@/types/moodsTypes"
 import { toast } from "sonner"
-import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
+import {
+  deleteImageFromFirebase,
+  uploadImageToFirebase
+} from "@/lib/firebaseImageUtils"
+import EditMoodMainPopUp from "./EditMoodMainPopup"
+import { useUpdatedTranslationStore } from "@/stores/useUpdatedTranslationStore"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -27,11 +47,13 @@ interface Column<T> {
 }
 
 interface MoodsDataType {
+  id: number
   mood: string
   title: string
   content: string
   dateCreated: string
   status: string
+  image?: string
 }
 
 export default function MoodsPage({
@@ -42,19 +64,24 @@ export default function MoodsPage({
   userName: string
 }): JSX.Element {
   const [isOpenAddMood, setIsOpenAddMood] = useState<boolean>(false)
+  const [isOpenEditMood, setIsOpenEditMood] = useState<boolean>(false)
+  const [selectedMoodId, setSelectedMoodId] = useState<number>(0)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [moods, setMooods] = useState<MoodsDataType[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [previousImageUrl, setPreviousImageUrl] = useState<string | null>(null)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
 
   const {
-    allowMultiLang,
     activeLang,
     translationsData,
     activeTab,
     setTranslationField,
     resetTranslations
   } = useMoodStore()
+
+  const { setUpdatedField, resetUpdatedStore } = useUpdatedTranslationStore()
 
   // handle get users
   const getMoods = async (): Promise<void> => {
@@ -65,15 +92,19 @@ export default function MoodsPage({
           (item: any) => {
             let title = ""
             let content = ""
+            let image = ""
 
             switch (item.layout) {
               case "Recipe":
                 title = item.recipe?.recipe ?? ""
                 content = item.recipe?.description ?? ""
+                image = item.recipe?.image ?? ""
                 break
               case "Food":
                 title = item.ingredient?.foodName ?? ""
                 content = item.ingredient?.description ?? ""
+                image = item.ingredient?.image ?? ""
+
                 break
               case "Quote":
                 title = item.quote?.quoteAuthor ?? ""
@@ -82,24 +113,28 @@ export default function MoodsPage({
             }
 
             return {
+              id: item.id,
               mood: item.mood,
               title,
               content,
               dateCreated: new Date(item.createdAt).toLocaleDateString(),
-              status: "Active"
+              status: "Active",
+              image
             }
           }
         )
         setMooods(transformedData)
-      } else {
-        console.log(response)
       }
     } catch (error) {
       console.error("Failed to fetch moods:", error)
     }
   }
 
-  const uploadMoodImageAndSetUrl = async () => {
+  useEffect(() => {
+    void getMoods()
+  }, [])
+
+  const uploadMoodImageAndSetUrl = async (): Promise<string | null> => {
     let imageFile: string | File | undefined = undefined
 
     if (activeTab === "Food") {
@@ -108,7 +143,7 @@ export default function MoodsPage({
       imageFile = translationsData.recipeData[activeLang].image
     }
 
-    if (!imageFile) return
+    if (!imageFile) return null
 
     const folder = activeTab === "Food" ? "moods/food-tab" : "moods/recipe-tab"
     const fileNamePrefix = activeTab === "Food" ? "food-image" : "recipe-image"
@@ -123,7 +158,7 @@ export default function MoodsPage({
         fileToUpload = blob
       } catch (err) {
         console.error("Failed to convert string to Blob", err)
-        return
+        return null
       }
     } else {
       fileToUpload = imageFile
@@ -137,26 +172,39 @@ export default function MoodsPage({
 
     if (activeTab === "Food") {
       setTranslationField("foodData", activeLang, "image", uploadedUrl)
+      setUpdatedField("foodData", activeLang, "image", uploadedUrl)
     } else if (activeTab === "Recipe") {
       setTranslationField("recipeData", activeLang, "image", uploadedUrl)
+      setUpdatedField("recipeData", activeLang, "image", uploadedUrl)
     }
+
+    return uploadedUrl
   }
 
   const handleAddMood = async () => {
     try {
       setIsLoading(true)
+      let uploadedImageUrl: string | null = null
 
       // Upload and update image URL first
-      await uploadMoodImageAndSetUrl()
+      uploadedImageUrl = await uploadMoodImageAndSetUrl()
+
+      // Get fresh state after image update
+      const {
+        allowMultiLang: currentAllowMultiLang,
+        activeLang: currentLang,
+        activeTab: currentTab,
+        translationsData: currentTranslations
+      } = useMoodStore.getState()
 
       const requestBody: AddMoodRequestBody = {
-        allowMultiLang,
-        activeLang,
-        activeTab,
-        translationsData
+        allowMultiLang: currentAllowMultiLang,
+        activeLang: currentLang,
+        activeTab: currentTab,
+        translationsData: currentTranslations
       }
 
-      const response = await AddNewMood(token, requestBody)
+      const response = await addNewMood(token, requestBody)
 
       if (response.status === 200 || response.status === 201) {
         toast.success("Mood added successfully")
@@ -165,17 +213,80 @@ export default function MoodsPage({
 
         // clear store and session
         resetTranslations()
+        resetUpdatedStore()
       } else {
-        toast.error("Failed to add mood")
+        toast.error("Failed to add mood!")
+        if (uploadedImageUrl) {
+          await deleteImageFromFirebase(uploadedImageUrl)
+        }
       }
     } catch (error) {
       console.log(error)
     } finally {
       sessionStorage.removeItem("mood-storage")
+      sessionStorage.removeItem("updated-mood-fields")
+
       setIsLoading(false)
     }
   }
 
+  // handle update mood
+  const handleUpdateMood = async () => {
+    try {
+      setIsLoading(true)
+
+      const { activeTab, activeLang } = useMoodStore.getState()
+      const { translationsData: updatedTranslations } =
+        useUpdatedTranslationStore.getState()
+
+      let uploadedImageUrl: string | null = null
+
+      // 🔍 Check if image was updated (only for Recipe or Food)
+      const isImageChanged =
+        (activeTab === "Recipe" &&
+          updatedTranslations.recipeData[activeLang].image) ||
+        (activeTab === "Food" && updatedTranslations.foodData[activeLang].image)
+
+      if (isImageChanged) {
+        // 📤 Upload new image
+        uploadedImageUrl = await uploadMoodImageAndSetUrl()
+      }
+
+      // 📦 Prepare request body
+      const { translationsData: finalUpdatedTranslations } =
+        useUpdatedTranslationStore.getState()
+
+      const requestBody: AddMoodRequestBody = {
+        translationsData: finalUpdatedTranslations
+      }
+
+      // 📡 Submit updated data
+      const response = await updateNewMood(token, selectedMoodId, requestBody)
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Mood updated successfully")
+        setIsOpenEditMood(false)
+        getMoods()
+
+        // 🗑️ Delete old image from Firebase if it exists
+        if (previousImageUrl) {
+          await deleteImageFromFirebase(previousImageUrl)
+          setPreviousImageUrl(null)
+        }
+      } else {
+        toast.error("Failed to update mood!")
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error("Something went wrong during update!")
+    } finally {
+      sessionStorage.removeItem("mood-storage")
+      sessionStorage.removeItem("updated-mood-fields")
+      setIsLoading(false)
+    }
+  }
+
+  // add popup open and close handlers
   const handleOpenAddMood = (): void => {
     setIsOpenAddMood(true)
   }
@@ -183,9 +294,48 @@ export default function MoodsPage({
     setIsOpenAddMood(false)
   }
 
-  useEffect(() => {
-    void getMoods()
-  }, [])
+  // edit popup open and close handlers
+  const handleOpenEditMood = (id: number): void => {
+    setIsOpenEditMood(true)
+    setSelectedMoodId(id)
+  }
+  const handleCloseEditMood = async (): Promise<void> => {
+    setSelectedMoodId(0)
+    setIsOpenEditMood(false)
+
+    // clear store and session
+    await resetTranslations()
+    await resetUpdatedStore()
+    sessionStorage.removeItem("updated-mood-fields")
+  }
+
+  // handle delete mood
+  const handleDeleteMood = async (): Promise<void> => {
+    try {
+      const response = await deleteMoodById(token, selectedMoodId)
+      console.log(response)
+      if (response.status === 200 || response.status === 201) {
+        toast.success(response.data.message)
+        getMoods()
+      } else {
+        console.log("failed to delete mood : ", response)
+        toast.error("Failed to delete mood!")
+      }
+    } catch (error) {
+      console.log("failed to delete mood : ", error)
+    }
+  }
+
+  // handle open delete confirmation popup
+  const handleOpenDeleteConfirmationPopup = (id: number): void => {
+    setSelectedMoodId(id)
+    setConfirmDeleteOpen(true)
+  }
+
+  // handle close delete confirmation popup
+  const handleCloseDeleteConfirmationPopup = (): void => {
+    setConfirmDeleteOpen(false)
+  }
 
   const columns: Array<Column<MoodsDataType>> = [
     {
@@ -242,7 +392,19 @@ export default function MoodsPage({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                handleOpenEditMood(row.id)
+                setPreviousImageUrl(row.image || "")
+              }}
+            >
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleOpenDeleteConfirmationPopup(row.id)}
+            >
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -290,6 +452,39 @@ export default function MoodsPage({
         isLoading={isLoading}
         userName={userName}
       />
+
+      <EditMoodMainPopUp
+        open={isOpenEditMood}
+        onClose={handleCloseEditMood}
+        EditMood={handleUpdateMood}
+        isLoading={isLoading}
+        userName={userName}
+        token={token}
+        moodId={selectedMoodId}
+      />
+
+      {/* delete confirmation popup  */}
+      <AlertDialog
+        open={confirmDeleteOpen}
+        onOpenChange={handleCloseDeleteConfirmationPopup}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Mood</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this mood?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCloseDeleteConfirmationPopup}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteMood}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

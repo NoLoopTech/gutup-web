@@ -317,7 +317,11 @@ export default function AddFoodPopUpContent({
         setIsTranslating(true)
 
         // Upload image to Firebase
-        const imageUrl = await uploadImageToFirebase(file, "add-food")
+        const imageUrl = await uploadImageToFirebase(
+          file,
+          "add-food",
+          `food-${Date.now()}-${file.name}`
+        )
 
         // Convert file to base64 for session storage
         const reader = new FileReader()

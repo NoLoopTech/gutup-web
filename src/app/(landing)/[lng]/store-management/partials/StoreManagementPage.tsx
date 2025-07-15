@@ -17,12 +17,32 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical, Store } from "lucide-react"
+import { MoreVertical } from "lucide-react"
 import { useState, useEffect, useMemo } from "react"
-import { getAllStores } from "@/app/api/store"
+import { AddNewStore, getAllStores, deleteStoreById } from "@/app/api/store"
 import { Badge } from "@/components/ui/badge"
 import AddStorePopUp from "./AddStorePopUp"
 import { Label } from "@/components/ui/label"
+import { useStoreStore } from "@/stores/useStoreStore"
+import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
+import {
+  transformStoreDataToApiRequest,
+  type translationsTypes,
+  defaultTranslations
+} from "@/types/storeTypes"
+import { toast } from "sonner"
+import { loadLanguage } from "@/../../src/i18n/locales"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
+import ViewStorePopUp from "./ViewStorePopUp"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -33,10 +53,12 @@ interface Column<T> {
 }
 
 interface StoreManagementDataType {
+  id?: number
   storeName: string
   storeLocation: string
   storeType: string
   phoneNumber: string
+  email: string
   shopStatus: boolean
   ingredients: string
   subscriptionType: string
@@ -46,6 +68,17 @@ interface dataListTypes {
   value: string
   label: string
 }
+const locations: dataListTypes[] = [
+  { value: "Lagos", label: "Lagos" },
+  { value: "Abuja", label: "Abuja" },
+  { value: "Kano", label: "Kano" },
+  { value: "Kaduna", label: "Kaduna" }
+]
+
+const storeTypes: dataListTypes[] = [
+  { value: "Online", label: "Online" },
+  { value: "Physical", label: "Physical" }
+]
 
 export default function StoreManagementPage({
   token
@@ -59,6 +92,35 @@ export default function StoreManagementPage({
   const [searchText, setSearchText] = useState<string>("")
   const [selectedLocation, setSelectedLocation] = useState<string>("")
   const [selectedStoreType, setSelectedStoreType] = useState<string>("")
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
+  const [viewStoreOpen, setViewStoreOpen] = useState<boolean>(false)
+  const [, setSelectedStoreForView] = useState<StoreManagementDataType | null>(
+    null
+  )
+  const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null)
+  const [storeId, setStoreId] = useState<number>(0)
+  const [translations, setTranslations] =
+    useState<translationsTypes>(defaultTranslations)
+
+  // Get store data from zustand store
+  const {
+    allowMultiLang,
+    activeLang,
+    storeData,
+    setTranslationField,
+    resetForm
+  } = useStoreStore()
+
+  // Load translations based on the current language
+  useEffect(() => {
+    const loadTranslations = async (): Promise<void> => {
+      const langData = await loadLanguage(activeLang, "store")
+      setTranslations(langData)
+    }
+
+    void loadTranslations()
+  }, [activeLang])
 
   // handle open add food popup
   const handleOpenAddStorePopUp = (): void => {
@@ -81,13 +143,18 @@ export default function StoreManagementPage({
   const getStores = async (): Promise<void> => {
     try {
       const response = await getAllStores(token)
-      if (response.status === 200) {
+      if (response?.status === 200 && response?.data) {
+        setStores(response.data)
+      } else if (response?.data && Array.isArray(response.data)) {
         setStores(response.data)
       } else {
-        console.warn("No stores found or wrong format:", response)
+        console.warn("No stores found or unexpected format:", response)
+        setStores([])
       }
     } catch (error) {
       console.error("Failed to fetch stores:", error)
+      toast.error("Failed to load stores")
+      setStores([])
     }
   }
 
@@ -95,7 +162,151 @@ export default function StoreManagementPage({
     void getStores()
   }, [])
 
-  const columns: Array<Column<StoreManagementDataType>> = [
+  const uploadStoreImageAndSetUrl = async (): Promise<string | undefined> => {
+    const imageFile: string | File | null | undefined =
+      storeData[activeLang].storeImage
+
+    if (!imageFile) return
+
+    const folder = "stores"
+    const fileNamePrefix = "store-image"
+    const fileName = `${fileNamePrefix}-${Date.now()}`
+
+    let fileToUpload: File | Blob
+
+    if (typeof imageFile === "string") {
+      // Convert data URL or blob URL to Blob
+      try {
+        const blob = await fetch(imageFile).then(async res => await res.blob())
+        fileToUpload = blob
+      } catch (err) {
+        console.error("Failed to convert string to Blob", err)
+        return
+      }
+    } else {
+      fileToUpload = imageFile
+    }
+
+    const uploadedUrl = await uploadImageToFirebase(
+      fileToUpload,
+      folder,
+      fileName
+    )
+
+    // Update the store image URL in the store
+    setTranslationField("storeData", activeLang, "storeImage", uploadedUrl)
+
+    return uploadedUrl
+  }
+
+  const handleAddStore = async (): Promise<void> => {
+    try {
+      setIsLoading(true)
+
+      // Upload image first and wait for it to complete
+      await uploadStoreImageAndSetUrl()
+
+      const requestBody = transformStoreDataToApiRequest(
+        storeData,
+        activeLang,
+        allowMultiLang
+      )
+
+      const existingPhone = stores.some(
+        store => store.phoneNumber === requestBody.phoneNumber
+      )
+      const existingEmail = stores.some(
+        store => store.email === requestBody.email
+      )
+
+      if (existingPhone && existingEmail) {
+        toast.error(translations.phoneEmailAlreadyExists)
+        return
+      } else if (existingPhone) {
+        toast.error(translations.phoneAlreadyExists)
+        return
+      } else if (existingEmail) {
+        toast.error(translations.emailAlreadyExists)
+        return
+      }
+
+      const response = await AddNewStore(token, requestBody)
+
+      if (response?.data) {
+        toast.success(
+          translations.formSubmittedSuccessfully || "Store added successfully"
+        )
+        setOpenAddStorePopUp(false)
+        await getStores()
+        resetForm()
+      } else {
+        console.error("Unexpected response structure:", response)
+        toast.error(translations.storeCreationFailed || "Failed to add store")
+      }
+    } catch (error) {
+      toast.error("System error. Please try again later.")
+    } finally {
+      sessionStorage.removeItem("store-store")
+      setIsLoading(false)
+    }
+  }
+
+  const handleDeleteStore = (storeId: number): void => {
+    setStoreId(storeId)
+    setConfirmDeleteOpen(true)
+  }
+
+  const handleDeleteStoreById = async (): Promise<void> => {
+    try {
+      setIsLoading(true)
+      const response = await deleteStoreById(token, storeId)
+
+      // Check if response is an error object
+      if (response?.response?.status) {
+        const errorMessage =
+          response.response?.data?.message || "Failed to delete store"
+        toast.error(errorMessage)
+        setConfirmDeleteOpen(false)
+        return
+      }
+
+      // Check for successful response
+      if (response?.data) {
+        toast.success("Store deleted successfully")
+        setConfirmDeleteOpen(false)
+        await getStores()
+      } else {
+        toast.error("Failed to delete store")
+        setConfirmDeleteOpen(false)
+      }
+    } catch (error) {
+      console.error("Error deleting store:", error)
+      toast.error("Failed to delete store")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // handle close delete confirmation popup
+  const handleCloseDeleteConfirmationPopup = (): void => {
+    setConfirmDeleteOpen(false)
+  }
+
+  // handle view store
+  const handleViewStore = (store: StoreManagementDataType): void => {
+    setSelectedStoreForView(store)
+    setSelectedStoreId(store.id ?? null)
+    setViewStoreOpen(true)
+  }
+
+  // handle close view store popup
+  const handleCloseViewStorePopup = (): void => {
+    setViewStoreOpen(false)
+    setSelectedStoreForView(null)
+    setSelectedStoreId(null)
+  }
+
+  const columns: Column<StoreManagementDataType>[] = [
     {
       accessor: "storeName",
       header: "Store Name"
@@ -173,9 +384,25 @@ export default function StoreManagementPage({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
+            <DropdownMenuItem
+              onClick={() => {
+                handleViewStore(row)
+              }}
+            >
+              View
+            </DropdownMenuItem>
             <DropdownMenuItem>Edit</DropdownMenuItem>
             <DropdownMenuItem>Make a copy</DropdownMenuItem>
             <DropdownMenuItem>Favorite</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                if (row.id) {
+                  handleDeleteStore(row.id)
+                }
+              }}
+            >
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -224,18 +451,6 @@ export default function StoreManagementPage({
     setSelectedLocation("")
     setSelectedStoreType("")
   }
-
-  const locations: dataListTypes[] = [
-    { value: "Lagos", label: "Lagos" },
-    { value: "Abuja", label: "Abuja" },
-    { value: "Kano", label: "Kano" },
-    { value: "Kaduna", label: "Kaduna" }
-  ]
-
-  const storeTypes: dataListTypes[] = [
-    { value: "Online", label: "Online" },
-    { value: "Physical", label: "Physical" }
-  ]
 
   return (
     <div className="space-y-4">
@@ -308,11 +523,44 @@ export default function StoreManagementPage({
         onPageSizeChange={handlePageSizeChange}
       />
 
-      {/* add food popup */}
+      {/* add store popup */}
       <AddStorePopUp
         open={openAddStorePopUp}
         onClose={handleCloseAddStorePopUp}
+        onAddStore={handleAddStore}
+        isLoading={isLoading}
       />
+
+      {/* view store popup */}
+      <ViewStorePopUp
+        open={viewStoreOpen}
+        onClose={handleCloseViewStorePopup}
+        storeId={selectedStoreId}
+        token={token}
+      />
+
+      {/* delete confirmation popup  */}
+      <AlertDialog
+        open={confirmDeleteOpen}
+        onOpenChange={handleCloseDeleteConfirmationPopup}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Store</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this store?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCloseDeleteConfirmationPopup}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteStoreById}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

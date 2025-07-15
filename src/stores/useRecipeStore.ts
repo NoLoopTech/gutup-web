@@ -101,6 +101,8 @@ export const useRecipeStore = create<RecipeStoreState>()(
     set => ({
       allowMultiLang: false,
       activeLang: "en",
+      fr: { ...emptyRecipe },
+      en: { ...emptyRecipe },
       translations: {
         en: { ...emptyRecipe },
         fr: { ...emptyRecipe }

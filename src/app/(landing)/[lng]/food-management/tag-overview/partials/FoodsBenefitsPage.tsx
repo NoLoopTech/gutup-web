@@ -10,8 +10,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
 import { useState, useEffect } from "react"
-import { getAllTagsByCategory } from "@/app/api/tags"
-import { deleteTagById } from "@/app/api/tags"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import AddNewTagPopUp from "../../partials/AddNewTagPopUp"
@@ -29,15 +27,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 
-interface Column<T> {
-  accessor?: keyof T | ((row: T) => React.ReactNode)
-  header?: string
-  id?: string
-  cell?: (row: T) => React.ReactNode
-  className?: string
-}
 interface FoodsBenefitsDataType {
-  tagName: ReactI18NextChildren | Iterable<ReactI18NextChildren>
+  tagName: React.ReactNode
   tagId: number
   category: string
   count: string
@@ -52,21 +43,21 @@ export default function FoodsBenefitsPage({
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(10)
   const [foodBenefits, setFoodBenefits] = useState<FoodsBenefitsDataType[]>([])
-  const [tagOverviewPopupOpen, setTagOverviewPopupOpen] =
-    useState<boolean>(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
   const [openAddNewTagPopUp, setOpenAddNewTagPopUp] = useState<boolean>(false)
-  const { tags, loading, error, fetchTags } =
-    useGetAllTags<FoodsBenefitsDataType>(token, "Benefit")
-  const {
-    deleteTag,
-    loading: deleteLoading,
-    error: deleteError
-  } = useDeleteTag(token)
+  const { tags, fetchTags } = useGetAllTags<FoodsBenefitsDataType>(
+    token,
+    "Benefit"
+  )
+  const { deleteTag, loading: deleteLoading } = useDeleteTag(token)
   const [tagId, setTagId] = useState<number>(0)
 
   // handle delete tag OverView
   const handleDeleteTag = (tagId: number): void => {
+    if (!tagId) {
+      toast.error("Invalid tag ID")
+      return
+    }
     setTagId(tagId)
     setConfirmDeleteOpen(true)
   }
@@ -77,24 +68,41 @@ export default function FoodsBenefitsPage({
       toast.error("Tag ID is invalid.")
       return
     }
-    const result = await deleteTag(tagId)
-    if (result.success) {
-      toast.success(result.message)
-      setConfirmDeleteOpen(false)
-      fetchTags() // Refresh the data
-    } else {
+
+    try {
+      const result = await deleteTag(tagId)
+      if (result?.success) {
+        toast.success(result.message || "Tag deleted successfully")
+        setConfirmDeleteOpen(false)
+        setTagId(0) // Reset tagId
+        await fetchTags() // Refresh the data
+      } else {
+        toast.error("Failed to delete tag", {
+          description: result?.message || "An error occurred"
+        })
+      }
+    } catch (error) {
+      console.error("Delete error:", error)
       toast.error("Failed to delete tag", {
-        description: result.message
+        description: "An unexpected error occurred"
       })
+    } finally {
       setConfirmDeleteOpen(false)
+      setTagId(0)
     }
   }
 
-  // handle open delete confirmation popup
-  const handleOpenDeleteConfirmationPopup = (): void => {
-    setConfirmDeleteOpen(true)
+  // handle delete tag click from dropdown
+  const handleDeleteTagClick = (row: FoodsBenefitsDataType): void => {
+    const id =
+      row.tagId || (row as any).id || (row as any)._id || (row as any).tag_id
+    if (id) {
+      handleDeleteTag(id)
+    } else {
+      console.error("No valid ID found in row data")
+      toast.error("Unable to find tag ID")
+    }
   }
-
   // handle close delete confirmation popup
   const handleCloseDeleteConfirmationPopup = (): void => {
     setConfirmDeleteOpen(false)
@@ -114,10 +122,9 @@ export default function FoodsBenefitsPage({
     if (tags) {
       setFoodBenefits(tags)
     }
-    console.log("Tags updated2:", tags)
   }, [tags])
 
-  const columns: Array<Column<FoodsBenefitsDataType>> = [
+  const columns: any[] = [
     {
       accessor: "category",
       header: "Tag",
@@ -165,7 +172,7 @@ export default function FoodsBenefitsPage({
           <DropdownMenuContent align="end" className="w-32">
             <DropdownMenuItem
               onClick={() => {
-                handleDeleteTag(row.tagId)
+                handleDeleteTagClick(row)
               }}
             >
               Delete
@@ -223,10 +230,7 @@ export default function FoodsBenefitsPage({
         getTags={fetchTags}
       />
       {/* delete confirmation popup  */}
-      <AlertDialog
-        open={confirmDeleteOpen}
-        onOpenChange={handleCloseDeleteConfirmationPopup}
-      >
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Tag</AlertDialogTitle>
@@ -238,8 +242,11 @@ export default function FoodsBenefitsPage({
             <AlertDialogCancel onClick={handleCloseDeleteConfirmationPopup}>
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteTagById}>
-              Delete
+            <AlertDialogAction
+              onClick={handleDeleteTagById}
+              disabled={deleteLoading}
+            >
+              {deleteLoading ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

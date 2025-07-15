@@ -10,5 +10,5 @@ export default async function DailyTips(): Promise<any> {
     redirect("/login")
   }
 
-  return <DailyTipsPage token={session.apiToken} />
+  return <DailyTipsPage token={session.apiToken} userName={session.user.name} />
 }
