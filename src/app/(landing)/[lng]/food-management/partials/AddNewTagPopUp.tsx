@@ -164,6 +164,24 @@ export default function AddNewTagPopUp({
 
     onClose()
   }
+
+  const handleClosePopup = (): void => {
+    form.reset({
+      category,
+      tagName: ""
+    })
+    setTranslationField("tagData", "en", "tagName", "")
+    setTranslationField("tagData", "fr", "tagName", "")
+    setTranslationField("tagData", "en", "category", category)
+    setTranslationField("tagData", "fr", "category", category)
+
+    sessionStorage.removeItem("tag-store")
+
+    setActiveLang("en")
+    setAllowMultiLang(false)
+
+    onClose()
+  }
   // Input blur handler for translation
   const renderForm = (): JSX.Element => (
     <Form {...form}>
@@ -222,7 +240,7 @@ export default function AddNewTagPopUp({
   )
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClosePopup}>
       <DialogContent className="max-w-md p-6 rounded-xl">
         <DialogTitle>{translations.addNewTag ?? "Add New Tag"}</DialogTitle>
         <Tabs
