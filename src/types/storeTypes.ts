@@ -212,8 +212,7 @@ export interface AddStoreRequestBody {
   description: string
   descriptionFR: string
   storeImage: string
-  categories: CategoryIngredientItem[]
-  ingredients: CategoryIngredientItem[]
+  ingAndCatData: IngAndCatDataType[]
 }
 
 // Transform store data to API request format
@@ -225,43 +224,36 @@ export function transformStoreDataToApiRequest(
   const enData = storeData.en || storeData
   const frData = storeData.fr || storeData.en || storeData
 
-  // Transform availData to categories and ingredients
-  const categories: CategoryIngredientItem[] = []
-  const ingredients: CategoryIngredientItem[] = []
+  // Transform availData to ingAndCatData format
+  const ingAndCatData: IngAndCatDataType[] = []
 
   // Handle availData from both English and French data
   const availDataToProcess = enData.availData || []
   const frAvailData = allowMultiLang ? frData.availData || [] : []
 
   if (Array.isArray(availDataToProcess)) {
-    availDataToProcess.forEach((item: any, index: number) => {
-      const frItem =
-        allowMultiLang && frAvailData[index] ? frAvailData[index] : item
+    availDataToProcess.forEach((item: any) => {
+      // Find the corresponding French item by ID
+      const frItem = allowMultiLang
+        ? frAvailData.find((frItem: any) => frItem.id === item.id)
+        : null
 
-      const transformedItem: CategoryIngredientItem = {
+      const transformedItem: IngAndCatDataType = {
+        id: item.id || Date.now(),
         name: item.name || "",
-        nameFR: allowMultiLang && frItem?.name ? frItem.name : item.name || "",
-        type: item.type || "category",
+        nameFR: frItem?.name || item.name || "",
+        type: item.type?.toLowerCase() || "category",
         typeFR:
-          allowMultiLang && frItem?.type
-            ? frItem.type
-            : item.type === "category"
-            ? "catégorie"
-            : item.type === "ingredient"
+          frItem?.type?.toLowerCase() ||
+          (item.type?.toLowerCase() === "ingredient"
             ? "ingrédient"
-            : item.type || "catégorie",
+            : "catégorie"),
         availability:
           item.status === "Active" || item.availability === true || true,
         display: item.display !== false
       }
 
-      if (item.type?.toLowerCase() === "category") {
-        categories.push(transformedItem)
-      } else if (item.type?.toLowerCase() === "ingredient") {
-        ingredients.push(transformedItem)
-      } else {
-        categories.push(transformedItem)
-      }
+      ingAndCatData.push(transformedItem)
     })
   }
 
@@ -290,10 +282,7 @@ export function transformStoreDataToApiRequest(
   return {
     storeName: enData.storeName || "",
     category: enData.category || "",
-    categoryFR:
-      allowMultiLang && frData?.category
-        ? frData.category
-        : enData.category || "",
+    categoryFR: frData?.category || enData.category || "",
     storeLocation: enData.storeLocation || "",
     shopStatus: enData.shopStatus !== undefined ? enData.shopStatus : true,
     deliverible: enData.deliverible !== undefined ? enData.deliverible : false,
@@ -301,10 +290,7 @@ export function transformStoreDataToApiRequest(
     startTime: enData.timeFrom || enData.startTime || "08:00",
     endTime: enData.timeTo || enData.endTime || "18:00",
     storeType: enData.storeType || "physical",
-    storeTypeFR:
-      allowMultiLang && frData?.storeType
-        ? frData.storeType
-        : getStoreTypeFR(enData.storeType),
+    storeTypeFR: frData?.storeType || getStoreTypeFR(enData.storeType),
     subscriptionType:
       typeof enData.subscriptionType === "boolean"
         ? enData.subscriptionType
@@ -322,14 +308,8 @@ export function transformStoreDataToApiRequest(
     instagram: enData.instagram || "",
     website: enData.website || "",
     description: enData.about || enData.description || "",
-    descriptionFR:
-      allowMultiLang && frData?.about
-        ? frData.about
-        : allowMultiLang && frData?.description
-        ? frData.description
-        : enData.about || enData.description || "",
+    descriptionFR: frData?.about || enData.about || enData.description || "",
     storeImage: enData.storeImage || "",
-    categories,
-    ingredients
+    ingAndCatData
   }
 }

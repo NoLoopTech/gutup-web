@@ -209,30 +209,8 @@ export default function StoreManagementPage({
         allowMultiLang
       )
 
-      // Transform availData to ingAndCatData format
-      const ingAndCatData =
-        storeData[activeLang]?.availData?.map((item: any) => ({
-          name: item.name,
-          nameFR: allowMultiLang
-            ? storeData.fr?.availData?.find(
-                (frItem: any) => frItem.id === item.id
-              )?.name || item.name
-            : item.name,
-          type: item.type.toLowerCase(),
-          typeFR: allowMultiLang
-            ? item.type.toLowerCase() === "ingredient"
-              ? "ingrédient"
-              : "catégorie"
-            : item.type.toLowerCase(),
-          availability: item.status === "Active",
-          display: item.display
-        })) || []
-
       const requestBody = {
         ...transformedData,
-        ingAndCatData,
-        categories: [],
-        ingredients: [],
         allowMultiLang
       }
 
@@ -356,28 +334,8 @@ export default function StoreManagementPage({
         allowMultiLang
       )
 
-      // Transform availData to ingAndCatData format
-      const ingAndCatData =
-        storeData[activeLang]?.availData?.map((item: any) => ({
-          name: item.name,
-          nameFR: allowMultiLang
-            ? storeData.fr?.availData?.find(
-                (frItem: any) => frItem.id === item.id
-              )?.name || item.name
-            : item.name,
-          type: item.type.toLowerCase(),
-          typeFR: allowMultiLang
-            ? item.type.toLowerCase() === "ingredient"
-              ? "ingrédient"
-              : "catégorie"
-            : item.type.toLowerCase(),
-          availability: item.status === "Active",
-          display: item.display
-        })) || []
-
       const requestBody = {
         ...transformedData,
-        ingAndCatData,
         allowMultiLang
       }
 

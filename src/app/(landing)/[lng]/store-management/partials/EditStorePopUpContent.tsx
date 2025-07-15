@@ -567,7 +567,7 @@ export default function EditStorePopUpContent({
         setHasChanges(true)
       }
     })
-    return () => subscription.unsubscribe()
+    return () => { subscription.unsubscribe(); }
   }, [form, isDataLoaded])
 
   // Clean up session storage when component unmounts (popup closes)
@@ -656,7 +656,9 @@ export default function EditStorePopUpContent({
         setIsTranslating(true)
         try {
           const translated = await translateText(val)
-          // Handle French translation if needed
+          if (translated) {
+            setTranslationField("storeData", "fr", fieldName, translated)
+          }
         } finally {
           setIsTranslating(false)
         }
@@ -674,8 +676,7 @@ export default function EditStorePopUpContent({
       header: translations.type,
       accessor: (row: AvailableItem) => (
         <Badge className="bg-white text-black text-xs px-2 py-1 rounded-md border border-gray-100 hover:bg-white">
-          {translations[row.type?.toLowerCase() as keyof typeof translations] ||
-            row.type}
+          {getTranslatedType(row.type, activeLang)}
         </Badge>
       )
     },
@@ -689,9 +690,7 @@ export default function EditStorePopUpContent({
               : "bg-gray-200 text-black text-xs px-2 py-1 rounded-md border border-gray-500 hover:bg-gray-100 transition-colors"
           }
         >
-          {translations[
-            row.status.toLowerCase() as keyof typeof translations
-          ] ?? row.status}
+          {getTranslatedStatus(row.status, activeLang)}
         </Badge>
       )
     },
@@ -750,11 +749,11 @@ export default function EditStorePopUpContent({
   // translated type/status using translations object
   const getTranslatedType = (type: string, lang: string): string => {
     const key = type.toLowerCase()
-    return translations[key] || type
+    return translations[key as keyof typeof translations] || type
   }
   const getTranslatedStatus = (status: string, lang: string): string => {
     const key = status.toLowerCase()
-    return translations[key] || status
+    return translations[key as keyof typeof translations] || status
   }
 
   // handler for "Add Ingredient"
@@ -1398,7 +1397,7 @@ export default function EditStorePopUpContent({
             <Button type="button" variant="outline" onClick={handleCancel}>
               {translations.cancel}
             </Button>
-            <Button type="submit" disabled={isLoading || !hasChanges}>
+            <Button type="submit" disabled={isLoading ?? !hasChanges}>
               {isLoading ? (
                 <div className="flex gap-2 items-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />

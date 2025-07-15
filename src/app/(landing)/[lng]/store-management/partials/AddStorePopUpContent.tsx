@@ -574,13 +574,14 @@ export default function AddStorePopUpContent({
     setPage(1)
   }
 
-  // Sync availData with form value
+  // Sync availData with form value and filter by active language
   useEffect(() => {
-    const formAvailData = form.watch("availData")
-    if (Array.isArray(formAvailData) && formAvailData !== availData) {
-      setAvailData(formAvailData)
+    const currentStoreData = storeData[activeLang]
+    if (currentStoreData?.availData && Array.isArray(currentStoreData.availData)) {
+      setAvailData(currentStoreData.availData)
+      form.setValue("availData", currentStoreData.availData)
     }
-  }, [form.watch("availData")])
+  }, [activeLang, storeData, form])
 
   // translated type/status using translations object
   const getTranslatedType = (type: string, lang: string): string => {
