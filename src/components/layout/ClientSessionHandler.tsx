@@ -1,5 +1,3 @@
-// components/layout/ClientSessionHandler.tsx
-
 "use client"
 
 import { useEffect } from "react"

@@ -19,7 +19,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
 import { useState, useEffect, useMemo } from "react"
-import { AddNewStore, getAllStores, deleteStoreById, updateStoreById } from "@/app/api/store"
+import {
+  AddNewStore,
+  getAllStores,
+  deleteStoreById,
+  updateStoreById
+} from "@/app/api/store"
 import { Badge } from "@/components/ui/badge"
 import AddStorePopUp from "./AddStorePopUp"
 import { Label } from "@/components/ui/label"
@@ -168,7 +173,6 @@ export default function StoreManagementPage({
     let fileToUpload: File | Blob
 
     if (typeof imageFile === "string") {
-      // Convert data URL or blob URL to Blob
       try {
         const blob = await fetch(imageFile).then(async res => await res.blob())
         fileToUpload = blob
@@ -377,7 +381,11 @@ export default function StoreManagementPage({
         allowMultiLang
       }
 
-      const response = await updateStoreById(token, selectedStoreId, requestBody)
+      const response = await updateStoreById(
+        token,
+        selectedStoreId,
+        requestBody
+      )
 
       if (response?.data) {
         toast.success("Store updated successfully")

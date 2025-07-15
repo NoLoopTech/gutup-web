@@ -570,6 +570,15 @@ export default function EditStorePopUpContent({
     return () => subscription.unsubscribe()
   }, [form, isDataLoaded])
 
+  // Clean up session storage when component unmounts (popup closes)
+  useEffect(() => {
+    return () => {
+      form.reset()
+      resetForm()
+      sessionStorage.removeItem("store-store")
+    }
+  }, [form, resetForm])
+
   // Input change handler for fields that need translation
   const handleInputChange = (
     fieldName:
@@ -854,6 +863,7 @@ export default function EditStorePopUpContent({
       await onUpdateStore()
     } else {
       toast(translations.formSubmittedSuccessfully, {})
+      sessionStorage.removeItem("store-store")
     }
     setHasChanges(false)
   }
