@@ -13,9 +13,6 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { type RecipeFields } from "@/stores/useRecipeStore"
 import LabelInput from "@/components/Shared/LableInput/LableInput"
-// import { type Recipe } from "@/types/recipeTypes"
-import { getAllTagsByCategory } from "@/app/api/tags"
-import { getAllFoods } from "@/app/api/foods"
 import { Trash } from "lucide-react"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import {
@@ -862,6 +859,7 @@ export default function AddRecipePopUpContent({
     onClose()
   }
 
+
   return (
     <div className="relative">
       {isTranslating && (
@@ -1205,7 +1203,7 @@ export default function AddRecipePopUpContent({
                               field.value,
                               "authorName"
                             )
-                          }}
+                          }
                         />
                       </FormControl>
                       <FormMessage />
