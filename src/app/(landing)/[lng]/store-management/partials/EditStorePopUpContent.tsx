@@ -277,15 +277,11 @@ export default function EditStorePopUpContent({
   activeLang: "en" | "fr"
 }): JSX.Element {
   const { translateText } = useTranslation()
-  const {
-    storeData: globalStoreData,
-    setTranslationField,
-    resetForm
-  } = useStoreStore() as any
+  const { setTranslationField, resetForm } = useStoreStore() as any
   const [isTranslating, setIsTranslating] = useState(false)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
-  const [isPremium, setIsPremium] = React.useState(false)
+  const [, setIsPremium] = React.useState(false)
   const [foods, setFoods] = useState<Food[]>([])
   const [categoryTags, setCategoryTags] = useState<Food[]>([])
   const [availData, setAvailData] = useState<AvailableItem[]>([])
@@ -294,9 +290,7 @@ export default function EditStorePopUpContent({
   const [ingredientInput, setIngredientInput] = useState<string>("")
   const [categoryInput, setCategoryInput] = useState<string>("")
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
-  const [currentStoreData, setCurrentStoreData] = useState<StoreData | null>(
-    null
-  )
+  const [, setCurrentStoreData] = useState<StoreData | null>(null)
   const [isDataLoaded, setIsDataLoaded] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
 
@@ -567,7 +561,9 @@ export default function EditStorePopUpContent({
         setHasChanges(true)
       }
     })
-    return () => { subscription.unsubscribe(); }
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [form, isDataLoaded])
 
   // Clean up session storage when component unmounts (popup closes)
