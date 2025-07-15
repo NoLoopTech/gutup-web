@@ -116,7 +116,9 @@ export default function AddFoodPopUpContent({
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
   const { data: session } = useSession()
   const [categoryOptionsApi, setCategoryOptionsApi] = useState<Option[]>([])
-  const [benefitTags, setBenefitTags] = useState<{ tagName: string; tagNameFr: string }[]>([])
+  const [benefitTags, setBenefitTags] = useState<
+    { tagName: string; tagNameFr: string }[]
+  >([])
 
   // Define FoodSchema before using it in useForm
   const FoodSchema = z.object({
@@ -223,6 +225,21 @@ export default function AddFoodPopUpContent({
       }
     }
   }
+  const seasonSyncMap = [
+    { en: "January", fr: "january", frLabel: "Janvier" },
+    { en: "February", fr: "february", frLabel: "Février" },
+    { en: "March", fr: "march", frLabel: "Mars" },
+    { en: "April", fr: "april", frLabel: "Avril" },
+    { en: "May", fr: "may", frLabel: "Mai" },
+    { en: "June", fr: "june", frLabel: "Juin" },
+    { en: "July", fr: "july", frLabel: "Juillet" },
+    { en: "August", fr: "august", frLabel: "Août" },
+    { en: "September", fr: "september", frLabel: "Septembre" },
+    { en: "October", fr: "october", frLabel: "Octobre" },
+    { en: "November", fr: "november", frLabel: "Novembre" },
+    { en: "December", fr: "december", frLabel: "Décembre" }
+  ]
+
   // Function to update select fields (category, season, country)
   const handleSelectChange = (
     fieldName: "category" | "season" | "country",
@@ -233,15 +250,52 @@ export default function AddFoodPopUpContent({
 
     if (fieldName === "category") {
       // Find the selected option
-      const selected = categoryOptionsApi.find(opt =>
-        (activeLang === "en" ? opt.valueEn : opt.valueFr) === value
+      const selected = categoryOptionsApi.find(
+        opt => (activeLang === "en" ? opt.valueEn : opt.valueFr) === value
       )
       if (selected) {
         setTranslationField("foodData", "en", "category", selected.valueEn)
         setTranslationField("foodData", "fr", "category", selected.valueFr)
       }
     }
-    // ...existing code for season/country...
+
+    if (fieldName === "season") {
+      // Sync season between languages
+      if (activeLang === "en") {
+        const found = seasonSyncMap.find(m => m.en === value)
+        if (found) {
+          setTranslationField("foodData", "en", "season", found.en)
+          setTranslationField("foodData", "fr", "season", found.fr)
+        }
+      } else if (activeLang === "fr") {
+        const found = seasonSyncMap.find(m => m.fr === value)
+        if (found) {
+          setTranslationField("foodData", "en", "season", found.en)
+          setTranslationField("foodData", "fr", "season", found.fr)
+        }
+      }
+    }
+
+    if (fieldName === "country") {
+      // Sync country between languages
+      if (activeLang === "en") {
+        const found = countriesOptions.fr.find(
+          opt => opt.value === value.toLowerCase()
+        )
+        if (found) {
+          setTranslationField("foodData", "en", "country", value)
+          setTranslationField("foodData", "fr", "country", found.value)
+        }
+      } else if (activeLang === "fr") {
+        const found = countriesOptions.en.find(
+          opt => opt.value.toLowerCase() === value
+        )
+        if (found) {
+          setTranslationField("foodData", "en", "country", found.value)
+          setTranslationField("foodData", "fr", "country", value)
+        }
+      }
+    }
   }
 
   const makeRichHandlers = (
@@ -334,7 +388,11 @@ export default function AddFoodPopUpContent({
         setIsTranslating(true)
 
         // Upload image to Firebase
-        const imageUrl = await uploadImageToFirebase(file, "add-food")
+        const imageUrl = await uploadImageToFirebase(
+          file,
+          "add-food",
+          file.name
+        )
 
         // Convert file to base64 for session storage
         const reader = new FileReader()
@@ -393,11 +451,13 @@ export default function AddFoodPopUpContent({
         seasonFR: foodData.fr?.season ?? "",
         country: foodData.en.country,
         seasons: foodData.en.season
-          ? [{
-              foodId: 0,
-              season: foodData.en.season,
-              seasonFR: foodData.fr?.season ?? ""
-            }]
+          ? [
+              {
+                foodId: 0,
+                season: foodData.en.season,
+                seasonFR: foodData.fr?.season ?? ""
+              }
+            ]
           : [],
         attributes: {
           fiber: Number(foodData.en.fiber) || 0,
@@ -420,18 +480,20 @@ export default function AddFoodPopUpContent({
         images: foodData.en.storeImage
           ? [{ image: foodData.en.storeImage }]
           : [],
-        healthBenefits: (foodData.en.benefits || []).map((b: string, i: number) => ({
-          healthBenefit: b,
-          healthBenefitFR: foodData.fr?.benefits?.[i] ?? ""
-        }))
+        healthBenefits: (foodData.en.benefits || []).map(
+          (b: string, i: number) => ({
+            healthBenefit: b,
+            healthBenefitFR: foodData.fr?.benefits?.[i] ?? ""
+          })
+        )
       }
 
       const response = await postNewFood(token, foodDto)
       if (response.status === 201 || response.status === 200) {
         toast.success(translations.formSubmittedSuccessfully)
-        getFoods() 
-        sessionStorage.removeItem("food-store") 
-        onClose()  
+        getFoods()
+        sessionStorage.removeItem("food-store")
+        onClose()
       } else {
         toast.error("Failed to add food")
       }
@@ -460,7 +522,10 @@ export default function AddFoodPopUpContent({
       console.log("Type category response:", typeResponse)
 
       // Fetch Benefit
-      const benefitResponse = await getCatagoryFoodType(session.apiToken, "Benefit")
+      const benefitResponse = await getCatagoryFoodType(
+        session.apiToken,
+        "Benefit"
+      )
       console.log("Benefit category response:", benefitResponse)
     }
 
@@ -470,12 +535,20 @@ export default function AddFoodPopUpContent({
   React.useEffect(() => {
     const fetchBenefitTags = async (): Promise<void> => {
       if (!session?.apiToken) return
-      const benefitResponse = await getCatagoryFoodType(session.apiToken, "Benefit")
-      if (benefitResponse?.status === 200 && Array.isArray(benefitResponse.data)) {
-        setBenefitTags(benefitResponse.data.map((item: any) => ({
-          tagName: item.tagName,
-          tagNameFr: item.tagNameFr
-        })))
+      const benefitResponse = await getCatagoryFoodType(
+        session.apiToken,
+        "Benefit"
+      )
+      if (
+        benefitResponse?.status === 200 &&
+        Array.isArray(benefitResponse.data)
+      ) {
+        setBenefitTags(
+          benefitResponse.data.map((item: any) => ({
+            tagName: item.tagName,
+            tagNameFr: item.tagNameFr
+          }))
+        )
       }
     }
     fetchBenefitTags()
@@ -548,10 +621,20 @@ export default function AddFoodPopUpContent({
                         <SelectContent>
                           {categoryOptionsApi.map(option => (
                             <SelectItem
-                              key={activeLang === "en" ? option.valueEn : option.valueFr}
-                              value={activeLang === "en" ? option.valueEn : option.valueFr}
+                              key={
+                                activeLang === "en"
+                                  ? option.valueEn
+                                  : option.valueFr
+                              }
+                              value={
+                                activeLang === "en"
+                                  ? option.valueEn
+                                  : option.valueFr
+                              }
                             >
-                              {activeLang === "en" ? option.labelEn : option.labelFr}
+                              {activeLang === "en"
+                                ? option.labelEn
+                                : option.labelFr}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -579,9 +662,7 @@ export default function AddFoodPopUpContent({
                         }}
                       >
                         <SelectTrigger className="w-full mt-1">
-                          <SelectValue
-                            placeholder={translations.selectMonth}
-                          />
+                          <SelectValue placeholder={translations.selectMonth} />
                         </SelectTrigger>
                         <SelectContent>
                           {seasonOptions[activeLang].map(option => (
@@ -829,18 +910,41 @@ export default function AddFoodPopUpContent({
                   activeLang={activeLang}
                   onSelectSuggestion={benefit => {
                     // Always add both at the same index
-                    const enBenefits = [...(foodData.en.benefits || []), benefit.tagName]
-                    const frBenefits = [...(foodData.fr.benefits || []), benefit.tagNameFr]
+                    const enBenefits = [
+                      ...(foodData.en.benefits || []),
+                      benefit.tagName
+                    ]
+                    const frBenefits = [
+                      ...(foodData.fr.benefits || []),
+                      benefit.tagNameFr
+                    ]
 
-                    setTranslationField("foodData", "en", "benefits", enBenefits)
-                    setTranslationField("foodData", "fr", "benefits", frBenefits)
+                    setTranslationField(
+                      "foodData",
+                      "en",
+                      "benefits",
+                      enBenefits
+                    )
+                    setTranslationField(
+                      "foodData",
+                      "fr",
+                      "benefits",
+                      frBenefits
+                    )
                     // Update the visible field for the active language
-                    form.setValue("benefits", activeLang === "en" ? enBenefits : frBenefits)
+                    form.setValue(
+                      "benefits",
+                      activeLang === "en" ? enBenefits : frBenefits
+                    )
                   }}
                   onRemoveBenefit={removed => {
                     // Remove both at the same index
-                    const idxEn = (foodData.en.benefits || []).indexOf(removed.tagName)
-                    const idxFr = (foodData.fr.benefits || []).indexOf(removed.tagNameFr)
+                    const idxEn = (foodData.en.benefits || []).indexOf(
+                      removed.tagName
+                    )
+                    const idxFr = (foodData.fr.benefits || []).indexOf(
+                      removed.tagNameFr
+                    )
                     let enBenefits = [...(foodData.en.benefits || [])]
                     let frBenefits = [...(foodData.fr.benefits || [])]
                     if (idxEn > -1) {
@@ -850,9 +954,22 @@ export default function AddFoodPopUpContent({
                       enBenefits.splice(idxFr, 1)
                       frBenefits.splice(idxFr, 1)
                     }
-                    setTranslationField("foodData", "en", "benefits", enBenefits)
-                    setTranslationField("foodData", "fr", "benefits", frBenefits)
-                    form.setValue("benefits", activeLang === "en" ? enBenefits : frBenefits)
+                    setTranslationField(
+                      "foodData",
+                      "en",
+                      "benefits",
+                      enBenefits
+                    )
+                    setTranslationField(
+                      "foodData",
+                      "fr",
+                      "benefits",
+                      frBenefits
+                    )
+                    form.setValue(
+                      "benefits",
+                      activeLang === "en" ? enBenefits : frBenefits
+                    )
                   }}
                   onChange={(newArr: string[]) => {
                     handleBenefitsChange(newArr)
