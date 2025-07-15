@@ -1,7 +1,9 @@
 import axiosInstance from "@/query/axios.instance"
-import { type AddRecipeRequestBody } from "@/types/recipeTypes"
+import {
+  type AddRecipeRequestBody,
+  type RecipeClient
+} from "@/types/recipeTypes"
 
-// get all Recipes
 export const getAllRecipes = async (token: string): Promise<any> => {
   try {
     const response = await axiosInstance.get("/recipe/admin", {
@@ -44,16 +46,18 @@ export const addNewRecipe = async (
   }
 }
 
-
 // get all Recipe Clients
-export const getAllRecipeClients = async (token: string): Promise<any> => {
+export const getAllRecipeClients = async (
+  token: string
+): Promise<RecipeClient[]> => {
   try {
-    const response = await axiosInstance.get("/recipe/client", {
+    const response = await axiosInstance.get<RecipeClient[]>("/recipe/client", {
       headers: { Authorization: `Bearer ${token}` }
     })
-    return response
+    return response.data
   } catch (error) {
-    return error
+    console.error("Error fetching recipe clients:", error)
+    throw error
   }
 }
 
@@ -72,7 +76,6 @@ export const deleteRecipeById = async (
   }
 }
 
-
 // // Edit new Recipe
 // export const EditRecipe = async (
 //   token: string,
@@ -89,7 +92,6 @@ export const deleteRecipeById = async (
 //   }
 // }
 
-
 // Update Recipe using PATCH
 export const updateRecipe = async (
   token: string,
@@ -97,13 +99,16 @@ export const updateRecipe = async (
   requestBody: AddRecipeRequestBody
 ): Promise<any> => {
   try {
-    const response = await axiosInstance.patch(`/recipe/${recipeId}`, requestBody, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response;
+    const response = await axiosInstance.patch(
+      `/recipe/${recipeId}`,
+      requestBody,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    )
+    return response
   } catch (error) {
-    console.error("Failed to update recipe:", error);
-    return error;
+    console.error("Failed to update recipe:", error)
+    return error
   }
-};
-
+}

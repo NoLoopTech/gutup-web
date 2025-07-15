@@ -161,15 +161,15 @@ export interface RecipeImage {
 //   healthBenefitFR: string[]
 // }
 
-export interface Ingredient {
-  ingredientName: string
-  ingredientNameFR: string
-  quantity: string
-  quantityFR: string
-  mainIngredient: boolean
-  foodId: number
-  available: boolean
-}
+// export interface Ingredient {
+//   ingredientName: string
+//   ingredientNameFR: string
+//   quantity: string
+//   quantityFR: string
+//   mainIngredient: boolean
+//   foodId: number
+//   available: boolean
+// }
 
 export interface Attribute {
   preparation: string
@@ -200,4 +200,11 @@ export interface AddRecipeRequestBody {
   // healthBenefits: HealthBenefit[]
   author: Author
   ingredients: Ingredient[]
+}
+
+export interface RecipeClient {
+  id: number
+  name: string
+  email: string
+  isActive: boolean
 }

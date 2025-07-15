@@ -12,7 +12,7 @@ import {
   defaultTranslations,
   type translationsTypes
 } from "@/types/recipeTypes"
-import { useSession } from "next-auth/react"
+// import { useSession } from "next-auth/react"
 
 interface Props {
   open: boolean

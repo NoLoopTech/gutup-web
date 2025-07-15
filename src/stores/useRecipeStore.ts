@@ -109,15 +109,18 @@ export const useRecipeStore = create<RecipeStoreState>()(
       },
       errors: {},
 
-      setAllowMultiLang: (val: boolean) =>
+      setAllowMultiLang: (val: boolean) => {
         set(state => ({
           allowMultiLang: val,
           activeLang: val ? state.activeLang : "en"
-        })),
+        }))
+      },
 
-      setActiveLang: (lang: Lang) => set({ activeLang: lang }),
+      setActiveLang: (lang: Lang) => {
+        set({ activeLang: lang })
+      },
 
-      setField: (lang: Lang, field: keyof RecipeFields, value: any) =>
+      setField: (lang: Lang, field: keyof RecipeFields, value: any) => {
         set(state => ({
           translations: {
             ...state.translations,
@@ -126,9 +129,10 @@ export const useRecipeStore = create<RecipeStoreState>()(
               [field]: value
             }
           }
-        })),
+        }))
+      },
 
-      setTranslationField: (lang, field, value) =>
+      setTranslationField: (lang, field, value) => {
         set(state => ({
           translations: {
             ...state.translations,
@@ -137,12 +141,13 @@ export const useRecipeStore = create<RecipeStoreState>()(
               [field]: value
             }
           }
-        })),
+        }))
+      },
 
       addTag: (
         lang: Lang,
         tag: { healthBenefit: string[]; healthBenefitFR: string[] }
-      ) =>
+      ) => {
         set(state => {
           const tags = state.translations[lang].benefits as HealthBenefit[]
           if (
@@ -159,12 +164,13 @@ export const useRecipeStore = create<RecipeStoreState>()(
               }
             }
           }
-        }),
+        })
+      },
 
       removeTag: (
         lang: Lang,
         tag: { healthBenefit: string[]; healthBenefitFR: string[] }
-      ) =>
+      ) => {
         set(state => ({
           translations: {
             ...state.translations,
@@ -175,9 +181,10 @@ export const useRecipeStore = create<RecipeStoreState>()(
               ).filter(t => JSON.stringify(t) !== JSON.stringify(tag))
             }
           }
-        })),
+        }))
+      },
 
-      addIngredient: (lang: Lang, ing: Ingredient) =>
+      addIngredient: (lang: Lang, ing: Ingredient) => {
         set(state => ({
           translations: {
             ...state.translations,
@@ -186,9 +193,10 @@ export const useRecipeStore = create<RecipeStoreState>()(
               ingredients: [...state.translations[lang].ingredientData, ing]
             }
           }
-        })),
+        }))
+      },
 
-      removeIngredient: (lang: Lang, name: string) =>
+      removeIngredient: (lang: Lang, name: string) => {
         set(state => ({
           translations: {
             ...state.translations,
@@ -199,19 +207,25 @@ export const useRecipeStore = create<RecipeStoreState>()(
               )
             }
           }
-        })),
+        }))
+      },
 
-      setErrors: (errors: ValidationErrors) => { set({ errors }); },
+      setErrors: (errors: ValidationErrors) => {
+        set({ errors })
+      },
 
-      resetErrors: () => { set({ errors: {} }); },
+      resetErrors: () => {
+        set({ errors: {} })
+      },
 
-      resetRecipe: () =>
-        { set(() => ({
+      resetRecipe: () => {
+        set(() => ({
           translations: {
             en: { ...emptyRecipe },
             fr: { ...emptyRecipe }
           }
-        })); }
+        }))
+      }
     }),
     {
       name: "recipe-storage",

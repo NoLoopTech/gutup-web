@@ -20,24 +20,6 @@ export function useGetAllRecipes<T>(token: string) {
   const [clients, setClients] = useState<T[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  // const fetchRecipeClients = async () => {
-  //   try {
-  //     const response = await fetchRecipeClientsAPI(token)
-  //     console.log("response from recipe clients", response)
-  //     if (response.status === 200) {
-  //       console.log("response data", response.data)
-  //       setClients(response.data)
-  //     } else {
-  //       setError("Failed to fetch")
-  //     }
-  //   } catch (err) {
-  //     setError("Error fetching tag")
-  //   } finally {
-  //     setLoading(false)
-  //   }
-  // }
-
   const fetchRecipes = async () => {
     try {
       const response = await fetchRecipesAPI(token)

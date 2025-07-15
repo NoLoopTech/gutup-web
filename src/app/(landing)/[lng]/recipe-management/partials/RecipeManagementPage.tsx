@@ -91,19 +91,14 @@ export default function RecipeManagementPage({
   const [viewRecipe, setViewRecipe] = useState<boolean>(false)
   const [viewRecipeId, setViewRecipeId] = useState<number>(0)
   // const [openEditRecipePopUp, setOpenEditRecipePopUp] = useState<boolean>(false)
-  const [editRecipeData, setEditRecipeData] = useState<RecipeDataType | null>(
-    null
-  )
+  // const [editRecipeData, setEditRecipeData] = useState<RecipeDataType | null>(
+  //   null
+  // )
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
-  const {
-    deleteRecipe,
-    loading: deleteLoading,
-    error: deleteError
-  } = useDeleteRecipe(token)
+  const { deleteRecipe } = useDeleteRecipe(token)
   const [recipeId, setRecipeId] = useState<number>(0)
 
-  const { clients, loading, error, fetchRecipes } =
-    useGetAllRecipes<RecipeDataType>(token)
+  const { clients } = useGetAllRecipes<RecipeDataType>(token)
   const [healthBenefitTypes, setHealthBenefitTypes] = useState<dataListTypes[]>(
     []
   )
@@ -163,11 +158,6 @@ export default function RecipeManagementPage({
     }
   }
 
-  // handle open delete confirmation popup
-  const handleOpenDeleteConfirmationPopup = (): void => {
-    setConfirmDeleteOpen(true)
-  }
-
   // handle close delete confirmation popup
   const handleCloseDeleteConfirmationPopup = (): void => {
     setConfirmDeleteOpen(false)
@@ -200,13 +190,10 @@ export default function RecipeManagementPage({
   }
 
   useEffect(() => {
-    // console.log("step 1")
     if (clients) {
-      // console.log("step 2 : true")
       setRecipes(clients)
       console.log("clients : ", clients)
     }
-    // console.log("step 2 : false")
   }, [clients])
 
   interface TagType {
@@ -214,11 +201,6 @@ export default function RecipeManagementPage({
     category: string
     count: number
     status: boolean
-  }
-
-  interface HealthBenefitItem {
-    healthBenefit: string
-    healthBenefitFR: string
   }
 
   useEffect(() => {
@@ -279,33 +261,6 @@ export default function RecipeManagementPage({
         <Label className="text-gray-500">{row.persons} Servings</Label>
       )
     },
-    // {
-    //   accessor: "ingredients",
-    //   header: "Main Ingredients",
-    //   cell: (row: RecipeDataType) => (
-    //     <div className="flex flex-wrap gap-2">
-    //       {row.ingredients.map((ingredient, idx) => (
-    //         <Badge key={`${ingredient}-${idx}`} variant={"outline"}>
-    //           {ingredient}
-    //         </Badge>
-    //       ))}
-    //     </div>
-    //   )
-    // },
-    // {
-    //   accessor: "healthBenefits",
-    //   header: "Health Benefits",
-    //   cell: (row: RecipeDataType) => (
-    //     <div className="flex flex-wrap gap-2">
-    //       {row.healthBenefits.map((benefit, idx) => (
-    //         <Badge key={`${benefit}-${idx}`} variant={"outline"}>
-    //           {benefit}
-    //         </Badge>
-    //       ))}
-    //     </div>
-    //   )
-    // },
-
     {
       accessor: "createdAt",
       header: "Date Added",
@@ -456,12 +411,6 @@ export default function RecipeManagementPage({
     value: i + 1,
     label: (i + 1).toString()
   }))
-
-  const healthBenefits: dataListTypes[] = [
-    { value: "Immune Support", label: "Immune Support" },
-    { value: "Skin Health", label: "Skin Health" },
-    { value: "Eye Health", label: "Eye Health" }
-  ]
 
   return (
     <div className="space-y-4">

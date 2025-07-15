@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { DialogFooter, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -39,7 +39,6 @@ import {
   type translationsTypes
 } from "@/types/recipeTypes"
 import { useRecipeStore } from "@/stores/useRecipeStore"
-import { type translationsTypes } from "@/types/recipeTypes"
 import { getAllTagsByCategory } from "@/app/api/tags"
 import { getAllFoods } from "@/app/api/foods"
 import {
@@ -105,11 +104,6 @@ const seasonOptions: Record<string, Option[]> = {
   ]
 }
 
-// Define function for handling image upload changes
-// const handleImageUpload = (field: any) => (files: File[] | null) => {
-//   field.onChange(files && files.length > 0 ? files[0] : null)
-// }
-
 // Dynamically load RichTextEditor with SSR disabled
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -148,7 +142,6 @@ export default function AddRecipePopUpContent({
   const { activeLang, setTranslationField, allowMultiLang } = useRecipeStore()
   const { translateText } = useTranslation()
   const [isTranslating, setIsTranslating] = useState(false)
-  // const [isLoading, setIsLoading] = useState(false)
   const [foods, setFoods] = useState<Food[]>([])
   const [ingredientData, setIngredientData] = useState<Ingredient[]>([])
   const [selected, setSelected] = useState<Food | null>(null)
@@ -157,29 +150,27 @@ export default function AddRecipePopUpContent({
   const [ingredientInput, setIngredientInput] = useState<string>("")
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
-  // const [allBenefits, setAllBenefits] = useState<string[]>([])
-
   const [healthBenefitSuggestions, setHealthBenefitSuggestions] = useState<
     string[]
   >([])
 
-  useEffect(() => {
-    const fetchHealthTags = async (): Promise<void> => {
-      try {
-        const res = await getAllTagsByCategory(token, "Benefit")
-        const tags = res?.data
+  const fetchHealthTags = useCallback(async (): Promise<void> => {
+    try {
+      const res = await getAllTagsByCategory(token, "Benefit")
+      const tags = res?.data
 
-        if (Array.isArray(tags)) {
-          console.log("tags", tags)
-          setHealthBenefitSuggestions(tags.map((tag: any) => tag.category))
-        }
-      } catch (error) {
-        console.error("Error fetching health benefit tags:", error)
+      if (Array.isArray(tags)) {
+        setHealthBenefitSuggestions(
+          tags.map((tag: { category: string }) => tag.category)
+        )
       }
+    } catch (error) {
+      console.error("Error fetching health benefit tags:", error)
     }
-
-    void fetchHealthTags()
   }, [token])
+  useEffect(() => {
+    void fetchHealthTags()
+  }, [fetchHealthTags])
 
   const handleSelectSync =
     (field: any, key: keyof RecipeFields) => async (value: string) => {
@@ -210,7 +201,6 @@ export default function AddRecipePopUpContent({
         message: translations.pleaseenteratleastonebenefit
       }),
     ingredientData: z
-      // .array(z.unknown())
       .array(z.any())
       .nonempty(translations.atleastoneingredientcategorymustbeadded),
     authorName: z
@@ -243,7 +233,7 @@ export default function AddRecipePopUpContent({
         message: translations.required
       }
     ),
-    
+
     foodimage: z.string().min(1, { message: translations.required }),
     authorimage: z.string().min(1, { message: translations.required })
   })
@@ -287,11 +277,6 @@ export default function AddRecipePopUpContent({
   // save recipe popup content
   const handleAddRecipe = async (): Promise<void> => {
     try {
-      // setIsLoading(true)
-
-      // Upload and update image URL first
-      // await uploadRecipeImageAndSetUrl()
-
       // Get translations from store
       const { translations } = useRecipeStore.getState()
       // Get images from form (implement upload logic as needed)
@@ -333,7 +318,7 @@ export default function AddRecipePopUpContent({
         },
 
         ingredients: (translations.en.ingredientData || []).map(
-          (ing: any, idx: number) => {
+          (ing: Ingredient, idx: number) => {
             const frIngredient = translations.fr.ingredientData?.[idx]
 
             return {
@@ -359,8 +344,6 @@ export default function AddRecipePopUpContent({
 
         // clear store and session
         form.reset()
-        // Optionally, clear the recipe store fields if needed:
-        // useRecipeStore.getState().resetFields?.()
       } else {
         toast.error("Failed to add recipe")
       }
@@ -431,31 +414,6 @@ export default function AddRecipePopUpContent({
       }
     }
   }
-
-  // const richTextFieldOnBlur = async (fieldName: "recipe"): Promise<void> => {
-  //   if (activeLang === "en") {
-  //     const val = form.getValues(fieldName)
-  //     if (typeof val === "string" && val.trim().length > 0) {
-  //       setIsTranslating(true)
-  //       try {
-  //         const translated = await translateText(val)
-  //         setTranslationField("fr", fieldName, translated)
-  //       } finally {
-  //         setIsTranslating(false)
-  //       }
-  //     } else if (Array.isArray(val) && val.length) {
-  //       setIsTranslating(true)
-  //       try {
-  //         const trArr = await Promise.all(
-  //           val.map(async v => await translateText(v))
-  //         )
-  //         setTranslationField("fr", fieldName, trArr)
-  //       } finally {
-  //         setIsTranslating(false)
-  //       }
-  //     }
-  //   }
-  // }
 
   const richTextFieldOnBlur = async (fieldName: "recipe"): Promise<void> => {
     if (activeLang === "en") {
@@ -574,12 +532,12 @@ export default function AddRecipePopUpContent({
   const handleDeleteIngredientData = (id: number): void => {
     const updated = ingredientData.filter(item => item.id !== id)
     setIngredientData(updated)
-    form.setValue("ingredientData", updated as any, { shouldValidate: true })
-    setTranslationField(activeLang, "ingredientData", updated as any)
+    form.setValue("ingredientData", updated, { shouldValidate: true })
+    setTranslationField(activeLang, "ingredientData", updated)
     setTranslationField(
       activeLang === "en" ? "fr" : "en",
       "ingredientData",
-      updated as any
+      updated
     )
   }
 
@@ -612,7 +570,6 @@ export default function AddRecipePopUpContent({
     const entry: Ingredient = {
       id: selected ? Number(selected.id) : Date.now(),
       ingredientName: name,
-      // type: "Ingredient",
       tags: ["InSystem"],
       display: true,
       quantity: "",
@@ -699,21 +656,6 @@ export default function AddRecipePopUpContent({
     { value: "autumn", label: "Autumn" },
     { value: "winter", label: "Winter" }
   ]
-
-  useEffect(() => {
-    const fetchTags = async (): Promise<void> => {
-      try {
-        const token = localStorage.getItem("token") ?? ""
-        await getAllTagsByCategory(token, "health-benefits")
-        // const tags = res?.data?.map((item: any) => item.category) || []
-        // setAllBenefits(tags)
-      } catch (error) {
-        console.error("Failed to fetch tags", error)
-      }
-    }
-
-    void fetchTags()
-  }, [])
 
   // Sync form values with store values for the current language
   useEffect(() => {
@@ -858,7 +800,6 @@ export default function AddRecipePopUpContent({
     // Close the modal or section
     onClose()
   }
-
 
   return (
     <div className="relative">
