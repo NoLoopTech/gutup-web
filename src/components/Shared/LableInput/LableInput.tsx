@@ -19,6 +19,9 @@ interface Props {
   activeLang?: "en" | "fr"
   onSelectSuggestion?: (benefit: { tagName: string; tagNameFr: string }) => void
   onRemoveBenefit?: (benefit: { tagName: string; tagNameFr: string }) => void
+  onAddNewBenefit?: (
+    benefit: string
+  ) => Promise<{ tagName: string; tagNameFr: string }>
 }
 
 export default function LableInput({
@@ -33,7 +36,8 @@ export default function LableInput({
   suggestions = [],
   activeLang = "en",
   onSelectSuggestion,
-  onRemoveBenefit
+  onRemoveBenefit,
+  onAddNewBenefit
 }: Props): React.ReactElement {
   const {
     setValue,
@@ -53,16 +57,27 @@ export default function LableInput({
     void trigger(name)
   }
 
-  const addItem = (suggestion?: { tagName: string; tagNameFr: string }): void => {
+  const addItem = async (suggestion?: {
+    tagName: string
+    tagNameFr: string
+  }) => {
     let newItem = value.trim()
     let matchedSuggestion = suggestion
 
     // If not clicked from suggestion, try to find a match
     if (!matchedSuggestion) {
-      matchedSuggestion = suggestions.find(s =>
-        (activeLang === "en" && s.tagName.toLowerCase() === newItem.toLowerCase()) ||
-        (activeLang === "fr" && s.tagNameFr.toLowerCase() === newItem.toLowerCase())
+      matchedSuggestion = suggestions.find(
+        s =>
+          (activeLang === "en" &&
+            s.tagName.toLowerCase() === newItem.toLowerCase()) ||
+          (activeLang === "fr" &&
+            s.tagNameFr.toLowerCase() === newItem.toLowerCase())
       )
+    }
+
+    // If not in suggestions, treat as new benefit
+    if (!matchedSuggestion && newItem.length > 0 && onAddNewBenefit) {
+      matchedSuggestion = await onAddNewBenefit(newItem)
     }
 
     // Only allow adding if matchedSuggestion exists
@@ -71,7 +86,10 @@ export default function LableInput({
       return
     }
 
-    newItem = activeLang === "en" ? matchedSuggestion.tagName : matchedSuggestion.tagNameFr
+    newItem =
+      activeLang === "en"
+        ? matchedSuggestion.tagName
+        : matchedSuggestion.tagNameFr
 
     if (!items.includes(newItem) && items.length < 6) {
       const updatedItems = [...items, newItem]
@@ -137,9 +155,9 @@ export default function LableInput({
           // Find the suggestion object for removal
           const suggestion = suggestions.find(
             s =>
-              (activeLang === "en" && s.tagName === item) ||
-              (activeLang === "fr" && s.tagNameFr === item)
-          )
+              s.tagName === item || s.tagNameFr === item
+          ) || { tagName: item, tagNameFr: item } // fallback for custom benefits
+
           return (
             <div
               key={item}
@@ -150,7 +168,8 @@ export default function LableInput({
                 type="button"
                 onClick={() => {
                   removeItem(item)
-                  if (suggestion && onRemoveBenefit) {
+                  // Always call onRemoveBenefit with both EN and FR
+                  if (onRemoveBenefit) {
                     onRemoveBenefit(suggestion)
                   }
                 }}

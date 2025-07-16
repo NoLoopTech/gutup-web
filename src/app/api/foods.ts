@@ -86,3 +86,26 @@ export const getCatagoryFoodType = async (
     return error
   }
 }
+
+// post food tag
+export const postFoodTag = async (
+  token: string,
+  data: { tagName: string; tagNameFr: string }
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.post(
+      "/food-tag",
+      {
+        category: "Benefit", // always "Benefit"
+        tagName: data.tagName,
+        tagNameFr: data.tagNameFr
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    )
+    return response
+  } catch (error) {
+    return error
+  }
+}

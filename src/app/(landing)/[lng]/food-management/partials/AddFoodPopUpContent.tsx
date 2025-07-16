@@ -1,6 +1,6 @@
 "use client"
 
-import { getCatagoryFoodType, postNewFood } from "@/app/api/foods"
+import { getCatagoryFoodType, postFoodTag, postNewFood } from "@/app/api/foods"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import LableInput from "@/components/Shared/LableInput/LableInput"
 import { Button } from "@/components/ui/button"
@@ -431,7 +431,8 @@ export default function AddFoodPopUpContent({
   ): Promise<void> => {
     try {
       const token = session?.apiToken
-      // Map your form data to CreateFoodDto
+
+      // Save food first
       const foodDto: CreateFoodDto = {
         name: foodData.en.name,
         nameFR: foodData.fr?.name ?? "",
@@ -478,7 +479,6 @@ export default function AddFoodPopUpContent({
         ),
         allowMultiLang
       }
-
       const response = await postNewFood(token ?? "", foodDto)
       if (response.status === 201 || response.status === 200) {
         toast.success(translations.formSubmittedSuccessfully)
@@ -487,6 +487,21 @@ export default function AddFoodPopUpContent({
         onClose()
       } else {
         toast.error("Failed to add food")
+      }
+
+      // Now, post new benefits to /food-tag if not exist
+      const benefitResponse = await getCatagoryFoodType(token, "Benefit")
+      const existingTags = Array.isArray(benefitResponse?.data)
+        ? benefitResponse.data.map((b: any) => b.tagName)
+        : []
+
+      for (const [i, benefit] of (foodData.en.benefits || []).entries()) {
+        if (!existingTags.includes(benefit)) {
+          await postFoodTag(token, {
+            tagName: benefit,
+            tagNameFr: foodData.fr?.benefits?.[i] ?? ""
+          })
+        }
       }
     } catch (error) {
       toast.error("Error adding food")
@@ -552,6 +567,12 @@ export default function AddFoodPopUpContent({
     form: ReturnType<typeof useForm<z.infer<typeof FoodSchema>>>
   ): void => {
     form.reset()
+  }
+
+  const handleAddNewBenefit = async (benefit: string) => {
+    // Translate to French
+    const tagNameFr = await translateText(benefit)
+    return { tagName: benefit, tagNameFr }
   }
 
   return (
@@ -888,43 +909,19 @@ export default function AddFoodPopUpContent({
                   width="w-[32%]"
                   suggestions={benefitTags}
                   activeLang={activeLang}
+                  onAddNewBenefit={handleAddNewBenefit}
                   onSelectSuggestion={benefit => {
-                    // Always add both at the same index
-                    const enBenefits = [
-                      ...(foodData.en.benefits || []),
-                      benefit.tagName
-                    ]
-                    const frBenefits = [
-                      ...(foodData.fr.benefits || []),
-                      benefit.tagNameFr
-                    ]
-
-                    setTranslationField(
-                      "foodData",
-                      "en",
-                      "benefits",
-                      enBenefits
-                    )
-                    setTranslationField(
-                      "foodData",
-                      "fr",
-                      "benefits",
-                      frBenefits
-                    )
-                    // Update the visible field for the active language
-                    form.setValue(
-                      "benefits",
-                      activeLang === "en" ? enBenefits : frBenefits
-                    )
+                    // Add both EN and FR at the same index
+                    const enBenefits = [...(foodData.en.benefits || []), benefit.tagName]
+                    const frBenefits = [...(foodData.fr.benefits || []), benefit.tagNameFr]
+                    setTranslationField("foodData", "en", "benefits", enBenefits)
+                    setTranslationField("foodData", "fr", "benefits", frBenefits)
+                    form.setValue("benefits", activeLang === "en" ? enBenefits : frBenefits)
                   }}
                   onRemoveBenefit={removed => {
                     // Remove both at the same index
-                    const idxEn = (foodData.en.benefits || []).indexOf(
-                      removed.tagName
-                    )
-                    const idxFr = (foodData.fr.benefits || []).indexOf(
-                      removed.tagNameFr
-                    )
+                    const idxEn = (foodData.en.benefits || []).indexOf(removed.tagName)
+                    const idxFr = (foodData.fr.benefits || []).indexOf(removed.tagNameFr)
                     const enBenefits = [...(foodData.en.benefits || [])]
                     const frBenefits = [...(foodData.fr.benefits || [])]
                     if (idxEn > -1) {
@@ -934,22 +931,9 @@ export default function AddFoodPopUpContent({
                       enBenefits.splice(idxFr, 1)
                       frBenefits.splice(idxFr, 1)
                     }
-                    setTranslationField(
-                      "foodData",
-                      "en",
-                      "benefits",
-                      enBenefits
-                    )
-                    setTranslationField(
-                      "foodData",
-                      "fr",
-                      "benefits",
-                      frBenefits
-                    )
-                    form.setValue(
-                      "benefits",
-                      activeLang === "en" ? enBenefits : frBenefits
-                    )
+                    setTranslationField("foodData", "en", "benefits", enBenefits)
+                    setTranslationField("foodData", "fr", "benefits", frBenefits)
+                    form.setValue("benefits", activeLang === "en" ? enBenefits : frBenefits)
                   }}
                   onChange={(newArr: string[]) => {
                     handleBenefitsChange(newArr)
