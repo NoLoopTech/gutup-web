@@ -49,7 +49,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import ViewStorePopUp from "./ViewStorePopUp"
 import EditStorePopUp from "./EditStorePopUp"
-import { transformStoreDataToApiRequest } from "@/helpers/storehelpers"
+import { transformStoreDataToApiRequest } from "@/helpers/storeHelpers"
+
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)

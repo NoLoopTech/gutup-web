@@ -38,6 +38,7 @@ import { getAllFoods } from "@/app/api/foods"
 import { Trash } from "lucide-react"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { getAllTags } from "@/app/api/tags"
+import { getStoreCategories } from "@/app/api/store"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -55,6 +56,20 @@ interface Option {
   label: string
 }
 
+interface StoreCategory {
+  id: number
+  Tag: string
+  TagName: string
+  TagNameFr: string
+}
+
+interface StoreType {
+  id: number
+  Tag: string
+  TagName: string
+  TagNameFr: string
+}
+
 interface AvailableItem {
   id: number
   name: string
@@ -64,170 +79,6 @@ interface AvailableItem {
   tags: string[]
   quantity: string
   isMain: boolean
-}
-
-const categoryOptions: Record<string, Option[]> = {
-  en: [
-    { value: "breakfast", label: "Breakfast" },
-    { value: "dinner", label: "Dinner" },
-    { value: "dairy", label: "Dairy" },
-    { value: "farmers-market", label: "Farmers' market" },
-    { value: "farm", label: "Farm" },
-    { value: "farm-vending-machine", label: "Farm vending machine" },
-    { value: "local-cooperative", label: "Local cooperative" },
-    {
-      value: "direct-from-farm-livestock",
-      label: "Direct-from-farm livestock"
-    },
-    { value: "pick-your-own-farm", label: "Pick-your-own farm" },
-    { value: "farm-drive-thru", label: "Farm drive-thru" },
-    { value: "microfarm", label: "Microfarm" },
-    { value: "farm-baskets", label: "Farm baskets" },
-    { value: "greengrocer", label: "Greengrocer" },
-    { value: "grocery-store", label: "Grocery store" },
-    { value: "organic-store", label: "Organic store" },
-    { value: "vegan-store", label: "Vegan store" },
-    { value: "bulk-grocery", label: "Bulk grocery" },
-    { value: "zero-waste-store", label: "Zero-waste store" },
-    { value: "parapharmacy", label: "Parapharmacy" },
-    { value: "pharmacy", label: "Pharmacy" },
-    { value: "herbalist-shop", label: "Herbalist shop" },
-    { value: "diet-store", label: "Diet store" },
-    { value: "ayurvedic-store", label: "Ayurvedic store" },
-    { value: "butcher", label: "Butcher" },
-    { value: "cheese-store", label: "Cheese store" },
-    { value: "creamery", label: "Creamery" },
-    { value: "bakery", label: "Bakery" },
-    { value: "fishmonger", label: "Fishmonger" },
-    { value: "oil-mill", label: "Oil mill" },
-    { value: "beekeeper", label: "Beekeeper" },
-    { value: "coffee-roaster", label: "Coffee roaster" },
-    { value: "brewery", label: "Brewery" },
-    { value: "pastry-shop", label: "Pastry shop" },
-    { value: "chocolate-factory", label: "Chocolate factory" },
-    { value: "organic-marketplace", label: "Organic marketplace" },
-    { value: "ethical-marketplace", label: "Ethical marketplace" },
-    { value: "direct-sales-platform", label: "Direct sales platform" },
-    { value: "online-organic-store", label: "Online organic store" },
-    { value: "online-bulk-store", label: "Online bulk store" },
-    { value: "online-superfood-store", label: "Online superfood store" },
-    { value: "farm-basket-platform", label: "Farm basket delivery platform" },
-    { value: "dietary-supplements", label: "Dietary supplements" },
-    { value: "superfood-producer", label: "Superfood producer" },
-    { value: "legume-grower", label: "Legume grower" },
-    { value: "oilseed-producer", label: "Oilseed producer" },
-    { value: "cereal-producer", label: "Cereal producer" },
-    { value: "tofu-producer", label: "Tofu producer" },
-    { value: "spice-producer", label: "Spice producer" },
-    { value: "spirulina-farmer", label: "Spirulina farmer" },
-    { value: "mushroom-grower", label: "Mushroom grower" },
-    { value: "medicinal-herb-grower", label: "Medicinal herb grower" },
-    { value: "aromatic-plant-grower", label: "Aromatic plant grower" },
-    { value: "dried-fruit-producer", label: "Dried fruit producer" },
-    { value: "craft-beverage-producer", label: "Craft beverage producer" },
-    { value: "sprouted-seed-producer", label: "Sprouted seed producer" },
-    { value: "vinegar-maker", label: "Vinegar maker" },
-    {
-      value: "plant-based-beverage-producer",
-      label: "Plant-based beverage producer"
-    },
-    { value: "kefir-kombucha-brewer", label: "Kefir / Kombucha brewer" },
-    { value: "seaweed-producer", label: "Seaweed producer" },
-    {
-      value: "fermented-products-producer",
-      label: "Fermented products producer"
-    }
-  ],
-  fr: [
-    { value: "breakfast", label: "Petit déjeuner" },
-    { value: "dinner", label: "Dîner" },
-    { value: "dairy", label: "Produits laitiers" },
-    { value: "farmers-market", label: "Marché de producteurs" },
-    { value: "farm", label: "Ferme" },
-    { value: "farm-vending-machine", label: "Distributeur automatique" },
-    { value: "local-cooperative", label: "Coopérative locale" },
-    { value: "direct-from-farm-livestock", label: "Élevage fermier" },
-    { value: "pick-your-own-farm", label: "Cueillette à la ferme" },
-    { value: "farm-drive-thru", label: "Drive fermier" },
-    { value: "microfarm", label: "Microferme" },
-    { value: "farm-baskets", label: "Paniers" },
-    { value: "greengrocer", label: "Primeur" },
-    { value: "grocery-store", label: "Épicerie de quartier" },
-    { value: "organic-store", label: "Magasin bio" },
-    { value: "vegan-store", label: "Magasin végan" },
-    { value: "bulk-grocery", label: "Épicerie vrac" },
-    { value: "zero-waste-store", label: "Épicerie zéro déchet" },
-    { value: "parapharmacy", label: "Parapharmacie" },
-    { value: "pharmacy", label: "Pharmacie" },
-    { value: "herbalist-shop", label: "Herboristerie" },
-    { value: "diet-store", label: "Magasin diététique" },
-    { value: "ayurvedic-store", label: "Magasin ayurvédique" },
-    { value: "butcher", label: "Boucherie" },
-    { value: "cheese-store", label: "Fromagerie" },
-    { value: "creamery", label: "Crèmerie" },
-    { value: "bakery", label: "Boulangerie" },
-    { value: "fishmonger", label: "Poissonnerie" },
-    { value: "oil-mill", label: "Huilerie" },
-    { value: "beekeeper", label: "Apiculteur" },
-    { value: "coffee-roaster", label: "Torréfacteur" },
-    { value: "brewery", label: "Brasserie" },
-    { value: "pastry-shop", label: "Pâtisserie" },
-    { value: "chocolate-factory", label: "Chocolaterie" },
-    { value: "organic-marketplace", label: "Marketplace bio" },
-    { value: "ethical-marketplace", label: "Marketplace éthique" },
-    { value: "direct-sales-platform", label: "Plateforme de vente directe" },
-    { value: "online-organic-store", label: "Magasin bio en ligne" },
-    { value: "online-bulk-store", label: "Vente en ligne de vrac" },
-    {
-      value: "online-superfood-store",
-      label: "Vente en ligne de super-aliments"
-    },
-    { value: "farm-basket-platform", label: "Plateforme de paniers" },
-    { value: "dietary-supplements", label: "Compléments alimentaires" },
-    { value: "superfood-producer", label: "Producteur de super-aliment" },
-    { value: "legume-grower", label: "Producteur de légumineuses" },
-    { value: "oilseed-producer", label: "Producteur d’oléagineux" },
-    { value: "cereal-producer", label: "Producteur de céréales" },
-    { value: "tofu-producer", label: "Producteur de tofu" },
-    { value: "spice-producer", label: "Producteur d’épices" },
-    { value: "spirulina-farmer", label: "Producteur de spiruline" },
-    { value: "mushroom-grower", label: "Producteur de champignons" },
-    {
-      value: "medicinal-herb-grower",
-      label: "Producteur de plantes médicinales"
-    },
-    {
-      value: "aromatic-plant-grower",
-      label: "Producteur de plantes aromatiques"
-    },
-    { value: "dried-fruit-producer", label: "Producteur de fruits secs" },
-    {
-      value: "craft-beverage-producer",
-      label: "Producteur de boissons artisanales"
-    },
-    { value: "sprouted-seed-producer", label: "Producteur de graines germées" },
-    { value: "vinegar-maker", label: "Producteur de vinaigre" },
-    {
-      value: "plant-based-beverage-producer",
-      label: "Producteur de boissons végétales"
-    },
-    { value: "kefir-kombucha-brewer", label: "Producteur de kéfir / kombucha" },
-    { value: "seaweed-producer", label: "Producteur d’algues" },
-    {
-      value: "fermented-products-producer",
-      label: "Producteur de produits fermentés"
-    }
-  ]
-}
-const storeTypeOptions: Record<string, Option[]> = {
-  en: [
-    { value: "physical", label: "Physical" },
-    { value: "online", label: "Online" }
-  ],
-  fr: [
-    { value: "physical", label: "Physique" },
-    { value: "online", label: "En ligne" }
-  ]
 }
 
 export default function AddStorePopUpContent({
@@ -250,6 +101,8 @@ export default function AddStorePopUpContent({
   const [, setIsPremium] = React.useState(false)
   const [foods, setFoods] = useState<Food[]>([])
   const [categoryTags, setCategoryTags] = useState<Food[]>([])
+  const [storeCategories, setStoreCategories] = useState<StoreCategory[]>([])
+  const [storeTypes, setStoreTypes] = useState<StoreType[]>([])
   const [availData, setAvailData] = useState<AvailableItem[]>([])
   const [selected, setSelected] = useState<Food | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -345,6 +198,33 @@ export default function AddStorePopUpContent({
     void fetchTags()
   }, [token])
 
+  useEffect(() => {
+    const fetchStoreData = async (): Promise<void> => {
+      try {
+        const res = await getStoreCategories()
+        if (res && res.status === 200 && Array.isArray(res.data)) {
+          // Filter data based on Tag field
+          const categories = res.data.filter(
+            (item: any) => item.Tag === "Category"
+          )
+          const types = res.data.filter((item: any) => item.Tag === "Type")
+
+          setStoreCategories(categories)
+          setStoreTypes(types)
+        } else {
+          setStoreCategories([])
+          setStoreTypes([])
+          console.error("Failed to fetch store data:", res)
+        }
+      } catch (err) {
+        setStoreCategories([])
+        setStoreTypes([])
+        console.error("Error fetching store data:", err)
+      }
+    }
+    void fetchStoreData()
+  }, [])
+
   // Form hook
   const form = useForm<z.infer<typeof AddStoreSchema>>({
     resolver: zodResolver(AddStoreSchema),
@@ -354,6 +234,28 @@ export default function AddStorePopUpContent({
       storeImage: storeData[activeLang]?.storeImage || ""
     }
   })
+
+  // Convert store categories to dropdown options
+  const getCategoryOptions = (): Option[] => {
+    if (!Array.isArray(storeCategories) || storeCategories.length === 0) {
+      return []
+    }
+    return storeCategories.map(category => ({
+      value: category.id.toString(),
+      label: activeLang === "en" ? category.TagName : category.TagNameFr
+    }))
+  }
+
+  // Convert store types to dropdown options
+  const getStoreTypeOptions = (): Option[] => {
+    if (!Array.isArray(storeTypes) || storeTypes.length === 0) {
+      return []
+    }
+    return storeTypes.map(type => ({
+      value: type.id.toString(),
+      label: activeLang === "en" ? type.TagName : type.TagNameFr
+    }))
+  }
 
   // Update form when lang changes
   React.useEffect(() => {
@@ -378,13 +280,39 @@ export default function AddStorePopUpContent({
       }
     }
 
-    form.reset({
+    // Convert stored TagName/TagNameFr back to IDs for form
+    let categoryId = ""
+    let storeTypeId = ""
+
+    if (currentStoreData?.category) {
+      const categoryMatch = storeCategories.find(
+        cat =>
+          (activeLang === "en" ? cat.TagName : cat.TagNameFr) ===
+          currentStoreData.category
+      )
+      categoryId = categoryMatch ? categoryMatch.id.toString() : ""
+    }
+
+    if (currentStoreData?.storeType) {
+      const typeMatch = storeTypes.find(
+        type =>
+          (activeLang === "en" ? type.TagName : type.TagNameFr) ===
+          currentStoreData.storeType
+      )
+      storeTypeId = typeMatch ? typeMatch.id.toString() : ""
+    }
+
+    const formData = {
       ...currentStoreData,
-      storeImage: currentStoreData?.storeImage || ""
-    })
+      storeImage: currentStoreData?.storeImage || "",
+      category: categoryId,
+      storeType: storeTypeId
+    }
+
+    form.reset(formData)
 
     void recreatePreview()
-  }, [activeLang, form, storeData])
+  }, [activeLang, form, storeData, storeCategories, storeTypes])
 
   // Input change handler for fields that need translation
   const handleInputChange = (
@@ -438,35 +366,44 @@ export default function AddStorePopUpContent({
       form.setValue(name, value)
     }
 
-  // Function to update select fields (category, season, country)
+  // Function to update select fields (category, storeType)
   const handleSelectChange = (
     fieldName: "category" | "storeType",
     value: string
   ): void => {
     form.setValue(fieldName, value)
 
-    // Get the correct options set
-    let optionsMap: Record<string, Option[]>
-    if (fieldName === "category") optionsMap = categoryOptions
-    else optionsMap = storeTypeOptions
-
-    const current = optionsMap[activeLang]
-    const oppositeLang = activeLang === "en" ? "fr" : "en"
-    const opposite = optionsMap[oppositeLang]
-
-    // Find the selected option in current language
-    const index = current.findIndex(opt => opt.value === value)
-
-    if (index !== -1 && opposite[index]) {
-      // Store the value for current language
-      setTranslationField("storeData", activeLang, fieldName, value)
-
-      setTranslationField(
-        "storeData",
-        oppositeLang,
-        fieldName,
-        opposite[index].label
+    if (fieldName === "category") {
+      // Find the selected category and store TagName/TagNameFr
+      const selectedCategory = storeCategories.find(
+        cat => cat.id.toString() === value
       )
+      if (selectedCategory) {
+        setTranslationField(
+          "storeData",
+          "en",
+          fieldName,
+          selectedCategory.TagName
+        )
+        setTranslationField(
+          "storeData",
+          "fr",
+          fieldName,
+          selectedCategory.TagNameFr
+        )
+      }
+    } else if (fieldName === "storeType") {
+      // Find the selected store type and store TagName/TagNameFr
+      const selectedType = storeTypes.find(type => type.id.toString() === value)
+      if (selectedType) {
+        setTranslationField("storeData", "en", fieldName, selectedType.TagName)
+        setTranslationField(
+          "storeData",
+          "fr",
+          fieldName,
+          selectedType.TagNameFr
+        )
+      }
     }
   }
 
@@ -577,7 +514,10 @@ export default function AddStorePopUpContent({
   // Sync availData with form value and filter by active language
   useEffect(() => {
     const currentStoreData = storeData[activeLang]
-    if (currentStoreData?.availData && Array.isArray(currentStoreData.availData)) {
+    if (
+      currentStoreData?.availData &&
+      Array.isArray(currentStoreData.availData)
+    ) {
       setAvailData(currentStoreData.availData)
       form.setValue("availData", currentStoreData.availData)
     }
@@ -749,7 +689,7 @@ export default function AddStorePopUpContent({
       onClose()
     }
   }
-  
+
   const onSubmit = async (
     data: z.infer<typeof AddStoreSchema>
   ): Promise<void> => {
@@ -822,26 +762,11 @@ export default function AddStorePopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {categoryOptions[activeLang].map(option => {
-                            if (activeLang === "fr") {
-                              return (
-                                <SelectItem
-                                  key={option.value}
-                                  value={option.label}
-                                >
-                                  {option.label}
-                                </SelectItem>
-                              )
-                            }
-                            return (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            )
-                          })}
+                          {getCategoryOptions().map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -898,26 +823,11 @@ export default function AddStorePopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {storeTypeOptions[activeLang].map(option => {
-                            if (activeLang === "fr") {
-                              return (
-                                <SelectItem
-                                  key={option.value}
-                                  value={option.label}
-                                >
-                                  {option.label}
-                                </SelectItem>
-                              )
-                            }
-                            return (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            )
-                          })}
+                          {getStoreTypeOptions().map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </FormControl>
