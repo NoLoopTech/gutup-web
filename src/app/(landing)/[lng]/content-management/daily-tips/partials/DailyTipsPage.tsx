@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
+import sampleImage from "@/../../public/images/sample-image.png"
 import { MoreVertical, ThumbsDown, ThumbsUp } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
@@ -136,85 +137,6 @@ export default function DailyTipsPage({
   }
 
   const handleAddDailyTip = async () => {
-    // Get fresh state after image update
-    const {
-      allowMultiLang: currentAllowMultiLang,
-      activeLang: currentLang,
-      activeTab: currentTab,
-      translationsData: currentTranslations
-    } = useDailyTipStore.getState()
-
-    const requestBody = {
-      allowMultiLang: currentAllowMultiLang,
-      title:
-        currentTab === "basicForm"
-          ? currentTranslations.basicLayoutData.en.title
-          : currentTab === "videoForm"
-          ? currentTranslations.videoTipData.en.title
-          : "",
-      titleFR:
-        currentTab === "basicForm"
-          ? currentTranslations.basicLayoutData.fr.title
-          : currentTab === "videoForm"
-          ? currentTranslations.videoTipData.fr.title
-          : "",
-      type:
-        currentTab === "basicForm"
-          ? "basic"
-          : currentTab === "videoForm"
-          ? "video"
-          : "store",
-      typeFR:
-        currentTab === "basicForm"
-          ? "basic"
-          : currentTab === "videoForm"
-          ? "video"
-          : "store",
-      status: false,
-      basicForm: {
-        concern: currentTranslations.basicLayoutData.en.concern,
-        concernFR: currentTranslations.basicLayoutData.fr.concern,
-        subTitleOne: currentTranslations.basicLayoutData.en.subTitleOne,
-        subTitleOneFR: currentTranslations.basicLayoutData.fr.subTitleOne,
-        subDescOne: currentTranslations.basicLayoutData.en.subDescriptionOne,
-        subDescOneFR: currentTranslations.basicLayoutData.fr.subDescriptionOne,
-        subTitleTwo: currentTranslations.basicLayoutData.en.subTitleTwo,
-        subTitleTwoFR: currentTranslations.basicLayoutData.fr.subTitleTwo,
-        subDescTwo: currentTranslations.basicLayoutData.en.subDescriptionTwo,
-        subDescTwoFR: currentTranslations.basicLayoutData.fr.subDescriptionTwo,
-        share: currentTranslations.basicLayoutData.en.share,
-        image: currentTranslations.basicLayoutData.en.image
-      },
-      shopPromote: {
-        reason: currentTranslations.shopPromotionData.en.reason,
-        reasonFR: currentTranslations.shopPromotionData.fr.reason,
-        name: currentTranslations.shopPromotionData.en.shopName,
-        location: currentTranslations.shopPromotionData.en.shopLocation,
-        category: currentTranslations.shopPromotionData.en.shopCategory,
-        categoryFR: currentTranslations.shopPromotionData.fr.shopCategory,
-        desc: currentTranslations.shopPromotionData.en.subDescription,
-        descFR: currentTranslations.shopPromotionData.fr.subDescription,
-        phoneNumber: currentTranslations.shopPromotionData.en.mobileNumber,
-        email: currentTranslations.shopPromotionData.en.email,
-        mapsPin: currentTranslations.shopPromotionData.en.mapsPin,
-        facebook: currentTranslations.shopPromotionData.en.facebook,
-        instagram: currentTranslations.shopPromotionData.en.instagram,
-        website: currentTranslations.shopPromotionData.en.website,
-        image: currentTranslations.shopPromotionData.en.image,
-        shopPromoteFoods:
-          currentTranslations.shopPromotionData.en.shopPromoteFoods
-      },
-      videoForm: {
-        concern: currentTranslations.videoTipData.en.concern,
-        concernFR: currentTranslations.videoTipData.fr.concern,
-        subTitle: currentTranslations.videoTipData.en.subTitle,
-        subTitleFR: currentTranslations.videoTipData.fr.subTitle,
-        subDesc: currentTranslations.videoTipData.en.subDescription,
-        subDescFR: currentTranslations.videoTipData.fr.subDescription,
-        videoUrl: currentTranslations.videoTipData.en.videoLink
-      }
-    }
-
     try {
       setIsLoading(true)
 
@@ -222,6 +144,94 @@ export default function DailyTipsPage({
 
       // Upload and update image URL first
       uploadedImageUrl = await uploadDailyTipImageAndSetUrl()
+      // Get fresh state after image update
+      const {
+        allowMultiLang: currentAllowMultiLang,
+        activeTab: currentTab,
+        translationsData: currentTranslations
+      } = useDailyTipStore.getState()
+
+      const requestBody = {
+        allowMultiLang: currentAllowMultiLang,
+        concern:
+          currentTab === "basicForm"
+            ? currentTranslations.basicLayoutData.en.concern
+            : currentTab === "videoForm"
+            ? currentTranslations.videoTipData.en.concern
+            : "",
+        concernFR:
+          currentTab === "basicForm"
+            ? currentTranslations.basicLayoutData.fr.concern
+            : currentTab === "videoForm"
+            ? currentTranslations.videoTipData.fr.concern
+            : "",
+
+        title:
+          currentTab === "basicForm"
+            ? currentTranslations.basicLayoutData.en.title
+            : currentTab === "videoForm"
+            ? currentTranslations.videoTipData.en.title
+            : "",
+        titleFR:
+          currentTab === "basicForm"
+            ? currentTranslations.basicLayoutData.fr.title
+            : currentTab === "videoForm"
+            ? currentTranslations.videoTipData.fr.title
+            : "",
+        type:
+          currentTab === "basicForm"
+            ? "basic"
+            : currentTab === "videoForm"
+            ? "video"
+            : "store",
+        typeFR:
+          currentTab === "basicForm"
+            ? "basic"
+            : currentTab === "videoForm"
+            ? "video"
+            : "store",
+        status: false,
+        basicForm: {
+          subTitleOne: currentTranslations.basicLayoutData.en.subTitleOne,
+          subTitleOneFR: currentTranslations.basicLayoutData.fr.subTitleOne,
+          subDescOne: currentTranslations.basicLayoutData.en.subDescriptionOne,
+          subDescOneFR:
+            currentTranslations.basicLayoutData.fr.subDescriptionOne,
+          subTitleTwo: currentTranslations.basicLayoutData.en.subTitleTwo,
+          subTitleTwoFR: currentTranslations.basicLayoutData.fr.subTitleTwo,
+          subDescTwo: currentTranslations.basicLayoutData.en.subDescriptionTwo,
+          subDescTwoFR:
+            currentTranslations.basicLayoutData.fr.subDescriptionTwo,
+          share: currentTranslations.basicLayoutData.en.share,
+          image: currentTranslations.basicLayoutData.en.image
+        },
+        shopPromote: {
+          reason: currentTranslations.shopPromotionData.en.reason,
+          reasonFR: currentTranslations.shopPromotionData.fr.reason,
+          name: currentTranslations.shopPromotionData.en.shopName,
+          location: currentTranslations.shopPromotionData.en.shopLocation,
+          category: currentTranslations.shopPromotionData.en.shopCategory,
+          categoryFR: currentTranslations.shopPromotionData.fr.shopCategory,
+          desc: currentTranslations.shopPromotionData.en.subDescription,
+          descFR: currentTranslations.shopPromotionData.fr.subDescription,
+          phoneNumber: currentTranslations.shopPromotionData.en.mobileNumber,
+          email: currentTranslations.shopPromotionData.en.email,
+          mapsPin: currentTranslations.shopPromotionData.en.mapsPin,
+          facebook: currentTranslations.shopPromotionData.en.facebook,
+          instagram: currentTranslations.shopPromotionData.en.instagram,
+          website: currentTranslations.shopPromotionData.en.website,
+          image: currentTranslations.shopPromotionData.en.image,
+          shopPromoteFoods:
+            currentTranslations.shopPromotionData.en.shopPromoteFoods
+        },
+        videoForm: {
+          subTitle: currentTranslations.videoTipData.en.subTitle,
+          subTitleFR: currentTranslations.videoTipData.fr.subTitle,
+          subDesc: currentTranslations.videoTipData.en.subDescription,
+          subDescFR: currentTranslations.videoTipData.fr.subDescription,
+          videoUrl: currentTranslations.videoTipData.en.videoLink
+        }
+      }
 
       const response = await AddNewDailyTips(token, requestBody)
       console.log(response)
@@ -252,7 +262,7 @@ export default function DailyTipsPage({
       header: "Media",
       cell: (row: DailyTipsDataType) => (
         <Image
-          src={row.imageOrVideoUrl}
+          src={row.type !== "video" ? row.imageOrVideoUrl : sampleImage}
           alt={row.title}
           width={40}
           height={40}

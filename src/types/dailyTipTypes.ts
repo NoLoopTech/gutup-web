@@ -160,8 +160,6 @@ export const defaultTranslations: translationsTypes = {
 
 export interface BasicForm {
   id?: number
-  concern: string
-  concernFR: string
   subTitleOne: string
   subTitleOneFR: string
   subDescOne: string
@@ -203,8 +201,6 @@ export interface ShopPromote {
 
 export interface VideoForm {
   id?: number
-  concern: string
-  concernFR: string
   subTitle: string
   subTitleFR: string
   subDesc: string
@@ -215,6 +211,7 @@ export interface VideoForm {
 export interface AddDailyTipTypes {
   id?: number
   allowMultiLang: boolean
+  concern: string
   title: string
   titleFR: string
   type: string
