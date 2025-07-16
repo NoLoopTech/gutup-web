@@ -12,7 +12,6 @@ import {
 import { MoreVertical, ThumbsDown, ThumbsUp } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
-import sampleImage from "@/../../public/images/sample-image.png"
 import AddDailyTipMainPopUp from "./AddDailyTipMainPopUp.tsx"
 import { AddNewDailyTips, getAllDailyTips } from "@/app/api/daily-tip"
 import { useDailyTipStore } from "@/stores/useDailyTipStore"
@@ -253,7 +252,7 @@ export default function DailyTipsPage({
       header: "Media",
       cell: (row: DailyTipsDataType) => (
         <Image
-          src={sampleImage}
+          src={row.imageOrVideoUrl}
           alt={row.title}
           width={40}
           height={40}

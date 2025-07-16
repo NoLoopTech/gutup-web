@@ -52,7 +52,7 @@ interface MoodsDataType {
   title: string
   content: string
   dateCreated: string
-  status: string
+  status: boolean
   image?: string
 }
 
@@ -118,7 +118,7 @@ export default function MoodsPage({
               title,
               content,
               dateCreated: new Date(item.createdAt).toLocaleDateString(),
-              status: "Active",
+              status: item.status,
               image
             }
           }
@@ -199,6 +199,7 @@ export default function MoodsPage({
 
       const requestBody: AddMoodRequestBody = {
         allowMultiLang: currentAllowMultiLang,
+        status: true,
         activeLang: currentLang,
         activeTab: currentTab,
         translationsData: currentTranslations
@@ -241,18 +242,18 @@ export default function MoodsPage({
 
       let uploadedImageUrl: string | null = null
 
-      // 🔍 Check if image was updated (only for Recipe or Food)
+      // Check if image was updated (only for Recipe or Food)
       const isImageChanged =
         (activeTab === "Recipe" &&
           updatedTranslations.recipeData[activeLang].image) ||
         (activeTab === "Food" && updatedTranslations.foodData[activeLang].image)
 
       if (isImageChanged) {
-        // 📤 Upload new image
+        // Upload new image
         uploadedImageUrl = await uploadMoodImageAndSetUrl()
       }
 
-      // 📦 Prepare request body
+      // Prepare request body
       const { translationsData: finalUpdatedTranslations } =
         useUpdatedTranslationStore.getState()
 
@@ -260,7 +261,7 @@ export default function MoodsPage({
         translationsData: finalUpdatedTranslations
       }
 
-      // 📡 Submit updated data
+      // Submit updated data
       const response = await updateNewMood(token, selectedMoodId, requestBody)
 
       if (response.status === 200 || response.status === 201) {
@@ -268,7 +269,7 @@ export default function MoodsPage({
         setIsOpenEditMood(false)
         getMoods()
 
-        // 🗑️ Delete old image from Firebase if it exists
+        // Delete old image from Firebase if it exists
         if (previousImageUrl) {
           await deleteImageFromFirebase(previousImageUrl)
           setPreviousImageUrl(null)
@@ -282,6 +283,31 @@ export default function MoodsPage({
     } finally {
       sessionStorage.removeItem("mood-storage")
       sessionStorage.removeItem("updated-mood-fields")
+      setIsLoading(false)
+    }
+  }
+
+  // handle update mood status
+  const handleUpdateMoodStatus = async (
+    moodId: number,
+    status: boolean
+  ): Promise<void> => {
+    const requestBody = { status: status ? false : true }
+    try {
+      // Submit updated data
+      const response = await updateNewMood(token, moodId, requestBody)
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Mood updated successfully")
+        setIsOpenEditMood(false)
+        getMoods()
+      } else {
+        toast.error("Failed to update mood!")
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error("Something went wrong during update!")
+    } finally {
       setIsLoading(false)
     }
   }
@@ -365,14 +391,12 @@ export default function MoodsPage({
       cell: (row: MoodsDataType) => (
         <Badge
           className={
-            row.status === "Active"
+            row.status
               ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700"
-              : row.status === "Pending"
-              ? "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
-              : "bg-red-100 text-red-700 hover:bg-red-200 border border-red-700"
+              : "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
           }
         >
-          {row.status}
+          {row.status ? "Active" : "Inactive"}
         </Badge>
       )
     },
@@ -392,6 +416,11 @@ export default function MoodsPage({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
+            <DropdownMenuItem
+              onClick={() => handleUpdateMoodStatus(row.id, row.status)}
+            >
+              {row.status ? "Inactive" : "Active"}
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 handleOpenEditMood(row.id)

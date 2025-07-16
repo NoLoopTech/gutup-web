@@ -32,6 +32,7 @@ interface LangData<T> {
 
 interface MoodStoreState {
   allowMultiLang: boolean
+  status: boolean
   activeLang: "en" | "fr"
   activeTab: "Quote" | "Food" | "Recipe"
   translationsData: {
@@ -55,6 +56,7 @@ export const useMoodStore = create<MoodStoreState>()(
   persist(
     set => ({
       allowMultiLang: false,
+      status: true,
       activeLang: "en",
       activeTab: "Quote",
       translationsData: {

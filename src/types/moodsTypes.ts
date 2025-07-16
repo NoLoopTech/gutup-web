@@ -114,7 +114,8 @@ interface TranslationsData {
 
 export interface AddMoodRequestBody {
   allowMultiLang?: boolean
+  status?: boolean
   activeLang?: LanguageCode
   activeTab?: "Quote" | "Food" | "Recipe"
-  translationsData: TranslationsData
+  translationsData?: TranslationsData
 }
