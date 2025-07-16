@@ -16,7 +16,11 @@ interface Props {
   getFoods: () => void // <-- add this prop
 }
 
-export default function AddFoodPopUp({ open, onClose, getFoods }: Props): JSX.Element {
+export default function AddFoodPopUp({
+  open,
+  onClose,
+  getFoods
+}: Props): JSX.Element {
   const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
     useFoodStore()
 
@@ -25,22 +29,22 @@ export default function AddFoodPopUp({ open, onClose, getFoods }: Props): JSX.El
   )
   // Load translations based on the selected language
   useEffect(() => {
-    const loadTranslations = async () => {
+    const loadTranslations = async (): Promise<void> => {
       const langData = await loadLanguage(activeLang, "food")
       setTranslations(langData)
     }
 
-    loadTranslations()
+    void loadTranslations()
   }, [activeLang])
 
   // Language toggle handler
-  const handleLanguageToggle = (val: boolean) => {
+  const handleLanguageToggle = (val: boolean): void => {
     setAllowMultiLang(val)
     if (!val) setActiveLang("en") // Default to English if multi-lang is disabled
   }
 
   // Wrap the onClose to clear session key
-  const handleClose = () => {
+  const handleClose = (): void => {
     sessionStorage.removeItem("food-store")
     onClose()
   }

@@ -15,7 +15,7 @@ interface Props {
   width?: string
   onChange?: (items: string[]) => void
   onBlur?: () => void
-  suggestions?: { tagName: string; tagNameFr: string }[]
+  suggestions?: Array<{ tagName: string; tagNameFr: string }>
   activeLang?: "en" | "fr"
   onSelectSuggestion?: (benefit: { tagName: string; tagNameFr: string }) => void
   onRemoveBenefit?: (benefit: { tagName: string; tagNameFr: string }) => void
@@ -46,7 +46,6 @@ export default function LableInput({
   } = useFormContext()
   const [value, setValueState] = useState("")
   const [items, setItems] = useState<string[]>(benefits)
-  const [allbenefits, setAllBenefits] = useState<string[]>([])
 
   const updateItems = (updatedItems: string[]): void => {
     setItems(updatedItems)
@@ -60,7 +59,7 @@ export default function LableInput({
   const addItem = async (suggestion?: {
     tagName: string
     tagNameFr: string
-  }) => {
+  }): Promise<void> => {
     let newItem = value.trim()
     let matchedSuggestion = suggestion
 
@@ -109,7 +108,7 @@ export default function LableInput({
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === "Enter") {
       e.preventDefault()
-      addItem()
+      void addItem()
     }
   }
 
@@ -131,7 +130,9 @@ export default function LableInput({
             placeholder={placeholder}
             className={`mb-2 ${width}`}
             value={value}
-            onChange={e => setValueState(e.target.value)}
+            onChange={e => {
+              setValueState(e.target.value)
+            }}
             onKeyDown={handleKeyDown}
             disabled={disable}
           />
@@ -141,7 +142,9 @@ export default function LableInput({
                 <div
                   key={idx}
                   className="px-3 py-2 cursor-pointer hover:bg-gray-100"
-                  onClick={() => addItem(item)}
+                  onClick={async () => {
+                    await addItem(item)
+                  }}
                 >
                   {activeLang === "en" ? item.tagName : item.tagNameFr}
                 </div>
@@ -154,9 +157,8 @@ export default function LableInput({
         {items.map(item => {
           // Find the suggestion object for removal
           const suggestion = suggestions.find(
-            s =>
-              s.tagName === item || s.tagNameFr === item
-          ) || { tagName: item, tagNameFr: item } // fallback for custom benefits
+            s => s.tagName === item || s.tagNameFr === item
+          ) ?? { tagName: item, tagNameFr: item } // fallback for custom benefits
 
           return (
             <div

@@ -14,7 +14,12 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -529,9 +534,7 @@ export default function FoodOverviewPage(): React.ReactElement {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => setConfirmDeleteOpen(false)}
-            >
+            <AlertDialogCancel onClick={() => setConfirmDeleteOpen(false)}>
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteFood}>
@@ -543,4 +546,3 @@ export default function FoodOverviewPage(): React.ReactElement {
     </div>
   )
 }
-
