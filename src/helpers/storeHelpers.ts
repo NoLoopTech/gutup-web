@@ -29,13 +29,18 @@ export function transformStoreDataToApiRequest(
       const transformedItem: IngAndCatDataType = {
         id: item.id || Date.now(),
         name: item.name || "",
-        nameFR: frItem?.name || item.name || "",
+        nameFR: allowMultiLang && frItem ? frItem.name : item.name || "",
         type: item.type?.toLowerCase() || "category",
         typeFR:
-          frItem?.type?.toLowerCase() ||
-          (item.type?.toLowerCase() === "ingredient"
+          allowMultiLang && frItem
+            ? frItem.type?.toLowerCase() === "ingredient"
+              ? "ingrédient"
+              : frItem.type?.toLowerCase() === "category"
+              ? "catégorie"
+              : frItem.type?.toLowerCase()
+            : item.type?.toLowerCase() === "ingredient"
             ? "ingrédient"
-            : "catégorie"),
+            : "catégorie",
         availability:
           item.status === "Active" || item.availability === true || true,
         display: item.display !== false
