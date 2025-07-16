@@ -31,7 +31,6 @@ import { Label } from "@/components/ui/label"
 import { useStoreStore } from "@/stores/useStoreStore"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import {
-  transformStoreDataToApiRequest,
   type translationsTypes,
   defaultTranslations,
   type StoreManagementDataType
@@ -50,6 +49,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import ViewStorePopUp from "./ViewStorePopUp"
 import EditStorePopUp from "./EditStorePopUp"
+import { transformStoreDataToApiRequest } from "@/helpers/storehelpers"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -455,8 +455,6 @@ export default function StoreManagementPage({
             >
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem>Make a copy</DropdownMenuItem>
-            <DropdownMenuItem>Favorite</DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 if (row.id) {
