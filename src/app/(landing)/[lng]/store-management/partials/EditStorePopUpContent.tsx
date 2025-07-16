@@ -38,7 +38,7 @@ import { getAllFoods } from "@/app/api/foods"
 import { Trash } from "lucide-react"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { getAllTags } from "@/app/api/tags"
-import { getStoreById } from "@/app/api/store"
+import { getStoreById, getStoreCategories } from "@/app/api/store"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -54,6 +54,20 @@ interface Food {
 interface Option {
   value: string
   label: string
+}
+
+interface StoreCategory {
+  id: number
+  Tag: string
+  TagName: string
+  TagNameFr: string
+}
+
+interface StoreType {
+  id: number
+  Tag: string
+  TagName: string
+  TagNameFr: string
 }
 
 interface AvailableItem {
@@ -94,171 +108,6 @@ interface StoreData {
   ingAndCatData: any[]
 }
 
-const categoryOptions: Record<string, Option[]> = {
-  en: [
-    { value: "breakfast", label: "Breakfast" },
-    { value: "dinner", label: "Dinner" },
-    { value: "dairy", label: "Dairy" },
-    { value: "farmers-market", label: "Farmers' market" },
-    { value: "farm", label: "Farm" },
-    { value: "farm-vending-machine", label: "Farm vending machine" },
-    { value: "local-cooperative", label: "Local cooperative" },
-    {
-      value: "direct-from-farm-livestock",
-      label: "Direct-from-farm livestock"
-    },
-    { value: "pick-your-own-farm", label: "Pick-your-own farm" },
-    { value: "farm-drive-thru", label: "Farm drive-thru" },
-    { value: "microfarm", label: "Microfarm" },
-    { value: "farm-baskets", label: "Farm baskets" },
-    { value: "greengrocer", label: "Greengrocer" },
-    { value: "grocery-store", label: "Grocery store" },
-    { value: "organic-store", label: "Organic store" },
-    { value: "vegan-store", label: "Vegan store" },
-    { value: "bulk-grocery", label: "Bulk grocery" },
-    { value: "zero-waste-store", label: "Zero-waste store" },
-    { value: "parapharmacy", label: "Parapharmacy" },
-    { value: "pharmacy", label: "Pharmacy" },
-    { value: "herbalist-shop", label: "Herbalist shop" },
-    { value: "diet-store", label: "Diet store" },
-    { value: "ayurvedic-store", label: "Ayurvedic store" },
-    { value: "butcher", label: "Butcher" },
-    { value: "cheese-store", label: "Cheese store" },
-    { value: "creamery", label: "Creamery" },
-    { value: "bakery", label: "Bakery" },
-    { value: "fishmonger", label: "Fishmonger" },
-    { value: "oil-mill", label: "Oil mill" },
-    { value: "beekeeper", label: "Beekeeper" },
-    { value: "coffee-roaster", label: "Coffee roaster" },
-    { value: "brewery", label: "Brewery" },
-    { value: "pastry-shop", label: "Pastry shop" },
-    { value: "chocolate-factory", label: "Chocolate factory" },
-    { value: "organic-marketplace", label: "Organic marketplace" },
-    { value: "ethical-marketplace", label: "Ethical marketplace" },
-    { value: "direct-sales-platform", label: "Direct sales platform" },
-    { value: "online-organic-store", label: "Online organic store" },
-    { value: "online-bulk-store", label: "Online bulk store" },
-    { value: "online-superfood-store", label: "Online superfood store" },
-    { value: "farm-basket-platform", label: "Farm basket delivery platform" },
-    { value: "dietary-supplements", label: "Dietary supplements" },
-    { value: "superfood-producer", label: "Superfood producer" },
-    { value: "legume-grower", label: "Legume grower" },
-    { value: "oilseed-producer", label: "Oilseed producer" },
-    { value: "cereal-producer", label: "Cereal producer" },
-    { value: "tofu-producer", label: "Tofu producer" },
-    { value: "spice-producer", label: "Spice producer" },
-    { value: "spirulina-farmer", label: "Spirulina farmer" },
-    { value: "mushroom-grower", label: "Mushroom grower" },
-    { value: "medicinal-herb-grower", label: "Medicinal herb grower" },
-    { value: "aromatic-plant-grower", label: "Aromatic plant grower" },
-    { value: "dried-fruit-producer", label: "Dried fruit producer" },
-    { value: "craft-beverage-producer", label: "Craft beverage producer" },
-    { value: "sprouted-seed-producer", label: "Sprouted seed producer" },
-    { value: "vinegar-maker", label: "Vinegar maker" },
-    {
-      value: "plant-based-beverage-producer",
-      label: "Plant-based beverage producer"
-    },
-    { value: "kefir-kombucha-brewer", label: "Kefir / Kombucha brewer" },
-    { value: "seaweed-producer", label: "Seaweed producer" },
-    {
-      value: "fermented-products-producer",
-      label: "Fermented products producer"
-    }
-  ],
-  fr: [
-    { value: "breakfast", label: "Petit déjeuner" },
-    { value: "dinner", label: "Dîner" },
-    { value: "dairy", label: "Produits laitiers" },
-    { value: "farmers-market", label: "Marché de producteurs" },
-    { value: "farm", label: "Ferme" },
-    { value: "farm-vending-machine", label: "Distributeur automatique" },
-    { value: "local-cooperative", label: "Coopérative locale" },
-    { value: "direct-from-farm-livestock", label: "Élevage fermier" },
-    { value: "pick-your-own-farm", label: "Cueillette à la ferme" },
-    { value: "farm-drive-thru", label: "Drive fermier" },
-    { value: "microfarm", label: "Microferme" },
-    { value: "farm-baskets", label: "Paniers" },
-    { value: "greengrocer", label: "Primeur" },
-    { value: "grocery-store", label: "Épicerie de quartier" },
-    { value: "organic-store", label: "Magasin bio" },
-    { value: "vegan-store", label: "Magasin végan" },
-    { value: "bulk-grocery", label: "Épicerie vrac" },
-    { value: "zero-waste-store", label: "Épicerie zéro déchet" },
-    { value: "parapharmacy", label: "Parapharmacie" },
-    { value: "pharmacy", label: "Pharmacie" },
-    { value: "herbalist-shop", label: "Herboristerie" },
-    { value: "diet-store", label: "Magasin diététique" },
-    { value: "ayurvedic-store", label: "Magasin ayurvédique" },
-    { value: "butcher", label: "Boucherie" },
-    { value: "cheese-store", label: "Fromagerie" },
-    { value: "creamery", label: "Crèmerie" },
-    { value: "bakery", label: "Boulangerie" },
-    { value: "fishmonger", label: "Poissonnerie" },
-    { value: "oil-mill", label: "Huilerie" },
-    { value: "beekeeper", label: "Apiculteur" },
-    { value: "coffee-roaster", label: "Torréfacteur" },
-    { value: "brewery", label: "Brasserie" },
-    { value: "pastry-shop", label: "Pâtisserie" },
-    { value: "chocolate-factory", label: "Chocolaterie" },
-    { value: "organic-marketplace", label: "Marketplace bio" },
-    { value: "ethical-marketplace", label: "Marketplace éthique" },
-    { value: "direct-sales-platform", label: "Plateforme de vente directe" },
-    { value: "online-organic-store", label: "Magasin bio en ligne" },
-    { value: "online-bulk-store", label: "Vente en ligne de vrac" },
-    {
-      value: "online-superfood-store",
-      label: "Vente en ligne de super-aliments"
-    },
-    { value: "farm-basket-platform", label: "Plateforme de paniers" },
-    { value: "dietary-supplements", label: "Compléments alimentaires" },
-    { value: "superfood-producer", label: "Producteur de super-aliment" },
-    { value: "legume-grower", label: "Producteur de légumineuses" },
-    { value: "oilseed-producer", label: "Producteur d'oléagineux" },
-    { value: "cereal-producer", label: "Producteur de céréales" },
-    { value: "tofu-producer", label: "Producteur de tofu" },
-    { value: "spice-producer", label: "Producteur d'épices" },
-    { value: "spirulina-farmer", label: "Producteur de spiruline" },
-    { value: "mushroom-grower", label: "Producteur de champignons" },
-    {
-      value: "medicinal-herb-grower",
-      label: "Producteur de plantes médicinales"
-    },
-    {
-      value: "aromatic-plant-grower",
-      label: "Producteur de plantes aromatiques"
-    },
-    { value: "dried-fruit-producer", label: "Producteur de fruits secs" },
-    {
-      value: "craft-beverage-producer",
-      label: "Producteur de boissons artisanales"
-    },
-    { value: "sprouted-seed-producer", label: "Producteur de graines germées" },
-    { value: "vinegar-maker", label: "Producteur de vinaigre" },
-    {
-      value: "plant-based-beverage-producer",
-      label: "Producteur de boissons végétales"
-    },
-    { value: "kefir-kombucha-brewer", label: "Producteur de kéfir / kombucha" },
-    { value: "seaweed-producer", label: "Producteur d'algues" },
-    {
-      value: "fermented-products-producer",
-      label: "Producteur de produits fermentés"
-    }
-  ]
-}
-
-const storeTypeOptions: Record<string, Option[]> = {
-  en: [
-    { value: "physical", label: "Physical" },
-    { value: "online", label: "Online" }
-  ],
-  fr: [
-    { value: "physical", label: "Physique" },
-    { value: "online", label: "En ligne" }
-  ]
-}
-
 export default function EditStorePopUpContent({
   translations,
   onUpdateStore,
@@ -284,6 +133,8 @@ export default function EditStorePopUpContent({
   const [, setIsPremium] = React.useState(false)
   const [foods, setFoods] = useState<Food[]>([])
   const [categoryTags, setCategoryTags] = useState<Food[]>([])
+  const [storeCategories, setStoreCategories] = useState<StoreCategory[]>([])
+  const [storeTypes, setStoreTypes] = useState<StoreType[]>([])
   const [availData, setAvailData] = useState<AvailableItem[]>([])
   const [selected, setSelected] = useState<Food | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -293,6 +144,8 @@ export default function EditStorePopUpContent({
   const [, setCurrentStoreData] = useState<StoreData | null>(null)
   const [isDataLoaded, setIsDataLoaded] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+  const [storeDataForConversion, setStoreDataForConversion] =
+    useState<StoreData | null>(null)
 
   // Validation schema using Zod
   const EditStoreSchema = z.object({
@@ -508,7 +361,8 @@ export default function EditStorePopUpContent({
           }
 
           setIsDataLoaded(true)
-          setHasChanges(false) // Ensure no changes initially after data load
+          setHasChanges(false)
+          setStoreDataForConversion(data)
         } else {
           toast.error("Failed to load store data")
         }
@@ -555,10 +409,78 @@ export default function EditStorePopUpContent({
     void fetchTags()
   }, [token])
 
-  // Watch for form changes
+  // fetch store categories and types
   useEffect(() => {
-    if (!isDataLoaded) return // Don't watch changes until data is loaded
-    
+    const fetchStoreData = async (): Promise<void> => {
+      try {
+        const res = await getStoreCategories()
+        if (res && res.status === 200 && Array.isArray(res.data)) {
+          // Filter data based on Tag field
+          const categories = res.data.filter(
+            (item: any) => item.Tag === "Category"
+          )
+          const types = res.data.filter((item: any) => item.Tag === "Type")
+
+          setStoreCategories(categories)
+          setStoreTypes(types)
+        } else {
+          setStoreCategories([])
+          setStoreTypes([])
+          console.error("Failed to fetch store data:", res)
+        }
+      } catch (err) {
+        setStoreCategories([])
+        setStoreTypes([])
+        console.error("Error fetching store data:", err)
+      }
+    }
+    void fetchStoreData()
+  }, [])
+
+  // Update form when categories and types are loaded
+  useEffect(() => {
+    if (
+      storeCategories.length > 0 &&
+      storeTypes.length > 0 &&
+      storeDataForConversion
+    ) {
+      let categoryId = ""
+      if (storeDataForConversion.category) {
+        const categoryMatch = storeCategories.find(
+          cat =>
+            cat.TagName === storeDataForConversion.category ||
+            cat.TagNameFr === storeDataForConversion.category
+        )
+        categoryId = categoryMatch ? categoryMatch.id.toString() : ""
+      }
+
+      // Convert stored storeType name back to ID for form
+      let storeTypeId = ""
+      if (storeDataForConversion.storeType) {
+        const typeMatch = storeTypes.find(
+          type =>
+            type.TagName === storeDataForConversion.storeType ||
+            type.TagNameFr === storeDataForConversion.storeType
+        )
+        storeTypeId = typeMatch ? typeMatch.id.toString() : ""
+      }
+
+      // Update form with IDs without triggering hasChanges
+      if (categoryId) {
+        form.setValue("category", categoryId, { shouldValidate: false })
+      }
+      if (storeTypeId) {
+        form.setValue("storeType", storeTypeId, { shouldValidate: false })
+      }
+
+      // Clear the stored data after conversion
+      setStoreDataForConversion(null)
+    }
+  }, [storeCategories, storeTypes, storeDataForConversion, form])
+
+  useEffect(() => {
+    if (!isDataLoaded) return
+
     const subscription = form.watch(() => {
       setHasChanges(true)
     })
@@ -567,7 +489,29 @@ export default function EditStorePopUpContent({
     }
   }, [form, isDataLoaded])
 
-  // Clean up session storage when component unmounts (popup closes)
+  // Convert store categories to dropdown options
+  const getCategoryOptions = (): Option[] => {
+    if (!Array.isArray(storeCategories) || storeCategories.length === 0) {
+      return []
+    }
+    return storeCategories.map(category => ({
+      value: category.id.toString(),
+      label: activeLang === "en" ? category.TagName : category.TagNameFr
+    }))
+  }
+
+  // Convert store types to dropdown options
+  const getStoreTypeOptions = (): Option[] => {
+    if (!Array.isArray(storeTypes) || storeTypes.length === 0) {
+      return []
+    }
+    return storeTypes.map(type => ({
+      value: type.id.toString(),
+      label: activeLang === "en" ? type.TagName : type.TagNameFr
+    }))
+  }
+
+  // Clean up session storage
   useEffect(() => {
     return () => {
       form.reset()
@@ -631,7 +575,38 @@ export default function EditStorePopUpContent({
     value: string
   ): void => {
     form.setValue(fieldName, value)
-    setTranslationField("storeData", activeLang, fieldName, value)
+
+    if (fieldName === "category") {
+      const selectedCategory = storeCategories.find(
+        cat => cat.id.toString() === value
+      )
+      if (selectedCategory) {
+        setTranslationField(
+          "storeData",
+          "en",
+          fieldName,
+          selectedCategory.TagName
+        )
+        setTranslationField(
+          "storeData",
+          "fr",
+          fieldName,
+          selectedCategory.TagNameFr
+        )
+      }
+    } else if (fieldName === "storeType") {
+      const selectedType = storeTypes.find(type => type.id.toString() === value)
+      if (selectedType) {
+        setTranslationField("storeData", "en", fieldName, selectedType.TagName)
+        setTranslationField(
+          "storeData",
+          "fr",
+          fieldName,
+          selectedType.TagNameFr
+        )
+      }
+    }
+
     setHasChanges(true)
   }
 
@@ -931,7 +906,7 @@ export default function EditStorePopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {categoryOptions[activeLang].map(option => (
+                          {getCategoryOptions().map(option => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
                             </SelectItem>
@@ -992,7 +967,7 @@ export default function EditStorePopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {storeTypeOptions[activeLang].map(option => (
+                          {getStoreTypeOptions().map(option => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
                             </SelectItem>
@@ -1394,7 +1369,10 @@ export default function EditStorePopUpContent({
             <Button type="button" variant="outline" onClick={handleCancel}>
               {translations.cancel}
             </Button>
-            <Button type="submit" disabled={(isLoading ?? false) || !hasChanges}>
+            <Button
+              type="submit"
+              disabled={(isLoading ?? false) || !hasChanges}
+            >
               {isLoading ? (
                 <div className="flex gap-2 items-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
