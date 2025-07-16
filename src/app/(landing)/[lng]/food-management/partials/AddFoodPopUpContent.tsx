@@ -62,18 +62,18 @@ const seasonOptions: Record<string, Option[]> = {
     { value: "December", label: "December" }
   ],
   fr: [
-    { value: "January", label: "Janvier" },
-    { value: "February", label: "Février" },
-    { value: "March", label: "Mars" },
-    { value: "April", label: "Avril" },
-    { value: "May", label: "Mai" },
-    { value: "June", label: "Juin" },
-    { value: "July", label: "Juillet" },
-    { value: "August", label: "Août" },
-    { value: "September", label: "Septembre" },
-    { value: "October", label: "Octobre" },
-    { value: "November", label: "Novembre" },
-    { value: "December", label: "Décembre" }
+    { value: "Janvier", label: "Janvier" },
+    { value: "Février", label: "Février" },
+    { value: "Mars", label: "Mars" },
+    { value: "Avril", label: "Avril" },
+    { value: "Mai", label: "Mai" },
+    { value: "Juin", label: "Juin" },
+    { value: "Juillet", label: "Juillet" },
+    { value: "Août", label: "Août" },
+    { value: "Septembre", label: "Septembre" },
+    { value: "Octobre", label: "Octobre" },
+    { value: "Novembre", label: "Novembre" },
+    { value: "Décembre", label: "Décembre" }
   ]
 }
 const countriesOptions: Record<string, Option[]> = {
