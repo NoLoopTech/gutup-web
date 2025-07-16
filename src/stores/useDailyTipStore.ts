@@ -4,9 +4,10 @@ import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 
 interface shopPromoteFoodsTypes {
-  foodId: number
+  id: number
   name: string
-  dispalyStatus: boolean
+  status: boolean
+  display: boolean
 }
 
 interface BasicLayoutFields {

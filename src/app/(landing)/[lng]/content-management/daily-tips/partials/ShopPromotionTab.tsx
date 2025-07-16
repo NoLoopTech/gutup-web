@@ -4,10 +4,8 @@ import React, { useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { Label } from "@/components/ui/label"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { Button } from "@/components/ui/button"
 import { CustomTable } from "@/components/Shared/Table/CustomTable"
@@ -38,6 +36,22 @@ import {
   uploadImageToFirebase
 } from "@/lib/firebaseImageUtils"
 import { useFoodList } from "@/query/hooks/useFoodList"
+import { Badge } from "@/components/ui/badge"
+import { Trash } from "lucide-react"
+import { getAllFoods } from "@/app/api/foods"
+
+interface Food {
+  id: number
+  name?: string
+  tagName?: string
+}
+
+interface AvailableItem {
+  id: number
+  name: string
+  status: boolean
+  display: boolean
+}
 
 interface Option {
   value: string
@@ -47,12 +61,8 @@ interface Option {
 interface Ingredient {
   id: number
   name: string
-  displayStatus: boolean
-}
-
-interface Column<T> {
-  header: string
-  accessor: keyof T | ((row: T) => React.ReactNode)
+  status: boolean
+  display: boolean
 }
 
 type FieldNames =
@@ -97,7 +107,7 @@ export default function ShopPromotionTab({
   isLoading: boolean
 }): JSX.Element {
   const [page, setPage] = React.useState(1)
-  const [pageSize, setPageSize] = React.useState(2)
+  const [pageSize, setPageSize] = React.useState(5)
   const { translateText } = useTranslation()
   const {
     activeLang,
@@ -109,36 +119,192 @@ export default function ShopPromotionTab({
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const { foods: foodsList = [] } = useFoodList(token)
   const [ingredientData, setIngredientData] = useState<Ingredient[]>([])
+  const [foods, setFoods] = useState<Food[]>([])
+  const [ingredientInput, setIngredientInput] = useState<string>("")
+  const [selected, setSelected] = useState<Food | null>(null)
+  const [availData, setAvailData] = useState<AvailableItem[]>([])
 
-  const updateStoreWithIngredients = (updated: Ingredient[]) => {
-    const mapped = updated.map(i => ({
-      foodId: i.id,
-      name: i.name,
-      dispalyStatus: i.displayStatus
-    }))
-    setTranslationField("shopPromotionData", "en", "shopPromoteFoods", mapped)
-    setTranslationField("shopPromotionData", "fr", "shopPromoteFoods", mapped)
-  }
+  // fetch once on mount
+  useEffect(() => {
+    const fetchFoods = async (): Promise<void> => {
+      const res = await getAllFoods(token)
+      if (res && res.status === 200) {
+        setFoods(res.data.foods)
+      } else {
+        console.error("Failed to fetch foods:", res)
+      }
+    }
+    void fetchFoods()
+  }, [token])
 
-  const handleToggleStatus = (id: number, checked: boolean) => {
-    const updated = ingredientData.map(i =>
-      i.id === id ? { ...i, displayStatus: checked } : i
+  const handleAddIngredient = () => {
+    let updatedAvailData: AvailableItem
+
+    // Step 1: Check if the item is already in the availData list by item name
+    if (selected) {
+      // Check if the item name already exists in availData
+      const isItemExists = availData.some(item => item.name === selected.name)
+
+      if (isItemExists) {
+        // Show an error and return early if the item already exists in the table
+        toast.error("This food item is already in the list!")
+        setSelected(null)
+        setIngredientInput("")
+        return
+      }
+
+      // Add the selected item with "Inactive" status if not already added
+      updatedAvailData = {
+        id: selected.id,
+        name: selected.name ?? "",
+        status: true,
+        display: true
+      }
+    } else if (ingredientInput.trim()) {
+      // Step 2: Check if the custom food item entered by the user already exists
+      const isCustomItemExists = availData.some(
+        item => item.name.toLowerCase() === ingredientInput.toLowerCase()
+      )
+
+      if (isCustomItemExists) {
+        // If a custom item already exists in the table, show an error and return
+        toast.error("This custom food item is already in the list!")
+        setIngredientInput("")
+        return
+      }
+
+      // Step 3: Add the custom item with "Inactive" status if it doesn't exist
+      updatedAvailData = {
+        id: 0,
+        name: ingredientInput,
+        status: false,
+        display: true
+      }
+    } else {
+      toast.error("Please select or enter a food item first!")
+      return
+    }
+
+    // Step 4: Add the new item (either selected or custom) to the availData state
+    setAvailData([...availData, updatedAvailData])
+
+    // Save the updated availData into the daily tips store
+    setTranslationField("shopPromotionData", activeLang, "shopPromoteFoods", [
+      ...availData,
+      updatedAvailData
+    ])
+    setTranslationField(
+      "shopPromotionData",
+      activeLang === "en" ? "fr" : "en",
+      "shopPromoteFoods",
+      [...availData, updatedAvailData]
     )
-    setIngredientData(updated)
-    form.setValue("ingredientData", updated as [Ingredient, ...Ingredient[]], {
-      shouldValidate: true
-    })
-    updateStoreWithIngredients(updated)
+
+    // Optionally, show a success message
+    toast.success("Food item added successfully!")
+
+    // Reset selected food to null and clear the search bar after item is added
+    setSelected(null)
+    setIngredientInput("")
   }
 
-  const handleRemoveIngredient = (id: number) => {
-    const updated = ingredientData.filter(i => i.id !== id)
-    setIngredientData(updated)
-    form.setValue("ingredientData", updated as [Ingredient, ...Ingredient[]], {
-      shouldValidate: true
+  const handleToggleDisplayStatus = (name: string) => {
+    // Create a new updatedAvailData array by mapping over the existing availData
+    const updatedAvailData = availData.map(item => {
+      if (item.name === name) {
+        return { ...item, display: !item.display }
+      }
+      return item
     })
-    updateStoreWithIngredients(updated)
+
+    // Update the state with the new updatedAvailData
+    setAvailData(updatedAvailData)
+
+    // Optionally, update translations/store or any other global state
+    setTranslationField(
+      "shopPromotionData",
+      activeLang,
+      "shopPromoteFoods",
+      updatedAvailData
+    )
+    setTranslationField(
+      "shopPromotionData",
+      activeLang === "en" ? "fr" : "en",
+      "shopPromoteFoods",
+      updatedAvailData
+    )
+
+    // Optionally show a success message
+    toast.success("Display status updated successfully!")
   }
+
+  const handleDeleteAvailItem = (name: string): void => {
+    const updated = availData.filter(item => item.name !== name) // Filter out the item by name
+    setAvailData(updated) // Update state with the filtered list
+    setTranslationField(
+      "shopPromotionData",
+      activeLang,
+      "shopPromoteFoods",
+      updated
+    ) // Update store
+    setTranslationField(
+      "shopPromotionData",
+      activeLang === "en" ? "fr" : "en",
+      "shopPromoteFoods",
+      updated
+    )
+    toast.success("Food item deleted successfully!") // Show success message
+  }
+
+  // table columns for available ingredients and categories
+  const availColumns = [
+    {
+      header: "Item",
+      accessor: "name" as const
+    },
+    {
+      header: "Status",
+      accessor: (row: AvailableItem) => (
+        <Badge
+          className={
+            row.status
+              ? "bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors"
+              : "bg-gray-200 text-black text-xs px-2 py-1 rounded-md border border-gray-500 hover:bg-gray-100 transition-colors"
+          }
+        >
+          {row.status ? "Active" : "Inactive"}
+        </Badge>
+      )
+    },
+    {
+      header: "Display Status",
+      accessor: (row: AvailableItem) => (
+        <Switch
+          checked={row.display}
+          onCheckedChange={() => handleToggleDisplayStatus(row.name)}
+          className="scale-75"
+        />
+      )
+    },
+    {
+      header: "", // No header for delete column
+      accessor: (row: AvailableItem) => (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="w-8 h-8 border border-gray-300 hover:bg-gray-100"
+          onClick={() => {
+            handleDeleteAvailItem(row.name)
+          }}
+          title={"Delete"}
+        >
+          <Trash className="w-4 h-4 text-gray-500" />
+        </Button>
+      ),
+      id: "delete"
+    }
+  ]
 
   // Validate only inputs and select
   const FormSchema = z.object({
@@ -176,7 +342,7 @@ export default function ShopPromotionTab({
       .refine(val => !val || /^https?:\/\/.+$/.test(val), {
         message: translations.invalidWebsiteURL
       }),
-    ingredientData: z
+    availData: z
       .array(
         z.object({
           id: z.number(),
@@ -325,87 +491,9 @@ export default function ShopPromotionTab({
     onClose()
   }
 
-  const handleSelectFood = (item: {
-    id: number
-    name: string
-    displayStatus?: boolean
-  }) => {
-    const alreadyExists = ingredientData.some(i => i.id === item.id)
-    if (alreadyExists) {
-      toast.warning("Ingredient already added")
-      return
-    }
-
-    const newIngredient: Ingredient = {
-      id: item.id,
-      name: item.name,
-      displayStatus: item.displayStatus ?? false
-    }
-
-    const updated = [...ingredientData, newIngredient]
-    setIngredientData(updated)
-    form.setValue("ingredientData", updated as [Ingredient, ...Ingredient[]], {
-      shouldValidate: true
-    })
-
-    updateStoreWithIngredients(updated)
-  }
-
   function onSubmit(data: z.infer<typeof FormSchema>): void {
     addDailyTip()
   }
-
-  useEffect(() => {
-    form.reset(translationsData.shopPromotionData[activeLang])
-
-    const foods =
-      translationsData.shopPromotionData[activeLang]?.shopPromoteFoods ?? []
-    const mappedFoods: Ingredient[] = foods.map(f => ({
-      id: f.foodId,
-      name: "",
-      displayStatus: f.dispalyStatus
-    }))
-
-    // map name from `foods` list fetched from API
-    const enrichedFoods = mappedFoods.map(f => {
-      const foodInfo = Array.isArray(foodsList)
-        ? foodsList.find(food => food.id === f.id)
-        : undefined
-      return {
-        ...f,
-        name: foodInfo?.name ?? `Unknown (${f.id})`
-      }
-    })
-
-    setIngredientData(enrichedFoods)
-  }, [activeLang, form.reset, translationsData.shopPromotionData, foodsList])
-
-  const ingredientColumns: Array<Column<Ingredient>> = [
-    { header: "Ingredient Name", accessor: "name" },
-    {
-      header: "Main Ingredient",
-      accessor: row => (
-        <Switch
-          checked={row.displayStatus}
-          onCheckedChange={checked => handleToggleStatus(row.id, checked)}
-          className="scale-75"
-          style={{ minWidth: 28, minHeight: 16 }}
-        />
-      )
-    },
-    {
-      header: "Action",
-      accessor: row => (
-        <Button
-          variant="ghost"
-          className="text-red-500 hover:underline"
-          onClick={() => handleRemoveIngredient(row.id)}
-        >
-          Remove
-        </Button>
-      )
-    }
-  ]
 
   return (
     <div className="relative">
@@ -654,42 +742,60 @@ export default function ShopPromotionTab({
 
             <Separator />
 
-            {/* Select Featured Ingredients */}
-            <div className="flex flex-row gap-2 items-center mb-4">
-              <SearchBar
-                title="Select Food"
-                placeholder="Search for food..."
-                dataList={foodsList}
-                onSelect={handleSelectFood}
+            {/* Available Products */}
+
+            <div className="flex flex-col gap-4 pt-4">
+              <div className="flex flex-row flex-1 gap-2 items-center mb-2">
+                <div className="flex-1">
+                  <SearchBar
+                    title="Select Food"
+                    placeholder="Search for food..."
+                    dataList={foods.map(f => ({
+                      id: f.id,
+                      name: f.name ?? ""
+                    }))}
+                    value={ingredientInput}
+                    onInputChange={setIngredientInput}
+                    onSelect={item => {
+                      setSelected(item)
+                      setIngredientInput(item.name)
+                    }}
+                  />
+                </div>
+                <div className="flex items-end mt-7 h-full">
+                  <Button type="button" onClick={handleAddIngredient}>
+                    {translations.add}
+                  </Button>
+                </div>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="availData"
+                render={({ field }) => (
+                  <>
+                    <CustomTable
+                      columns={availColumns}
+                      data={availData.slice(
+                        (page - 1) * pageSize,
+                        page * pageSize
+                      )}
+                      page={page}
+                      pageSize={pageSize}
+                      totalItems={availData.length}
+                      pageSizeOptions={[1, 5, 10]}
+                      onPageChange={handlePageChange}
+                      onPageSizeChange={handlePageSizeChange}
+                    />
+                    {availData.length === 0 && (
+                      <FormMessage className="text-red-500">
+                        At least one ingredient category must be added
+                      </FormMessage>
+                    )}
+                  </>
+                )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="ingredientData"
-              render={({ field }) => (
-                <>
-                  <CustomTable
-                    columns={ingredientColumns}
-                    data={ingredientData.slice(
-                      (page - 1) * pageSize,
-                      page * pageSize
-                    )}
-                    page={page}
-                    pageSize={pageSize}
-                    totalItems={ingredientData.length}
-                    pageSizeOptions={[1, 5, 10]}
-                    onPageChange={handlePageChange}
-                    onPageSizeChange={handlePageSizeChange}
-                  />
-                  {ingredientData.length === 0 && (
-                    <FormMessage className="text-red-500">
-                      At least one ingredient/category must be added.
-                    </FormMessage>
-                  )}
-                </>
-              )}
-            />
 
             <Separator />
 
