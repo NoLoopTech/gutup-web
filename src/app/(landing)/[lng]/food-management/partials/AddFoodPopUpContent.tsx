@@ -62,18 +62,18 @@ const seasonOptions: Record<string, Option[]> = {
     { value: "December", label: "December" }
   ],
   fr: [
-    { value: "january", label: "Janvier" },
-    { value: "february", label: "Février" },
-    { value: "march", label: "Mars" },
-    { value: "april", label: "Avril" },
-    { value: "may", label: "Mai" },
-    { value: "june", label: "Juin" },
-    { value: "july", label: "Juillet" },
-    { value: "august", label: "Août" },
-    { value: "september", label: "Septembre" },
-    { value: "october", label: "Octobre" },
-    { value: "november", label: "Novembre" },
-    { value: "december", label: "Décembre" }
+    { value: "January", label: "Janvier" },
+    { value: "February", label: "Février" },
+    { value: "March", label: "Mars" },
+    { value: "April", label: "Avril" },
+    { value: "May", label: "Mai" },
+    { value: "June", label: "Juin" },
+    { value: "July", label: "Juillet" },
+    { value: "August", label: "Août" },
+    { value: "September", label: "Septembre" },
+    { value: "October", label: "Octobre" },
+    { value: "November", label: "Novembre" },
+    { value: "December", label: "Décembre" }
   ]
 }
 const countriesOptions: Record<string, Option[]> = {
@@ -94,14 +94,14 @@ const countriesOptions: Record<string, Option[]> = {
 export default function AddFoodPopUpContent({
   translations,
   onClose,
-  getFoods // <-- add this prop
+  getFoods
 }: {
   translations: translationsTypes
   onClose: () => void
-  getFoods: () => void // <-- add this prop type
+  getFoods: () => void
 }): JSX.Element {
   const { translateText } = useTranslation()
-  const { activeLang, foodData, setTranslationField } = useFoodStore() as any
+  const { activeLang, foodData, setTranslationField, allowMultiLang } = useFoodStore() as any
   const [isTranslating, setIsTranslating] = useState(false)
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
   const { data: session } = useSession()
@@ -216,18 +216,18 @@ export default function AddFoodPopUpContent({
     }
   }
   const seasonSyncMap = [
-    { en: "January", fr: "january", frLabel: "Janvier" },
-    { en: "February", fr: "february", frLabel: "Février" },
-    { en: "March", fr: "march", frLabel: "Mars" },
-    { en: "April", fr: "april", frLabel: "Avril" },
-    { en: "May", fr: "may", frLabel: "Mai" },
-    { en: "June", fr: "june", frLabel: "Juin" },
-    { en: "July", fr: "july", frLabel: "Juillet" },
-    { en: "August", fr: "august", frLabel: "Août" },
-    { en: "September", fr: "september", frLabel: "Septembre" },
-    { en: "October", fr: "october", frLabel: "Octobre" },
-    { en: "November", fr: "november", frLabel: "Novembre" },
-    { en: "December", fr: "december", frLabel: "Décembre" }
+    { en: "January", fr: "Janvier", frLabel: "Janvier" },
+    { en: "February", fr: "Février", frLabel: "Février" },
+    { en: "March", fr: "Mars", frLabel: "Mars" },
+    { en: "April", fr: "Avril", frLabel: "Avril" },
+    { en: "May", fr: "Mai", frLabel: "Mai" },
+    { en: "June", fr: "Juin", frLabel: "Juin" },
+    { en: "July", fr: "Juillet", frLabel: "Juillet" },
+    { en: "August", fr: "Août", frLabel: "Août" },
+    { en: "September", fr: "Septembre", frLabel: "Septembre" },
+    { en: "October", fr: "Octobre", frLabel: "Octobre" },
+    { en: "November", fr: "Novembre", frLabel: "Novembre" },
+    { en: "December", fr: "Décembre", frLabel: "Décembre" }
   ]
 
   // Function to update select fields (category, season, country)
@@ -475,7 +475,8 @@ export default function AddFoodPopUpContent({
             healthBenefit: b,
             healthBenefitFR: foodData.fr?.benefits?.[i] ?? ""
           })
-        )
+        ),
+        allowMultiLang
       }
 
       const response = await postNewFood(token ?? "", foodDto)
