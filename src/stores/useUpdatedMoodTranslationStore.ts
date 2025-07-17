@@ -52,7 +52,7 @@ function isLangDataEmpty<T>(data: LangData<T>): boolean {
   return Object.keys(data.en).length === 0 && Object.keys(data.fr).length === 0
 }
 
-export const useUpdatedTranslationStore = create<UpdatedStoreState>()(
+export const useUpdatedMoodTranslationStore = create<UpdatedStoreState>()(
   persist(
     (set, get) => ({
       translationsData: {

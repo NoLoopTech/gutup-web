@@ -26,7 +26,7 @@ import {
   uploadImageToFirebase
 } from "@/lib/firebaseImageUtils"
 import EditMoodMainPopUp from "./EditMoodMainPopup"
-import { useUpdatedTranslationStore } from "@/stores/useUpdatedTranslationStore"
+import { useUpdatedMoodTranslationStore } from "@/stores/useUpdatedMoodTranslationStore"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,7 +81,8 @@ export default function MoodsPage({
     resetTranslations
   } = useMoodStore()
 
-  const { setUpdatedField, resetUpdatedStore } = useUpdatedTranslationStore()
+  const { setUpdatedField, resetUpdatedStore } =
+    useUpdatedMoodTranslationStore()
 
   // handle get users
   const getMoods = async (): Promise<void> => {
@@ -182,6 +183,13 @@ export default function MoodsPage({
   }
 
   const handleAddMood = async () => {
+    const previousImage =
+      activeTab === "Food"
+        ? translationsData.foodData.en.image
+        : activeTab === "Recipe"
+        ? translationsData.recipeData.en.image
+        : ""
+
     try {
       setIsLoading(true)
       let uploadedImageUrl: string | null = null
@@ -217,8 +225,8 @@ export default function MoodsPage({
         resetUpdatedStore()
       } else {
         toast.error("Failed to add mood!")
-        if (uploadedImageUrl) {
-          await deleteImageFromFirebase(uploadedImageUrl)
+        if (previousImage) {
+          await deleteImageFromFirebase(previousImage)
         }
       }
     } catch (error) {
@@ -238,7 +246,7 @@ export default function MoodsPage({
 
       const { activeTab, activeLang } = useMoodStore.getState()
       const { translationsData: updatedTranslations } =
-        useUpdatedTranslationStore.getState()
+        useUpdatedMoodTranslationStore.getState()
 
       let uploadedImageUrl: string | null = null
 
@@ -255,7 +263,7 @@ export default function MoodsPage({
 
       // Prepare request body
       const { translationsData: finalUpdatedTranslations } =
-        useUpdatedTranslationStore.getState()
+        useUpdatedMoodTranslationStore.getState()
 
       const requestBody: AddMoodRequestBody = {
         translationsData: finalUpdatedTranslations
@@ -270,7 +278,7 @@ export default function MoodsPage({
         getMoods()
 
         // Delete old image from Firebase if it exists
-        if (previousImageUrl) {
+        if (isImageChanged && previousImageUrl) {
           await deleteImageFromFirebase(previousImageUrl)
           setPreviousImageUrl(null)
         }

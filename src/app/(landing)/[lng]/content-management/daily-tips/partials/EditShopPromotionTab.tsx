@@ -38,6 +38,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Trash } from "lucide-react"
 import { getAllFoods } from "@/app/api/foods"
+import { useUpdateDailyTipStore } from "@/stores/useUpdateDailyTipStore"
 
 interface Food {
   id: number
@@ -65,6 +66,7 @@ type FieldNames =
   | "shopCategory"
   | "mobileNumber"
   | "email"
+  | "mapsPin"
   | "facebook"
   | "instagram"
   | "website"
@@ -82,19 +84,19 @@ const reason: Record<string, Option[]> = {
   ]
 }
 
-export default function ShopPromotionTab({
+export default function EditShopPromotionTab({
   translations,
   onClose,
   token,
   userName,
-  addDailyTip,
+  editDailyTip,
   isLoading
 }: {
   translations: translationsTypes
   token: string
   onClose: () => void
   userName: string
-  addDailyTip: () => void
+  editDailyTip: () => void
   isLoading: boolean
 }): JSX.Element {
   const [page, setPage] = React.useState(1)
@@ -112,6 +114,16 @@ export default function ShopPromotionTab({
   const [ingredientInput, setIngredientInput] = useState<string>("")
   const [selected, setSelected] = useState<Food | null>(null)
   const [availData, setAvailData] = useState<AvailableItem[]>([])
+
+  const {
+    translationsData: updatedTranslations,
+    setUpdatedField,
+    resetUpdatedStore
+  } = useUpdateDailyTipStore()
+
+  const hasShopPromotionDataUpdates =
+    Object.keys(updatedTranslations.shopPromotionData.en).length > 0 ||
+    Object.keys(updatedTranslations.shopPromotionData.fr).length > 0
 
   // fetch once on mount
   useEffect(() => {
@@ -189,6 +201,17 @@ export default function ShopPromotionTab({
       [...availData, updatedAvailData]
     )
 
+    setUpdatedField("shopPromotionData", activeLang, "shopPromoteFoods", [
+      ...availData,
+      updatedAvailData
+    ])
+    setUpdatedField(
+      "shopPromotionData",
+      activeLang === "en" ? "fr" : "en",
+      "shopPromoteFoods",
+      [...availData, updatedAvailData]
+    )
+
     // Optionally, show a success message
     toast.success("Food item added successfully!")
 
@@ -222,6 +245,31 @@ export default function ShopPromotionTab({
       "shopPromoteFoods",
       updatedAvailData
     )
+    setTranslationField(
+      "shopPromotionData",
+      activeLang,
+      "shopPromoteFoods",
+      updatedAvailData
+    )
+    setTranslationField(
+      "shopPromotionData",
+      activeLang === "en" ? "fr" : "en",
+      "shopPromoteFoods",
+      updatedAvailData
+    )
+
+    setUpdatedField(
+      "shopPromotionData",
+      activeLang,
+      "shopPromoteFoods",
+      updatedAvailData
+    )
+    setUpdatedField(
+      "shopPromotionData",
+      activeLang === "en" ? "fr" : "en",
+      "shopPromoteFoods",
+      updatedAvailData
+    )
 
     // Optionally show a success message
     toast.success("Display status updated successfully!")
@@ -237,6 +285,19 @@ export default function ShopPromotionTab({
       updated
     ) // Update store
     setTranslationField(
+      "shopPromotionData",
+      activeLang === "en" ? "fr" : "en",
+      "shopPromoteFoods",
+      updated
+    )
+
+    setUpdatedField(
+      "shopPromotionData",
+      activeLang,
+      "shopPromoteFoods",
+      updated
+    ) // Update store
+    setUpdatedField(
       "shopPromotionData",
       activeLang === "en" ? "fr" : "en",
       "shopPromoteFoods",
@@ -312,6 +373,7 @@ export default function ShopPromotionTab({
       .string()
       .nonempty(translations.required)
       .email({ message: translations.invalidEmailAddress }),
+    mapsPin: z.string().min(1, { message: translations.required }),
     facebook: z
       .string()
       .optional()
@@ -330,13 +392,12 @@ export default function ShopPromotionTab({
       .refine(val => !val || /^https?:\/\/.+$/.test(val), {
         message: translations.invalidWebsiteURL
       }),
-    shopPromoteFoods: z
+    availData: z
       .array(
         z.object({
           id: z.number(),
           name: z.string(),
-          status: z.boolean(),
-          display: z.boolean()
+          displayStatus: z.boolean()
         })
       )
       .nonempty(translations.atLeastOneIngredientCategoryMustBeAdded),
@@ -344,10 +405,12 @@ export default function ShopPromotionTab({
   })
 
   const handleInputChange = (fieldName: FieldNames, value: string) => {
-    form.setValue(fieldName, value)
+    form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
     setTranslationField("shopPromotionData", activeLang, fieldName, value)
+    setUpdatedField("shopPromotionData", activeLang, fieldName, value)
     if (fieldName !== "subDescription" || "shopCategory") {
       setTranslationField("shopPromotionData", "fr", fieldName, value)
+      setUpdatedField("shopPromotionData", "fr", fieldName, value)
     }
   }
 
@@ -357,6 +420,7 @@ export default function ShopPromotionTab({
         setIsTranslating(true)
         const translated = await translateText(value)
         setTranslationField("shopPromotionData", "fr", fieldName, translated)
+        setUpdatedField("shopPromotionData", "fr", fieldName, translated)
       } finally {
         setIsTranslating(false)
       }
@@ -367,6 +431,7 @@ export default function ShopPromotionTab({
   const handleReasonsChange = (value: string) => {
     form.setValue("reason", value)
     setTranslationField("shopPromotionData", activeLang, "reason", value)
+    setUpdatedField("shopPromotionData", activeLang, "reason", value)
 
     const current = reason[activeLang]
     const oppositeLang = activeLang === "en" ? "fr" : "en"
@@ -375,6 +440,12 @@ export default function ShopPromotionTab({
     const index = current.findIndex(opt => opt.value === value)
     if (index !== -1) {
       setTranslationField(
+        "shopPromotionData",
+        oppositeLang,
+        "reason",
+        opposite[index].value
+      )
+      setUpdatedField(
         "shopPromotionData",
         oppositeLang,
         "reason",
@@ -420,6 +491,9 @@ export default function ShopPromotionTab({
         })
         setTranslationField("shopPromotionData", "en", "image", imageUrl)
         setTranslationField("shopPromotionData", "fr", "image", imageUrl)
+
+        setUpdatedField("shopPromotionData", "en", "image", imageUrl)
+        setUpdatedField("shopPromotionData", "fr", "image", imageUrl)
 
         setPreviewUrls([imageUrl]) // For single image preview
       } catch (error) {
@@ -474,14 +548,17 @@ export default function ShopPromotionTab({
 
     // clear store and session
     await resetTranslations()
+    await resetUpdatedStore()
+
     sessionStorage.removeItem("daily-tip-storage")
+    sessionStorage.removeItem("update-daily-tip-storage")
 
     // Close the modal or section
     onClose()
   }
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
-    addDailyTip()
+    editDailyTip()
   }
 
   return (
@@ -760,7 +837,7 @@ export default function ShopPromotionTab({
 
               <FormField
                 control={form.control}
-                name="shopPromoteFoods"
+                name="availData"
                 render={({ field }) => (
                   <>
                     <CustomTable
@@ -825,7 +902,10 @@ export default function ShopPromotionTab({
             >
               {translations.cancel}
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button
+              type="submit"
+              disabled={isLoading || !hasShopPromotionDataUpdates}
+            >
               {isLoading ? (
                 <div className="flex gap-2 items-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
@@ -834,7 +914,7 @@ export default function ShopPromotionTab({
               ) : (
                 translations.save
               )}
-            </Button>
+            </Button>{" "}
           </div>
         </form>
       </Form>

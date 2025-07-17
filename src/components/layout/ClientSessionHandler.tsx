@@ -25,6 +25,7 @@ const ClientSessionHandler = () => {
       if (pathname !== "/content-management/daily-tips/") {
         await dailyTipResetTranslations()
         sessionStorage.removeItem("daily-tip-storage")
+        sessionStorage.removeItem("update-daily-tip-storage")
       }
     }
 

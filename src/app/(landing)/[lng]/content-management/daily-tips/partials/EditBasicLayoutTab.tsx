@@ -30,6 +30,7 @@ import { useDailyTipStore } from "@/stores/useDailyTipStore"
 import { Checkbox } from "@/components/ui/checkbox"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { toast } from "sonner"
+import { useUpdateDailyTipStore } from "@/stores/useUpdateDailyTipStore"
 
 interface Option {
   value: string
@@ -56,16 +57,16 @@ const concerns: Record<string, Option[]> = {
   ]
 }
 
-export default function BasicLayoutTab({
+export default function EditBasicLayoutTab({
   translations,
   onClose,
-  addDailyTip,
+  editDailyTip,
   userName,
   isLoading
 }: {
   translations: translationsTypes
   onClose: () => void
-  addDailyTip: () => void
+  editDailyTip: () => void
   userName: string
   isLoading: boolean
 }): JSX.Element {
@@ -78,6 +79,16 @@ export default function BasicLayoutTab({
   } = useDailyTipStore()
   const [isTranslating, setIsTranslating] = useState(false)
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
+
+  const {
+    translationsData: updatedTranslations,
+    setUpdatedField,
+    resetUpdatedStore
+  } = useUpdateDailyTipStore()
+
+  const hasBasicLayoutDataUpdates =
+    Object.keys(updatedTranslations.basicLayoutData.en).length > 0 ||
+    Object.keys(updatedTranslations.basicLayoutData.fr).length > 0
 
   // Validation schema including inputs & textareas
   const FormSchema = z.object({
@@ -126,6 +137,7 @@ export default function BasicLayoutTab({
   const handleInputChange = (fieldName: FieldNames, value: string) => {
     form.setValue(fieldName, value)
     setTranslationField("basicLayoutData", activeLang, fieldName, value)
+    setUpdatedField("basicLayoutData", activeLang, fieldName, value)
   }
 
   const handleInputBlur = async (fieldName: FieldNames, value: string) => {
@@ -134,6 +146,7 @@ export default function BasicLayoutTab({
         setIsTranslating(true)
         const translated = await translateText(value)
         setTranslationField("basicLayoutData", "fr", fieldName, translated)
+        setUpdatedField("basicLayoutData", "fr", fieldName, translated)
       } finally {
         setIsTranslating(false)
       }
@@ -159,6 +172,7 @@ export default function BasicLayoutTab({
   const handleConcernsChange = (value: string) => {
     form.setValue("concern", value)
     setTranslationField("basicLayoutData", activeLang, "concern", value)
+    setUpdatedField("basicLayoutData", activeLang, "concern", value)
 
     const current = concerns[activeLang]
     const oppositeLang = activeLang === "en" ? "fr" : "en"
@@ -167,6 +181,12 @@ export default function BasicLayoutTab({
     const index = current.findIndex(opt => opt.value === value)
     if (index !== -1) {
       setTranslationField(
+        "basicLayoutData",
+        oppositeLang,
+        "concern",
+        opposite[index].value
+      )
+      setUpdatedField(
         "basicLayoutData",
         oppositeLang,
         "concern",
@@ -193,6 +213,9 @@ export default function BasicLayoutTab({
         setTranslationField("basicLayoutData", "en", "image", imageUrl)
         setTranslationField("basicLayoutData", "fr", "image", imageUrl)
 
+        setUpdatedField("basicLayoutData", "en", "image", imageUrl)
+        setUpdatedField("basicLayoutData", "fr", "image", imageUrl)
+
         setPreviewUrls([imageUrl]) // For single image preview
       } catch (error) {
         toast.error("Image upload failed. Please try again.")
@@ -218,7 +241,10 @@ export default function BasicLayoutTab({
     form.reset(translationsData.basicLayoutData[activeLang])
     // clear store and session
     await resetTranslations()
+    await resetUpdatedStore()
+
     sessionStorage.removeItem("daily-tip-storage")
+    sessionStorage.removeItem("update-daily-tip-storage")
 
     // Clear preview image state
     setPreviewUrls([])
@@ -227,7 +253,7 @@ export default function BasicLayoutTab({
   }
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
-    addDailyTip()
+    editDailyTip()
   }
 
   return (
@@ -431,6 +457,19 @@ export default function BasicLayoutTab({
                           "share",
                           checked
                         )
+
+                        setUpdatedField(
+                          "basicLayoutData",
+                          "en",
+                          "share",
+                          checked
+                        )
+                        setUpdatedField(
+                          "basicLayoutData",
+                          "fr",
+                          "share",
+                          checked
+                        )
                       }}
                     />{" "}
                     <FormLabel
@@ -479,7 +518,10 @@ export default function BasicLayoutTab({
             <Button variant="outline" onClick={handleReset}>
               {translations.cancel}
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button
+              type="submit"
+              disabled={isLoading || !hasBasicLayoutDataUpdates}
+            >
               {isLoading ? (
                 <div className="flex gap-2 items-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />

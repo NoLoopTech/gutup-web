@@ -98,15 +98,17 @@ interface FoodData {
   foodName?: string
   description?: string
   shopCategory?: string
+  image?: string
 }
 
 interface RecipeData {
   mood?: string
   recipe?: string
   description?: string
+  image?: string
 }
 
-interface TranslationsData {
+export interface TranslationsData {
   quoteData?: Record<LanguageCode, QuoteData>
   foodData?: Record<LanguageCode, FoodData>
   recipeData?: Record<LanguageCode, RecipeData>
