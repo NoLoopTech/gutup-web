@@ -3,9 +3,8 @@ import axios from "axios"
 import { useState } from "react"
 
 interface LocationDropdownProps {
-  name: string
   onSelect: (selectedOptions: string[]) => void
-  errorMessage: string
+  errorMessage?: string
   selectedOption: OptionType | null
   onSelectLocation: (selectedOptions: OptionType) => void
 }
@@ -16,7 +15,6 @@ interface OptionType {
 }
 
 const LocationDropdown: React.FC<LocationDropdownProps> = ({
-  name,
   onSelect,
   errorMessage,
   selectedOption,
@@ -24,20 +22,15 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({
 }) => {
   const [localSelectedOption, setLocalSelectedOption] =
     useState<OptionType | null>(selectedOption)
+
   const fetchLocations = async (inputValue: string) => {
-    if (!inputValue) {
-      return []
-    }
+    if (!inputValue) return []
 
     try {
       const response = await axios.get(
-        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${inputValue}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+        `/api/places/autocomplete?input=${inputValue}`
       )
-
-      return response.data.predictions.map((place: any) => ({
-        label: place.description,
-        value: place.place_id
-      }))
+      return response.data.results
     } catch (error) {
       console.error("Error fetching locations:", error)
       return []

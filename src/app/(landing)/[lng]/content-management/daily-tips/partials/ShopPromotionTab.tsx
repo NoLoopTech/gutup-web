@@ -39,7 +39,6 @@ import { Badge } from "@/components/ui/badge"
 import { Trash } from "lucide-react"
 import { getAllFoods } from "@/app/api/foods"
 import LocationDropdown from "@/components/Shared/dropdown/LocationDropdown"
-import axios from "axios"
 
 interface Food {
   id: number
@@ -501,27 +500,55 @@ export default function ShopPromotionTab({
     const placeId = value[0]
 
     try {
-      const response = await axios.get(
-        `https://maps.googleapis.com/maps/api/place/details/json?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&place_id=${placeId}`
-      )
+      const res = await fetch(`/api/places/details?placeId=${placeId}`)
+      const data = await res.json()
 
-      const addressComponents = response.data.result.address_components
+      console.log("details", data)
 
-      const country =
-        addressComponents.find((c: { types: string[]; long_name: string }) =>
-          c.types.includes("country")
-        )?.long_name || ""
+      if (data.location) {
+        const { name, country, lat, lng } = data.location
 
-      const selectedLocation = {
-        value: placeId,
-        label: `${response.data.result.name}, ${country}`
+        const selectedLocation = {
+          value: placeId,
+          label: `${name}, ${country}`,
+          lat: lat,
+          lng: lng
+        }
+
+        setSelectedLocationName(selectedLocation)
+
+        // Set to form
+        form.setValue("shopLocation", selectedLocation.label)
+
+        // Set to translations store
+        setTranslationField(
+          "shopPromotionData",
+          activeLang,
+          "shopLocation",
+          selectedLocation.label
+        )
+        setTranslationField(
+          "shopPromotionData",
+          activeLang === "en" ? "fr" : "en",
+          "shopLocation",
+          selectedLocation.label
+        )
+
+        setTranslationField(
+          "shopPromotionData",
+          activeLang,
+          "shopLocationLatLng",
+          selectedLocation
+        )
+        setTranslationField(
+          "shopPromotionData",
+          activeLang === "en" ? "fr" : "en",
+          "shopLocationLatLng",
+          selectedLocation
+        )
+      } else {
+        console.error("Invalid location data:", data)
       }
-
-      // Update the dropdown state
-      setSelectedLocationName(selectedLocation)
-
-      // Save location details to localStorage
-      localStorage.setItem("selectedLocation", JSON.stringify(selectedLocation))
     } catch (error) {
       console.error("Error fetching location details:", error)
     }
@@ -604,12 +631,10 @@ export default function ShopPromotionTab({
                   <FormItem className="flex-1 mb-1">
                     <FormLabel>{translations.shopLocation}</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder={translations.enterShopLocation}
-                        {...field}
-                        onChange={e =>
-                          handleInputChange("shopLocation", e.target.value)
-                        }
+                      <LocationDropdown
+                        selectedOption={selectedLocationName}
+                        onSelect={handleLocationSelect}
+                        onSelectLocation={handleLocationName}
                       />
                     </FormControl>
                     <FormMessage />
@@ -617,25 +642,6 @@ export default function ShopPromotionTab({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="shopLocation"
-                render={({ field }) => (
-                  <FormItem className="flex-1 mb-1">
-                    <FormLabel>{translations.shopLocation}</FormLabel>
-                    <FormControl>
-                      <LocationDropdown
-                        name="location"
-                        selectedOption={selectedLocationName}
-                        onSelect={handleLocationSelect}
-                        onSelectLocation={handleLocationName}
-                        errorMessage={""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               {/* Category */}
               <FormField
                 control={form.control}
