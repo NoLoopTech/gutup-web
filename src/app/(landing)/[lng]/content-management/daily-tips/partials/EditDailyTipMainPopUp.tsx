@@ -1,0 +1,285 @@
+"use client"
+
+import React, { useEffect, useState } from "react"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { loadLanguage } from "@/../../src/i18n/locales"
+import {
+  defaultTranslations,
+  type translationsTypes
+} from "@/types/dailyTipTypes"
+import { useDailyTipStore } from "@/stores/useDailyTipStore"
+import EditDailyTipPopUp from "./EditDailyTipPopUp"
+import { getDailyTipById } from "@/app/api/daily-tip"
+
+interface Props {
+  open: boolean
+  onClose: () => void
+  token: string
+  userName: string
+  editDailyTip: () => void
+  isLoading: boolean
+  tipId: number
+}
+
+export default function EditDailyTipMainPopUp({
+  open,
+  onClose,
+  token,
+  userName,
+  editDailyTip,
+  isLoading,
+  tipId
+}: Props): JSX.Element {
+  const {
+    allowMultiLang,
+    setAllowMultiLang,
+    activeLang,
+    setActiveLang,
+    setActiveTab,
+    setTranslationField
+  } = useDailyTipStore()
+  const [translations, setTranslations] = useState<Partial<translationsTypes>>(
+    {}
+  )
+  // Load translations based on the selected language
+  useEffect(() => {
+    const loadTranslations = async () => {
+      const langData = await loadLanguage(activeLang, "dailyTip")
+      setTranslations(langData)
+    }
+
+    loadTranslations()
+  }, [activeLang])
+
+  // handle get daily tip by id
+  const handleDailyTipById = async () => {
+    try {
+      const res = await getDailyTipById(token, tipId)
+
+      console.log(res.data)
+
+      if (res.status === 200) {
+        const data = res.data
+
+        setAllowMultiLang(data.allowMultiLang)
+        setActiveTab(
+          data.type === "basic"
+            ? "basicForm"
+            : data.type === "video"
+            ? "videoForm"
+            : "shopPromote"
+        )
+
+        if (data.type === "basic") {
+          setTranslationField("basicLayoutData", "en", "concern", data.concern)
+          setTranslationField(
+            "basicLayoutData",
+            "fr",
+            "concern",
+            data.concernFR
+          )
+
+          setTranslationField("basicLayoutData", "en", "title", data.title)
+          setTranslationField("basicLayoutData", "fr", "title", data.typeFR)
+
+          setTranslationField(
+            "basicLayoutData",
+            "en",
+            "subTitleOne",
+            data.basicForm.subTitleOne
+          )
+          setTranslationField(
+            "basicLayoutData",
+            "fr",
+            "subTitleOne",
+            data.basicForm.subTitleOneFR
+          )
+
+          setTranslationField(
+            "basicLayoutData",
+            "en",
+            "subDescriptionOne",
+            data.basicForm.subDescOne
+          )
+          setTranslationField(
+            "basicLayoutData",
+            "fr",
+            "subDescriptionOne",
+            data.basicForm.subDescOneFR
+          )
+
+          setTranslationField(
+            "basicLayoutData",
+            "en",
+            "subTitleTwo",
+            data.basicForm.subTitleTwo
+          )
+          setTranslationField(
+            "basicLayoutData",
+            "fr",
+            "subTitleTwo",
+            data.basicForm.subTitleTwoFR
+          )
+
+          setTranslationField(
+            "basicLayoutData",
+            "en",
+            "subDescriptionTwo",
+            data.basicForm.subDescTwo
+          )
+          setTranslationField(
+            "basicLayoutData",
+            "fr",
+            "subDescriptionTwo",
+            data.basicForm.subDescTwoFR
+          )
+
+          setTranslationField(
+            "basicLayoutData",
+            "en",
+            "share",
+            data.basicForm.share
+          )
+          setTranslationField(
+            "basicLayoutData",
+            "fr",
+            "share",
+            data.basicForm.share
+          )
+
+          setTranslationField(
+            "basicLayoutData",
+            "en",
+            "image",
+            data.basicForm.image
+          )
+          setTranslationField(
+            "basicLayoutData",
+            "fr",
+            "image",
+            data.basicForm.image
+          )
+        } else if (data.type === "video") {
+          setTranslationField("videoTipData", "en", "concern", data.concern)
+          setTranslationField("videoTipData", "fr", "concern", data.concernFR)
+
+          setTranslationField("videoTipData", "en", "title", data.title)
+          setTranslationField("videoTipData", "fr", "title", data.typeFR)
+
+          setTranslationField(
+            "videoTipData",
+            "en",
+            "subTitle",
+            data.videoForm.subTitle
+          )
+          setTranslationField(
+            "videoTipData",
+            "fr",
+            "subTitle",
+            data.videoForm.subTitleFR
+          )
+
+          setTranslationField(
+            "videoTipData",
+            "en",
+            "subDescription",
+            data.videoForm.subDesc
+          )
+          setTranslationField(
+            "videoTipData",
+            "fr",
+            "subDescription",
+            data.videoForm.subDescFR
+          )
+
+          setTranslationField(
+            "videoTipData",
+            "en",
+            "videoLink",
+            data.videoForm.videoUrl
+          )
+          setTranslationField(
+            "videoTipData",
+            "fr",
+            "videoLink",
+            data.videoForm.videoUrl
+          )
+        }
+      }
+    } catch (error) {
+      console.error("Error:", error)
+    }
+  }
+
+  useEffect(() => {
+    if (tipId > 0) {
+      handleDailyTipById()
+    }
+  }, [tipId])
+
+  // Language toggle handler
+  const handleLanguageToggle = (val: boolean) => {
+    setAllowMultiLang(val)
+    if (!val) setActiveLang("en")
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
+        <div
+          className="overflow-y-auto p-2 h-full"
+          style={{
+            scrollbarWidth: "none",
+            msOverflowStyle: "none"
+          }}
+        >
+          <DialogTitle>
+            {translations.addDailyTipTitle || "Add New Daily Tip"}
+          </DialogTitle>
+
+          <Tabs
+            value={activeLang}
+            onValueChange={val => setActiveLang(val as "en" | "fr")}
+            className="w-full"
+          >
+            <div className="flex flex-col gap-4 justify-between items-start mt-4 mb-6 sm:flex-row sm:items-center">
+              <TabsList>
+                <TabsTrigger value="en">{translations.english}</TabsTrigger>
+                {allowMultiLang && (
+                  <TabsTrigger value="fr">{translations.french}</TabsTrigger>
+                )}
+              </TabsList>
+
+              <div className="flex gap-2 items-center">
+                <Switch
+                  id="multi-lang"
+                  checked={allowMultiLang}
+                  onCheckedChange={handleLanguageToggle}
+                  disabled
+                />
+                <Label htmlFor="multi-lang" className="text-Primary-300">
+                  {translations.allowMultiLang}
+                </Label>
+              </div>
+            </div>
+
+            {/* English Tab Content */}
+            <TabsContent value={activeLang}>
+              <EditDailyTipPopUp
+                onClose={onClose}
+                translations={{ ...defaultTranslations, ...translations }}
+                token={token}
+                userName={userName}
+                editDailyTip={editDailyTip}
+                isLoading={isLoading}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}

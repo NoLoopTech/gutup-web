@@ -9,18 +9,37 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
+import sampleImage from "@/../../public/images/sample-image.png"
 import { MoreVertical, ThumbsDown, ThumbsUp } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
-import sampleImage from "@/../../public/images/sample-image.png"
-import AddDailyTipMainPopUp from "./AddDailyTipMainPopUp.tsx"
-import { AddNewDailyTips, getAllDailyTips } from "@/app/api/daily-tip"
+import AddDailyTipMainPopUp from "./AddDailyTipMainPopUp"
+import {
+  AddNewDailyTips,
+  deleteDailyTipById,
+  getAllDailyTips,
+  updateDailyTip
+} from "@/app/api/daily-tip"
 import { useDailyTipStore } from "@/stores/useDailyTipStore"
 import {
   deleteImageFromFirebase,
   uploadImageToFirebase
 } from "@/lib/firebaseImageUtils"
 import { toast } from "sonner"
+import EditDailyTipMainPopUp from "./EditDailyTipMainPopUp"
+import { useUpdateDailyTipStore } from "@/stores/useUpdateDailyTipStore"
+import { EditDailyTipTypes } from "@/types/dailyTipTypes"
+import dayjs from "dayjs"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -54,20 +73,41 @@ export default function DailyTipsPage({
   const [pageSize, setPageSize] = useState<number>(10)
   const [dailyTips, setDailyTips] = useState<DailyTipsDataType[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isOpenEditDailyTip, setIsOpenEditDailyTip] = useState<boolean>(false)
+  const [selectedTipId, setSelectedTipId] = useState<number>(0)
+  const [previousImageUrl, setPreviousImageUrl] = useState<string | null>(null)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
 
-  const {
-    activeLang,
-    translationsData,
-    activeTab,
-    setTranslationField,
-    resetTranslations
-  } = useDailyTipStore()
+  const { activeLang, translationsData, activeTab, resetTranslations } =
+    useDailyTipStore()
+
+  const { resetUpdatedStore } = useUpdateDailyTipStore()
 
   const handleOpenAddTip = (): void => {
     setIsOpenAddTip(true)
   }
   const handleCloseAddTip = (): void => {
     setIsOpenAddTip(false)
+  }
+
+  const handleOpenEditDailyTip = (id: number): void => {
+    setSelectedTipId(id)
+    setIsOpenEditDailyTip(true)
+  }
+  const handleCloseEditDailyTip = (): void => {
+    setIsOpenEditDailyTip(false)
+    setSelectedTipId(0)
+  }
+
+  // handle open delete confirmation popup
+  const handleOpenDeleteConfirmationPopup = (id: number): void => {
+    setSelectedTipId(id)
+    setConfirmDeleteOpen(true)
+  }
+
+  // handle close delete confirmation popup
+  const handleCloseDeleteConfirmationPopup = (): void => {
+    setConfirmDeleteOpen(false)
   }
 
   const getDailyTips = async () => {
@@ -127,95 +167,10 @@ export default function DailyTipsPage({
       fileName
     )
 
-    if (activeTab === "basicForm") {
-      setTranslationField("basicLayoutData", activeLang, "image", uploadedUrl)
-    } else if (activeTab === "shopPromote") {
-      setTranslationField("shopPromotionData", activeLang, "image", uploadedUrl)
-    }
-
     return uploadedUrl
   }
 
   const handleAddDailyTip = async () => {
-    // Get fresh state after image update
-    const {
-      allowMultiLang: currentAllowMultiLang,
-      activeLang: currentLang,
-      activeTab: currentTab,
-      translationsData: currentTranslations
-    } = useDailyTipStore.getState()
-
-    const requestBody = {
-      allowMultiLang: currentAllowMultiLang,
-      title:
-        currentTab === "basicForm"
-          ? currentTranslations.basicLayoutData.en.title
-          : currentTab === "videoForm"
-          ? currentTranslations.videoTipData.en.title
-          : "",
-      titleFR:
-        currentTab === "basicForm"
-          ? currentTranslations.basicLayoutData.fr.title
-          : currentTab === "videoForm"
-          ? currentTranslations.videoTipData.fr.title
-          : "",
-      type:
-        currentTab === "basicForm"
-          ? "basic"
-          : currentTab === "videoForm"
-          ? "video"
-          : "store",
-      typeFR:
-        currentTab === "basicForm"
-          ? "basic"
-          : currentTab === "videoForm"
-          ? "video"
-          : "store",
-      status: false,
-      basicForm: {
-        concern: currentTranslations.basicLayoutData.en.concern,
-        concernFR: currentTranslations.basicLayoutData.fr.concern,
-        subTitleOne: currentTranslations.basicLayoutData.en.subTitleOne,
-        subTitleOneFR: currentTranslations.basicLayoutData.fr.subTitleOne,
-        subDescOne: currentTranslations.basicLayoutData.en.subDescriptionOne,
-        subDescOneFR: currentTranslations.basicLayoutData.fr.subDescriptionOne,
-        subTitleTwo: currentTranslations.basicLayoutData.en.subTitleTwo,
-        subTitleTwoFR: currentTranslations.basicLayoutData.fr.subTitleTwo,
-        subDescTwo: currentTranslations.basicLayoutData.en.subDescriptionTwo,
-        subDescTwoFR: currentTranslations.basicLayoutData.fr.subDescriptionTwo,
-        share: currentTranslations.basicLayoutData.en.share,
-        image: currentTranslations.basicLayoutData.en.image
-      },
-      shopPromote: {
-        reason: currentTranslations.shopPromotionData.en.reason,
-        reasonFR: currentTranslations.shopPromotionData.fr.reason,
-        name: currentTranslations.shopPromotionData.en.shopName,
-        location: currentTranslations.shopPromotionData.en.shopLocation,
-        category: currentTranslations.shopPromotionData.en.shopCategory,
-        categoryFR: currentTranslations.shopPromotionData.fr.shopCategory,
-        desc: currentTranslations.shopPromotionData.en.subDescription,
-        descFR: currentTranslations.shopPromotionData.fr.subDescription,
-        phoneNumber: currentTranslations.shopPromotionData.en.mobileNumber,
-        email: currentTranslations.shopPromotionData.en.email,
-        mapsPin: currentTranslations.shopPromotionData.en.mapsPin,
-        facebook: currentTranslations.shopPromotionData.en.facebook,
-        instagram: currentTranslations.shopPromotionData.en.instagram,
-        website: currentTranslations.shopPromotionData.en.website,
-        image: currentTranslations.shopPromotionData.en.image,
-        shopPromoteFoods:
-          currentTranslations.shopPromotionData.en.shopPromoteFoods
-      },
-      videoForm: {
-        concern: currentTranslations.videoTipData.en.concern,
-        concernFR: currentTranslations.videoTipData.fr.concern,
-        subTitle: currentTranslations.videoTipData.en.subTitle,
-        subTitleFR: currentTranslations.videoTipData.fr.subTitle,
-        subDesc: currentTranslations.videoTipData.en.subDescription,
-        subDescFR: currentTranslations.videoTipData.fr.subDescription,
-        videoUrl: currentTranslations.videoTipData.en.videoLink
-      }
-    }
-
     try {
       setIsLoading(true)
 
@@ -223,16 +178,110 @@ export default function DailyTipsPage({
 
       // Upload and update image URL first
       uploadedImageUrl = await uploadDailyTipImageAndSetUrl()
+      // Get fresh state after image update
+      const {
+        allowMultiLang: currentAllowMultiLang,
+        activeTab: currentTab,
+        translationsData: currentTranslations
+      } = useDailyTipStore.getState()
+
+      const requestBody = {
+        allowMultiLang: currentAllowMultiLang,
+        concern:
+          currentTab === "basicForm"
+            ? currentTranslations.basicLayoutData.en.concern
+            : currentTab === "videoForm"
+            ? currentTranslations.videoTipData.en.concern
+            : "",
+        concernFR:
+          currentTab === "basicForm"
+            ? currentTranslations.basicLayoutData.fr.concern
+            : currentTab === "videoForm"
+            ? currentTranslations.videoTipData.fr.concern
+            : "",
+
+        title:
+          currentTab === "basicForm"
+            ? currentTranslations.basicLayoutData.en.title
+            : currentTab === "videoForm"
+            ? currentTranslations.videoTipData.en.title
+            : "",
+        titleFR:
+          currentTab === "basicForm"
+            ? currentTranslations.basicLayoutData.fr.title
+            : currentTab === "videoForm"
+            ? currentTranslations.videoTipData.fr.title
+            : "",
+        type:
+          currentTab === "basicForm"
+            ? "basic"
+            : currentTab === "videoForm"
+            ? "video"
+            : "store",
+        typeFR:
+          currentTab === "basicForm"
+            ? "basic"
+            : currentTab === "videoForm"
+            ? "video"
+            : "store",
+        status: true,
+        basicForm: {
+          subTitleOne: currentTranslations.basicLayoutData.en.subTitleOne,
+          subTitleOneFR: currentTranslations.basicLayoutData.fr.subTitleOne,
+          subDescOne: currentTranslations.basicLayoutData.en.subDescriptionOne,
+          subDescOneFR:
+            currentTranslations.basicLayoutData.fr.subDescriptionOne,
+          subTitleTwo: currentTranslations.basicLayoutData.en.subTitleTwo,
+          subTitleTwoFR: currentTranslations.basicLayoutData.fr.subTitleTwo,
+          subDescTwo: currentTranslations.basicLayoutData.en.subDescriptionTwo,
+          subDescTwoFR:
+            currentTranslations.basicLayoutData.fr.subDescriptionTwo,
+          share: currentTranslations.basicLayoutData.en.share,
+          image: uploadedImageUrl || ""
+        },
+        shopPromote: {
+          reason: currentTranslations.shopPromotionData.en.reason,
+          reasonFR: currentTranslations.shopPromotionData.fr.reason,
+          name: currentTranslations.shopPromotionData.en.shopName,
+          location: currentTranslations.shopPromotionData.en.shopLocation,
+          locationLat:
+            currentTranslations.shopPromotionData.en.shopLocationLatLng.lat,
+          locationLng:
+            currentTranslations.shopPromotionData.en.shopLocationLatLng.lng,
+          category: currentTranslations.shopPromotionData.en.shopCategory,
+          categoryFR: currentTranslations.shopPromotionData.fr.shopCategory,
+          desc: currentTranslations.shopPromotionData.en.subDescription,
+          descFR: currentTranslations.shopPromotionData.fr.subDescription,
+          phoneNumber: currentTranslations.shopPromotionData.en.mobileNumber,
+          email: currentTranslations.shopPromotionData.en.email,
+          mapsPin: currentTranslations.shopPromotionData.en.mapsPin,
+          facebook: currentTranslations.shopPromotionData.en.facebook,
+          instagram: currentTranslations.shopPromotionData.en.instagram,
+          website: currentTranslations.shopPromotionData.en.website,
+          image: uploadedImageUrl || "",
+          shopPromoteFoods:
+            currentTranslations.shopPromotionData.en.shopPromoteFoods
+        },
+        videoForm: {
+          subTitle: currentTranslations.videoTipData.en.subTitle,
+          subTitleFR: currentTranslations.videoTipData.fr.subTitle,
+          subDesc: currentTranslations.videoTipData.en.subDescription,
+          subDescFR: currentTranslations.videoTipData.fr.subDescription,
+          videoUrl: currentTranslations.videoTipData.en.videoLink
+        }
+      }
 
       const response = await AddNewDailyTips(token, requestBody)
-      console.log(response)
       if (response.status === 200 || response.status === 201) {
         toast.success("Daily Tip added successfully")
         setIsOpenAddTip(false)
         getDailyTips()
 
+        sessionStorage.removeItem("daily-tip-storage")
+
         // clear store and session
         resetTranslations()
+        resetUpdatedStore()
       } else {
         toast.error("Failed to add daily tip!")
         if (uploadedImageUrl) {
@@ -242,8 +291,216 @@ export default function DailyTipsPage({
     } catch (error) {
       console.log(error)
     } finally {
-      sessionStorage.removeItem("daily-tip-storage")
       setIsLoading(false)
+    }
+  }
+
+  // handle update Daily Tip
+  const handleUpdateDailyTip = async () => {
+    try {
+      setIsLoading(true)
+
+      const { activeTab } = useDailyTipStore.getState()
+      const { translationsData: updatedTranslations } =
+        useUpdateDailyTipStore.getState()
+
+      let uploadedImageUrl: string | null = null
+
+      const isImageChanged =
+        (activeTab === "basicForm" &&
+          updatedTranslations.basicLayoutData.en.image) ||
+        (activeTab === "shopPromote" &&
+          updatedTranslations.shopPromotionData.en.image)
+
+      if (isImageChanged) {
+        uploadedImageUrl = await uploadDailyTipImageAndSetUrl()
+      }
+
+      const requestBody: EditDailyTipTypes = {}
+      const updatedState = useUpdateDailyTipStore.getState().translationsData
+
+      // Root-level fields
+      if (activeTab === "basicForm") {
+        if ("concern" in updatedState.basicLayoutData.en)
+          requestBody.concern = updatedState.basicLayoutData.en
+            .concern as string
+        if ("concern" in updatedState.basicLayoutData.fr)
+          requestBody.concernFR = updatedState.basicLayoutData.fr
+            .concern as string
+        if ("title" in updatedState.basicLayoutData.en)
+          requestBody.title = updatedState.basicLayoutData.en.title as string
+        if ("title" in updatedState.basicLayoutData.fr)
+          requestBody.titleFR = updatedState.basicLayoutData.fr.title as string
+      }
+
+      if (activeTab === "videoForm") {
+        if ("concern" in updatedState.videoTipData.en)
+          requestBody.concern = updatedState.videoTipData.en.concern as string
+        if ("concern" in updatedState.videoTipData.fr)
+          requestBody.concernFR = updatedState.videoTipData.fr.concern as string
+        if ("title" in updatedState.videoTipData.en)
+          requestBody.title = updatedState.videoTipData.en.title as string
+        if ("title" in updatedState.videoTipData.fr)
+          requestBody.titleFR = updatedState.videoTipData.fr.title as string
+      }
+
+      // basicForm
+      if (activeTab === "basicForm") {
+        const basicData = updatedState.basicLayoutData
+        const basicForm: EditDailyTipTypes["basicForm"] = {}
+
+        if ("subTitleOne" in basicData.en)
+          basicForm.subTitleOne = basicData.en.subTitleOne as string
+        if ("subTitleOne" in basicData.fr)
+          basicForm.subTitleOneFR = basicData.fr.subTitleOne as string
+        if ("subDescOne" in basicData.en)
+          basicForm.subDescOne = basicData.en.subDescOne as string
+        if ("subDescOne" in basicData.fr)
+          basicForm.subDescOneFR = basicData.fr.subDescOne as string
+        if ("subTitleTwo" in basicData.en)
+          basicForm.subTitleTwo = basicData.en.subTitleTwo as string
+        if ("subTitleTwo" in basicData.fr)
+          basicForm.subTitleTwoFR = basicData.fr.subTitleTwo as string
+        if ("subDescTwo" in basicData.en)
+          basicForm.subDescTwo = basicData.en.subDescTwo as string
+        if ("subDescTwo" in basicData.fr)
+          basicForm.subDescTwoFR = basicData.fr.subDescTwo as string
+        if ("share" in basicData.en)
+          basicForm.share = basicData.en.share as boolean
+        if (uploadedImageUrl) basicForm.image = uploadedImageUrl
+
+        if (Object.keys(basicForm).length > 0) {
+          requestBody.basicForm = basicForm
+        }
+      }
+
+      // shopPromote
+      if (activeTab === "shopPromote") {
+        const shopData = updatedState.shopPromotionData
+        const shopPromote: EditDailyTipTypes["shopPromote"] = {}
+
+        if ("reason" in shopData.en)
+          shopPromote.reason = shopData.en.reason as string
+        if ("reason" in shopData.fr)
+          shopPromote.reasonFR = shopData.fr.reason as string
+        if ("shopName" in shopData.en)
+          shopPromote.name = shopData.en.shopName as string
+        if ("shopLocation" in shopData.en)
+          shopPromote.location = shopData.en.shopLocation as string
+        if ("shopCategory" in shopData.en)
+          shopPromote.category = shopData.en.shopCategory as string
+        if ("shopCategory" in shopData.fr)
+          shopPromote.categoryFR = shopData.fr.shopCategory as string
+        if ("subDescription" in shopData.en)
+          shopPromote.desc = shopData.en.subDescription as string
+        if ("subDescription" in shopData.fr)
+          shopPromote.descFR = shopData.fr.subDescription as string
+        if ("mobileNumber" in shopData.en)
+          shopPromote.phoneNumber = shopData.en.mobileNumber as string
+        if ("email" in shopData.en)
+          shopPromote.email = shopData.en.email as string
+        if ("mapsPin" in shopData.en)
+          shopPromote.mapsPin = shopData.en.mapsPin as string
+        if ("facebook" in shopData.en)
+          shopPromote.facebook = shopData.en.facebook as string
+        if ("instagram" in shopData.en)
+          shopPromote.instagram = shopData.en.instagram as string
+        if ("website" in shopData.en)
+          shopPromote.website = shopData.en.website as string
+        if ("shopPromoteFoods" in shopData.en)
+          shopPromote.shopPromoteFoods = shopData.en.shopPromoteFoods
+        if (uploadedImageUrl) shopPromote.image = uploadedImageUrl
+
+        if (Object.keys(shopPromote).length > 0) {
+          requestBody.shopPromote = shopPromote
+        }
+      }
+
+      // videoForm
+      if (activeTab === "videoForm") {
+        const videoData = updatedState.videoTipData
+        const videoForm: EditDailyTipTypes["videoForm"] = {}
+
+        if ("subTitle" in videoData.en)
+          videoForm.subTitle = videoData.en.subTitle as string
+        if ("subTitle" in videoData.fr)
+          videoForm.subTitleFR = videoData.fr.subTitle as string
+        if ("subDescription" in videoData.en)
+          videoForm.subDesc = videoData.en.subDescription as string
+        if ("subDescription" in videoData.fr)
+          videoForm.subDescFR = videoData.fr.subDescription as string
+        if ("videoLink" in videoData.en)
+          videoForm.videoUrl = videoData.en.videoLink as string
+
+        if (Object.keys(videoForm).length > 0) {
+          requestBody.videoForm = videoForm
+        }
+      }
+
+      const response = await updateDailyTip(token, selectedTipId, requestBody)
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Daily Tip updated successfully")
+        setIsOpenEditDailyTip(false)
+        getDailyTips()
+
+        if (isImageChanged && previousImageUrl) {
+          await deleteImageFromFirebase(previousImageUrl)
+          setPreviousImageUrl(null)
+        }
+      } else {
+        toast.error("Failed to update daily tip!")
+        if (isImageChanged && uploadedImageUrl) {
+          await deleteImageFromFirebase(uploadedImageUrl)
+        }
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error("Something went wrong during update!")
+    } finally {
+      sessionStorage.removeItem("daily-tip-storage")
+      sessionStorage.removeItem("update-daily-tip-storage")
+      setIsLoading(false)
+    }
+  }
+
+  // handle update daily tip status
+  const handleUpdateDailyTipStatus = async (
+    dailyTipId: number,
+    status: boolean
+  ): Promise<void> => {
+    const requestBody = { status: status ? false : true }
+    try {
+      // Submit updated data
+      const response = await updateDailyTip(token, dailyTipId, requestBody)
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Daily Tip updated successfully")
+        getDailyTips()
+      } else {
+        toast.error("Failed to update daily tip!")
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error("Something went wrong during update!")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // handle delete daily tip
+  const handleDeleteDailyTip = async (): Promise<void> => {
+    try {
+      const response = await deleteDailyTipById(token, selectedTipId)
+      if (response.status === 200 || response.status === 201) {
+        toast.success(response.data.message)
+        getDailyTips()
+      } else {
+        console.log("failed to delete mood : ", response)
+        toast.error("Failed to delete mood!")
+      }
+    } catch (error) {
+      console.log("failed to delete mood : ", error)
     }
   }
 
@@ -253,7 +510,7 @@ export default function DailyTipsPage({
       header: "Media",
       cell: (row: DailyTipsDataType) => (
         <Image
-          src={sampleImage}
+          src={row.type !== "video" ? row.imageOrVideoUrl : sampleImage}
           alt={row.title}
           width={40}
           height={40}
@@ -271,7 +528,8 @@ export default function DailyTipsPage({
     },
     {
       accessor: "dateCreated",
-      header: "Date Created"
+      header: "Date Created",
+      cell: (row: any) => dayjs(row.dateCreated).format("DD/MM/YYYY")
     },
     {
       accessor: "status",
@@ -322,9 +580,26 @@ export default function DailyTipsPage({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem>Make a copy</DropdownMenuItem>
-            <DropdownMenuItem>Favorite</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() =>
+                handleUpdateDailyTipStatus(row.dailyTipsId, row.status)
+              }
+            >
+              {row.status ? "Inactive" : "Active"}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                handleOpenEditDailyTip(row.dailyTipsId)
+                setPreviousImageUrl(row.imageOrVideoUrl || "")
+              }}
+            >
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleOpenDeleteConfirmationPopup(row.dailyTipsId)}
+            >
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -375,6 +650,39 @@ export default function DailyTipsPage({
         addDailyTip={handleAddDailyTip}
         isLoading={isLoading}
       />
+
+      <EditDailyTipMainPopUp
+        open={isOpenEditDailyTip}
+        onClose={handleCloseEditDailyTip}
+        token={token}
+        userName={userName}
+        isLoading={isLoading}
+        tipId={selectedTipId}
+        editDailyTip={handleUpdateDailyTip}
+      />
+
+      {/* delete confirmation popup  */}
+      <AlertDialog
+        open={confirmDeleteOpen}
+        onOpenChange={handleCloseDeleteConfirmationPopup}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Mood</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this mood?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCloseDeleteConfirmationPopup}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteDailyTip}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

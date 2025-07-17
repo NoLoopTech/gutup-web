@@ -29,7 +29,7 @@ import { useTranslation } from "@/query/hooks/useTranslation"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { toast } from "sonner"
-import { useUpdatedTranslationStore } from "@/stores/useUpdatedTranslationStore"
+import { useUpdatedMoodTranslationStore } from "@/stores/useUpdatedMoodTranslationStore"
 
 interface Option {
   value: string
@@ -87,7 +87,7 @@ export default function EditFoodTab({
     translationsData: updatedTranslations,
     setUpdatedField,
     resetUpdatedStore
-  } = useUpdatedTranslationStore()
+  } = useUpdatedMoodTranslationStore()
 
   const { translateText } = useTranslation()
   const [isTranslating, setIsTranslating] = useState(false)

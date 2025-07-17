@@ -25,6 +25,7 @@ const ClientSessionHandler = (): null => {
       if (pathname !== "/content-management/daily-tips/") {
         dailyTipResetTranslations()
         sessionStorage.removeItem("daily-tip-storage")
+        sessionStorage.removeItem("update-daily-tip-storage")
       }
 
       // Check if the current path is not '/store-management'
