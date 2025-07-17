@@ -51,6 +51,13 @@ interface Food {
   tagName?: string
 }
 
+interface CategoryTag {
+  id: number | string
+  tagName?: string
+  tagNameFr?: string
+  category?: string
+}
+
 interface Option {
   value: string
   label: string
@@ -100,12 +107,14 @@ export default function AddStorePopUpContent({
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [, setIsPremium] = React.useState(false)
   const [foods, setFoods] = useState<Food[]>([])
-  const [categoryTags, setCategoryTags] = useState<Food[]>([])
+  const [categoryTags, setCategoryTags] = useState<CategoryTag[]>([])
   const [storeCategories, setStoreCategories] = useState<StoreCategory[]>([])
   const [storeTypes, setStoreTypes] = useState<StoreType[]>([])
   const [availData, setAvailData] = useState<AvailableItem[]>([])
   const [selected, setSelected] = useState<Food | null>(null)
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<CategoryTag | null>(
+    null
+  )
   const [ingredientInput, setIngredientInput] = useState<string>("")
   const [categoryInput, setCategoryInput] = useState<string>("")
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
@@ -539,7 +548,7 @@ export default function AddStorePopUpContent({
     if (!name) return
 
     const entry: AvailableItem = {
-      id: selected ? Number(selected.id) : Date.now(),
+      id: selected ? Number(selected.id) : 0,
       name,
       type: "Ingredient",
       tags: ["InSystem"],
@@ -585,11 +594,15 @@ export default function AddStorePopUpContent({
 
   // handler for “Add Category”
   const handleAddCategory = async (): Promise<void> => {
-    const name = selectedCategory ?? categoryInput.trim()
+    const name = selectedCategory
+      ? (activeLang === "en"
+          ? selectedCategory.tagName
+          : selectedCategory.tagNameFr) ?? ""
+      : categoryInput.trim()
     if (!name) return
 
     const entry: AvailableItem = {
-      id: Date.now(),
+      id: selectedCategory ? Number(selectedCategory.id) : 0,
       name,
       type: "Category",
       tags: ["InSystem"],
@@ -1109,12 +1122,18 @@ export default function AddStorePopUpContent({
                     placeholder={translations.searchAvailableCategories}
                     dataList={categoryTags.map(tag => ({
                       id: tag.id,
-                      name: tag.tagName ?? ""
+                      name:
+                        activeLang === "en"
+                          ? tag.tagName ?? ""
+                          : tag.tagNameFr ?? ""
                     }))}
                     value={categoryInput}
                     onInputChange={setCategoryInput}
                     onSelect={item => {
-                      setSelectedCategory(item.name)
+                      const selectedTag = categoryTags.find(
+                        tag => tag.id === item.id
+                      )
+                      setSelectedCategory(selectedTag ?? null)
                       setCategoryInput(item.name)
                     }}
                   />
