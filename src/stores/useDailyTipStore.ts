@@ -25,6 +25,10 @@ interface ShopPromotionFields {
   reason: string
   shopName: string
   shopLocation: string
+  shopLocationLatLng: {
+    lat: number
+    lng: number
+  }
   subDescription: string
   shopCategory: string
   mobileNumber: string
@@ -105,6 +109,10 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             reason: "",
             shopName: "",
             shopLocation: "",
+            shopLocationLatLng: {
+              lat: 0,
+              lng: 0
+            },
             subDescription: "",
             shopCategory: "",
             mobileNumber: "",
@@ -120,6 +128,10 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             reason: "",
             shopName: "",
             shopLocation: "",
+            shopLocationLatLng: {
+              lat: 0,
+              lng: 0
+            },
             subDescription: "",
             shopCategory: "",
             mobileNumber: "",
@@ -207,6 +219,10 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 reason: "",
                 shopName: "",
                 shopLocation: "",
+                shopLocationLatLng: {
+                  lat: 0,
+                  lng: 0
+                },
                 subDescription: "",
                 shopCategory: "",
                 mobileNumber: "",
@@ -222,6 +238,10 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 reason: "",
                 shopName: "",
                 shopLocation: "",
+                shopLocationLatLng: {
+                  lat: 0,
+                  lng: 0
+                },
                 subDescription: "",
                 shopCategory: "",
                 mobileNumber: "",

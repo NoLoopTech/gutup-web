@@ -39,6 +39,8 @@ import { Badge } from "@/components/ui/badge"
 import { Trash } from "lucide-react"
 import { getAllFoods } from "@/app/api/foods"
 import { useUpdateDailyTipStore } from "@/stores/useUpdateDailyTipStore"
+import LocationDropdown from "@/components/Shared/dropdown/LocationDropdown"
+import { getLocationDetails } from "@/app/api/location"
 
 interface Food {
   id: number
@@ -54,6 +56,11 @@ interface AvailableItem {
 }
 
 interface Option {
+  value: string
+  label: string
+}
+
+interface OptionType {
   value: string
   label: string
 }
@@ -114,6 +121,8 @@ export default function EditShopPromotionTab({
   const [ingredientInput, setIngredientInput] = useState<string>("")
   const [selected, setSelected] = useState<Food | null>(null)
   const [availData, setAvailData] = useState<AvailableItem[]>([])
+  const [selectedLocationName, setSelectedLocationName] =
+    useState<OptionType | null>(null)
 
   const {
     translationsData: updatedTranslations,
@@ -557,6 +566,86 @@ export default function EditShopPromotionTab({
     onClose()
   }
 
+  const handleLocationName = (value: OptionType | null) => {
+    setSelectedLocationName(value)
+  }
+
+  const handleLocationSelect = async (value: string[]) => {
+    const placeId = value[0]
+
+    const location = await getLocationDetails(placeId)
+
+    if (!location) {
+      toast.error("Failed to load location details.")
+      return
+    }
+
+    const { name, country, lat, lng } = location
+
+    const selectedLocation = {
+      value: placeId,
+      label: `${name}, ${country}`,
+      lat,
+      lng
+    }
+
+    setSelectedLocationName(selectedLocation)
+
+    form.setValue("shopLocation", selectedLocation.label)
+
+    setTranslationField(
+      "shopPromotionData",
+      activeLang,
+      "shopLocation",
+      selectedLocation.label
+    )
+    setTranslationField(
+      "shopPromotionData",
+      activeLang === "en" ? "fr" : "en",
+      "shopLocation",
+      selectedLocation.label
+    )
+
+    setUpdatedField(
+      "shopPromotionData",
+      activeLang,
+      "shopLocation",
+      selectedLocation.label
+    )
+    setUpdatedField(
+      "shopPromotionData",
+      activeLang === "en" ? "fr" : "en",
+      "shopLocation",
+      selectedLocation.label
+    )
+
+    setTranslationField(
+      "shopPromotionData",
+      activeLang,
+      "shopLocationLatLng",
+      selectedLocation
+    )
+    setTranslationField(
+      "shopPromotionData",
+      activeLang === "en" ? "fr" : "en",
+      "shopLocationLatLng",
+      selectedLocation
+    )
+
+    setUpdatedField(
+      "shopPromotionData",
+      activeLang,
+      "shopLocationLatLng",
+      selectedLocation
+    )
+    setUpdatedField(
+      "shopPromotionData",
+      activeLang === "en" ? "fr" : "en",
+      "shopLocationLatLng",
+      selectedLocation
+    )
+  }
+
   function onSubmit(data: z.infer<typeof FormSchema>): void {
     editDailyTip()
   }
@@ -638,18 +727,17 @@ export default function EditShopPromotionTab({
                   <FormItem className="flex-1 mb-1">
                     <FormLabel>{translations.shopLocation}</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder={translations.enterShopLocation}
-                        {...field}
-                        onChange={e =>
-                          handleInputChange("shopLocation", e.target.value)
-                        }
+                      <LocationDropdown
+                        selectedOption={selectedLocationName}
+                        onSelect={handleLocationSelect}
+                        onSelectLocation={handleLocationName}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               {/* Category */}
               <FormField
                 control={form.control}

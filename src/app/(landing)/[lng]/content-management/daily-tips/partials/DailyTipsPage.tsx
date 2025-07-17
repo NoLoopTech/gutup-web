@@ -221,6 +221,10 @@ export default function DailyTipsPage({
           reasonFR: currentTranslations.shopPromotionData.fr.reason,
           name: currentTranslations.shopPromotionData.en.shopName,
           location: currentTranslations.shopPromotionData.en.shopLocation,
+          locationLat:
+            currentTranslations.shopPromotionData.en.shopLocationLatLng.lat,
+          locationLng:
+            currentTranslations.shopPromotionData.en.shopLocationLatLng.lng,
           category: currentTranslations.shopPromotionData.en.shopCategory,
           categoryFR: currentTranslations.shopPromotionData.fr.shopCategory,
           desc: currentTranslations.shopPromotionData.en.subDescription,

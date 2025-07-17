@@ -489,10 +489,6 @@ export default function ShopPromotionTab({
     onClose()
   }
 
-  function onSubmit(data: z.infer<typeof FormSchema>): void {
-    addDailyTip()
-  }
-
   const handleLocationName = (value: OptionType | null) => {
     setSelectedLocationName(value)
   }
@@ -545,6 +541,10 @@ export default function ShopPromotionTab({
       "shopLocationLatLng",
       selectedLocation
     )
+  }
+
+  function onSubmit(data: z.infer<typeof FormSchema>): void {
+    addDailyTip()
   }
 
   return (

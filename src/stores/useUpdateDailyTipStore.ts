@@ -27,6 +27,10 @@ interface ShopPromotionFields {
   reason?: string
   shopName?: string
   shopLocation?: string
+  shopLocationLatLng?: {
+    lat: number
+    lng: number
+  }
   subDescription?: string
   shopCategory?: string
   mobileNumber?: string
