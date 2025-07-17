@@ -39,6 +39,7 @@ import { Badge } from "@/components/ui/badge"
 import { Trash } from "lucide-react"
 import { getAllFoods } from "@/app/api/foods"
 import LocationDropdown from "@/components/Shared/dropdown/LocationDropdown"
+import { getLocationDetails } from "@/app/api/location"
 
 interface Food {
   id: number
@@ -499,59 +500,51 @@ export default function ShopPromotionTab({
   const handleLocationSelect = async (value: string[]) => {
     const placeId = value[0]
 
-    try {
-      const res = await fetch(`/api/places/details?placeId=${placeId}`)
-      const data = await res.json()
+    const location = await getLocationDetails(placeId)
 
-      console.log("details", data)
-
-      if (data.location) {
-        const { name, country, lat, lng } = data.location
-
-        const selectedLocation = {
-          value: placeId,
-          label: `${name}, ${country}`,
-          lat: lat,
-          lng: lng
-        }
-
-        setSelectedLocationName(selectedLocation)
-
-        // Set to form
-        form.setValue("shopLocation", selectedLocation.label)
-
-        // Set to translations store
-        setTranslationField(
-          "shopPromotionData",
-          activeLang,
-          "shopLocation",
-          selectedLocation.label
-        )
-        setTranslationField(
-          "shopPromotionData",
-          activeLang === "en" ? "fr" : "en",
-          "shopLocation",
-          selectedLocation.label
-        )
-
-        setTranslationField(
-          "shopPromotionData",
-          activeLang,
-          "shopLocationLatLng",
-          selectedLocation
-        )
-        setTranslationField(
-          "shopPromotionData",
-          activeLang === "en" ? "fr" : "en",
-          "shopLocationLatLng",
-          selectedLocation
-        )
-      } else {
-        console.error("Invalid location data:", data)
-      }
-    } catch (error) {
-      console.error("Error fetching location details:", error)
+    if (!location) {
+      toast.error("Failed to load location details.")
+      return
     }
+
+    const { name, country, lat, lng } = location
+
+    const selectedLocation = {
+      value: placeId,
+      label: `${name}, ${country}`,
+      lat,
+      lng
+    }
+
+    setSelectedLocationName(selectedLocation)
+
+    form.setValue("shopLocation", selectedLocation.label)
+
+    setTranslationField(
+      "shopPromotionData",
+      activeLang,
+      "shopLocation",
+      selectedLocation.label
+    )
+    setTranslationField(
+      "shopPromotionData",
+      activeLang === "en" ? "fr" : "en",
+      "shopLocation",
+      selectedLocation.label
+    )
+
+    setTranslationField(
+      "shopPromotionData",
+      activeLang,
+      "shopLocationLatLng",
+      selectedLocation
+    )
+    setTranslationField(
+      "shopPromotionData",
+      activeLang === "en" ? "fr" : "en",
+      "shopLocationLatLng",
+      selectedLocation
+    )
   }
 
   return (
