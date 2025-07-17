@@ -262,23 +262,27 @@ export default function EditStorePopUpContent({
           setAvailData(transformedAvailData)
 
           // Set form values
-          form.reset({
-            storeName: data.storeName,
-            category: data.category,
-            storeLocation: data.storeLocation,
-            storeType: data.storeType,
-            subscriptionType: data.subscriptionType === "premium",
-            timeFrom: data.startTime,
-            timeTo: data.endTime,
-            phone: data.phoneNumber,
-            email: data.email,
-            website: data.website || "",
-            facebook: data.facebook || "",
-            instagram: data.instagram || "",
-            about: activeLang === "en" ? data.description : data.descriptionFR,
-            availData: transformedAvailData,
-            storeImage: data.storeImage
-          })
+          form.reset(
+            {
+              storeName: data.storeName,
+              category: data.category,
+              storeLocation: data.storeLocation,
+              storeType: data.storeType,
+              subscriptionType: data.subscriptionType === "premium",
+              timeFrom: data.startTime,
+              timeTo: data.endTime,
+              phone: data.phoneNumber,
+              email: data.email,
+              website: data.website || "",
+              facebook: data.facebook || "",
+              instagram: data.instagram || "",
+              about:
+                activeLang === "en" ? data.description : data.descriptionFR,
+              availData: transformedAvailData,
+              storeImage: data.storeImage
+            },
+            { keepDirty: false }
+          )
 
           // Update global store data
           setTranslationField(
@@ -482,6 +486,9 @@ export default function EditStorePopUpContent({
         form.setValue("storeType", storeTypeId, { shouldValidate: false })
       }
 
+      // Reset hasChanges after data conversion
+      setHasChanges(false)
+
       // Clear the stored data after conversion
       setStoreDataForConversion(null)
     }
@@ -497,6 +504,13 @@ export default function EditStorePopUpContent({
       subscription.unsubscribe()
     }
   }, [form, isDataLoaded])
+
+  // Reset hasChanges to false after initial data load completes
+  useEffect(() => {
+    if (isDataLoaded) {
+      setHasChanges(false)
+    }
+  }, [isDataLoaded])
 
   // Convert store categories to dropdown options
   const getCategoryOptions = (): Option[] => {

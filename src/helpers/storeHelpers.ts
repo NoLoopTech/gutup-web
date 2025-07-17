@@ -16,34 +16,28 @@ export function transformStoreDataToApiRequest(
   const ingAndCatData: IngAndCatDataType[] = []
 
   // Handle availData from both English and French data
-  const availDataToProcess = enData.availData || []
-  const frAvailData = allowMultiLang ? frData.availData || [] : []
+  const enAvailData = enData.availData || []
+  const frAvailData = frData.availData || []
 
-  if (Array.isArray(availDataToProcess)) {
-    availDataToProcess.forEach((item: any) => {
+  if (Array.isArray(enAvailData)) {
+    enAvailData.forEach((enItem: any) => {
       // Find the corresponding French item by ID
-      const frItem = allowMultiLang
-        ? frAvailData.find((frItem: any) => frItem.id === item.id)
-        : null
+      const frItem = frAvailData.find((frItem: any) => frItem.id === enItem.id)
 
       const transformedItem: IngAndCatDataType = {
-        id: item.id || Date.now(),
-        name: item.name || "",
-        nameFR: allowMultiLang && frItem ? frItem.name : item.name || "",
-        type: item.type?.toLowerCase() || "category",
+        id: enItem.id || Date.now(),
+        name: enItem.name || "",
+        nameFR: frItem ? frItem.name : enItem.name || "",
+        type: enItem.type?.toLowerCase() || "category",
         typeFR:
-          allowMultiLang && frItem
-            ? frItem.type?.toLowerCase() === "ingredient"
-              ? "ingrédient"
-              : frItem.type?.toLowerCase() === "category"
-              ? "catégorie"
-              : frItem.type?.toLowerCase()
-            : item.type?.toLowerCase() === "ingredient"
+          enItem.type?.toLowerCase() === "ingredient"
             ? "ingrédient"
-            : "catégorie",
+            : enItem.type?.toLowerCase() === "category"
+            ? "catégorie"
+            : enItem.type?.toLowerCase() || "catégorie",
         availability:
-          item.status === "Active" || item.availability === true || true,
-        display: item.display !== false
+          enItem.status === "Active" || enItem.availability === true || true,
+        display: enItem.display !== false
       }
 
       ingAndCatData.push(transformedItem)
