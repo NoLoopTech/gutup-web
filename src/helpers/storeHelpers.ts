@@ -25,7 +25,7 @@ export function transformStoreDataToApiRequest(
       const frItem = frAvailData.find((frItem: any) => frItem.id === enItem.id)
 
       const transformedItem: IngAndCatDataType = {
-        id: enItem.id || Date.now(),
+        id: enItem.id || 0,
         name: enItem.name || "",
         nameFR: frItem ? frItem.name : enItem.name || "",
         type: enItem.type?.toLowerCase() || "category",
