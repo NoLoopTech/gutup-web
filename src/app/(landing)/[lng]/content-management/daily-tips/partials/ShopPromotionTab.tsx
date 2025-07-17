@@ -38,6 +38,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Trash } from "lucide-react"
 import { getAllFoods } from "@/app/api/foods"
+import LocationDropdown from "@/components/Shared/dropdown/LocationDropdown"
+import axios from "axios"
 
 interface Food {
   id: number
@@ -53,6 +55,11 @@ interface AvailableItem {
 }
 
 interface Option {
+  value: string
+  label: string
+}
+
+interface OptionType {
   value: string
   label: string
 }
@@ -112,6 +119,8 @@ export default function ShopPromotionTab({
   const [ingredientInput, setIngredientInput] = useState<string>("")
   const [selected, setSelected] = useState<Food | null>(null)
   const [availData, setAvailData] = useState<AvailableItem[]>([])
+  const [selectedLocationName, setSelectedLocationName] =
+    useState<OptionType | null>(null)
 
   // fetch once on mount
   useEffect(() => {
@@ -484,6 +493,40 @@ export default function ShopPromotionTab({
     addDailyTip()
   }
 
+  const handleLocationName = (value: OptionType | null) => {
+    setSelectedLocationName(value)
+  }
+
+  const handleLocationSelect = async (value: string[]) => {
+    const placeId = value[0]
+
+    try {
+      const response = await axios.get(
+        `https://maps.googleapis.com/maps/api/place/details/json?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&place_id=${placeId}`
+      )
+
+      const addressComponents = response.data.result.address_components
+
+      const country =
+        addressComponents.find((c: { types: string[]; long_name: string }) =>
+          c.types.includes("country")
+        )?.long_name || ""
+
+      const selectedLocation = {
+        value: placeId,
+        label: `${response.data.result.name}, ${country}`
+      }
+
+      // Update the dropdown state
+      setSelectedLocationName(selectedLocation)
+
+      // Save location details to localStorage
+      localStorage.setItem("selectedLocation", JSON.stringify(selectedLocation))
+    } catch (error) {
+      console.error("Error fetching location details:", error)
+    }
+  }
+
   return (
     <div className="relative">
       {isTranslating && (
@@ -567,6 +610,26 @@ export default function ShopPromotionTab({
                         onChange={e =>
                           handleInputChange("shopLocation", e.target.value)
                         }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="shopLocation"
+                render={({ field }) => (
+                  <FormItem className="flex-1 mb-1">
+                    <FormLabel>{translations.shopLocation}</FormLabel>
+                    <FormControl>
+                      <LocationDropdown
+                        name="location"
+                        selectedOption={selectedLocationName}
+                        onSelect={handleLocationSelect}
+                        onSelectLocation={handleLocationName}
+                        errorMessage={""}
                       />
                     </FormControl>
                     <FormMessage />

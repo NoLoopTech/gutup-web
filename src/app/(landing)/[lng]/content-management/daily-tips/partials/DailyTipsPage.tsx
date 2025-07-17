@@ -28,6 +28,7 @@ import { toast } from "sonner"
 import EditDailyTipMainPopUp from "./EditDailyTipMainPopUp"
 import { useUpdateDailyTipStore } from "@/stores/useUpdateDailyTipStore"
 import { EditDailyTipTypes } from "@/types/dailyTipTypes"
+import dayjs from "dayjs"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -461,7 +462,8 @@ export default function DailyTipsPage({
     },
     {
       accessor: "dateCreated",
-      header: "Date Created"
+      header: "Date Created",
+      cell: (row: any) => dayjs(row.dateCreated).format("DD/MM/YYYY")
     },
     {
       accessor: "status",
