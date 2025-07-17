@@ -59,8 +59,6 @@ export default function EditDailyTipMainPopUp({
     try {
       const res = await getDailyTipById(token, tipId)
 
-      console.log(res.data)
-
       if (res.status === 200) {
         const data = res.data
 
