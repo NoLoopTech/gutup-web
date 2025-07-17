@@ -307,7 +307,6 @@ export default function MoodsPage({
 
       if (response.status === 200 || response.status === 201) {
         toast.success("Mood updated successfully")
-        setIsOpenEditMood(false)
         getMoods()
       } else {
         toast.error("Failed to update mood!")

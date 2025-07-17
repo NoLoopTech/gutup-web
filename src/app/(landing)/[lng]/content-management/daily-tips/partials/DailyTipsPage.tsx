@@ -16,6 +16,7 @@ import { useEffect, useState } from "react"
 import AddDailyTipMainPopUp from "./AddDailyTipMainPopUp"
 import {
   AddNewDailyTips,
+  deleteDailyTipById,
   getAllDailyTips,
   updateDailyTip
 } from "@/app/api/daily-tip"
@@ -29,6 +30,16 @@ import EditDailyTipMainPopUp from "./EditDailyTipMainPopUp"
 import { useUpdateDailyTipStore } from "@/stores/useUpdateDailyTipStore"
 import { EditDailyTipTypes } from "@/types/dailyTipTypes"
 import dayjs from "dayjs"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -65,6 +76,7 @@ export default function DailyTipsPage({
   const [isOpenEditDailyTip, setIsOpenEditDailyTip] = useState<boolean>(false)
   const [selectedTipId, setSelectedTipId] = useState<number>(0)
   const [previousImageUrl, setPreviousImageUrl] = useState<string | null>(null)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
 
   const { activeLang, translationsData, activeTab, resetTranslations } =
     useDailyTipStore()
@@ -85,6 +97,17 @@ export default function DailyTipsPage({
   const handleCloseEditDailyTip = (): void => {
     setIsOpenEditDailyTip(false)
     setSelectedTipId(0)
+  }
+
+  // handle open delete confirmation popup
+  const handleOpenDeleteConfirmationPopup = (id: number): void => {
+    setSelectedTipId(id)
+    setConfirmDeleteOpen(true)
+  }
+
+  // handle close delete confirmation popup
+  const handleCloseDeleteConfirmationPopup = (): void => {
+    setConfirmDeleteOpen(false)
   }
 
   const getDailyTips = async () => {
@@ -249,7 +272,6 @@ export default function DailyTipsPage({
       }
 
       const response = await AddNewDailyTips(token, requestBody)
-      console.log(response)
       if (response.status === 200 || response.status === 201) {
         toast.success("Daily Tip added successfully")
         setIsOpenAddTip(false)
@@ -442,6 +464,46 @@ export default function DailyTipsPage({
     }
   }
 
+  // handle update daily tip status
+  const handleUpdateDailyTipStatus = async (
+    dailyTipId: number,
+    status: boolean
+  ): Promise<void> => {
+    const requestBody = { status: status ? false : true }
+    try {
+      // Submit updated data
+      const response = await updateDailyTip(token, dailyTipId, requestBody)
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Daily Tip updated successfully")
+        getDailyTips()
+      } else {
+        toast.error("Failed to update daily tip!")
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error("Something went wrong during update!")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // handle delete daily tip
+  const handleDeleteDailyTip = async (): Promise<void> => {
+    try {
+      const response = await deleteDailyTipById(token, selectedTipId)
+      if (response.status === 200 || response.status === 201) {
+        toast.success(response.data.message)
+        getDailyTips()
+      } else {
+        console.log("failed to delete mood : ", response)
+        toast.error("Failed to delete mood!")
+      }
+    } catch (error) {
+      console.log("failed to delete mood : ", error)
+    }
+  }
+
   const columns: Array<Column<DailyTipsDataType>> = [
     {
       accessor: "imageOrVideoUrl",
@@ -519,12 +581,24 @@ export default function DailyTipsPage({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
             <DropdownMenuItem
+              onClick={() =>
+                handleUpdateDailyTipStatus(row.dailyTipsId, row.status)
+              }
+            >
+              {row.status ? "Inactive" : "Active"}
+            </DropdownMenuItem>
+            <DropdownMenuItem
               onClick={() => {
                 handleOpenEditDailyTip(row.dailyTipsId)
                 setPreviousImageUrl(row.imageOrVideoUrl || "")
               }}
             >
               Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleOpenDeleteConfirmationPopup(row.dailyTipsId)}
+            >
+              Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -586,6 +660,29 @@ export default function DailyTipsPage({
         tipId={selectedTipId}
         editDailyTip={handleUpdateDailyTip}
       />
+
+      {/* delete confirmation popup  */}
+      <AlertDialog
+        open={confirmDeleteOpen}
+        onOpenChange={handleCloseDeleteConfirmationPopup}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Mood</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this mood?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCloseDeleteConfirmationPopup}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteDailyTip}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

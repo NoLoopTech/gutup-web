@@ -61,3 +61,18 @@ export const updateDailyTip = async (
     return error
   }
 }
+
+// delete daily tip by id
+export const deleteDailyTipById = async (
+  token: string,
+  id: number
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.delete(`/daily-tips/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response
+  } catch (error) {
+    return error
+  }
+}
