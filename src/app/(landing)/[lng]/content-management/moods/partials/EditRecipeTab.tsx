@@ -12,9 +12,9 @@ import {
   SelectValue
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Resolver, useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
 import {
   Form,
   FormField,
@@ -26,7 +26,10 @@ import {
 import { type translationsTypes } from "@/types/moodsTypes"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { useTranslation } from "@/query/hooks/useTranslation"
-import { Checkbox } from "@/components/ui/checkbox"
+import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
+import { toast } from "sonner"
+import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
+import { useUpdatedTranslationStore } from "@/stores/useUpdatedTranslationStore"
 
 interface Option {
   value: string
@@ -48,88 +51,65 @@ const moodOptions: Record<string, Option[]> = {
     { value: "sad", label: "Triste" }
   ]
 }
-
-export default function QuoteTab({
+export default function EditRecipeTab({
   translations,
   onClose,
-  addQuoteMood,
-  isLoading
+  EditRecipeMood,
+  isLoading,
+  userName
 }: {
   translations: translationsTypes
   onClose: () => void
-  addQuoteMood: () => void
+  EditRecipeMood: () => void
   isLoading: boolean
+  userName: string
 }): JSX.Element {
-  const { translateText } = useTranslation()
   const {
     activeLang,
     translationsData,
     setTranslationField,
     resetTranslations
   } = useMoodStore()
-  const [isTranslating, setIsTranslating] = useState(false)
+  const {
+    translationsData: updatedTranslations,
+    setUpdatedField,
+    resetUpdatedStore
+  } = useUpdatedTranslationStore()
 
-  // Schema
+  const { translateText } = useTranslation()
+  const [isTranslating, setIsTranslating] = useState(false)
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
+
+  const hasRecipeUpdates =
+    Object.keys(updatedTranslations.recipeData.en).length > 0 ||
+    Object.keys(updatedTranslations.recipeData.fr).length > 0
+
   const FormSchema = z.object({
     mood: z.string().nonempty(translations.pleaseSelectAMood),
-    author: z
+    recipe: z
       .string()
       .nonempty(translations.required)
-      .min(2, { message: translations.authorNameMustBeAtLeast2Characters }),
-    quote: z
+      .min(2, translations.recipeNameMustBeAtLeast2Characters),
+    description: z
       .string()
       .nonempty(translations.required)
-      .min(10, { message: translations.quoteMustBeAtLeast10Characters }),
-    share: z
-      .boolean({ required_error: translations.required })
-      .default(false)
-      .refine(val => typeof val === "boolean", {
-        message: translations.required
-      })
+      .min(10, translations.descriptionMustBeAtLeast10Characters),
+    image: z.string().nonempty(translations.required)
   })
 
   const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema) as Resolver<
-      z.infer<typeof FormSchema>,
-      any
-    >,
-    defaultValues: translationsData.quoteData[activeLang] as z.infer<
-      typeof FormSchema
-    >
+    resolver: zodResolver(FormSchema),
+    defaultValues: translationsData.recipeData[activeLang]
   })
 
-  // Update form when lang changes
   useEffect(() => {
-    form.reset(translationsData.quoteData[activeLang])
-  }, [activeLang, form.reset, translationsData.quoteData])
-
-  const handleInputChange = (fieldName: "author" | "quote", value: string) => {
-    form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
-    setTranslationField("quoteData", activeLang, fieldName, value)
-  }
-
-  const handleInputBlur = async (
-    fieldName: "author" | "quote",
-    value: string
-  ) => {
-    if (activeLang === "en" && value.trim()) {
-      try {
-        if (fieldName === "author") {
-          setTranslationField("quoteData", "fr", fieldName, value)
-        } else {
-          setIsTranslating(true)
-          const translated = await translateText(value)
-          setTranslationField("quoteData", "fr", fieldName, translated)
-        }
-      } finally {
-        setIsTranslating(false)
-      }
-    }
-  }
+    form.reset(translationsData.recipeData[activeLang])
+  }, [activeLang, form.reset, translationsData.recipeData])
 
   const handleMoodChange = (value: string) => {
     form.setValue("mood", value)
-    setTranslationField("quoteData", activeLang, "mood", value)
+    setTranslationField("recipeData", activeLang, "mood", value)
+    setUpdatedField("recipeData", activeLang, "mood", value)
 
     const current = moodOptions[activeLang]
     const oppositeLang = activeLang === "en" ? "fr" : "en"
@@ -138,25 +118,84 @@ export default function QuoteTab({
     const index = current.findIndex(opt => opt.value === value)
     if (index !== -1) {
       setTranslationField(
-        "quoteData",
+        "recipeData",
         oppositeLang,
         "mood",
         opposite[index].value
       )
+      setUpdatedField("recipeData", oppositeLang, "mood", opposite[index].value)
     }
   }
 
-  function onSubmit(data: z.infer<typeof FormSchema>): void {
-    addQuoteMood()
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    fieldName: "recipe" | "description"
+  ) => {
+    const value = e.target.value
+    form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
+    setTranslationField("recipeData", activeLang, fieldName, value)
+    setUpdatedField("recipeData", activeLang, fieldName, value)
+  }
+
+  const handleInputBlur = async (
+    value: string,
+    fieldName: "recipe" | "description"
+  ) => {
+    if (activeLang === "en" && value.trim()) {
+      try {
+        setIsTranslating(true)
+        const translated = await translateText(value)
+        setTranslationField("recipeData", "fr", fieldName, translated)
+        setUpdatedField("recipeData", "fr", fieldName, translated)
+      } finally {
+        setIsTranslating(false)
+      }
+    }
+  }
+
+  const handleImageSelect = async (files: File[] | null) => {
+    const file = files?.[0] ?? null
+    if (file) {
+      try {
+        setIsTranslating(true)
+        const imageUrl = await uploadImageToFirebase(
+          file,
+          "moods/temp-recipe-tab",
+          `temp-recipe-mood-image-${userName}`
+        )
+        form.setValue("image", imageUrl, {
+          shouldValidate: true,
+          shouldDirty: true
+        })
+        setTranslationField("recipeData", "en", "image", imageUrl)
+        setTranslationField("recipeData", "fr", "image", imageUrl)
+        setUpdatedField("recipeData", "en", "image", imageUrl)
+        setUpdatedField("recipeData", "fr", "image", imageUrl)
+
+        setPreviewUrls([imageUrl]) // For single image preview
+      } catch (error) {
+        toast.error("Image upload failed. Please try again.")
+        console.error("Firebase upload error:", error)
+      } finally {
+        setIsTranslating(false)
+      }
+    }
   }
 
   const handleResetForm = async () => {
-    form.reset(translationsData.quoteData[activeLang])
+    form.reset(translationsData.recipeData[activeLang])
     // clear store and session
     await resetTranslations()
+    await resetUpdatedStore()
+
     sessionStorage.removeItem("mood-storage")
+    sessionStorage.removeItem("updated-mood-fields")
 
     onClose()
+  }
+
+  const onSubmit = (data: z.infer<typeof FormSchema>): void => {
+    EditRecipeMood()
   }
 
   return (
@@ -169,7 +208,7 @@ export default function QuoteTab({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-4 text-black"
+          className="pb-20 space-y-4 text-black"
         >
           {/* Mood */}
           <div className="pt-4 pb-3">
@@ -204,80 +243,76 @@ export default function QuoteTab({
 
           <Separator />
 
-          {/* Author Field */}
+          {/* Recipe */}
           <FormField
             control={form.control}
-            name="author"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>{translations.quoteAuthor}</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder={translations.enterQuoteQuthor}
-                    {...field}
-                    onChange={e => handleInputChange("author", e.target.value)}
-                    onBlur={() => handleInputBlur("author", field.value)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Quote Field */}
-          <FormField
-            control={form.control}
-            name="quote"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>{translations.quote}</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder={translations.addTheQuoteHereInDetails}
-                    {...field}
-                    onChange={e => handleInputChange("quote", e.target.value)}
-                    onBlur={() => handleInputBlur("quote", field.value)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="share"
+            name="recipe"
             render={({ field }) => (
               <FormItem>
-                <FormControl className="flex gap-2 items-center">
-                  <Checkbox
-                    id="share-checkbox"
-                    checked={field.value}
-                    onCheckedChange={(checked: boolean) => {
-                      field.onChange(checked)
-                      setTranslationField("quoteData", "en", "share", checked)
-                      setTranslationField("quoteData", "fr", "share", checked)
-                    }}
-                  />{" "}
-                  <FormLabel
-                    htmlFor="share-checkbox"
-                    className="m-0 cursor-pointer"
-                  >
-                    {translations.share}
-                  </FormLabel>
+                <FormLabel>{translations.recipe}</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder={translations.searchForRecipe}
+                    {...field}
+                    onChange={e => handleInputChange(e, "recipe")}
+                    onBlur={() => handleInputBlur(field.value, "recipe")}
+                  />
                 </FormControl>
-
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          {/* Action Buttons */}
+          {/* Description */}
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{translations.description}</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder={translations.addDetailsInHere}
+                    {...field}
+                    onChange={e => handleInputChange(e, "description")}
+                    onBlur={() => handleInputBlur(field.value, "description")}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Image Uploader */}
+          <div className="pb-8 w-full">
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <ImageUploader
+                      title={translations.selectImagesForYourFoodItem}
+                      previewUrls={
+                        previewUrls.length > 0
+                          ? previewUrls
+                          : [translationsData.recipeData.en.image]
+                      }
+                      onChange={handleImageSelect}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Actions */}
           <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
             <Button variant="outline" type="button" onClick={handleResetForm}>
               {translations.cancel}
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || !hasRecipeUpdates}>
               {isLoading ? (
                 <div className="flex gap-2 items-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />

@@ -29,6 +29,7 @@
   "bakery": "Boulangerie",
   "dairy": "Produits laitiers",
   "produce": "Produits frais",
+  "Mood": "Humeur",
 
   "required": "Obligatoire",
   "pleaseSelectAMood": "Veuillez sélectionner une humeur",

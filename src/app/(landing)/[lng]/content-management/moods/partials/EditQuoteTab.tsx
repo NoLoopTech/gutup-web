@@ -27,6 +27,7 @@ import { type translationsTypes } from "@/types/moodsTypes"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useUpdatedTranslationStore } from "@/stores/useUpdatedTranslationStore"
 
 interface Option {
   value: string
@@ -49,15 +50,15 @@ const moodOptions: Record<string, Option[]> = {
   ]
 }
 
-export default function QuoteTab({
+export default function EditQuoteTab({
   translations,
   onClose,
-  addQuoteMood,
+  EditQuoteMood,
   isLoading
 }: {
   translations: translationsTypes
   onClose: () => void
-  addQuoteMood: () => void
+  EditQuoteMood: () => void
   isLoading: boolean
 }): JSX.Element {
   const { translateText } = useTranslation()
@@ -67,6 +68,17 @@ export default function QuoteTab({
     setTranslationField,
     resetTranslations
   } = useMoodStore()
+
+  const {
+    translationsData: updatedTranslations,
+    setUpdatedField,
+    resetUpdatedStore
+  } = useUpdatedTranslationStore()
+
+  const hasQuoteUpdates =
+    Object.keys(updatedTranslations.quoteData.en).length > 0 ||
+    Object.keys(updatedTranslations.quoteData.fr).length > 0
+
   const [isTranslating, setIsTranslating] = useState(false)
 
   // Schema
@@ -106,6 +118,7 @@ export default function QuoteTab({
   const handleInputChange = (fieldName: "author" | "quote", value: string) => {
     form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
     setTranslationField("quoteData", activeLang, fieldName, value)
+    setUpdatedField("quoteData", activeLang, fieldName, value)
   }
 
   const handleInputBlur = async (
@@ -116,10 +129,12 @@ export default function QuoteTab({
       try {
         if (fieldName === "author") {
           setTranslationField("quoteData", "fr", fieldName, value)
+          setUpdatedField("quoteData", "fr", fieldName, value)
         } else {
           setIsTranslating(true)
           const translated = await translateText(value)
           setTranslationField("quoteData", "fr", fieldName, translated)
+          setUpdatedField("quoteData", "fr", fieldName, translated)
         }
       } finally {
         setIsTranslating(false)
@@ -130,6 +145,7 @@ export default function QuoteTab({
   const handleMoodChange = (value: string) => {
     form.setValue("mood", value)
     setTranslationField("quoteData", activeLang, "mood", value)
+    setUpdatedField("quoteData", activeLang, "mood", value)
 
     const current = moodOptions[activeLang]
     const oppositeLang = activeLang === "en" ? "fr" : "en"
@@ -143,18 +159,21 @@ export default function QuoteTab({
         "mood",
         opposite[index].value
       )
+      setUpdatedField("quoteData", oppositeLang, "mood", opposite[index].value)
     }
   }
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
-    addQuoteMood()
+    EditQuoteMood()
   }
 
   const handleResetForm = async () => {
     form.reset(translationsData.quoteData[activeLang])
     // clear store and session
     await resetTranslations()
+    await resetUpdatedStore()
     sessionStorage.removeItem("mood-storage")
+    sessionStorage.removeItem("updated-mood-fields")
 
     onClose()
   }
@@ -257,6 +276,9 @@ export default function QuoteTab({
                       field.onChange(checked)
                       setTranslationField("quoteData", "en", "share", checked)
                       setTranslationField("quoteData", "fr", "share", checked)
+
+                      setUpdatedField("quoteData", "en", "share", checked)
+                      setUpdatedField("quoteData", "fr", "share", checked)
                     }}
                   />{" "}
                   <FormLabel
@@ -277,7 +299,7 @@ export default function QuoteTab({
             <Button variant="outline" type="button" onClick={handleResetForm}>
               {translations.cancel}
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || !hasQuoteUpdates}>
               {isLoading ? (
                 <div className="flex gap-2 items-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
@@ -286,7 +308,7 @@ export default function QuoteTab({
               ) : (
                 translations.save
               )}
-            </Button>
+            </Button>{" "}
           </div>
         </form>
       </Form>

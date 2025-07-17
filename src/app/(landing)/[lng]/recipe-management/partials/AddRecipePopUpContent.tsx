@@ -13,8 +13,7 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { type RecipeFields } from "@/stores/useRecipeStore"
 import LabelInput from "@/components/Shared/LableInput/LableInput"
-import { type Recipe } from "@/types/recipeTypes"
-import { Trash, CircleFadingPlus, MoreVertical } from "lucide-react"
+import { Trash } from "lucide-react"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import {
   Select,
@@ -36,12 +35,18 @@ import { toast } from "sonner"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRecipeStore } from "@/stores/useRecipeStore"
-import { type translationsTypes } from "@/types/storeTypes"
-import { getAllTagsByCategory } from "@/app/api/foods"
+import { type translationsTypes } from "@/types/recipeTypes"
+import { getAllTagsByCategory } from "@/app/api/tags"
+import { getAllFoods } from "@/app/api/foods"
 import {
   deleteImageFromFirebase,
   uploadImageToFirebase
 } from "@/lib/firebaseImageUtils"
+
+interface Food {
+  id: string
+  name: string
+}
 
 interface Ingredient {
   id: number
@@ -122,10 +127,12 @@ const translateToFrench = async (
 
 export default function AddRecipePopUpContent({
   translations,
-  token
+  token,
+  onClose
 }: {
   translations: translationsTypes
   token: string
+  onClose: () => void
 }): JSX.Element {
   const { activeLang, setTranslationField, allowMultiLang } = useRecipeStore()
   const { translateText } = useTranslation()
@@ -202,15 +209,11 @@ export default function AddRecipePopUpContent({
         message: translations.required
       }
     ),
-    // authorimage: z.custom<File | null>(val => val instanceof File, {
-    //   message: translations.required
-    // }),
-    // foodimage: z.custom<File | null>(val => val instanceof File, {
-    //   message: translations.required
-    // })
     foodimage: z.string().min(1, { message: translations.required }),
     authorimage: z.string().min(1, { message: translations.required })
   })
+
+  type RecipeSchemaType = z.infer<typeof RecipeSchema>
 
   useEffect(() => {
     const fetchFoods = async (): Promise<void> => {
@@ -237,11 +240,11 @@ export default function AddRecipePopUpContent({
     }
   }
 
-  const onSubmit = (data: z.infer<typeof RecipeSchema>): void => {
+  const onSubmit = (data: RecipeSchemaType): void => {
     toast(translations.formSubmittedSuccessfully, {})
   }
   const handleCancel = (
-    form: ReturnType<typeof useForm<z.infer<typeof RecipeSchema>>>
+    form: ReturnType<typeof useForm<RecipeSchemaType>>
   ): void => {
     form.reset()
   }
@@ -389,7 +392,7 @@ export default function AddRecipePopUpContent({
   const handleRecipeChange = (field: any) => (val: string) => {
     field.onChange(val)
   }
-  const form = useForm<z.infer<typeof RecipeSchema>>({
+  const form = useForm<RecipeSchemaType>({
     resolver: zodResolver(RecipeSchema),
     defaultValues: {
       name: "",
@@ -406,8 +409,8 @@ export default function AddRecipePopUpContent({
       email: "",
       website: "",
       recipe: "",
-      authorimage: null,
-      foodimage: null
+      authorimage: "",
+      foodimage: ""
     }
   })
 
@@ -418,11 +421,10 @@ export default function AddRecipePopUpContent({
       accessor: "name" as const
     },
     {
-      header: translations.type,
+      header: "Type",
       accessor: (row: Ingredient) => (
         <Badge className="bg-white text-black text-xs px-2 py-1 rounded-md border border-gray-100 hover:bg-white">
-          {translations[row.type?.toLowerCase() as keyof typeof translations] ||
-            row.type}
+          {getTranslatedType(row.type, activeLang)}
         </Badge>
       )
     },
@@ -443,7 +445,7 @@ export default function AddRecipePopUpContent({
       )
     },
     {
-      header: translations.displayStatus,
+      header: "Display Status",
       accessor: (row: Ingredient) => (
         <Switch checked={row.display} className="scale-75" />
       )
@@ -459,7 +461,7 @@ export default function AddRecipePopUpContent({
           onClick={() => {
             handleDeleteAvailItem(row.id)
           }}
-          title={translations.delete}
+          title="Delete"
         >
           <Trash className="h-4 w-4 text-gray-500" />
         </Button>
@@ -472,13 +474,12 @@ export default function AddRecipePopUpContent({
   const handleDeleteAvailItem = (id: number): void => {
     const updated = ingredientData.filter(item => item.id !== id)
     setIngredientData(updated)
-    form.setValue("ingredientData", updated, { shouldValidate: true })
-    setTranslationField(activeLang, "ingredientData", updated)
+    form.setValue("ingredientData", updated as any, { shouldValidate: true })
+    setTranslationField(activeLang, "ingredientData", updated as any)
     setTranslationField(
-      // "storeData",
       activeLang === "en" ? "fr" : "en",
       "ingredientData",
-      updated
+      updated as any
     )
   }
 
@@ -489,18 +490,16 @@ export default function AddRecipePopUpContent({
       Array.isArray(formIngredientData) &&
       formIngredientData !== ingredientData
     ) {
-      setIngredientData(formIngredientData)
+      setIngredientData(formIngredientData as Ingredient[])
     }
-  }, [form.watch("ingredientData")])
+  }, [form, ingredientData])
 
   // translated type/status using translations object
   const getTranslatedType = (type: string, lang: string): string => {
-    const key = type.toLowerCase()
-    return translations[key] || type
+    return type
   }
   const getTranslatedStatus = (status: string, lang: string): string => {
-    const key = status.toLowerCase()
-    return translations[key] || status
+    return status
   }
 
   // handler for “Add Ingredient”
@@ -520,10 +519,13 @@ export default function AddRecipePopUpContent({
     }
 
     // Update current lang
-    const updated = [...(form.getValues("ingredientData") || []), entry]
+    const updated = [
+      ...(form.getValues("ingredientData") || []),
+      entry
+    ] as Ingredient[]
     setIngredientData(updated)
-    form.setValue("ingredientData", updated, { shouldValidate: true })
-    setTranslationField(activeLang, "ingredientData", updated)
+    form.setValue("ingredientData", updated as any, { shouldValidate: true })
+    setTranslationField(activeLang, "ingredientData", updated as any)
 
     // Prepare translated entry for opposite lang
     const oppLang = activeLang === "en" ? "fr" : "en"
@@ -542,11 +544,8 @@ export default function AddRecipePopUpContent({
       status: translatedStatus as "Active" | "Inactive"
     }
     // Only pass translated data to opposite lang
-    const oppUpdated = [
-      ...(([oppLang]?.ingredientData as Ingredient[]) || []),
-      translatedEntry
-    ]
-    setTranslationField(oppLang, "ingredientData", oppUpdated)
+    const oppUpdated = [...ingredientData, translatedEntry]
+    setTranslationField(oppLang, "ingredientData", oppUpdated as any)
 
     // clear for next
     setSelected(null)
@@ -556,7 +555,7 @@ export default function AddRecipePopUpContent({
   // adds/removes benefits:
   function handleBenefitsChange(vals: string[]): void {
     form.setValue("benefits", vals)
-    setTranslationField(activeLang, "benefits", vals)
+    setTranslationField(activeLang, "benefits", vals as any)
   }
 
   async function handleBenefitsBlur(): Promise<void> {
@@ -568,7 +567,7 @@ export default function AddRecipePopUpContent({
           const trArr = await Promise.all(
             vals.map(async v => await translateText(v))
           )
-          setTranslationField("fr", "benefits", trArr)
+          setTranslationField("fr", "benefits", trArr as any)
         } finally {
           setIsTranslating(false)
         }
@@ -615,7 +614,7 @@ export default function AddRecipePopUpContent({
   // Sync form values with store values for the current language
   useEffect(() => {
     const store = useRecipeStore.getState()
-    const fields: (keyof RecipeFields)[] = [
+    const validFields = [
       "name",
       "preparation",
       "rest",
@@ -629,16 +628,13 @@ export default function AddRecipePopUpContent({
       "category",
       "season",
       "ingredientData",
-      "authorCategory"
-    ]
-    fields.forEach(field => {
-      // Safely cast store[activeLang] to Record<string, unknown> before indexing
-      const langData = (
-        store as unknown as Record<string, Partial<RecipeFields>>
-      )[activeLang]
-      const value = langData
-        ? (langData as Record<string, unknown>)[field]
-        : undefined
+      "authorCategory",
+      "foodimage",
+      "authorimage"
+    ] as const
+    validFields.forEach(field => {
+      const langData = store[activeLang]
+      const value = langData ? langData[field] : undefined
       console.log(
         "Syncing field:",
         field,
@@ -648,17 +644,21 @@ export default function AddRecipePopUpContent({
         activeLang
       )
       if (typeof value !== "undefined") {
-        form.setValue(field, value)
+        form.setValue(field as any, value as any)
       }
     })
   }, [activeLang])
 
-  const handleImageSelect = async (files: File[] | null) => {
+  const handleImageSelect = async (files: File[] | null): Promise<void> => {
     const file = files?.[0] ?? null
     if (file) {
       try {
         setIsTranslating(true)
-        const imageUrl = await uploadImageToFirebase(file, "recipes")
+        const imageUrl = await uploadImageToFirebase(
+          file,
+          "recipes",
+          `recipe_${Date.now()}`
+        )
 
         form.setValue("foodimage", imageUrl, {
           shouldValidate: true,
@@ -676,14 +676,20 @@ export default function AddRecipePopUpContent({
       }
     }
   }
-  const handleImageSelectAuthor = async (files: File[] | null) => {
+  const handleImageSelectAuthor = async (
+    files: File[] | null
+  ): Promise<void> => {
     console.log("handleImageSelect called with files:", files)
 
     const file = files?.[0] ?? null
     if (file) {
       try {
         setIsTranslating(true)
-        const imageUrl = await uploadImageToFirebase(file, "author")
+        const imageUrl = await uploadImageToFirebase(
+          file,
+          "author",
+          `author_${Date.now()}`
+        )
         console.log("Uploaded food image URL:", imageUrl)
 
         form.setValue("authorimage", imageUrl, {
@@ -721,22 +727,24 @@ export default function AddRecipePopUpContent({
   //   }
   // }, [activeLang, form.reset, allowMultiLang])
   useEffect(() => {
-    const langData = allowMultiLang[activeLang]
+    const store = useRecipeStore.getState()
+    const langData = store[activeLang]
     if (langData) {
-      form.reset(langData)
+      form.reset(langData as any)
       if (langData.foodimage) setPreviewFoodUrls([langData.foodimage])
-      else setPreviewFoodUrls(imageUrls)
+      else setPreviewFoodUrls([])
 
       if (langData.authorimage) setPreviewAuthorUrls([langData.authorimage])
-      else setPreviewAuthorUrls(imageUrls)
+      else setPreviewAuthorUrls([])
     }
-  }, [activeLang, form.reset, allowMultiLang])
+  }, [activeLang, form.reset])
 
   const handleCancelImage = async (): Promise<void> => {
+    const store = useRecipeStore.getState()
     //  Combine all possible image URLs (preview + stored)
     const possibleImages = [
-      allowMultiLang[activeLang]?.foodimage,
-      allowMultiLang[activeLang]?.authorimage
+      store[activeLang]?.foodimage,
+      store[activeLang]?.authorimage
     ]
     const uniqueImageUrls = Array.from(new Set(possibleImages)).filter(Boolean)
 
@@ -758,7 +766,6 @@ export default function AddRecipePopUpContent({
     sessionStorage.removeItem("recipe-storage")
 
     // Clear preview image state
-    // setPreviewUrls([])
     setPreviewFoodUrls([])
     setPreviewAuthorUrls([])
 
@@ -1002,7 +1009,7 @@ export default function AddRecipePopUpContent({
                 value={ingredientInput}
                 onInputChange={setIngredientInput}
                 onSelect={item => {
-                  setSelected(item)
+                  setSelected(item as Food)
                   setIngredientInput(item.name)
                 }}
               />
@@ -1101,12 +1108,12 @@ export default function AddRecipePopUpContent({
                           placeholder={translations.addAuthorName}
                           {...field}
                           onChange={e => handleInputChange(e, "authorName")}
-                          onBlur={() =>
-                            handleInputBlurWithoutTranslate(
+                          onBlur={async () => {
+                            await handleInputBlurWithoutTranslate(
                               field.value,
                               "authorName"
                             )
-                          }
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -1128,9 +1135,9 @@ export default function AddRecipePopUpContent({
                           placeholder={translations.enterAuthorSpecialty}
                           {...field}
                           onChange={e => handleInputChange(e, "authorCategory")}
-                          onBlur={() =>
-                            handleInputBlur(field.value, "authorCategory")
-                          }
+                          onBlur={async () => {
+                            await handleInputBlur(field.value, "authorCategory")
+                          }}
                         />
                       </FormControl>
                       <FormMessage />

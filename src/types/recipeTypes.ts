@@ -96,6 +96,7 @@ export const defaultTranslations: translationsTypes = {
   quantity: "",
   mainIngredient: "",
   availableInIngredients: "",
+  availabilityStatus: "",
   inTheSystem: "",
   addToIngredients: "",
   describeTheRecipe: "",
