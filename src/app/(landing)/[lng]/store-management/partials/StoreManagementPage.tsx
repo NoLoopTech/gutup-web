@@ -51,7 +51,6 @@ import ViewStorePopUp from "./ViewStorePopUp"
 import EditStorePopUp from "./EditStorePopUp"
 import { transformStoreDataToApiRequest } from "@/helpers/storeHelpers"
 
-
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
   header?: string
@@ -223,13 +222,18 @@ export default function StoreManagementPage({
       )
 
       if (existingPhone && existingEmail) {
-        toast.error(translations.phoneEmailAlreadyExists)
+        toast.error(
+          translations.phoneEmailAlreadyExists ||
+            "Phone number and email already exist"
+        )
         return
       } else if (existingPhone) {
-        toast.error(translations.phoneAlreadyExists)
+        toast.error(
+          translations.phoneAlreadyExists || "Phone number already exists"
+        )
         return
       } else if (existingEmail) {
-        toast.error(translations.emailAlreadyExists)
+        toast.error(translations.emailAlreadyExists || "Email already exists")
         return
       }
 
