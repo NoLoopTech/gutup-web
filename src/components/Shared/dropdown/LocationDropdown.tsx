@@ -49,23 +49,23 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({
     control: (provided: any, state: any) => ({
       ...provided,
       borderRadius: "8px", // Adjust border radius as desired
-      borderColor: state.isFocused ? "#4D194D" : "#4D194D",
-      borderWidth: "2px", // Adjust border width as desired
+      borderColor: state.isFocused ? "#969595" : "#dedede",
+      borderWidth: "1px", // Adjust border width as desired
       boxShadow: state.isFocused ? "none" : "none", // Remove default box-shadow
       outline: "none", // Remove the outline
-      backgroundColor: "#fef2f2",
+      backgroundColor: "#fff",
       "&:hover": {
-        borderColor: "#4D194D" // Change this to your desired hover border color
+        borderColor: "##c4c4c4" // Change this to your desired hover border color
       }
     }),
     menu: (provided: any) => ({
       ...provided,
-      backgroundColor: "#fef2f2" // Change this to your desired background color
+      backgroundColor: "#fff" // Change this to your desired background color
     }),
     option: (provided: any, state: any) => ({
       ...provided,
-      backgroundColor: state.isFocused ? "#FFEBE7" : "", // Change this to your desired background color
-      color: "#4D194D" // Text color
+      backgroundColor: state.isFocused ? "#fff" : "", // Change this to your desired background color
+      color: "#000" // Text color
     }),
     singleValue: (provided: any) => ({
       ...provided,
