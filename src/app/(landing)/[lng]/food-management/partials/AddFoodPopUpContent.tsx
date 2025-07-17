@@ -1,11 +1,18 @@
 "use client"
 
-import React, { useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
+import { getCatagoryFoodType, postFoodTag, postNewFood } from "@/app/api/foods"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
-import dynamic from "next/dynamic"
 import LableInput from "@/components/Shared/LableInput/LableInput"
+import { Button } from "@/components/ui/button"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -13,23 +20,18 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormControl
-} from "@/components/ui/form"
-import { toast } from "sonner"
-import { type translationsTypes } from "@/types/foodTypes"
-import { useFoodStore } from "@/stores/useFoodStore"
-import { useTranslation } from "@/query/hooks/useTranslation"
+import { Separator } from "@/components/ui/separator"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
+import { useTranslation } from "@/query/hooks/useTranslation"
+import { useFoodStore } from "@/stores/useFoodStore"
+import { type CreateFoodDto, type translationsTypes } from "@/types/foodTypes"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useSession } from "next-auth/react"
+import dynamic from "next/dynamic"
+import React, { useState } from "react"
+import { useForm } from "react-hook-form"
+import { toast } from "sonner"
+import { z } from "zod"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -38,34 +40,40 @@ const RichTextEditor = dynamic(
 interface Option {
   value: string
   label: string
+  valueEn?: string
+  valueFr?: string
+  labelEn?: string
+  labelFr?: string
 }
 // Define category options for each language
-const categoryOptions: Record<string, Option[]> = {
-  en: [
-    { value: "fruits", label: "Fruits" },
-    { value: "vegetables", label: "Vegetables" },
-    { value: "dairy", label: "Dairy" },
-    { value: "grains", label: "Grains" }
-  ],
-  fr: [
-    { value: "fruits", label: "Fruits" },
-    { value: "vegetables", label: "Légumes" },
-    { value: "dairy", label: "Produits laitiers" },
-    { value: "grains", label: "Céréales" }
-  ]
-}
 const seasonOptions: Record<string, Option[]> = {
   en: [
-    { value: "spring", label: "Spring" },
-    { value: "summer", label: "Summer" },
-    { value: "autumn", label: "Autumn" },
-    { value: "winter", label: "Winter" }
+    { value: "January", label: "January" },
+    { value: "February", label: "February" },
+    { value: "March", label: "March" },
+    { value: "April", label: "April" },
+    { value: "May", label: "May" },
+    { value: "June", label: "June" },
+    { value: "July", label: "July" },
+    { value: "August", label: "August" },
+    { value: "September", label: "September" },
+    { value: "October", label: "October" },
+    { value: "November", label: "November" },
+    { value: "December", label: "December" }
   ],
   fr: [
-    { value: "spring", label: "Printemps" },
-    { value: "summer", label: "Été" },
-    { value: "autumn", label: "Automne" },
-    { value: "winter", label: "Hiver" }
+    { value: "Janvier", label: "Janvier" },
+    { value: "Février", label: "Février" },
+    { value: "Mars", label: "Mars" },
+    { value: "Avril", label: "Avril" },
+    { value: "Mai", label: "Mai" },
+    { value: "Juin", label: "Juin" },
+    { value: "Juillet", label: "Juillet" },
+    { value: "Août", label: "Août" },
+    { value: "Septembre", label: "Septembre" },
+    { value: "Octobre", label: "Octobre" },
+    { value: "Novembre", label: "Novembre" },
+    { value: "Décembre", label: "Décembre" }
   ]
 }
 const countriesOptions: Record<string, Option[]> = {
@@ -84,14 +92,24 @@ const countriesOptions: Record<string, Option[]> = {
 }
 
 export default function AddFoodPopUpContent({
-  translations
+  translations,
+  onClose,
+  getFoods
 }: {
   translations: translationsTypes
+  onClose: () => void
+  getFoods: () => void
 }): JSX.Element {
   const { translateText } = useTranslation()
-  const { activeLang, foodData, setTranslationField } = useFoodStore() as any
+  const { activeLang, foodData, setTranslationField, allowMultiLang } =
+    useFoodStore() as any
   const [isTranslating, setIsTranslating] = useState(false)
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
+  const { data: session } = useSession()
+  const [categoryOptionsApi, setCategoryOptionsApi] = useState<Option[]>([])
+  const [benefitTags, setBenefitTags] = useState<
+    Array<{ tagName: string; tagNameFr: string }>
+  >([])
 
   // Define FoodSchema before using it in useForm
   const FoodSchema = z.object({
@@ -198,6 +216,21 @@ export default function AddFoodPopUpContent({
       }
     }
   }
+  const seasonSyncMap = [
+    { en: "January", fr: "Janvier", frLabel: "Janvier" },
+    { en: "February", fr: "Février", frLabel: "Février" },
+    { en: "March", fr: "Mars", frLabel: "Mars" },
+    { en: "April", fr: "Avril", frLabel: "Avril" },
+    { en: "May", fr: "Mai", frLabel: "Mai" },
+    { en: "June", fr: "Juin", frLabel: "Juin" },
+    { en: "July", fr: "Juillet", frLabel: "Juillet" },
+    { en: "August", fr: "Août", frLabel: "Août" },
+    { en: "September", fr: "Septembre", frLabel: "Septembre" },
+    { en: "October", fr: "Octobre", frLabel: "Octobre" },
+    { en: "November", fr: "Novembre", frLabel: "Novembre" },
+    { en: "December", fr: "Décembre", frLabel: "Décembre" }
+  ]
+
   // Function to update select fields (category, season, country)
   const handleSelectChange = (
     fieldName: "category" | "season" | "country",
@@ -206,24 +239,53 @@ export default function AddFoodPopUpContent({
     form.setValue(fieldName, value)
     setTranslationField("foodData", activeLang, fieldName, value)
 
-    // Get the correct options set
-    let optionsMap: Record<string, Option[]>
-    if (fieldName === "category") optionsMap = categoryOptions
-    else if (fieldName === "season") optionsMap = seasonOptions
-    else optionsMap = countriesOptions
-
-    const current = optionsMap[activeLang]
-    const oppositeLang = activeLang === "en" ? "fr" : "en"
-    const opposite = optionsMap[oppositeLang]
-
-    const index = current.findIndex(opt => opt.value === value)
-    if (index !== -1 && opposite[index]) {
-      setTranslationField(
-        "foodData",
-        oppositeLang,
-        fieldName,
-        opposite[index].value
+    if (fieldName === "category") {
+      // Find the selected option
+      const selected = categoryOptionsApi.find(
+        opt => (activeLang === "en" ? opt.valueEn : opt.valueFr) === value
       )
+      if (selected) {
+        setTranslationField("foodData", "en", "category", selected.valueEn)
+        setTranslationField("foodData", "fr", "category", selected.valueFr)
+      }
+    }
+
+    if (fieldName === "season") {
+      // Sync season between languages
+      if (activeLang === "en") {
+        const found = seasonSyncMap.find(m => m.en === value)
+        if (found) {
+          setTranslationField("foodData", "en", "season", found.en)
+          setTranslationField("foodData", "fr", "season", found.fr)
+        }
+      } else if (activeLang === "fr") {
+        const found = seasonSyncMap.find(m => m.fr === value)
+        if (found) {
+          setTranslationField("foodData", "en", "season", found.en)
+          setTranslationField("foodData", "fr", "season", found.fr)
+        }
+      }
+    }
+
+    if (fieldName === "country") {
+      // Sync country between languages
+      if (activeLang === "en") {
+        const found = countriesOptions.fr.find(
+          opt => opt.value === value.toLowerCase()
+        )
+        if (found) {
+          setTranslationField("foodData", "en", "country", value)
+          setTranslationField("foodData", "fr", "country", found.value)
+        }
+      } else if (activeLang === "fr") {
+        const found = countriesOptions.en.find(
+          opt => opt.value.toLowerCase() === value
+        )
+        if (found) {
+          setTranslationField("foodData", "en", "country", found.value)
+          setTranslationField("foodData", "fr", "country", value)
+        }
+      }
     }
   }
 
@@ -320,7 +382,7 @@ export default function AddFoodPopUpContent({
         const imageUrl = await uploadImageToFirebase(
           file,
           "add-food",
-          `food-${Date.now()}-${file.name}`
+          file.name
         )
 
         // Convert file to base64 for session storage
@@ -365,9 +427,136 @@ export default function AddFoodPopUpContent({
   }
 
   // Submit handler
-  const onSubmit = (): void => {
-    toast(translations.formSubmittedSuccessfully, {})
+  const onSubmit = async (
+    formData: z.infer<typeof FoodSchema>
+  ): Promise<void> => {
+    try {
+      const token = session?.apiToken
+
+      // Save food first
+      const foodDto: CreateFoodDto = {
+        name: foodData.en.name,
+        nameFR: foodData.fr?.name ?? "",
+        category: foodData.en.category,
+        categoryFR: foodData.fr?.category ?? "",
+        country: foodData.en.country,
+        seasons: foodData.en.season
+          ? [
+              {
+                foodId: 0,
+                season: foodData.en.season,
+                seasonFR: foodData.fr?.season ?? ""
+              }
+            ]
+          : [],
+        attributes: {
+          fiber: Number(foodData.en.fiber) || 0,
+          proteins: Number(foodData.en.proteins) || 0,
+          vitamins: foodData.en.vitamins || "",
+          vitaminsFR: foodData.fr?.vitamins ?? "",
+          minerals: foodData.en.minerals || "",
+          mineralsFR: foodData.fr?.minerals ?? "",
+          fat: Number(foodData.en.fat) || 0,
+          sugar: Number(foodData.en.sugar) || 0
+        },
+        describe: {
+          selection: foodData.en.selection,
+          selectionFR: foodData.fr?.selection ?? "",
+          preparation: foodData.en.preparation,
+          preparationFR: foodData.fr?.preparation ?? "",
+          conservation: foodData.en.conservation,
+          conservationFR: foodData.fr?.conservation ?? ""
+        },
+        images: foodData.en.storeImage
+          ? [{ image: foodData.en.storeImage }]
+          : [],
+        healthBenefits: (foodData.en.benefits || []).map(
+          (b: string, i: number) => ({
+            healthBenefit: b,
+            healthBenefitFR: foodData.fr?.benefits?.[i] ?? ""
+          })
+        ),
+        allowMultiLang
+      }
+      const response = await postNewFood(token ?? "", foodDto)
+      if (response.status === 201 || response.status === 200) {
+        toast.success(translations.formSubmittedSuccessfully)
+        getFoods()
+        sessionStorage.removeItem("food-store")
+        onClose()
+      } else {
+        toast.error("Failed to add food")
+      }
+
+      // Now, post new benefits to /food-tag if not exist
+      if (!token) {
+        toast.error("Session expired. Please log in again.")
+        return
+      }
+      const benefitResponse = await getCatagoryFoodType(token, "Benefit")
+      const existingTags = Array.isArray(benefitResponse?.data)
+        ? benefitResponse.data.map((b: any) => b.tagName)
+        : []
+
+      for (const [i, benefit] of (foodData.en.benefits || []).entries()) {
+        if (!existingTags.includes(benefit)) {
+          await postFoodTag(token, {
+            tagName: benefit,
+            tagNameFr: foodData.fr?.benefits?.[i] ?? ""
+          })
+        }
+      }
+    } catch (error) {
+      toast.error("Error adding food")
+      console.error(error)
+    }
   }
+
+  React.useEffect(() => {
+    const fetchCategoryAndBenefit = async (): Promise<void> => {
+      if (!session?.apiToken) return
+
+      // Fetch Type
+      const typeResponse = await getCatagoryFoodType(session.apiToken, "Type")
+      if (typeResponse?.status === 200 && Array.isArray(typeResponse.data)) {
+        setCategoryOptionsApi(
+          typeResponse.data.map((item: any) => ({
+            value: activeLang === "en" ? item.tagName : item.tagNameFr,
+            label: activeLang === "en" ? item.tagName : item.tagNameFr,
+            valueEn: item.tagName,
+            valueFr: item.tagNameFr,
+            labelEn: item.tagName,
+            labelFr: item.tagNameFr
+          }))
+        )
+      }
+      
+    }
+
+    void fetchCategoryAndBenefit()
+  }, [session?.apiToken])
+
+  React.useEffect(() => {
+    const fetchBenefitTags = async (): Promise<void> => {
+      if (!session?.apiToken) return
+      const benefitResponse = await getCatagoryFoodType(
+        session.apiToken,
+        "Benefit"
+      )
+      if (
+        benefitResponse?.status === 200 &&
+        Array.isArray(benefitResponse.data)
+      ) {
+        setBenefitTags(
+          benefitResponse.data.map((item: any) => ({
+            tagName: item.tagName,
+            tagNameFr: item.tagNameFr
+          }))
+        )
+      }
+    }
+    void fetchBenefitTags()
+  }, [session?.apiToken])
 
   // Cancel handler
   const handleCancel = (
@@ -376,15 +565,23 @@ export default function AddFoodPopUpContent({
     form.reset()
   }
 
+  const handleAddNewBenefit = async (
+    benefit: string
+  ): Promise<{ tagName: string; tagNameFr: string }> => {
+    // Translate to French
+    const tagNameFr = await translateText(benefit)
+    return { tagName: benefit, tagNameFr }
+  }
+
   return (
     <div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
             <div>
               {isTranslating && (
-                <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
-                  <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60">
+                  <span className="w-10 h-10 border-t-4 border-blue-500 border-solid rounded-full animate-spin" />
                 </div>
               )}
               <FormField
@@ -434,7 +631,7 @@ export default function AddFoodPopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {categoryOptions[activeLang].map(option => (
+                          {categoryOptionsApi.map(option => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
                             </SelectItem>
@@ -454,7 +651,7 @@ export default function AddFoodPopUpContent({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="block mb-1 text-black">
-                      {translations.season}
+                      {translations.month}
                     </FormLabel>
                     <FormControl>
                       <Select
@@ -464,9 +661,7 @@ export default function AddFoodPopUpContent({
                         }}
                       >
                         <SelectTrigger className="w-full mt-1">
-                          <SelectValue
-                            placeholder={translations.selectSeason}
-                          />
+                          <SelectValue placeholder={translations.selectMonth} />
                         </SelectTrigger>
                         <SelectContent>
                           {seasonOptions[activeLang].map(option => (
@@ -696,8 +891,8 @@ export default function AddFoodPopUpContent({
           </div>
           <div className="w-[100%]">
             {isTranslating && (
-              <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
-                <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center bg-white/60">
+                <span className="w-10 h-10 border-t-4 border-blue-500 rounded-full animate-spin" />
               </div>
             )}
             <FormField
@@ -710,6 +905,70 @@ export default function AddFoodPopUpContent({
                   benefits={field.value || []}
                   name="benefits"
                   width="w-[32%]"
+                  suggestions={benefitTags}
+                  activeLang={activeLang}
+                  onAddNewBenefit={handleAddNewBenefit}
+                  onSelectSuggestion={benefit => {
+                    // Add both EN and FR at the same index
+                    const enBenefits = [
+                      ...(foodData.en.benefits || []),
+                      benefit.tagName
+                    ]
+                    const frBenefits = [
+                      ...(foodData.fr.benefits || []),
+                      benefit.tagNameFr
+                    ]
+                    setTranslationField(
+                      "foodData",
+                      "en",
+                      "benefits",
+                      enBenefits
+                    )
+                    setTranslationField(
+                      "foodData",
+                      "fr",
+                      "benefits",
+                      frBenefits
+                    )
+                    form.setValue(
+                      "benefits",
+                      activeLang === "en" ? enBenefits : frBenefits
+                    )
+                  }}
+                  onRemoveBenefit={removed => {
+                    // Remove both at the same index
+                    const idxEn = (foodData.en.benefits || []).indexOf(
+                      removed.tagName
+                    )
+                    const idxFr = (foodData.fr.benefits || []).indexOf(
+                      removed.tagNameFr
+                    )
+                    const enBenefits = [...(foodData.en.benefits || [])]
+                    const frBenefits = [...(foodData.fr.benefits || [])]
+                    if (idxEn > -1) {
+                      enBenefits.splice(idxEn, 1)
+                      frBenefits.splice(idxEn, 1)
+                    } else if (idxFr > -1) {
+                      enBenefits.splice(idxFr, 1)
+                      frBenefits.splice(idxFr, 1)
+                    }
+                    setTranslationField(
+                      "foodData",
+                      "en",
+                      "benefits",
+                      enBenefits
+                    )
+                    setTranslationField(
+                      "foodData",
+                      "fr",
+                      "benefits",
+                      frBenefits
+                    )
+                    form.setValue(
+                      "benefits",
+                      activeLang === "en" ? enBenefits : frBenefits
+                    )
+                  }}
                   onChange={(newArr: string[]) => {
                     handleBenefitsChange(newArr)
                     field.onChange(newArr)
@@ -738,7 +997,7 @@ export default function AddFoodPopUpContent({
                   return (
                     <FormItem className="relative">
                       {isTranslating && (
-                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
                           <span className="loader" />
                         </div>
                       )}
@@ -770,7 +1029,7 @@ export default function AddFoodPopUpContent({
                   return (
                     <FormItem className="relative">
                       {isTranslating && (
-                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
                           <span className="loader" />
                         </div>
                       )}
@@ -802,7 +1061,7 @@ export default function AddFoodPopUpContent({
                   return (
                     <FormItem className="relative">
                       {isTranslating && (
-                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
                           <span className="loader" />
                         </div>
                       )}
@@ -827,7 +1086,7 @@ export default function AddFoodPopUpContent({
             </div>
           </div>
 
-          <div className="w-full mt-6 sm:w-2/5 pb-12">
+          <div className="w-full pb-12 mt-6 sm:w-2/5">
             <h3 className="mb-4 text-lg font-semibold text-black">
               {translations.uploadImages}
             </h3>
@@ -850,11 +1109,13 @@ export default function AddFoodPopUpContent({
           </div>
 
           {/* Save and Cancel buttons */}
-          <div className="fixed bottom-0 left-0 w-full bg-white border-t py-4 px-4 flex justify-between gap-2 z-50">
+          <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full gap-2 px-4 py-4 bg-white border-t">
             <Button
               variant="outline"
               onClick={() => {
                 handleCancel(form)
+                sessionStorage.removeItem("food-store") // Remove session key on cancel
+                onClose()
               }}
             >
               {translations.cancel}
