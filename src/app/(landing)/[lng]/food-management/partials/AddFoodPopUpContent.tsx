@@ -439,8 +439,6 @@ export default function AddFoodPopUpContent({
         nameFR: foodData.fr?.name ?? "",
         category: foodData.en.category,
         categoryFR: foodData.fr?.category ?? "",
-        season: foodData.en.season,
-        seasonFR: foodData.fr?.season ?? "",
         country: foodData.en.country,
         seasons: foodData.en.season
           ? [
