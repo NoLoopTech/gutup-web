@@ -67,6 +67,7 @@ export const CustomPagination = ({
       {/* Controls */}
       <div className="flex items-center">
         <Button
+          type="button"
           variant="ghost"
           size="icon"
           onClick={() => {
@@ -78,6 +79,7 @@ export const CustomPagination = ({
           <ChevronsLeft className="h-3 w-3 sm:h-4 sm:w-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="icon"
           onClick={() => {
@@ -89,6 +91,7 @@ export const CustomPagination = ({
           <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="icon"
           onClick={() => {
@@ -100,6 +103,7 @@ export const CustomPagination = ({
           <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="icon"
           onClick={() => {

@@ -3,23 +3,23 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 
-interface FoodFields {
-  name: string
-  fiber: string
-  proteins: string
-  vitamins: string
-  minerals: string
-  fat: string
-  sugar: string
-  benefits: string[]
-  image: string | null
-  imageName: string | null
+interface StoreField {
+  storeName: string
   category: string
-  season: string
-  country: string
-  selection: string
-  preparation: string
-  conservation: string
+  storeLocation: string
+  storeType: string
+  subscriptionType: boolean
+  timeFrom: string
+  timeTo: string
+  phone: string
+  email: string
+  website: string
+  facebook: string
+  instagram: string
+  about: string
+  availData: any[] // Changed from string[] to any[] to match AvailableItem[]
+  storeImage: string | null // Store as base64 string or Firebase URL
+  storeImageName: string | null // Store the original file name
 }
 
 interface LangData<T> {
@@ -27,49 +27,49 @@ interface LangData<T> {
   fr: T
 }
 
-interface FoodStoreState {
+interface StoreStoreState {
   allowMultiLang: boolean
   activeLang: "en" | "fr"
-  foodData: LangData<FoodFields>
+  storeData: LangData<StoreField>
   setAllowMultiLang: (val: boolean) => void
   setActiveLang: (lang: "en" | "fr") => void
 
   // same signature you had:
   setTranslationField: (
-    section: "foodData",
+    section: "storeData",
     lang: "en" | "fr",
-    field: keyof FoodFields,
-    value: string | string[]
+    field: keyof StoreField,
+    value: string | string[] | null
   ) => void
 
   resetForm: () => void
 }
 
-const emptyFields: FoodFields = {
-  name: "",
-  fiber: "",
-  proteins: "",
-  vitamins: "",
-  minerals: "",
-  fat: "",
-  sugar: "",
-  benefits: [],
-  image: null,
-  imageName: null,
+const emptyFields: StoreField = {
+  storeName: "",
   category: "",
-  season: "",
-  country: "",
-  selection: "",
-  preparation: "",
-  conservation: ""
+  storeLocation: "",
+  storeType: "",
+  subscriptionType: false,
+  timeFrom: "",
+  timeTo: "",
+  phone: "",
+  email: "",
+  website: "",
+  facebook: "",
+  instagram: "",
+  about: "",
+  availData: [],
+  storeImage: null,
+  storeImageName: null
 }
 
-export const useFoodStore = create<FoodStoreState>()(
+export const useStoreStore = create<StoreStoreState>()(
   persist(
     (set, get) => ({
       allowMultiLang: false,
       activeLang: "en",
-      foodData: {
+      storeData: {
         en: { ...emptyFields },
         fr: { ...emptyFields }
       },
@@ -101,7 +101,7 @@ export const useFoodStore = create<FoodStoreState>()(
 
       resetForm: () => {
         set({
-          foodData: {
+          storeData: {
             en: { ...emptyFields },
             fr: { ...emptyFields }
           }
@@ -109,7 +109,7 @@ export const useFoodStore = create<FoodStoreState>()(
       }
     }),
     {
-      name: "food-store",
+      name: "store-store",
       storage: createJSONStorage(() => sessionStorage)
     }
   )

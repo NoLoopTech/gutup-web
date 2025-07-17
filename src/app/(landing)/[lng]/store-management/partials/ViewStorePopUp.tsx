@@ -5,30 +5,27 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import AddStorePopUpContent from "./AddStorePopUpContent"
+import ViewStorePopUpContent from "./ViewStorePopUpContent"
 import { loadLanguage } from "@/../../src/i18n/locales"
 import { defaultTranslations, type translationsTypes } from "@/types/storeTypes"
-import { useStoreStore } from "@/stores/useStoreStore"
 
-interface Props {
+interface ViewStorePopUpProps {
   open: boolean
   onClose: () => void
-  onAddStore?: () => Promise<void>
-  isLoading?: boolean
+  storeId: number | null
+  token: string
 }
 
-export default function AddStorePopUp({
+export default function ViewStorePopUp({
   open,
   onClose,
-  onAddStore,
-  isLoading
-}: Props): JSX.Element {
-  const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
-    useStoreStore()
+  storeId,
+  token
+}: ViewStorePopUpProps): JSX.Element {
+  const [allowMultiLang, setAllowMultiLang] = useState(true)
+  const [activeLang, setActiveLang] = useState<"en" | "fr">("en")
+  const [translations, setTranslations] = useState<Partial<translationsTypes>>({})
 
-  const [translations, setTranslations] = useState<Partial<translationsTypes>>(
-    {}
-  )
   // Load translations based on the selected language
   useEffect(() => {
     const loadTranslations = async (): Promise<void> => {
@@ -56,7 +53,7 @@ export default function AddStorePopUp({
           }}
         >
           <DialogTitle>
-            {translations.addNewStore ?? "Add New Store"}
+            {translations.viewStoreDetails ?? "View Store Details"}
           </DialogTitle>
 
           <Tabs
@@ -90,32 +87,34 @@ export default function AddStorePopUp({
 
             {/* English Tab Content */}
             <TabsContent value="en">
-              <AddStorePopUpContent
+              <ViewStorePopUpContent
                 translations={{
                   ...defaultTranslations,
                   ...Object.fromEntries(
                     Object.entries(translations).map(([k, v]) => [k, v ?? ""])
                   )
                 }}
-                onAddStore={onAddStore}
-                isLoading={isLoading}
                 onClose={onClose}
+                storeId={storeId}
+                token={token}
+                activeLang="en"
               />
             </TabsContent>
 
             {/* French Tab Content (if multi-language is allowed) */}
             {allowMultiLang && (
               <TabsContent value="fr">
-                <AddStorePopUpContent
+                <ViewStorePopUpContent
                   translations={{
                     ...defaultTranslations,
                     ...Object.fromEntries(
                       Object.entries(translations).map(([k, v]) => [k, v ?? ""])
                     )
                   }}
-                  onAddStore={onAddStore}
-                  isLoading={isLoading}
                   onClose={onClose}
+                  storeId={storeId}
+                  token={token}
+                  activeLang="fr"
                 />
               </TabsContent>
             )}

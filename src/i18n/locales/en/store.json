@@ -1,5 +1,6 @@
 {
   "addNewStore": "Add New Store",
+  "viewStoreDetails": "View Store Details",
   "allowMultiLang": "Allow Multi Lang",
   "english": "English",
   "french": "French",
@@ -55,6 +56,7 @@
   "dairy": "Dairy",
   "physical": "physical",
   "online": "Online",
+  "ingredient": "Ingredient",
 
   "required": "Required",
   "mustbeatleast2characters": "Must be at least 2 characters",

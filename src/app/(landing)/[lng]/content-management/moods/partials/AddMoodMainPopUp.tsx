@@ -10,6 +10,7 @@ import { loadLanguage } from "@/../../src/i18n/locales"
 import { defaultTranslations, type translationsTypes } from "@/types/moodsTypes"
 import { useMoodStore } from "@/stores/useMoodStore"
 
+
 interface Props {
   open: boolean
   onClose: () => void

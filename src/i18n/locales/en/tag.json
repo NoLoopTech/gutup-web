@@ -1,0 +1,14 @@
+{
+  "addNewTag": "Add New Tag",
+  "allowMultiLang": "Allow Multi Lang",
+  "tagName": "Tag Name",
+  "english": "English",
+  "french": "French",
+  "giveATagName": "Give a Tag Name",
+  "cancel": "Cancel",
+  "save": "Save",
+
+  "pleaseSelectACategory": "Please select a category",
+  "required": "Required",
+  "tagNameMustBeAtLeast2Characters": "Tag name must be at least 2 characters"
+}

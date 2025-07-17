@@ -1,7 +1,7 @@
 // Utility to load the JSON language files dynamically based on the selected language
 export const loadLanguage = async (
   lang: "en" | "fr",
-  contentType: "moods" | "dailyTip" | "recipe" | "store" | "food"
+  contentType: "moods" | "dailyTip" | "recipe" | "store" | "food" | "tag"
 ) => {
   try {
     const translations = await import(`./${lang}/${contentType}.json`)

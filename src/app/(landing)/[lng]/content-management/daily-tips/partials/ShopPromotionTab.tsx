@@ -9,7 +9,9 @@ import { Separator } from "@/components/ui/separator"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { Button } from "@/components/ui/button"
 import { CustomTable } from "@/components/Shared/Table/CustomTable"
-import SearchBar from "@/components/Shared/SearchBar/SearchBar"
+import SearchBar, {
+  SearchBarItem
+} from "@/components/Shared/SearchBar/SearchBar"
 import { Switch } from "@/components/ui/switch"
 import {
   Select,

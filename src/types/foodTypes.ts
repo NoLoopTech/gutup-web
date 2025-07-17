@@ -7,8 +7,8 @@ export interface translationsTypes {
   enterFoodName: string
   category: string
   selectCategory: string
-  season: string
-  selectSeason: string
+  month: string
+  selectMonth: string
   country: string
   selectCountry: string
   foodAttributes: string
@@ -59,8 +59,8 @@ export const defaultTranslations: translationsTypes = {
   enterFoodName: "",
   category: "",
   selectCategory: "",
-  season: "",
-  selectSeason: "",
+  month: "",
+  selectMonth: "",
   country: "",
   selectCountry: "",
   foodAttributes: "",
@@ -101,4 +101,40 @@ export const defaultTranslations: translationsTypes = {
   pleaseselectacountry: "",
   pleaseenteratleastonebenefit: "",
   formSubmittedSuccessfully: ""
+}
+
+export interface SeasonDto {
+  foodId: number
+  season: string
+  seasonFR: string
+}
+
+export interface CreateFoodDto {
+  name: string
+  nameFR: string
+  category: string
+  categoryFR: string
+  country: string
+  seasons?: SeasonDto[]
+  attributes: {
+    fiber: number
+    proteins: number
+    vitamins: string
+    vitaminsFR: string
+    minerals: string
+    mineralsFR: string
+    fat: number
+    sugar: number
+  }
+  allowMultiLang: boolean
+  describe: {
+    selection: string
+    selectionFR: string
+    preparation: string
+    preparationFR: string
+    conservation: string
+    conservationFR: string
+  }
+  images: Array<{ image: string }>
+  healthBenefits: Array<{ healthBenefit: string; healthBenefitFR: string }>
 }

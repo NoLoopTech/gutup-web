@@ -1,8 +1,31 @@
 "use client"
 
+import {
+  deleteFoodById,
+  getAllFoods,
+  getCatagoryFoodType
+} from "@/app/api/foods"
 import { CustomTable } from "@/components/Shared/Table/CustomTable"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -11,21 +34,13 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu"
-import { MoreVertical } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
-import { Badge } from "@/components/ui/badge"
-import Image from "next/image"
-import AddFoodPopUp from "./AddFoodPopUp"
-import { getAllFoods } from "@/app/api/foods"
 import dayjs from "dayjs"
+import { MoreVertical } from "lucide-react"
+import { useSession } from "next-auth/react"
+import Image from "next/image"
+import { useEffect, useMemo, useState } from "react"
+import AddFoodPopUp from "./AddFoodPopUp"
 import ViewFoodPopUp from "./ViewFoodPopUp"
-import { Label } from "@/components/ui/label"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -49,12 +64,19 @@ interface FoodAttributesTypes {
   sugar: number
 }
 
+interface SeasonDto {
+  foodId: number
+  season: string
+  seasonFR: string
+}
+
 interface FoodOverviewDataType {
   id: number
   name: string
   category: string
   healthBenefits: string[]
-  season: string
+  season?: string // (optional, if you still use it elsewhere)
+  seasons: SeasonDto[] // <-- change from string[] to SeasonDto[]
   image: string
   status: string
   createdAt: string
@@ -62,25 +84,44 @@ interface FoodOverviewDataType {
   attributes: FoodAttributesTypes
 }
 
-export default function FoodOverviewPage({
-  token
-}: {
-  token: string
-}): React.ReactElement {
+export default function FoodOverviewPage(): React.ReactElement {
+  const { data: session } = useSession()
+  const token = session?.apiToken
+
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [openAddFoodPopUp, setOpenAddFoodPopUp] = useState(false)
   const [foods, setFoods] = useState<FoodOverviewDataType[]>([])
   const [searchText, setSearchText] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+
+  // Debounce searchText for real-time search
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchText)
+    }, 300) // 300ms debounce
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [searchText])
+
   const [category, setCategory] = useState("")
   const [nutritional, setNutritional] = useState("")
   const [season, setSeason] = useState("")
   const [viewFood, setViewFood] = useState(false)
   const [foodId, setFoodId] = useState(0)
   const [selectedMonths, setSelectedMonths] = useState<string[]>([])
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  const [foodIdToDelete, setFoodIdToDelete] = useState<number | null>(null)
+
+  const [categoryOptionsApi, setCategoryOptionsApi] = useState<dataListTypes[]>(
+    []
+  )
 
   // Function to fetch all foods from API
   const getFoods = async (): Promise<void> => {
+    if (!token) return
     try {
       const response = await getAllFoods(token)
       if (response.status === 200) {
@@ -95,6 +136,22 @@ export default function FoodOverviewPage({
 
   useEffect(() => {
     void getFoods()
+  }, [token])
+
+  useEffect(() => {
+    const fetchCategories = async (): Promise<void> => {
+      if (!token) return
+      const typeResponse = await getCatagoryFoodType(token, "Type")
+      if (typeResponse?.status === 200 && Array.isArray(typeResponse.data)) {
+        setCategoryOptionsApi(
+          typeResponse.data.map((item: any) => ({
+            value: item.tagName,
+            label: item.tagName
+          }))
+        )
+      }
+    }
+    void fetchCategories()
   }, [token])
 
   // Handler to open the "Add Food" popup
@@ -134,12 +191,6 @@ export default function FoodOverviewPage({
   }
 
   // Static categories for filtering foods
-  const categories: dataListTypes[] = [
-    { value: "Fruit", label: "Fruit" },
-    { value: "Vegetables", label: "Vegetables" },
-    { value: "Meat", label: "Meat" },
-    { value: "Dairy", label: "Dairy" }
-  ]
 
   // Static nutritional options for filtering foods
   const nutritionals: dataListTypes[] = [
@@ -172,10 +223,18 @@ export default function FoodOverviewPage({
     return foods.filter(food => {
       const nameMatch = food.name
         .toLowerCase()
-        .includes(searchText.toLowerCase())
+        .includes(debouncedSearch.toLowerCase())
       const categoryMatch = category ? food.category === category : true
+
+      // FIX: Check seasons array for selected months
       const seasonMatch = selectedMonths.length
-        ? selectedMonths.some(month => food.season === month)
+        ? Array.isArray(food.seasons)
+          ? food.seasons.some(seasonObj =>
+              selectedMonths.includes(seasonObj.season)
+            )
+          : food.season
+          ? selectedMonths.includes(food.season)
+          : false
         : true
 
       let nutritionalMatch = true
@@ -197,7 +256,7 @@ export default function FoodOverviewPage({
 
       return nameMatch && categoryMatch && nutritionalMatch && seasonMatch
     })
-  }, [foods, searchText, category, nutritional, season, selectedMonths])
+  }, [foods, debouncedSearch, category, nutritional, season, selectedMonths])
 
   const totalItems = filteredFoods.length
 
@@ -238,18 +297,53 @@ export default function FoodOverviewPage({
       header: "Health Benefits",
       cell: row => (
         <div className="flex flex-wrap gap-2">
-          {row.healthBenefits.map((benefit, index) => (
-            <Badge key={index} variant={"outline"}>
-              {benefit}
-            </Badge>
-          ))}
+          {Array.isArray(row.healthBenefits) &&
+          row.healthBenefits.length > 0 ? (
+            row.healthBenefits.map((benefit, index) => (
+              <Badge key={index} variant={"outline"}>
+                {typeof benefit === "string"
+                  ? benefit
+                  : typeof benefit === "object" &&
+                    benefit !== null &&
+                    ("healthBenefit" in benefit || "healthBenefitFR" in benefit)
+                  ? (
+                      benefit as {
+                        healthBenefit?: string
+                        healthBenefitFR?: string
+                      }
+                    ).healthBenefit ??
+                    (
+                      benefit as {
+                        healthBenefit?: string
+                        healthBenefitFR?: string
+                      }
+                    ).healthBenefitFR ??
+                    "N/A"
+                  : "N/A"}
+              </Badge>
+            ))
+          ) : (
+            <Badge variant={"outline"}>No benefits listed</Badge>
+          )}
         </div>
       )
     },
     {
-      accessor: "season",
+      accessor: "seasons",
       header: "Month",
-      cell: row => <Badge variant={"outline"}>{row.season}</Badge>
+      cell: row => (
+        <div className="flex flex-wrap gap-1">
+          {Array.isArray(row.seasons) && row.seasons.length > 0 ? (
+            row.seasons.map((seasonObj, idx) => (
+              <Badge key={idx} variant="outline">
+                {seasonObj.season || seasonObj.season}
+              </Badge>
+            ))
+          ) : (
+            <Badge variant="outline">No season</Badge>
+          )}
+        </div>
+      )
     },
     {
       accessor: "recipesCount",
@@ -304,16 +398,43 @@ export default function FoodOverviewPage({
             >
               View
             </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-red-600"
+              onClick={() => {
+                handleAskDeleteFood(row.id)
+              }}
+            >
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
     }
   ]
 
+  // Show confirmation dialog instead of window.confirm
+  const handleAskDeleteFood = (id: number): void => {
+    setFoodIdToDelete(id)
+    setConfirmDeleteOpen(true)
+  }
+
+  // Actually delete after confirmation
+  const handleDeleteFood = async (): Promise<void> => {
+    if (!token || !foodIdToDelete) return
+    const response = await deleteFoodById(token, foodIdToDelete)
+    if (!response.error) {
+      await getFoods()
+    } else {
+      alert(response.message || "Failed to delete food.")
+    }
+    setConfirmDeleteOpen(false)
+    setFoodIdToDelete(null)
+  }
+
   return (
     <div className="space-y-4">
       {/* Filters and Search */}
-      <div className="flex flex-wrap gap-2 justify-between">
+      <div className="flex flex-wrap justify-between gap-2">
         <div className="flex flex-wrap w-[80%] gap-2">
           <Input
             className="max-w-xs"
@@ -341,7 +462,7 @@ export default function FoodOverviewPage({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className="overflow-auto w-40 max-h-64"
+              className="w-40 overflow-auto max-h-64"
               style={{ scrollbarWidth: "none" }}
             >
               <DropdownMenuItem
@@ -381,11 +502,15 @@ export default function FoodOverviewPage({
             </SelectTrigger>
             <SelectContent className="max-h-40">
               <SelectGroup>
-                {categories.map(item => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
+                {categoryOptionsApi.length > 0 ? (
+                  categoryOptionsApi.map(item => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem disabled>No categories found</SelectItem>
+                )}
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -437,16 +562,44 @@ export default function FoodOverviewPage({
       />
 
       {/* Add Food Popup */}
-      <AddFoodPopUp open={openAddFoodPopUp} onClose={handleCloseAddFoodPopUp} />
+      <AddFoodPopUp
+        open={openAddFoodPopUp}
+        onClose={handleCloseAddFoodPopUp}
+        getFoods={getFoods} // <-- pass the fetch function
+      />
 
       {/* View Food Details Popup */}
       <ViewFoodPopUp
         open={viewFood}
         onClose={handleCloseViewFoodPopUp}
-        token={token}
+        token={token ?? ""}
         foodId={foodId}
         getFoods={getFoods}
       />
+
+      {/* Delete confirmation popup */}
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Food</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this food?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setConfirmDeleteOpen(false)
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteFood}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

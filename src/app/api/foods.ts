@@ -1,40 +1,10 @@
 import axiosInstance from "@/query/axios.instance"
-import { NextResponse } from "next/server"
+import type { CreateFoodDto } from "@/types/foodTypes"
 
 // get all foods
 export const getAllFoods = async (token: string): Promise<any> => {
   try {
     const response = await axiosInstance.get("/food", {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    return response
-  } catch (error) {
-    return error
-  }
-}
-
-// get all types
-export const getAllTags = async (
-  token: string,
-  category: string
-): Promise<any> => {
-  try {
-    const response = await axiosInstance.get(`/food/tag-overview/${category}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    return response
-  } catch (error) {
-    return error
-  }
-}
-
-// POST: Save a new tag
-export const AddNewTag = async (
-  token: string,
-  requestBody: { category: string; tagName: string }
-): Promise<any> => {
-  try {
-    const response = await axiosInstance.post("/food-tag", requestBody, {
       headers: { Authorization: `Bearer ${token}` }
     })
     return response
@@ -55,7 +25,7 @@ export const getFoodsById = async (token: string, id: number): Promise<any> => {
   }
 }
 
-// delete user by id
+// delete food by id
 export const deleteFoodById = async (
   token: string,
   id: number
@@ -64,24 +34,13 @@ export const deleteFoodById = async (
     const response = await axiosInstance.delete(`/food/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-    return response
-  } catch (error) {
-    return error
-  }
-}
-
-// delete tag by id
-export const deleteTagById = async (
-  token: string,
-  id: number
-): Promise<any> => {
-  try {
-    const response = await axiosInstance.delete(`/food-tag/${id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    return response
-  } catch (error) {
-    return error
+    return response.data // Return only the data, not the whole response
+  } catch (error: any) {
+    // Return a consistent error object
+    return {
+      error: true,
+      message: error?.response?.data?.message || error.message || "Delete failed"
+    }
   }
 }
 
@@ -96,3 +55,58 @@ export const getAllFoodsList = async (token: string): Promise<any> => {
     return error
   }
 }
+
+// post new food
+export const postNewFood = async (
+  token: string,
+  data: CreateFoodDto
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.post("/food", data, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    console.log("Token being sent:", token)
+    return response
+  } catch (error) {
+    return error
+  }
+}
+
+// get category food type and benifit
+export const getCatagoryFoodType = async (
+  token: string,
+  category: string
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(`/food-tag/category/${category}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response
+  } catch (error) {
+    return error
+  }
+}
+
+// post food tag
+export const postFoodTag = async (
+  token: string,
+  data: { tagName: string; tagNameFr: string }
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.post(
+      "/food-tag",
+      {
+        category: "Benefit", // always "Benefit"
+        tagName: data.tagName,
+        tagNameFr: data.tagNameFr
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    )
+    return response
+  } catch (error) {
+    return error
+  }
+}
+

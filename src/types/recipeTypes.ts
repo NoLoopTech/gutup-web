@@ -26,6 +26,7 @@ export interface translationsTypes {
   quantity: string
   mainIngredient: string
   availableInIngredients: string
+  availabilityStatus: string
   inTheSystem: string
   addToIngredients: string
   describeTheRecipe: string
@@ -95,6 +96,7 @@ export const defaultTranslations: translationsTypes = {
   quantity: "",
   mainIngredient: "",
   availableInIngredients: "",
+  availabilityStatus: "",
   inTheSystem: "",
   addToIngredients: "",
   describeTheRecipe: "",
