@@ -37,7 +37,6 @@ import { useDeleteRecipe } from "@/query/hooks/useDeleteRecipes"
 import { Label } from "@/components/ui/label"
 import dayjs from "dayjs"
 import ViewRecipePopUp from "./ViewRecipePopUp"
-
 import { useGetAllRecipes } from "@/query/hooks/useGetAllRecipes"
 import { getAllTagsByCategory } from "@/app/api/tags"
 import { toast } from "sonner"
@@ -227,7 +226,7 @@ export default function RecipeManagementPage({
     void fetchHealthTags()
   }, [token])
 
-  const columns: Array<Column<RecipeDataType>> = [
+  const columns: Column<RecipeDataType>[] = [
     {
       accessor: "images",
       header: "Media",
@@ -342,10 +341,12 @@ export default function RecipeManagementPage({
         recipe.healthBenefits.some(
           (b: { healthBenefit: string }) => b.healthBenefit === selectedBenefit
         )
-      console.log("Checking recipe:", recipe.name)
-      console.log("Health benefits:", recipe.healthBenefits)
-      console.log("Selected:", selectedBenefit)
-      console.log("Matched:", recipe.healthBenefits.includes(selectedBenefit))
+      console.log(
+        "Matched:",
+        recipe.healthBenefits.some(
+          item => item.healthBenefit === selectedBenefit
+        )
+      )
 
       return nameMatch && categoryMatch && scoreMatch && benefitMatch
     })
@@ -391,7 +392,6 @@ export default function RecipeManagementPage({
     setSearchText("")
     setSelectedCategory("")
     setSelectedPersons("")
-    setSelectedBenefit("")
     setSelectedBenefit("")
   }
 
@@ -546,6 +546,6 @@ export default function RecipeManagementPage({
     </div>
   )
 }
-function fetchTags() {
+function fetchTags(): never {
   throw new Error("Function not implemented.")
 }

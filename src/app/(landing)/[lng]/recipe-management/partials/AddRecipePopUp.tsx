@@ -12,7 +12,6 @@ import {
   defaultTranslations,
   type translationsTypes
 } from "@/types/recipeTypes"
-// import { useSession } from "next-auth/react"
 
 interface Props {
   open: boolean
@@ -25,23 +24,28 @@ export default function AddRecipePopUp({
   onClose,
   token
 }: Props): JSX.Element {
-  const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
-    useRecipeStore()
+  const {
+    allowMultiLang,
+    setAllowMultiLang,
+    activeLang,
+    setActiveLang,
+    translations
+  } = useRecipeStore()
 
-  const [translations, setTranslations] = useState<Partial<translationsTypes>>(
-    {}
-  )
+  const [translationsFromAPI, setTranslationsFromAPI] = useState<
+    Partial<translationsTypes>
+  >({})
+
   useEffect(() => {
     console.log("TOKEN RECEIVED:", token)
     const loadTranslationsAsync = async (): Promise<void> => {
       const langData = await loadLanguage(activeLang, "recipe")
-      setTranslations(langData)
+      setTranslationsFromAPI(langData)
       console.log("Language", langData)
     }
     void loadTranslationsAsync()
   }, [activeLang])
 
-  // Language toggle handler
   const handleLanguageToggle = (val: boolean): void => {
     setAllowMultiLang(val)
     if (!val) setActiveLang("en") // Default to English when disabled
@@ -55,7 +59,7 @@ export default function AddRecipePopUp({
           style={{ scrollbarWidth: "none" }}
         >
           <DialogTitle>
-            {translations.addNewRecipe ?? "Add New Recipe"}
+            {translationsFromAPI.addNewRecipe ?? "Add New Recipe"}
           </DialogTitle>
 
           <Tabs
@@ -67,9 +71,13 @@ export default function AddRecipePopUp({
           >
             <div className="flex flex-col gap-4 justify-between items-start mt-4 mb-6 sm:flex-row sm:items-center">
               <TabsList>
-                <TabsTrigger value="en">{translations.english}</TabsTrigger>
+                <TabsTrigger value="en">
+                  {translationsFromAPI.english}
+                </TabsTrigger>
                 {allowMultiLang && (
-                  <TabsTrigger value="fr">{translations.french}</TabsTrigger>
+                  <TabsTrigger value="fr">
+                    {translationsFromAPI.french}
+                  </TabsTrigger>
                 )}
               </TabsList>
 
@@ -80,15 +88,19 @@ export default function AddRecipePopUp({
                   onCheckedChange={handleLanguageToggle}
                 />
                 <Label htmlFor="multi-lang" className="text-Primary-300">
-                  {translations.allowMultiLang}
+                  {translationsFromAPI.allowMultiLang}
                 </Label>
               </div>
             </div>
 
             <TabsContent value={activeLang}>
               <AddRecipePopUpContent
-                translations={{ ...defaultTranslations, ...translations }}
+                translations={{
+                  ...defaultTranslations,
+                  ...translationsFromAPI
+                }}
                 token={token}
+                onClose={onClose}
               />
             </TabsContent>
           </Tabs>
