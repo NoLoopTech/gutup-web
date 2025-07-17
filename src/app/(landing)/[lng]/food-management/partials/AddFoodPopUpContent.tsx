@@ -530,14 +530,7 @@ export default function AddFoodPopUpContent({
           }))
         )
       }
-      console.log("Type category response:", typeResponse)
-
-      // Fetch Benefit
-      const benefitResponse = await getCatagoryFoodType(
-        session.apiToken,
-        "Benefit"
-      )
-      console.log("Benefit category response:", benefitResponse)
+      
     }
 
     void fetchCategoryAndBenefit()

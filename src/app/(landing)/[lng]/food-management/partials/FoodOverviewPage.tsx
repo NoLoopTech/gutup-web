@@ -1,6 +1,10 @@
 "use client"
 
-import { deleteFoodById, getAllFoods, getCatagoryFoodType } from "@/app/api/foods"
+import {
+  deleteFoodById,
+  getAllFoods,
+  getCatagoryFoodType
+} from "@/app/api/foods"
 import { CustomTable } from "@/components/Shared/Table/CustomTable"
 import {
   AlertDialog,
@@ -60,12 +64,19 @@ interface FoodAttributesTypes {
   sugar: number
 }
 
+interface SeasonDto {
+  foodId: number
+  season: string
+  seasonFR: string
+}
+
 interface FoodOverviewDataType {
   id: number
   name: string
   category: string
   healthBenefits: string[]
-  season: string
+  season?: string // (optional, if you still use it elsewhere)
+  seasons: SeasonDto[] // <-- change from string[] to SeasonDto[]
   image: string
   status: string
   createdAt: string
@@ -104,7 +115,9 @@ export default function FoodOverviewPage(): React.ReactElement {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [foodIdToDelete, setFoodIdToDelete] = useState<number | null>(null)
 
-  const [categoryOptionsApi, setCategoryOptionsApi] = useState<dataListTypes[]>([])
+  const [categoryOptionsApi, setCategoryOptionsApi] = useState<dataListTypes[]>(
+    []
+  )
 
   // Function to fetch all foods from API
   const getFoods = async (): Promise<void> => {
@@ -126,7 +139,7 @@ export default function FoodOverviewPage(): React.ReactElement {
   }, [token])
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchCategories = async (): Promise<void> => {
       if (!token) return
       const typeResponse = await getCatagoryFoodType(token, "Type")
       if (typeResponse?.status === 200 && Array.isArray(typeResponse.data)) {
@@ -138,7 +151,7 @@ export default function FoodOverviewPage(): React.ReactElement {
         )
       }
     }
-    fetchCategories()
+    void fetchCategories()
   }, [token])
 
   // Handler to open the "Add Food" popup
@@ -178,12 +191,6 @@ export default function FoodOverviewPage(): React.ReactElement {
   }
 
   // Static categories for filtering foods
-  const categories: dataListTypes[] = [
-    { value: "Fruits", label: "Fruit" },
-    { value: "Vegetables", label: "Vegetables" },
-    { value: "Meat", label: "Meat" },
-    { value: "Dairy", label: "Dairy" }
-  ]
 
   // Static nutritional options for filtering foods
   const nutritionals: dataListTypes[] = [
@@ -225,7 +232,9 @@ export default function FoodOverviewPage(): React.ReactElement {
           ? food.seasons.some(seasonObj =>
               selectedMonths.includes(seasonObj.season)
             )
-          : selectedMonths.includes(food.season)
+          : food.season
+          ? selectedMonths.includes(food.season)
+          : false
         : true
 
       let nutritionalMatch = true
@@ -294,7 +303,23 @@ export default function FoodOverviewPage(): React.ReactElement {
               <Badge key={index} variant={"outline"}>
                 {typeof benefit === "string"
                   ? benefit
-                  : benefit?.healthBenefit || benefit?.healthBenefitFR || "N/A"}
+                  : typeof benefit === "object" &&
+                    benefit !== null &&
+                    ("healthBenefit" in benefit || "healthBenefitFR" in benefit)
+                  ? (
+                      benefit as {
+                        healthBenefit?: string
+                        healthBenefitFR?: string
+                      }
+                    ).healthBenefit ??
+                    (
+                      benefit as {
+                        healthBenefit?: string
+                        healthBenefitFR?: string
+                      }
+                    ).healthBenefitFR ??
+                    "N/A"
+                  : "N/A"}
               </Badge>
             ))
           ) : (
@@ -562,7 +587,11 @@ export default function FoodOverviewPage(): React.ReactElement {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => { setConfirmDeleteOpen(false); }}>
+            <AlertDialogCancel
+              onClick={() => {
+                setConfirmDeleteOpen(false)
+              }}
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteFood}>
