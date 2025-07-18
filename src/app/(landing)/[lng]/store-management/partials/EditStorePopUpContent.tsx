@@ -225,7 +225,8 @@ export default function EditStorePopUpContent({
     defaultValues: {
       ...storeData[activeLang],
       category: storeData[activeLang]?.category || "",
-      storeImage: storeData[activeLang]?.storeImage || ""
+      storeImage: storeData[activeLang]?.storeImage || "",
+      availData: storeData[activeLang]?.availData || []
     }
   })
 
@@ -242,30 +243,57 @@ export default function EditStorePopUpContent({
           const data = response.data
           setCurrentStoreData(data)
 
-          // Transform ingAndCatData to availData format for both languages
-          const transformedAvailDataEn =
-            data.ingAndCatData?.map((item: any, index: number) => ({
-              ingOrCatId: item.ingOrCatId || item.id || index + 1,
+          // Transform ingredients and categories data to availData format for both languages
+          const ingredientsData = data.ingredients || []
+          const categoriesData = data.categories || data.ingAndCatData || []
+
+          // Combine ingredients and categories
+          const allItemsData = [
+            ...ingredientsData,
+            ...categoriesData.filter(
+              (cat: any) =>
+                !ingredientsData.some(
+                  (ing: any) =>
+                    (ing.id || ing.foodId) === (cat.id || cat.foodId)
+                )
+            )
+          ]
+
+          const transformedAvailDataEn: AvailableItem[] =
+            allItemsData.map((item: any, index: number) => ({
+              ingOrCatId:
+                item.foodId || item.ingOrCatId || item.id || index + 1,
               name: item.name,
-              type: item.type === "ingredient" ? "Ingredient" : "Category",
-              status: item.availability
-                ? "Active"
-                : ("Inactive" as "Active" | "Inactive"),
-              display: item.display,
+              type:
+                item.type === "ingredient" || item.type === "category"
+                  ? item.type === "ingredient"
+                    ? "Ingredient"
+                    : "Category"
+                  : "Ingredient", // Default to Ingredient if type is unclear
+              status: item.availability ? "Active" : "Inactive",
+              display: item.display !== undefined ? item.display : true,
               tags: ["InSystem"],
               quantity: "",
               isMain: false
             })) || []
 
-          const transformedAvailDataFr =
-            data.ingAndCatData?.map((item: any, index: number) => ({
-              ingOrCatId: item.ingOrCatId || item.id || index + 1,
+          const transformedAvailDataFr: AvailableItem[] =
+            allItemsData.map((item: any, index: number) => ({
+              ingOrCatId:
+                item.foodId || item.ingOrCatId || item.id || index + 1,
               name: item.nameFR || item.name,
-              type: item.typeFR === "ingrédient" ? "Ingrédient" : "Catégorie",
-              status: item.availability
-                ? "Actif"
-                : ("Inactif" as "Active" | "Inactive"),
-              display: item.display,
+              type:
+                item.typeFR === "ingrédient" || item.typeFR === "catégorie"
+                  ? item.typeFR === "ingrédient"
+                    ? "Ingrédient"
+                    : "Catégorie"
+                  : item.type === "ingredient" || item.type === "category"
+                  ? item.type === "ingredient"
+                    ? "Ingrédient"
+                    : "Catégorie"
+                  : "Ingrédient", // Default to Ingrédient if type is unclear
+              status: item.availability ? "Active" : "Inactive",
+              display: item.display !== undefined ? item.display : true,
               tags: ["InSystem"],
               quantity: "",
               isMain: false
@@ -598,7 +626,8 @@ export default function EditStorePopUpContent({
       ...currentStoreData,
       storeImage: currentStoreData?.storeImage || "",
       category: categoryId,
-      storeType: storeTypeId
+      storeType: storeTypeId,
+      availData: currentStoreData?.availData || []
     }
 
     if (isDataLoaded && Object.keys(formData).length > 0) {
@@ -887,7 +916,33 @@ export default function EditStorePopUpContent({
     {
       header: translations.displayStatus,
       accessor: (row: AvailableItem) => (
-        <Switch checked={row.display} className="scale-75" />
+        <Switch
+          checked={row.display}
+          className="scale-75"
+          onCheckedChange={checked => {
+            // Update the display status when switch is toggled
+            const updated = availData.map(item =>
+              item.ingOrCatId === row.ingOrCatId
+                ? { ...item, display: checked }
+                : item
+            )
+            setAvailData(updated)
+            form.setValue("availData", updated, { shouldValidate: true })
+            setTranslationField("storeData", activeLang, "availData", updated)
+
+            // Also update opposite language
+            const oppLang = activeLang === "en" ? "fr" : "en"
+            const oppCurrentData =
+              (storeData[oppLang]?.availData as AvailableItem[]) || []
+            const oppUpdated = oppCurrentData.map(item =>
+              item.ingOrCatId === row.ingOrCatId
+                ? { ...item, display: checked }
+                : item
+            )
+            setTranslationField("storeData", oppLang, "availData", oppUpdated)
+            setHasChanges(true)
+          }}
+        />
       )
     },
     {

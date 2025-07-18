@@ -183,7 +183,8 @@ export interface StoreManagementDataType {
   phoneNumber: string
   email: string
   shopStatus: boolean
-  ingredients: string
+  ingredients?: IngAndCatDataType[]
+  categories?: IngAndCatDataType[]
   subscriptionType: string
   ingAndCatData?: IngAndCatDataType[]
 }
@@ -216,5 +217,3 @@ export interface AddStoreRequestBody {
   storeImage: string
   ingAndCatData: IngAndCatDataType[]
 }
-
-

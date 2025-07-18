@@ -408,11 +408,19 @@ export default function StoreManagementPage({
     {
       accessor: "ingredients",
       header: "Products Available",
-      cell: (row: StoreManagementDataType) => (
-        <Label className="text-gray-500">
-          {row.ingAndCatData?.length ?? 0} Available
-        </Label>
-      )
+      cell: (row: StoreManagementDataType) => {
+        const ingredientsCount = row.ingredients?.length ?? 0
+        const categoriesCount = row.categories?.length ?? 0
+        const ingAndCatCount = row.ingAndCatData?.length ?? 0
+        
+        // Use ingredients + categories if available, otherwise fall back to ingAndCatData
+        const totalCount =
+          row.ingredients ?? row.categories
+            ? ingredientsCount + categoriesCount
+            : ingAndCatCount
+        
+        return <Label className="text-gray-500">{totalCount} Available</Label>
+      }
     },
     {
       accessor: "shopStatus",
