@@ -39,6 +39,9 @@ import { Trash } from "lucide-react"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { getAllTags } from "@/app/api/tags"
 import { getStoreById, getStoreCategories } from "@/app/api/store"
+import { getLocationDetails } from "@/app/api/location"
+
+import LocationDropdown from "@/components/Shared/dropdown/LocationDropdown"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -86,6 +89,13 @@ interface AvailableItem {
   tags: string[]
   quantity: string
   isMain: boolean
+}
+
+export interface OptionType {
+  value: string
+  label: string
+  lat?: number
+  lng?: number
 }
 
 interface StoreData {
@@ -150,6 +160,8 @@ export default function EditStorePopUpContent({
   const [ingredientInput, setIngredientInput] = useState<string>("")
   const [categoryInput, setCategoryInput] = useState<string>("")
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
+  const [selectedLocationName, setSelectedLocationName] =
+    useState<OptionType | null>(null)
   const [, setCurrentStoreData] = useState<StoreData | null>(null)
   const [isDataLoaded, setIsDataLoaded] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
@@ -274,6 +286,69 @@ export default function EditStorePopUpContent({
             "storeLocation",
             data.storeLocation
           )
+          // Set location LatLng data if available
+          if (data.storeMapLocation) {
+            try {
+              // Try to parse as JSON first (for new format)
+              const locationData = JSON.parse(data.storeMapLocation)
+              const locationLatLng = {
+                value: locationData.placeId || "",
+                label: data.storeLocation,
+                lat: locationData.lat,
+                lng: locationData.lng
+              }
+              setTranslationField(
+                "storeData",
+                "en",
+                "storeLocationLatLng",
+                locationLatLng
+              )
+              setTranslationField(
+                "storeData",
+                "fr",
+                "storeLocationLatLng",
+                locationLatLng
+              )
+            } catch (error) {
+              const basicLocationLatLng = {
+                value: "",
+                label: data.storeLocation || data.storeMapLocation,
+                lat: undefined,
+                lng: undefined
+              }
+              setTranslationField(
+                "storeData",
+                "en",
+                "storeLocationLatLng",
+                basicLocationLatLng
+              )
+              setTranslationField(
+                "storeData",
+                "fr",
+                "storeLocationLatLng",
+                basicLocationLatLng
+              )
+            }
+          } else if (data.storeLocation) {
+            const basicLocationLatLng = {
+              value: "",
+              label: data.storeLocation,
+              lat: undefined,
+              lng: undefined
+            }
+            setTranslationField(
+              "storeData",
+              "en",
+              "storeLocationLatLng",
+              basicLocationLatLng
+            )
+            setTranslationField(
+              "storeData",
+              "fr",
+              "storeLocationLatLng",
+              basicLocationLatLng
+            )
+          }
           setTranslationField("storeData", "en", "storeType", data.storeType)
           setTranslationField(
             "storeData",
@@ -425,7 +500,6 @@ export default function EditStorePopUpContent({
       try {
         const res = await getStoreCategories()
         if (res && res.status === 200 && Array.isArray(res.data)) {
-          // Filter data based on Tag field
           const categories = res.data.filter(
             (item: any) => item.Tag === "Category"
           )
@@ -447,9 +521,37 @@ export default function EditStorePopUpContent({
     void fetchStoreData()
   }, [])
 
+  // Initialize selected location from stored data
+  useEffect(() => {
+    const currentStoreData = storeData[activeLang]
+    if (currentStoreData?.storeLocationLatLng) {
+      setSelectedLocationName(currentStoreData.storeLocationLatLng)
+    } else {
+      setSelectedLocationName(null)
+    }
+  }, [activeLang, storeData])
+
+  // Additional effect to ensure location is set when data is first loaded
+  useEffect(() => {
+    if (isDataLoaded) {
+      const currentStoreData = storeData[activeLang]
+      if (currentStoreData?.storeLocationLatLng) {
+        setSelectedLocationName(currentStoreData.storeLocationLatLng)
+      }
+    }
+  }, [isDataLoaded, activeLang, storeData])
+
   // Update form when lang changes or when session data changes
   React.useEffect(() => {
     const currentStoreData = storeData[activeLang]
+
+    // Update selected location
+    if (currentStoreData?.storeLocationLatLng) {
+      setSelectedLocationName(currentStoreData.storeLocationLatLng)
+    } else {
+      setSelectedLocationName(null)
+    }
+
     const recreatePreview = async (): Promise<void> => {
       if (currentStoreData?.storeImage) {
         try {
@@ -501,7 +603,6 @@ export default function EditStorePopUpContent({
 
     if (isDataLoaded && Object.keys(formData).length > 0) {
       form.reset(formData, { keepDirty: false })
-      // Reset hasChanges after form reset
       setHasChanges(false)
     }
 
@@ -579,7 +680,6 @@ export default function EditStorePopUpContent({
   const handleInputChange = (
     fieldName:
       | "storeName"
-      | "storeLocation"
       | "phone"
       | "email"
       | "website"
@@ -596,7 +696,6 @@ export default function EditStorePopUpContent({
   const handleInputBlur = async (
     fieldName:
       | "storeName"
-      | "storeLocation"
       | "phone"
       | "email"
       | "website"
@@ -607,6 +706,62 @@ export default function EditStorePopUpContent({
     if (activeLang === "en" && value.trim()) {
       setTranslationField("storeData", "fr", fieldName, value)
     }
+  }
+
+  const handleLocationName = (value: OptionType | null): void => {
+    setSelectedLocationName(value)
+  }
+
+  const handleLocationSelect = async (value: string[]): Promise<void> => {
+    const placeId = value[0]
+
+    const location = await getLocationDetails(placeId)
+
+    if (!location) {
+      toast.error("Failed to load location details.")
+      return
+    }
+
+    const { name, country, lat, lng } = location
+
+    const selectedLocation = {
+      value: placeId,
+      label: `${name}, ${country}`,
+      lat,
+      lng
+    }
+
+    setSelectedLocationName(selectedLocation)
+
+    form.setValue("storeLocation", selectedLocation.label)
+
+    setTranslationField(
+      "storeData",
+      activeLang,
+      "storeLocation",
+      selectedLocation.label
+    )
+    setTranslationField(
+      "storeData",
+      activeLang === "en" ? "fr" : "en",
+      "storeLocation",
+      selectedLocation.label
+    )
+
+    setTranslationField(
+      "storeData",
+      activeLang,
+      "storeLocationLatLng",
+      selectedLocation
+    )
+    setTranslationField(
+      "storeData",
+      activeLang === "en" ? "fr" : "en",
+      "storeLocationLatLng",
+      selectedLocation
+    )
+
+    setHasChanges(true)
   }
 
   const handleSubscriptionToggle = (value: boolean): void => {
@@ -1078,15 +1233,11 @@ export default function EditStorePopUpContent({
                       {translations.storeLocation}
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder={translations.enterStoreLocation}
-                        {...field}
-                        onChange={e => {
-                          handleInputChange("storeLocation", e.target.value)
-                        }}
-                        onBlur={async () => {
-                          await handleInputBlur("storeLocation", field.value)
-                        }}
+                      <LocationDropdown
+                        key={selectedLocationName?.value ?? activeLang}
+                        selectedOption={selectedLocationName}
+                        onSelect={handleLocationSelect}
+                        onSelectLocation={handleLocationName}
                       />
                     </FormControl>
                     <FormMessage />
