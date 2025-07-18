@@ -13,7 +13,6 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -45,7 +44,9 @@ interface ViewFoodEnglishProps {
   conservationRef: React.Ref<RichTextEditorHandle>
   foodDetails: FoodDetailsTypes | null
   categories: Option[]
-  benefitTags: Array<{ tagName: string; tagNameFr: string }> // <-- add this prop
+  benefitTags: Array<{ tagName: string; tagNameFr: string }>
+  updateEditedData: (field: string, value: any) => void
+  updateNestedData: (parentField: string, childField: string, value: any) => void
 }
 
 const seasons: Option[] = [
@@ -78,6 +79,12 @@ const FoodSchema = z.object({
   category: z.string().nonempty("Please select a category"),
   season: z.string().nonempty("Please select a season"),
   country: z.string().nonempty("Please select a country"),
+  fiber: z.string().optional(),
+  proteins: z.string().optional(),
+  vitamins: z.string().optional(),
+  minerals: z.string().optional(),
+  fat: z.string().optional(),
+  sugar: z.string().optional(),
   benefits: z
     .array(z.string())
     .refine(arr => arr.some(item => item.trim().length > 0), {
@@ -124,8 +131,10 @@ export default function ViewFoodEnglish({
   preparationRef,
   conservationRef,
   foodDetails,
-  categories, // <-- receive the prop
-  benefitTags // <-- receive the prop
+  categories,
+  benefitTags,
+  updateEditedData,
+  updateNestedData
 }: ViewFoodEnglishProps): JSX.Element {
   // handle form submit
   const onSubmit = (data: z.infer<typeof FoodSchema>): void => {
@@ -139,14 +148,17 @@ export default function ViewFoodEnglish({
 
   const handleSelectionChange = (field: any) => (val: string) => {
     field.onChange(val)
+    updateNestedData("describe", "selection", val)
   }
 
   const handlePreparationChange = (field: any) => (val: string) => {
     field.onChange(val)
+    updateNestedData("describe", "preparation", val)
   }
 
   const handleConservationChange = (field: any) => (val: string) => {
     field.onChange(val)
+    updateNestedData("describe", "conservation", val)
   }
   // Separate function for handling image upload
   const handleImageUpload = (field: any) => (files: File[] | null) => {
@@ -156,17 +168,55 @@ export default function ViewFoodEnglish({
   const form = useForm<z.infer<typeof FoodSchema>>({
     resolver: zodResolver(FoodSchema),
     defaultValues: {
-      name: "",
-      category: "",
-      season: "",
-      country: "",
-      benefits: [],
+      name: foodDetails?.name || "",
+      category: foodDetails?.category || "",
+      season: foodDetails?.seasons?.[0]?.season || "",
+      country: foodDetails?.country || "",
+      fiber: foodDetails?.attributes?.fiber?.toString() || "",
+      proteins: foodDetails?.attributes?.proteins?.toString() || "",
+      vitamins: foodDetails?.attributes?.vitamins || "",
+      minerals: foodDetails?.attributes?.minerals || "",
+      fat: foodDetails?.attributes?.fat?.toString() || "",
+      sugar: foodDetails?.attributes?.sugar?.toString() || "",
+      benefits: foodDetails?.healthBenefits?.map(b => b.healthBenefit) || [],
       image: null,
-      selection: "",
-      preparation: "",
-      conservation: ""
+      selection: foodDetails?.describe?.selection || "",
+      preparation: foodDetails?.describe?.preparation || "",
+      conservation: foodDetails?.describe?.conservation || ""
     }
   })
+
+  // Watch for form changes and update session storage
+  React.useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name && value[name] !== undefined) {
+        switch (name) {
+          case 'fiber':
+          case 'proteins':
+          case 'fat':
+          case 'sugar':
+            updateNestedData("attributes", name, parseFloat(value[name] as string) || 0)
+            break
+          case 'vitamins':
+          case 'minerals':
+            updateNestedData("attributes", name, value[name] as string)
+            break
+          case 'name':
+          case 'category':
+          case 'country':
+            updateEditedData(name, value[name])
+            break
+          case 'season':
+            updateEditedData("seasons", [{ season: value[name], seasonFR: "", foodId: foodDetails?.seasons?.[0]?.foodId || 0 }])
+            break
+          case 'benefits':
+            updateEditedData("healthBenefits", (value[name] as string[]).map(benefit => ({ healthBenefit: benefit, healthBenefitFR: "" })))
+            break
+        }
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [form, updateEditedData, updateNestedData, foodDetails])
 
   return (
     <Form {...form}>
@@ -187,8 +237,6 @@ export default function ViewFoodEnglish({
                       <Input
                         placeholder="Enter food name"
                         {...field}
-                        value={foodDetails?.name}
-                        disabled
                       />
                     </FormControl>
                     <FormMessage />
@@ -209,7 +257,6 @@ export default function ViewFoodEnglish({
                       <Select
                         onValueChange={field.onChange}
                         value={foodDetails?.category || field.value}
-                        disabled
                       >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue placeholder="Select Category" />
@@ -245,7 +292,6 @@ export default function ViewFoodEnglish({
                             ? foodDetails.seasons[0].season
                             : field.value
                         }
-                        disabled
                       >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue placeholder="Select Season" />
@@ -277,7 +323,6 @@ export default function ViewFoodEnglish({
                       <Select
                         onValueChange={field.onChange}
                         value={foodDetails?.country || field.value}
-                        disabled
                       >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue placeholder="Select Country" />
@@ -305,51 +350,105 @@ export default function ViewFoodEnglish({
           </h3>
           <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
             <div>
-              <Label className="block mb-1 text-black">Fiber</Label>
-              <Input
-                placeholder="Provide details if applicable"
-                value={foodDetails?.attributes.fiber}
-                disabled
+              <FormField
+                control={form.control}
+                name="fiber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="block mb-1 text-black">Fiber</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Provide details if applicable"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
             </div>
             <div>
-              <Label className="block mb-1 text-black">Proteins</Label>
-              <Input
-                placeholder="Provide details if applicable"
-                value={foodDetails?.attributes.proteins}
-                disabled
+              <FormField
+                control={form.control}
+                name="proteins"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="block mb-1 text-black">Proteins</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Provide details if applicable"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
             </div>
             <div>
-              <Label className="block mb-1 text-black">Vitamins</Label>
-              <Input
-                placeholder="Provide details if applicable"
-                value={foodDetails?.attributes.vitamins}
-                disabled
+              <FormField
+                control={form.control}
+                name="vitamins"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="block mb-1 text-black">Vitamins</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Provide details if applicable"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
             </div>
             <div>
-              <Label className="block mb-1 text-black">Minerals</Label>
-              <Input
-                placeholder="Provide details if applicable"
-                value={foodDetails?.attributes.minerals}
-                disabled
+              <FormField
+                control={form.control}
+                name="minerals"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="block mb-1 text-black">Minerals</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Provide details if applicable"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
             </div>
             <div>
-              <Label className="block mb-1 text-black">Fat</Label>
-              <Input
-                placeholder="Provide details if applicable"
-                value={foodDetails?.attributes.fat}
-                disabled
+              <FormField
+                control={form.control}
+                name="fat"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="block mb-1 text-black">Fat</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Provide details if applicable"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
             </div>
             <div>
-              <Label className="block mb-1 text-black">Sugar</Label>
-              <Input
-                placeholder="Provide details if applicable"
-                value={foodDetails?.attributes.sugar}
-                disabled
+              <FormField
+                control={form.control}
+                name="sugar"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="block mb-1 text-black">Sugar</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Provide details if applicable"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
             </div>
           </div>
@@ -366,8 +465,17 @@ export default function ViewFoodEnglish({
                   }
                   name="benefits"
                   width="w-[32%]"
-                  disable={true}
+                  disable={false}
                   suggestions={benefitTags}
+                  onChange={(newBenefits: string[]) => {
+                    field.onChange(newBenefits)
+                    // Update session storage with proper format
+                    const healthBenefits = newBenefits.map(benefit => ({
+                      healthBenefit: benefit,
+                      healthBenefitFR: ""
+                    }))
+                    updateEditedData("healthBenefits", healthBenefits)
+                  }}
                 />
               )}
             />
@@ -469,7 +577,6 @@ export default function ViewFoodEnglish({
                           ? foodDetails.images.map(img => img.image)
                           : []
                       }
-                      disabled
                     />
                   </FormControl>
                   <FormMessage />
@@ -478,20 +585,10 @@ export default function ViewFoodEnglish({
             />
           </div>
 
-          {/* Save and Cancel buttons */}
-          <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full gap-2 px-4 py-4 bg-white border-t">
-            <Button
-              variant="outline"
-              onClick={() => {
-                handleCancel(form)
-              }}
-            >
-              Cancel
-            </Button>
-            <Button type="submit">Save</Button>
-          </div>
+         
         </TabsContent>
       </form>
     </Form>
   )
 }
+

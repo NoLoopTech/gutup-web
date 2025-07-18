@@ -111,14 +111,14 @@ export const postFoodTag = async (
   }
 }
 
-// patch food by id
-export const patchFoodById = async (
+// put food by id
+export const putFoodById = async (
   token: string,
   id: number,
   data: CreateFoodDto
 ): Promise<any> => {
   try {
-    const response = await axiosInstance.patch(`/food/${id}`, data, {
+    const response = await axiosInstance.put(`/food/${id}`, data, {
       headers: { Authorization: `Bearer ${token}` }
     })
     return response

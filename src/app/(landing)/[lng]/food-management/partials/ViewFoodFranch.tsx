@@ -15,7 +15,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { TabsContent } from "@/components/ui/tabs"
 import dynamic from "next/dynamic"
-import React from "react"
+import React, { useEffect, useState } from "react"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -78,6 +78,8 @@ interface ViewFoodFrenchProps {
     }>
   }
   benefitTags: Array<{ tagName: string; tagNameFr: string }>
+  updateEditedData: (field: string, value: any) => void
+  updateNestedData: (parentField: string, childField: string, value: any) => void
 }
 
 export default function ViewFoodFrench({
@@ -88,8 +90,75 @@ export default function ViewFoodFrench({
   seasons,
   countries,
   foodDetails,
-  benefitTags
+  benefitTags,
+  updateEditedData,
+  updateNestedData
 }: ViewFoodFrenchProps): JSX.Element {
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "",
+    season: "",
+    country: "",
+    fiber: "",
+    proteins: "",
+    vitamins: "",
+    minerals: "",
+    fat: "",
+    sugar: "",
+    benefits: [] as string[]
+  })
+
+  useEffect(() => {
+    if (foodDetails) {
+      setFormData({
+        name: foodDetails.nameFR || "",
+        category: foodDetails.categoryFR || "",
+        season: foodDetails.seasons?.[0]?.seasonFR || "",
+        country: foodDetails.country || "",
+        fiber: foodDetails.attributes?.fiber?.toString() || "",
+        proteins: foodDetails.attributes?.proteins?.toString() || "",
+        vitamins: foodDetails.attributes?.vitaminsFR || "",
+        minerals: foodDetails.attributes?.mineralsFR || "",
+        fat: foodDetails.attributes?.fat?.toString() || "",
+        sugar: foodDetails.attributes?.sugar?.toString() || "",
+        benefits: foodDetails.healthBenefits?.map(b => b.healthBenefitFR) || []
+      })
+    }
+  }, [foodDetails])
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+    
+    // Update session storage based on field type
+    switch (field) {
+      case 'name':
+        updateEditedData('nameFR', value)
+        break
+      case 'category':
+        updateEditedData('categoryFR', value)
+        break
+      case 'season':
+        updateEditedData("seasons", [{ 
+          season: foodDetails?.seasons?.[0]?.season || "", 
+          seasonFR: value, 
+          foodId: foodDetails?.seasons?.[0]?.foodId || 0 
+        }])
+        break
+      case 'fiber':
+      case 'proteins':
+      case 'fat':
+      case 'sugar':
+        updateNestedData("attributes", field, parseFloat(value) || 0)
+        break
+      case 'vitamins':
+        updateNestedData("attributes", "vitaminsFR", value)
+        break
+      case 'minerals':
+        updateNestedData("attributes", "mineralsFR", value)
+        break
+    }
+  }
+
   return (
     <TabsContent value="french">
       {/* French Tab Content */}
@@ -98,13 +167,16 @@ export default function ViewFoodFrench({
           <Label className="block mb-1 text-black">Nom</Label>
           <Input
             placeholder="Entrez le nom de l'aliment"
-            value={foodDetails?.nameFR ?? ""}
-            disabled
+            value={formData.name}
+            onChange={(e) => handleInputChange("name", e.target.value)}
           />
         </div>
         <div>
           <Label className="block mb-1 text-black">Catégorie</Label>
-          <Select value={foodDetails?.categoryFR ?? ""} disabled>
+          <Select 
+            value={formData.category}
+            onValueChange={(value) => handleInputChange("category", value)}
+          >
             <SelectTrigger className="w-full mt-1">
               <SelectValue placeholder="Sélectionner une catégorie" />
             </SelectTrigger>
@@ -112,7 +184,6 @@ export default function ViewFoodFrench({
               {categories.map(option => (
                 <SelectItem
                   key={option.value}
-                  // Use French value/label if available
                   value={option.valueFr ?? option.value}
                 >
                   {option.labelFr ?? option.label}
@@ -123,7 +194,10 @@ export default function ViewFoodFrench({
         </div>
         <div>
           <Label className="block mb-1 text-black">Mois</Label>
-          <Select value={foodDetails?.seasons?.[0]?.seasonFR ?? ""} disabled>
+          <Select 
+            value={formData.season}
+            onValueChange={(value) => handleInputChange("season", value)}
+          >
             <SelectTrigger className="w-full mt-1">
               <SelectValue placeholder="Sélectionner un mois" />
             </SelectTrigger>
@@ -131,7 +205,7 @@ export default function ViewFoodFrench({
               {seasons.map(option => (
                 <SelectItem 
                   key={option.value} 
-                  value={option.labelFr ?? option.label} // Change this line
+                  value={option.labelFr ?? option.label}
                 >
                   {option.labelFr ?? option.label}
                 </SelectItem>
@@ -141,7 +215,10 @@ export default function ViewFoodFrench({
         </div>
         <div>
           <Label className="block mb-1 text-black">Pays</Label>
-          <Select value={foodDetails?.country ?? ""} disabled>
+          <Select 
+            value={formData.country}
+            onValueChange={(value) => handleInputChange("country", value)}
+          >
             <SelectTrigger className="w-full mt-1">
               <SelectValue placeholder="Sélectionner un pays" />
             </SelectTrigger>
@@ -166,48 +243,48 @@ export default function ViewFoodFrench({
           <Label className="block mb-1 text-black">Fibres</Label>
           <Input
             placeholder="Détails du fournisseur si applicable"
-            value={foodDetails?.attributes?.fiber ?? ""}
-            disabled
+            value={formData.fiber}
+            onChange={(e) => handleInputChange("fiber", e.target.value)}
           />
         </div>
         <div>
           <Label className="block mb-1 text-black">Protéines</Label>
           <Input
             placeholder="Détails du fournisseur si applicable"
-            value={foodDetails?.attributes?.proteins ?? ""}
-            disabled
+            value={formData.proteins}
+            onChange={(e) => handleInputChange("proteins", e.target.value)}
           />
         </div>
         <div>
           <Label className="block mb-1 text-black">Vitamines</Label>
           <Input
             placeholder="Détails du fournisseur si applicable"
-            value={foodDetails?.attributes?.vitaminsFR ?? ""}
-            disabled
+            value={formData.vitamins}
+            onChange={(e) => handleInputChange("vitamins", e.target.value)}
           />
         </div>
         <div>
           <Label className="block mb-1 text-black">Minéraux</Label>
           <Input
             placeholder="Détails du fournisseur si applicable"
-            value={foodDetails?.attributes?.mineralsFR ?? ""}
-            disabled
+            value={formData.minerals}
+            onChange={(e) => handleInputChange("minerals", e.target.value)}
           />
         </div>
         <div>
           <Label className="block mb-1 text-black">Graisses</Label>
           <Input
             placeholder="Détails du fournisseur si applicable"
-            value={foodDetails?.attributes?.fat ?? ""}
-            disabled
+            value={formData.fat}
+            onChange={(e) => handleInputChange("fat", e.target.value)}
           />
         </div>
         <div>
           <Label className="block mb-1 text-black">Sucres</Label>
           <Input
             placeholder="Détails du fournisseur si applicable"
-            value={foodDetails?.attributes?.sugar ?? ""}
-            disabled
+            value={formData.sugar}
+            onChange={(e) => handleInputChange("sugar", e.target.value)}
           />
         </div>
       </div>
@@ -216,13 +293,21 @@ export default function ViewFoodFrench({
         <LableInput
           title="Bienfaits pour la santé"
           placeholder="Ajoutez jusqu'à 6 bienfaits alimentaires ou moins"
-          benefits={
-            foodDetails?.healthBenefits?.map(b => b.healthBenefitFR) ?? []
-          }
+          benefits={formData.benefits}
           name="benefits"
           width="w-[32%]"
-          disable={true}
+          disable={false}
           suggestions={benefitTags}
+          onChange={(newBenefits: string[]) => {
+            setFormData(prev => ({ ...prev, benefits: newBenefits }))
+            // Update session storage with proper format
+            const currentHealthBenefits = foodDetails?.healthBenefits || []
+            const updatedHealthBenefits = newBenefits.map((benefit, index) => ({
+              healthBenefit: currentHealthBenefits[index]?.healthBenefit || "",
+              healthBenefitFR: benefit
+            }))
+            updateEditedData("healthBenefits", updatedHealthBenefits)
+          }}
         />
       </div>
 
@@ -237,8 +322,9 @@ export default function ViewFoodFrench({
           <RichTextEditor
             ref={selectionRef}
             initialContent={foodDetails?.describe?.selectionFR ?? ""}
-            onChange={() => {}}
-            readOnly
+            onChange={(content) => {
+              updateNestedData("describe", "selectionFR", content)
+            }}
           />
         </div>
         <div>
@@ -246,8 +332,9 @@ export default function ViewFoodFrench({
           <RichTextEditor
             ref={preparationRef}
             initialContent={foodDetails?.describe?.preparationFR ?? ""}
-            onChange={() => {}}
-            readOnly
+            onChange={(content) => {
+              updateNestedData("describe", "preparationFR", content)
+            }}
           />
         </div>
         <div>
@@ -255,8 +342,9 @@ export default function ViewFoodFrench({
           <RichTextEditor
             ref={conservationRef}
             initialContent={foodDetails?.describe?.conservationFR ?? ""}
-            onChange={() => {}}
-            readOnly
+            onChange={(content) => {
+              updateNestedData("describe", "conservationFR", content)
+            }}
           />
         </div>
       </div>
@@ -268,9 +356,9 @@ export default function ViewFoodFrench({
         <ImageUploader
           title="Sélectionnez des images pour votre aliment"
           previewUrls={foodDetails?.images?.map(img => img.image) ?? []}
-          disabled
         />
       </div>
     </TabsContent>
   )
 }
+

@@ -14,7 +14,8 @@ import ViewFoodEnglish from "./ViewFoodEnglish"
 import {
   deleteFoodById,
   getCatagoryFoodType,
-  getFoodsById
+  getFoodsById,
+  putFoodById
 } from "@/app/api/foods"
 import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
 import {
@@ -30,6 +31,22 @@ import {
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import ViewFoodFranch from "./ViewFoodFranch"
+
+// Add session storage utilities
+const EDIT_FOOD_STORAGE_KEY = "editfood-store"
+
+const saveToSessionStorage = (data: any) => {
+  sessionStorage.setItem(EDIT_FOOD_STORAGE_KEY, JSON.stringify(data))
+}
+
+const getFromSessionStorage = () => {
+  const stored = sessionStorage.getItem(EDIT_FOOD_STORAGE_KEY)
+  return stored ? JSON.parse(stored) : null
+}
+
+const clearSessionStorage = () => {
+  sessionStorage.removeItem(EDIT_FOOD_STORAGE_KEY)
+}
 
 interface Props {
   open: boolean
@@ -96,6 +113,7 @@ export default function ViewFoodPopUp({
     Array<{ tagName: string; tagNameFr: string }>
   >([])
   const [isLoading, setIsLoading] = useState(true)
+  const [editedData, setEditedData] = useState<any>(null)
 
   useEffect(() => {
     if (token && foodId) {
@@ -103,7 +121,10 @@ export default function ViewFoodPopUp({
         const response = await getFoodsById(token, foodId)
         if (response.status === 200) {
           setFoodDetails(response.data)
-          // Set allowMultiLang based on API response
+          // Initialize session storage with API data including foodId
+          const dataWithId = { ...response.data, foodId }
+          saveToSessionStorage(dataWithId)
+          setEditedData(dataWithId)
           setAllowMultiLang(response.data.allowMultiLang ?? false)
         } else {
           console.error("Failed to get food details")
@@ -223,6 +244,99 @@ export default function ViewFoodPopUp({
     setConfirmDeleteOpen(false)
   }
 
+  // Function to update session storage when data changes
+  const updateEditedData = (field: string, value: any) => {
+    const currentData = getFromSessionStorage() || editedData
+    const updatedData = { ...currentData, [field]: value, foodId }
+    setEditedData(updatedData)
+    saveToSessionStorage(updatedData)
+  }
+
+  // Function to update nested data
+  const updateNestedData = (parentField: string, childField: string, value: any) => {
+    const currentData = getFromSessionStorage() || editedData
+    const updatedData = {
+      ...currentData,
+      [parentField]: {
+        ...currentData[parentField],
+        [childField]: value
+      },
+      foodId
+    }
+    setEditedData(updatedData)
+    saveToSessionStorage(updatedData)
+  }
+
+  // API function to save changes
+  const handleSaveChanges = async () => {
+    const dataToSave = getFromSessionStorage()
+    if (!dataToSave || !dataToSave.foodId) return
+
+    try {
+      const { foodId: savedFoodId, ...rawData } = dataToSave
+      
+      // Transform the session storage data to match CreateFoodDto format
+      const updateData = {
+        name: rawData.name,
+        nameFR: rawData.nameFR || "",
+        category: rawData.category,
+        categoryFR: rawData.categoryFR || "",
+        country: rawData.country,
+        seasons: rawData.seasons?.map((season: any) => ({
+          foodId: savedFoodId,
+          season: season.season || season,
+          seasonFR: season.seasonFR || ""
+        })) || [],
+        attributes: {
+          fiber: Number(rawData.attributes?.fiber) || 0,
+          proteins: Number(rawData.attributes?.proteins) || 0,
+          vitamins: rawData.attributes?.vitamins || "",
+          vitaminsFR: rawData.attributes?.vitaminsFR || "",
+          minerals: rawData.attributes?.minerals || "",
+          mineralsFR: rawData.attributes?.mineralsFR || "",
+          fat: Number(rawData.attributes?.fat) || 0,
+          sugar: Number(rawData.attributes?.sugar) || 0
+        },
+        describe: {
+          selection: rawData.describe?.selection || "",
+          selectionFR: rawData.describe?.selectionFR || "",
+          preparation: rawData.describe?.preparation || "",
+          preparationFR: rawData.describe?.preparationFR || "",
+          conservation: rawData.describe?.conservation || "",
+          conservationFR: rawData.describe?.conservationFR || ""
+        },
+        images: rawData.images?.map((img: any) => ({
+          image: typeof img === 'string' ? img : img.image
+        })) || [],
+        healthBenefits: rawData.healthBenefits?.map((benefit: any) => ({
+          healthBenefit: typeof benefit === 'string' ? benefit : benefit.healthBenefit,
+          healthBenefitFR: typeof benefit === 'string' ? "" : benefit.healthBenefitFR || ""
+        })) || [],
+        allowMultiLang: rawData.allowMultiLang || false
+      }
+
+      console.log('Saving food with ID:', savedFoodId, 'Data:', updateData)
+      
+      const response = await putFoodById(token, savedFoodId, updateData)
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Food item updated successfully!")
+        clearSessionStorage()
+        getFoods()
+        onClose()
+      } else {
+        toast.error("Failed to update food item")
+      }
+    } catch (error) {
+      toast.error("Error updating food item")
+      console.error("Update error:", error)
+    }
+  }
+
+  const handleClose = () => {
+    clearSessionStorage()
+    onClose()
+  }
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
@@ -276,9 +390,11 @@ export default function ViewFoodPopUp({
                 selectionRef={selectionRef}
                 preparationRef={preparationRef}
                 conservationRef={conservationRef}
-                foodDetails={foodDetails}
+                foodDetails={editedData || foodDetails}
                 categories={categoryOptionsApi}
                 benefitTags={benefitTags}
+                updateEditedData={updateEditedData}
+                updateNestedData={updateNestedData}
               />
 
               {allowMultiLang && (
@@ -289,8 +405,10 @@ export default function ViewFoodPopUp({
                   categories={categoryOptionsApi}
                   seasons={seasons}
                   countries={countries}
-                  foodDetails={foodDetails}
+                  foodDetails={editedData || foodDetails}
                   benefitTags={benefitTags}
+                  updateEditedData={updateEditedData}
+                  updateNestedData={updateNestedData}
                 />
               )}
             </Tabs>
@@ -304,6 +422,9 @@ export default function ViewFoodPopUp({
               onClick={handleOpenDeleteConfirmationPopup}
             >
               Delete Food
+            </Button>
+            <Button onClick={handleSaveChanges}>
+              Save changes
             </Button>
           </div>
         </DialogFooter>
