@@ -402,16 +402,10 @@ export default function EditShopPromotionTab({
       .refine(val => !val || /^https?:\/\/.+$/.test(val), {
         message: translations.invalidWebsiteURL
       }),
-    shopPromoteFoods: z
-      .array(
-        z.object({
-          id: z.number(),
-          name: z.string(),
-          status: z.boolean(),
-          display: z.boolean()
-        })
-      )
-      .nonempty(translations.atLeastOneIngredientCategoryMustBeAdded),
+    shopPromoteFoods: z.array(z.any()).min(1, {
+      message: translations.atLeastOneIngredientCategoryMustBeAdded
+    }),
+
     image: z.string().nonempty(translations.required)
   })
 
