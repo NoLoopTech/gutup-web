@@ -101,7 +101,7 @@ export default function DailyTipsPage({
     // clear store and session
     await resetTranslations()
     await resetUpdatedStore()
-    
+
     sessionStorage.removeItem("daily-tip-storage")
     sessionStorage.removeItem("update-daily-tip-storage")
   }
@@ -467,6 +467,12 @@ export default function DailyTipsPage({
           await deleteImageFromFirebase(previousImageUrl)
           setPreviousImageUrl(null)
         }
+
+        setSelectedTipId(0)
+
+        // clear store and session
+        resetTranslations()
+        resetUpdatedStore()
       } else {
         toast.error("Failed to update daily tip!")
         if (isImageChanged && uploadedImageUrl) {

@@ -169,8 +169,8 @@ export default function EditShopPromotionTab({
       updatedAvailData = {
         id: selected.id,
         name: selected.name ?? "",
-        status: selected.status ?? "",
-        display: selected.display ?? ""
+        status: selected.status ?? false,
+        display: selected.display ?? false
       }
     } else if (ingredientInput.trim()) {
       // Step 2: Check if the custom food item entered by the user already exists
@@ -653,7 +653,7 @@ export default function EditShopPromotionTab({
   }
 
   const onError = (errors: any) => {
-    console.error("❌ Validation errors:", errors)
+    console.error("Validation errors:", errors)
   }
 
   return (
@@ -724,7 +724,6 @@ export default function EditShopPromotionTab({
               />
             </div>
 
-            {translationsData.shopPromotionData.en.shopLocation}
             <div className="flex gap-4">
               {/* Location */}
               <FormField
