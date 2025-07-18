@@ -49,7 +49,7 @@ interface StoreData {
 }
 
 interface AvailableItem {
-  id: number
+  ingOrCatId: number
   name: string
   type: string
   status: "Active" | "Inactive"

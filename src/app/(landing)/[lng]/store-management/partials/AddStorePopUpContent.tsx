@@ -81,7 +81,7 @@ interface StoreType {
 }
 
 interface AvailableItem {
-  id: number
+  ingOrCatId: number
   name: string
   type: string
   status: "Active" | "Inactive"
@@ -575,7 +575,7 @@ export default function AddStorePopUpContent({
           size="icon"
           className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
           onClick={() => {
-            handleDeleteAvailItem(row.id)
+            handleDeleteAvailItem(row.ingOrCatId)
           }}
           title={translations.delete}
         >
@@ -588,7 +588,7 @@ export default function AddStorePopUpContent({
 
   // Delete handler for availData
   const handleDeleteAvailItem = (id: number): void => {
-    const updated = availData.filter(item => item.id !== id)
+    const updated = availData.filter(item => item.ingOrCatId !== id)
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
     setTranslationField("storeData", activeLang, "availData", updated)
@@ -638,7 +638,7 @@ export default function AddStorePopUpContent({
     if (!name) return
 
     const entry: AvailableItem = {
-      id: selected ? Number(selected.id) : 0,
+      ingOrCatId: selected ? Number(selected.id) : 0,
       name,
       type: "Ingredient",
       tags: ["InSystem"],
@@ -692,7 +692,7 @@ export default function AddStorePopUpContent({
     if (!name) return
 
     const entry: AvailableItem = {
-      id: selectedCategory ? Number(selectedCategory.id) : 0,
+      ingOrCatId: selectedCategory ? Number(selectedCategory.id) : 0,
       name,
       type: "Category",
       tags: ["InSystem"],

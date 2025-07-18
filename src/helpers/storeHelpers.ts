@@ -23,14 +23,16 @@ export function transformStoreDataToApiRequest(
     enAvailData.forEach((enItem: any, index: number) => {
       let frItem: any = null
 
-      if (enItem.id === 0) {
+      const itemId = enItem.ingOrCatId || enItem.id || 0
+
+      if (itemId === 0) {
         frItem = frAvailData[index]
       } else {
-        frItem = frAvailData.find((frItem: any) => frItem.id === enItem.id)
+        frItem = frAvailData.find((frItem: any) => (frItem.ingOrCatId || frItem.id) === itemId)
       }
 
       const transformedItem: IngAndCatDataType = {
-        id: enItem.id || 0,
+        ingOrCatId: itemId,
         name: enItem.name || "",
         nameFR: frItem ? frItem.name : enItem.name || "",
         type: enItem.type?.toLowerCase() || "category",
@@ -95,6 +97,8 @@ export function transformStoreDataToApiRequest(
         : getSubscriptionTypeFR(enData.subscriptionType),
     phoneNumber: enData.phone || enData.phoneNumber || "",
     email: enData.email || "",
+    locationLat: enData.locationLat || undefined,
+    locationLng: enData.locationLng || undefined,
     mapsPin: enData.mapsPin || "",
     facebook: enData.facebook || "",
     instagram: enData.instagram || "",

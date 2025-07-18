@@ -81,7 +81,7 @@ interface StoreType {
 }
 
 interface AvailableItem {
-  id: number
+  ingOrCatId: number
   name: string
   type: string
   status: "Active" | "Inactive"
@@ -245,7 +245,7 @@ export default function EditStorePopUpContent({
           // Transform ingAndCatData to availData format for both languages
           const transformedAvailDataEn =
             data.ingAndCatData?.map((item: any, index: number) => ({
-              id: item.id || index + 1,
+              ingOrCatId: item.ingOrCatId || item.id || index + 1,
               name: item.name,
               type: item.type === "ingredient" ? "Ingredient" : "Category",
               status: item.availability
@@ -259,7 +259,7 @@ export default function EditStorePopUpContent({
 
           const transformedAvailDataFr =
             data.ingAndCatData?.map((item: any, index: number) => ({
-              id: item.id || index + 1,
+              ingOrCatId: item.ingOrCatId || item.id || index + 1,
               name: item.nameFR || item.name,
               type: item.typeFR === "ingrédient" ? "Ingrédient" : "Catégorie",
               status: item.availability
@@ -899,7 +899,7 @@ export default function EditStorePopUpContent({
           size="icon"
           className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
           onClick={() => {
-            handleDeleteAvailItem(row.id)
+            handleDeleteAvailItem(row.ingOrCatId)
           }}
           title={translations.delete}
         >
@@ -912,7 +912,7 @@ export default function EditStorePopUpContent({
 
   // Delete handler for availData
   const handleDeleteAvailItem = (id: number): void => {
-    const updated = availData.filter(item => item.id !== id)
+    const updated = availData.filter(item => item.ingOrCatId !== id)
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
     setTranslationField("storeData", activeLang, "availData", updated)
@@ -921,7 +921,7 @@ export default function EditStorePopUpContent({
     const oppLang = activeLang === "en" ? "fr" : "en"
     const oppCurrentData =
       (storeData[oppLang]?.availData as AvailableItem[]) || []
-    const oppUpdated = oppCurrentData.filter(item => item.id !== id)
+    const oppUpdated = oppCurrentData.filter(item => item.ingOrCatId !== id)
     setTranslationField("storeData", oppLang, "availData", oppUpdated)
 
     setHasChanges(true)
@@ -953,7 +953,7 @@ export default function EditStorePopUpContent({
     if (!name) return
 
     const entry: AvailableItem = {
-      id: selected ? Number(selected.id) : 0,
+      ingOrCatId: selected ? Number(selected.id) : 0,
       name,
       type: "Ingredient",
       tags: ["InSystem"],
@@ -1008,7 +1008,7 @@ export default function EditStorePopUpContent({
     if (!name) return
 
     const entry: AvailableItem = {
-      id: selectedCategory ? Number(selectedCategory.id) : 0,
+      ingOrCatId: selectedCategory ? Number(selectedCategory.id) : 0,
       name,
       type: "Category",
       tags: ["InSystem"],

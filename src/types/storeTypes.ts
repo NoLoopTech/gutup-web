@@ -165,7 +165,7 @@ export interface CategoryIngredientItem {
 
 // Add interface for IngAndCatData
 export interface IngAndCatDataType {
-  id: number
+  ingOrCatId: number
   name: string
   nameFR: string
   type: string
@@ -205,6 +205,8 @@ export interface AddStoreRequestBody {
   subscriptionTypeFR: string
   phoneNumber: string
   email: string
+  locationLat?: number
+  locationLng?: number
   mapsPin: string
   facebook: string
   instagram: string
