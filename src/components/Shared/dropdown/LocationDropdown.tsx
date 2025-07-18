@@ -6,6 +6,7 @@ interface LocationDropdownProps {
   onSelect: (selectedOptions: string[]) => void
   errorMessage?: string
   selectedOption: OptionType | null
+  defaultLocation: OptionType
   onSelectLocation: (selectedOptions: OptionType) => void
 }
 
@@ -18,6 +19,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({
   onSelect,
   errorMessage,
   selectedOption,
+  defaultLocation,
   onSelectLocation
 }) => {
   const [localSelectedOption, setLocalSelectedOption] =
@@ -77,7 +79,9 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({
         cacheOptions
         loadOptions={fetchLocations}
         defaultOptions
-        value={localSelectedOption}
+        value={
+          localSelectedOption === null ? defaultLocation : localSelectedOption
+        }
         placeholder="Enter location"
         onChange={(option: OptionType | OptionType[] | null) => {
           if (option) {

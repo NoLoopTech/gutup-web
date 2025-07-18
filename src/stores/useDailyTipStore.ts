@@ -33,7 +33,6 @@ interface ShopPromotionFields {
   shopCategory: string
   mobileNumber: string
   email: string
-  mapsPin: string
   facebook: string
   instagram: string
   website: string
@@ -227,7 +226,6 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 shopCategory: "",
                 mobileNumber: "",
                 email: "",
-                mapsPin: "",
                 facebook: "",
                 instagram: "",
                 website: "",
@@ -246,7 +244,6 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 shopCategory: "",
                 mobileNumber: "",
                 email: "",
-                mapsPin: "",
                 facebook: "",
                 instagram: "",
                 website: "",

@@ -185,6 +185,8 @@ export interface ShopPromote {
   reasonFR?: string
   name?: string
   location?: string
+  locationLat?: number
+  locationLng?: number
   category?: string
   categoryFR?: string
   desc?: string

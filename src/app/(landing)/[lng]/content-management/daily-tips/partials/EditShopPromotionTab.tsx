@@ -44,8 +44,9 @@ import { getLocationDetails } from "@/app/api/location"
 
 interface Food {
   id: number
-  name?: string
-  tagName?: string
+  name: string
+  status: boolean
+  display: boolean
 }
 
 interface AvailableItem {
@@ -73,7 +74,6 @@ type FieldNames =
   | "shopCategory"
   | "mobileNumber"
   | "email"
-  | "mapsPin"
   | "facebook"
   | "instagram"
   | "website"
@@ -120,7 +120,9 @@ export default function EditShopPromotionTab({
   const [foods, setFoods] = useState<Food[]>([])
   const [ingredientInput, setIngredientInput] = useState<string>("")
   const [selected, setSelected] = useState<Food | null>(null)
-  const [availData, setAvailData] = useState<AvailableItem[]>([])
+  const [availData, setAvailData] = useState<AvailableItem[]>(
+    translationsData.shopPromotionData.en.shopPromoteFoods
+  )
   const [selectedLocationName, setSelectedLocationName] =
     useState<OptionType | null>(null)
 
@@ -167,8 +169,8 @@ export default function EditShopPromotionTab({
       updatedAvailData = {
         id: selected.id,
         name: selected.name ?? "",
-        status: true,
-        display: true
+        status: selected.status ?? "",
+        display: selected.display ?? ""
       }
     } else if (ingredientInput.trim()) {
       // Step 2: Check if the custom food item entered by the user already exists
@@ -382,7 +384,6 @@ export default function EditShopPromotionTab({
       .string()
       .nonempty(translations.required)
       .email({ message: translations.invalidEmailAddress }),
-    mapsPin: z.string().min(1, { message: translations.required }),
     facebook: z
       .string()
       .optional()
@@ -401,12 +402,13 @@ export default function EditShopPromotionTab({
       .refine(val => !val || /^https?:\/\/.+$/.test(val), {
         message: translations.invalidWebsiteURL
       }),
-    availData: z
+    shopPromoteFoods: z
       .array(
         z.object({
           id: z.number(),
           name: z.string(),
-          displayStatus: z.boolean()
+          status: z.boolean(),
+          display: z.boolean()
         })
       )
       .nonempty(translations.atLeastOneIngredientCategoryMustBeAdded),
@@ -584,7 +586,7 @@ export default function EditShopPromotionTab({
 
     const selectedLocation = {
       value: placeId,
-      label: `${name}, ${country}`,
+      label: `${name}`,
       lat,
       lng
     }
@@ -646,8 +648,18 @@ export default function EditShopPromotionTab({
     )
   }
 
+  useEffect(() => {
+    const foods =
+      translationsData.shopPromotionData[activeLang]?.shopPromoteFoods || []
+    setAvailData(foods)
+  }, [activeLang, translationsData.shopPromotionData])
+
   function onSubmit(data: z.infer<typeof FormSchema>): void {
     editDailyTip()
+  }
+
+  const onError = (errors: any) => {
+    console.error("❌ Validation errors:", errors)
   }
 
   return (
@@ -658,7 +670,7 @@ export default function EditShopPromotionTab({
         </div>
       )}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit, onError)}>
           <div className="space-y-3 text-black">
             {/* Shop Name */}
             <div className="flex items-start lg:justify-end lg:-mt-[4.8rem]">
@@ -718,6 +730,7 @@ export default function EditShopPromotionTab({
               />
             </div>
 
+            {translationsData.shopPromotionData.en.shopLocation}
             <div className="flex gap-4">
               {/* Location */}
               <FormField
@@ -728,6 +741,12 @@ export default function EditShopPromotionTab({
                     <FormLabel>{translations.shopLocation}</FormLabel>
                     <FormControl>
                       <LocationDropdown
+                        defaultLocation={{
+                          label:
+                            translationsData.shopPromotionData.en.shopLocation,
+                          value:
+                            translationsData.shopPromotionData.en.shopLocation
+                        }}
                         selectedOption={selectedLocationName}
                         onSelect={handleLocationSelect}
                         onSelectLocation={handleLocationName}
@@ -925,7 +944,7 @@ export default function EditShopPromotionTab({
 
               <FormField
                 control={form.control}
-                name="availData"
+                name="shopPromoteFoods"
                 render={({ field }) => (
                   <>
                     <CustomTable
