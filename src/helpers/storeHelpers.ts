@@ -20,9 +20,14 @@ export function transformStoreDataToApiRequest(
   const frAvailData = frData.availData || []
 
   if (Array.isArray(enAvailData)) {
-    enAvailData.forEach((enItem: any) => {
-      // Find the corresponding French item by ID
-      const frItem = frAvailData.find((frItem: any) => frItem.id === enItem.id)
+    enAvailData.forEach((enItem: any, index: number) => {
+      let frItem: any = null
+
+      if (enItem.id === 0) {
+        frItem = frAvailData[index]
+      } else {
+        frItem = frAvailData.find((frItem: any) => frItem.id === enItem.id)
+      }
 
       const transformedItem: IngAndCatDataType = {
         id: enItem.id || 0,
