@@ -39,7 +39,8 @@ export const deleteFoodById = async (
     // Return a consistent error object
     return {
       error: true,
-      message: error?.response?.data?.message || error.message || "Delete failed"
+      message:
+        error?.response?.data?.message || error.message || "Delete failed"
     }
   }
 }
@@ -110,3 +111,18 @@ export const postFoodTag = async (
   }
 }
 
+// patch food by id
+export const patchFoodById = async (
+  token: string,
+  id: number,
+  data: CreateFoodDto
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.patch(`/food/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response
+  } catch (error) {
+    return error
+  }
+}

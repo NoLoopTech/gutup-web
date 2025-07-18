@@ -1,14 +1,19 @@
 "use client"
 
-import React from "react"
-import { TabsContent } from "@/components/ui/tabs"
+import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
+import LableInput from "@/components/Shared/LableInput/LableInput"
+import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
+import { Button } from "@/components/ui/button"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
-import dynamic from "next/dynamic"
-import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
-import LableInput from "@/components/Shared/LableInput/LableInput"
 import {
   Select,
   SelectContent,
@@ -16,19 +21,14 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
+import { Separator } from "@/components/ui/separator"
+import { TabsContent } from "@/components/ui/tabs"
 import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormControl
-} from "@/components/ui/form"
+import dynamic from "next/dynamic"
+import React from "react"
+import { useForm } from "react-hook-form"
 import { toast } from "sonner"
+import { z } from "zod"
 import { type FoodDetailsTypes } from "./ViewFoodPopUp"
 
 const RichTextEditor = dynamic(
@@ -44,14 +44,9 @@ interface ViewFoodEnglishProps {
   preparationRef: React.Ref<RichTextEditorHandle>
   conservationRef: React.Ref<RichTextEditorHandle>
   foodDetails: FoodDetailsTypes | null
+  categories: Option[]
+  benefitTags: Array<{ tagName: string; tagNameFr: string }> // <-- add this prop
 }
-
-const categories: Option[] = [
-  { value: "Fruit", label: "Fruit" },
-  { value: "Meat", label: "Meat" },
-  { value: "Fish", label: "Fish" },
-  { value: "grains", label: "Grains" }
-]
 
 const seasons: Option[] = [
   { value: "January", label: "January" },
@@ -69,9 +64,10 @@ const seasons: Option[] = [
 ]
 
 const countries: Option[] = [
-  { value: "Ecuador", label: "Ecuador" },
-  { value: "USA", label: "USA" },
-  { value: "Norway", label: "Norway" }
+  { value: "switzerland", label: "Switzerland" },
+  { value: "france", label: "France" },
+  { value: "germany", label: "Germany" },
+  { value: "italy", label: "Italy" }
 ]
 
 const FoodSchema = z.object({
@@ -127,7 +123,9 @@ export default function ViewFoodEnglish({
   selectionRef,
   preparationRef,
   conservationRef,
-  foodDetails
+  foodDetails,
+  categories, // <-- receive the prop
+  benefitTags // <-- receive the prop
 }: ViewFoodEnglishProps): JSX.Element {
   // handle form submit
   const onSubmit = (data: z.infer<typeof FoodSchema>): void => {
@@ -210,10 +208,10 @@ export default function ViewFoodEnglish({
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
-                        value={field.value || foodDetails?.category}
+                        value={foodDetails?.category || field.value}
                         disabled
                       >
-                        <SelectTrigger className="mt-1 w-full">
+                        <SelectTrigger className="w-full mt-1">
                           <SelectValue placeholder="Select Category" />
                         </SelectTrigger>
                         <SelectContent>
@@ -242,10 +240,14 @@ export default function ViewFoodEnglish({
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
-                        value={field.value || foodDetails?.season}
+                        value={
+                          foodDetails?.seasons && foodDetails.seasons.length > 0
+                            ? foodDetails.seasons[0].season
+                            : field.value
+                        }
                         disabled
                       >
-                        <SelectTrigger className="mt-1 w-full">
+                        <SelectTrigger className="w-full mt-1">
                           <SelectValue placeholder="Select Season" />
                         </SelectTrigger>
                         <SelectContent>
@@ -274,10 +276,10 @@ export default function ViewFoodEnglish({
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
-                        value={field.value || foodDetails?.country}
+                        value={foodDetails?.country || field.value}
                         disabled
                       >
-                        <SelectTrigger className="mt-1 w-full">
+                        <SelectTrigger className="w-full mt-1">
                           <SelectValue placeholder="Select Country" />
                         </SelectTrigger>
                         <SelectContent>
@@ -351,7 +353,7 @@ export default function ViewFoodEnglish({
               />
             </div>
           </div>
-          <div className="w-[100%] ">
+          <div className="w-[100%]">
             <FormField
               control={form.control}
               name="benefits"
@@ -359,9 +361,13 @@ export default function ViewFoodEnglish({
                 <LableInput
                   title="Health Benefits"
                   placeholder="Add up to 6 food benefits or fewer"
-                  benefits={field.value || foodDetails?.healthBenefits || []}
+                  benefits={
+                    foodDetails?.healthBenefits?.map(b => b.healthBenefit) || []
+                  }
                   name="benefits"
                   width="w-[32%]"
+                  disable={true}
+                  suggestions={benefitTags}
                 />
               )}
             />
@@ -446,10 +452,8 @@ export default function ViewFoodEnglish({
             </div>
           </div>
 
-          <div className="pb-12 mt-6 w-full sm:w-2/5">
-            <h3 className="mb-4 text-lg font-semibold text-black">
-              Upload Images
-            </h3>
+          <div className="w-full pb-12 mt-6 sm:w-2/5">
+            <h3 className="mb-4 text-lg font-semibold text-black">Images</h3>
             <FormField
               control={form.control}
               name="image"
@@ -459,6 +463,13 @@ export default function ViewFoodEnglish({
                     <ImageUploader
                       title="Select Images for your food item"
                       onChange={handleImageUpload(field)}
+                      // Show preview if foodDetails has images
+                      previewUrls={
+                        foodDetails?.images && foodDetails.images.length > 0
+                          ? foodDetails.images.map(img => img.image)
+                          : []
+                      }
+                      disabled
                     />
                   </FormControl>
                   <FormMessage />
@@ -468,7 +479,7 @@ export default function ViewFoodEnglish({
           </div>
 
           {/* Save and Cancel buttons */}
-          <div className="flex fixed bottom-0 left-0 z-50 gap-2 justify-between px-4 py-4 w-full bg-white border-t">
+          <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full gap-2 px-4 py-4 bg-white border-t">
             <Button
               variant="outline"
               onClick={() => {

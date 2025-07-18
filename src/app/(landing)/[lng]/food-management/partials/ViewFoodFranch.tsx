@@ -1,14 +1,10 @@
 "use client"
 
-import React from "react"
-import { TabsContent } from "@/components/ui/tabs"
+import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
+import LableInput from "@/components/Shared/LableInput/LableInput"
+import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
-import dynamic from "next/dynamic"
-import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
-import LableInput from "@/components/Shared/LableInput/LableInput"
 import {
   Select,
   SelectContent,
@@ -16,6 +12,10 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
+import { TabsContent } from "@/components/ui/tabs"
+import dynamic from "next/dynamic"
+import React from "react"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -26,9 +26,58 @@ interface ViewFoodFrenchProps {
   selectionRef: React.Ref<RichTextEditorHandle>
   preparationRef: React.Ref<RichTextEditorHandle>
   conservationRef: React.Ref<RichTextEditorHandle>
-  categories: Array<{ value: string; label: string }>
-  seasons: Array<{ value: string; label: string }>
+  categories: Array<{
+    value: string
+    label: string
+    valueEn?: string
+    valueFr?: string
+    labelEn?: string
+    labelFr?: string
+  }>
+  seasons: Array<{ 
+    value: string
+    label: string 
+    labelFr?: string
+  }>
   countries: Array<{ value: string; label: string }>
+  foodDetails?: {
+    name: string
+    nameFR: string
+    category: string
+    categoryFR: string
+    country: string
+    seasons: Array<{
+      season: string
+      seasonFR: string
+      foodId: number
+    }>
+    attributes: {
+      fiber: number
+      proteins: number
+      vitamins: string
+      vitaminsFR: string
+      minerals: string
+      mineralsFR: string
+      fat: number
+      sugar: number
+    }
+    describe: {
+      selection: string
+      selectionFR: string
+      preparation: string
+      preparationFR: string
+      conservation: string
+      conservationFR: string
+    }
+    healthBenefits: Array<{
+      healthBenefit: string
+      healthBenefitFR: string
+    }>
+    images: Array<{
+      image: string
+    }>
+  }
+  benefitTags: Array<{ tagName: string; tagNameFr: string }>
 }
 
 export default function ViewFoodFrench({
@@ -37,7 +86,9 @@ export default function ViewFoodFrench({
   conservationRef,
   categories,
   seasons,
-  countries
+  countries,
+  foodDetails,
+  benefitTags
 }: ViewFoodFrenchProps): JSX.Element {
   return (
     <TabsContent value="french">
@@ -45,41 +96,44 @@ export default function ViewFoodFrench({
       <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
         <div>
           <Label className="block mb-1 text-black">Nom</Label>
-          <Input placeholder="Entrez le nom de l'aliment" />
+          <Input
+            placeholder="Entrez le nom de l'aliment"
+            value={foodDetails?.nameFR ?? ""}
+            disabled
+          />
         </div>
         <div>
           <Label className="block mb-1 text-black">Catégorie</Label>
-          <Select>
-            <SelectTrigger
-              id="categorySelect"
-              name="categorySelect"
-              className="mt-1 w-full"
-            >
+          <Select value={foodDetails?.categoryFR ?? ""} disabled>
+            <SelectTrigger className="w-full mt-1">
               <SelectValue placeholder="Sélectionner une catégorie" />
             </SelectTrigger>
             <SelectContent>
               {categories.map(option => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                <SelectItem
+                  key={option.value}
+                  // Use French value/label if available
+                  value={option.valueFr ?? option.value}
+                >
+                  {option.labelFr ?? option.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label className="block mb-1 text-black">Saison</Label>
-          <Select>
-            <SelectTrigger
-              id="seasonSelect"
-              name="seasonSelect"
-              className="mt-1 w-full"
-            >
-              <SelectValue placeholder="Sélectionner une saison" />
+          <Label className="block mb-1 text-black">Mois</Label>
+          <Select value={foodDetails?.seasons?.[0]?.seasonFR ?? ""} disabled>
+            <SelectTrigger className="w-full mt-1">
+              <SelectValue placeholder="Sélectionner un mois" />
             </SelectTrigger>
             <SelectContent>
               {seasons.map(option => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                <SelectItem 
+                  key={option.value} 
+                  value={option.labelFr ?? option.label} // Change this line
+                >
+                  {option.labelFr ?? option.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -87,13 +141,9 @@ export default function ViewFoodFrench({
         </div>
         <div>
           <Label className="block mb-1 text-black">Pays</Label>
-          <Select>
-            <SelectTrigger
-              id="countrySelect"
-              name="countrySelect"
-              className="mt-1 w-full"
-            >
-              <SelectValue placeholder="Sélectionner un comptoir" />
+          <Select value={foodDetails?.country ?? ""} disabled>
+            <SelectTrigger className="w-full mt-1">
+              <SelectValue placeholder="Sélectionner un pays" />
             </SelectTrigger>
             <SelectContent>
               {countries.map(option => (
@@ -114,39 +164,66 @@ export default function ViewFoodFrench({
       <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
         <div>
           <Label className="block mb-1 text-black">Fibres</Label>
-          <Input placeholder="Détails du fournisseur si applicable" />
+          <Input
+            placeholder="Détails du fournisseur si applicable"
+            value={foodDetails?.attributes?.fiber ?? ""}
+            disabled
+          />
         </div>
         <div>
           <Label className="block mb-1 text-black">Protéines</Label>
-          <Input placeholder="Détails du fournisseur si applicable" />
+          <Input
+            placeholder="Détails du fournisseur si applicable"
+            value={foodDetails?.attributes?.proteins ?? ""}
+            disabled
+          />
         </div>
         <div>
           <Label className="block mb-1 text-black">Vitamines</Label>
-          <Input placeholder="Détails du fournisseur si applicable" />
+          <Input
+            placeholder="Détails du fournisseur si applicable"
+            value={foodDetails?.attributes?.vitaminsFR ?? ""}
+            disabled
+          />
         </div>
         <div>
           <Label className="block mb-1 text-black">Minéraux</Label>
-          <Input placeholder="Détails du fournisseur si applicable" />
+          <Input
+            placeholder="Détails du fournisseur si applicable"
+            value={foodDetails?.attributes?.mineralsFR ?? ""}
+            disabled
+          />
         </div>
         <div>
           <Label className="block mb-1 text-black">Graisses</Label>
-          <Input placeholder="Détails du fournisseur si applicable" />
+          <Input
+            placeholder="Détails du fournisseur si applicable"
+            value={foodDetails?.attributes?.fat ?? ""}
+            disabled
+          />
         </div>
         <div>
           <Label className="block mb-1 text-black">Sucres</Label>
-          <Input placeholder="Détails du fournisseur si applicable" />
-        </div>
-        <div
-          className="col-span-1 sm:col-span-2 md:col-span-1"
-          style={{ width: "100%" }}
-        >
-          <LableInput
-            title="Bienfaits pour la santé"
-            placeholder="Add up to 6 food benefits or lower"
-            benefits={[]}
-            name={""}
+          <Input
+            placeholder="Détails du fournisseur si applicable"
+            value={foodDetails?.attributes?.sugar ?? ""}
+            disabled
           />
         </div>
+      </div>
+
+      <div className="w-[100%]">
+        <LableInput
+          title="Bienfaits pour la santé"
+          placeholder="Ajoutez jusqu'à 6 bienfaits alimentaires ou moins"
+          benefits={
+            foodDetails?.healthBenefits?.map(b => b.healthBenefitFR) ?? []
+          }
+          name="benefits"
+          width="w-[32%]"
+          disable={true}
+          suggestions={benefitTags}
+        />
       </div>
 
       <Separator className="my-2" />
@@ -159,36 +236,40 @@ export default function ViewFoodFrench({
           <span className="block mb-2 text-sm text-black">Sélection</span>
           <RichTextEditor
             ref={selectionRef}
-            onChange={function (value: string): void {
-              throw new Error("Function not implemented.")
-            }}
+            initialContent={foodDetails?.describe?.selectionFR ?? ""}
+            onChange={() => {}}
+            readOnly
           />
         </div>
         <div>
           <span className="block mb-2 text-sm text-black">Préparation</span>
           <RichTextEditor
             ref={preparationRef}
-            onChange={function (value: string): void {
-              throw new Error("Function not implemented.")
-            }}
+            initialContent={foodDetails?.describe?.preparationFR ?? ""}
+            onChange={() => {}}
+            readOnly
           />
         </div>
         <div>
           <span className="block mb-2 text-sm text-black">Conservation</span>
           <RichTextEditor
             ref={conservationRef}
-            onChange={function (value: string): void {
-              throw new Error("Function not implemented.")
-            }}
+            initialContent={foodDetails?.describe?.conservationFR ?? ""}
+            onChange={() => {}}
+            readOnly
           />
         </div>
       </div>
 
-      <div className="pb-6 mt-6 w-full sm:w-2/5">
+      <div className="w-full pb-6 mt-6 sm:w-2/5">
         <h3 className="mb-4 text-lg font-semibold text-black">
           Télécharger des images
         </h3>
-        <ImageUploader title="Sélectionnez des images pour votre aliment" />
+        <ImageUploader
+          title="Sélectionnez des images pour votre aliment"
+          previewUrls={foodDetails?.images?.map(img => img.image) ?? []}
+          disabled
+        />
       </div>
     </TabsContent>
   )
