@@ -238,8 +238,7 @@ export default function StoreManagementPage({
       }
 
       const response = await AddNewStore(token, requestBody)
-
-      if (response?.data) {
+      if (response && (response.status === 201 || response.status === 200)) {
         toast.success(
           translations.formSubmittedSuccessfully || "Store added successfully"
         )
@@ -249,6 +248,7 @@ export default function StoreManagementPage({
         sessionStorage.removeItem("store-store")
       } else {
         console.error("Unexpected response structure:", response)
+        console.error("Response status was:", response?.status)
         toast.error(translations.storeCreationFailed || "Failed to add store")
       }
     } catch (error) {
@@ -522,7 +522,6 @@ export default function StoreManagementPage({
     <div className="space-y-4">
       <div className="flex flex-wrap justify-between gap-2">
         <div className="flex flex-wrap w-[80%] gap-2">
-          {/* search stores by name */}
           <Input
             className="max-w-xs"
             placeholder="Search by store name..."

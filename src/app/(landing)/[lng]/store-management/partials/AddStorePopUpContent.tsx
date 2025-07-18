@@ -1051,7 +1051,6 @@ export default function AddStorePopUpContent({
                       />
                     </FormControl>
                     <FormMessage />
-                    {/* Add a small informational note */}
                     <div className="text-xs text-gray-500 mt-1">
                       {translations.required}
                     </div>
@@ -1081,7 +1080,6 @@ export default function AddStorePopUpContent({
                       />
                     </FormControl>
                     <FormMessage />
-                    {/* Add a small informational note */}
                     <div className="text-xs text-gray-500 mt-1">
                       {translations.required}
                     </div>

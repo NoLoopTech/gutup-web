@@ -28,7 +28,9 @@ export function transformStoreDataToApiRequest(
       if (itemId === 0) {
         frItem = frAvailData[index]
       } else {
-        frItem = frAvailData.find((frItem: any) => (frItem.ingOrCatId || frItem.id) === itemId)
+        frItem = frAvailData.find(
+          (frItem: any) => (frItem.ingOrCatId || frItem.id) === itemId
+        )
       }
 
       const transformedItem: IngAndCatDataType = {
@@ -97,8 +99,10 @@ export function transformStoreDataToApiRequest(
         : getSubscriptionTypeFR(enData.subscriptionType),
     phoneNumber: enData.phone || enData.phoneNumber || "",
     email: enData.email || "",
-    locationLat: enData.locationLat || undefined,
-    locationLng: enData.locationLng || undefined,
+    locationLat:
+      enData.storeLocationLatLng?.lat || enData.locationLat || undefined,
+    locationLng:
+      enData.storeLocationLatLng?.lng || enData.locationLng || undefined,
     mapsPin: enData.mapsPin || "",
     facebook: enData.facebook || "",
     instagram: enData.instagram || "",
