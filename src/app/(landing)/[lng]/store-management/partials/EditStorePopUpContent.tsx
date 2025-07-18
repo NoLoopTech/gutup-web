@@ -133,7 +133,7 @@ export default function EditStorePopUpContent({
   activeLang: "en" | "fr"
 }): JSX.Element {
   const { translateText } = useTranslation()
-  const { setTranslationField, resetForm } = useStoreStore() as any
+  const { storeData, setTranslationField, resetForm } = useStoreStore() as any
   const [isTranslating, setIsTranslating] = useState(false)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
@@ -153,8 +153,6 @@ export default function EditStorePopUpContent({
   const [, setCurrentStoreData] = useState<StoreData | null>(null)
   const [isDataLoaded, setIsDataLoaded] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
-  const [storeDataForConversion, setStoreDataForConversion] =
-    useState<StoreData | null>(null)
 
   // Validation schema using Zod
   const EditStoreSchema = z.object({
@@ -213,21 +211,9 @@ export default function EditStorePopUpContent({
   const form = useForm<z.infer<typeof EditStoreSchema>>({
     resolver: zodResolver(EditStoreSchema),
     defaultValues: {
-      storeName: "",
-      category: "",
-      storeLocation: "",
-      storeType: "",
-      subscriptionType: false,
-      timeFrom: "",
-      timeTo: "",
-      phone: "",
-      email: "",
-      website: "",
-      facebook: "",
-      instagram: "",
-      about: "",
-      availData: [],
-      storeImage: ""
+      ...storeData[activeLang],
+      category: storeData[activeLang]?.category || "",
+      storeImage: storeData[activeLang]?.storeImage || ""
     }
   })
 
@@ -244,11 +230,11 @@ export default function EditStorePopUpContent({
           const data = response.data
           setCurrentStoreData(data)
 
-          // Transform ingAndCatData to availData format
-          const transformedAvailData =
+          // Transform ingAndCatData to availData format for both languages
+          const transformedAvailDataEn =
             data.ingAndCatData?.map((item: any, index: number) => ({
-              id: index + 1,
-              name: activeLang === "en" ? item.name : item.nameFR,
+              id: item.id || index + 1,
+              name: item.name,
               type: item.type === "ingredient" ? "Ingredient" : "Category",
               status: item.availability
                 ? "Active"
@@ -259,112 +245,124 @@ export default function EditStorePopUpContent({
               isMain: false
             })) || []
 
-          setAvailData(transformedAvailData)
+          const transformedAvailDataFr =
+            data.ingAndCatData?.map((item: any, index: number) => ({
+              id: item.id || index + 1,
+              name: item.nameFR || item.name,
+              type: item.typeFR === "ingrédient" ? "Ingrédient" : "Catégorie",
+              status: item.availability
+                ? "Actif"
+                : ("Inactif" as "Active" | "Inactive"),
+              display: item.display,
+              tags: ["InSystem"],
+              quantity: "",
+              isMain: false
+            })) || []
 
-          // Set form values
-          form.reset(
-            {
-              storeName: data.storeName,
-              category: data.category,
-              storeLocation: data.storeLocation,
-              storeType: data.storeType,
-              subscriptionType: data.subscriptionType === "premium",
-              timeFrom: data.startTime,
-              timeTo: data.endTime,
-              phone: data.phoneNumber,
-              email: data.email,
-              website: data.website || "",
-              facebook: data.facebook || "",
-              instagram: data.instagram || "",
-              about:
-                activeLang === "en" ? data.description : data.descriptionFR,
-              availData: transformedAvailData,
-              storeImage: data.storeImage
-            },
-            { keepDirty: false }
-          )
+          // Set availData for current language
+          if (activeLang === "en") {
+            setAvailData(transformedAvailDataEn)
+          } else {
+            setAvailData(transformedAvailDataFr)
+          }
 
-          // Update global store data
+          setTranslationField("storeData", "en", "storeName", data.storeName)
+          setTranslationField("storeData", "en", "category", data.category)
           setTranslationField(
             "storeData",
-            activeLang,
-            "storeName",
-            data.storeName
-          )
-          setTranslationField(
-            "storeData",
-            activeLang,
-            "category",
-            data.category
-          )
-          setTranslationField(
-            "storeData",
-            activeLang,
+            "en",
             "storeLocation",
             data.storeLocation
           )
+          setTranslationField("storeData", "en", "storeType", data.storeType)
           setTranslationField(
             "storeData",
-            activeLang,
-            "storeType",
-            data.storeType
-          )
-          setTranslationField(
-            "storeData",
-            activeLang,
+            "en",
             "subscriptionType",
             data.subscriptionType === "premium"
           )
+          setTranslationField("storeData", "en", "timeFrom", data.startTime)
+          setTranslationField("storeData", "en", "timeTo", data.endTime)
+          setTranslationField("storeData", "en", "phone", data.phoneNumber)
+          setTranslationField("storeData", "en", "email", data.email)
+          setTranslationField("storeData", "en", "website", data.website || "")
           setTranslationField(
             "storeData",
-            activeLang,
-            "timeFrom",
-            data.startTime
-          )
-          setTranslationField("storeData", activeLang, "timeTo", data.endTime)
-          setTranslationField(
-            "storeData",
-            activeLang,
-            "phone",
-            data.phoneNumber
-          )
-          setTranslationField("storeData", activeLang, "email", data.email)
-          setTranslationField(
-            "storeData",
-            activeLang,
-            "website",
-            data.website || ""
-          )
-          setTranslationField(
-            "storeData",
-            activeLang,
+            "en",
             "facebook",
             data.facebook || ""
           )
           setTranslationField(
             "storeData",
-            activeLang,
+            "en",
+            "instagram",
+            data.instagram || ""
+          )
+          setTranslationField("storeData", "en", "about", data.description)
+          setTranslationField(
+            "storeData",
+            "en",
+            "availData",
+            transformedAvailDataEn
+          )
+          setTranslationField("storeData", "en", "storeImage", data.storeImage)
+
+          // French data
+          setTranslationField("storeData", "fr", "storeName", data.storeName)
+          setTranslationField(
+            "storeData",
+            "fr",
+            "category",
+            data.categoryFR || data.category
+          )
+          setTranslationField(
+            "storeData",
+            "fr",
+            "storeLocation",
+            data.storeLocation
+          )
+          setTranslationField(
+            "storeData",
+            "fr",
+            "storeType",
+            data.storeTypeFR || data.storeType
+          )
+          setTranslationField(
+            "storeData",
+            "fr",
+            "subscriptionType",
+            data.subscriptionType === "premium"
+          )
+          setTranslationField("storeData", "fr", "timeFrom", data.startTime)
+          setTranslationField("storeData", "fr", "timeTo", data.endTime)
+          setTranslationField("storeData", "fr", "phone", data.phoneNumber)
+          setTranslationField("storeData", "fr", "email", data.email)
+          setTranslationField("storeData", "fr", "website", data.website || "")
+          setTranslationField(
+            "storeData",
+            "fr",
+            "facebook",
+            data.facebook || ""
+          )
+          setTranslationField(
+            "storeData",
+            "fr",
             "instagram",
             data.instagram || ""
           )
           setTranslationField(
             "storeData",
-            activeLang,
+            "fr",
             "about",
-            activeLang === "en" ? data.description : data.descriptionFR
+            data.descriptionFR || data.description
           )
           setTranslationField(
             "storeData",
-            activeLang,
+            "fr",
             "availData",
-            transformedAvailData
+            transformedAvailDataFr
           )
-          setTranslationField(
-            "storeData",
-            activeLang,
-            "storeImage",
-            data.storeImage
-          )
+          setTranslationField("storeData", "fr", "storeImage", data.storeImage)
 
           setIsPremium(data.subscriptionType === "premium")
 
@@ -375,7 +373,6 @@ export default function EditStorePopUpContent({
 
           setIsDataLoaded(true)
           setHasChanges(false)
-          setStoreDataForConversion(data)
         } else {
           toast.error("Failed to load store data")
         }
@@ -388,7 +385,7 @@ export default function EditStorePopUpContent({
     }
 
     void fetchStoreData()
-  }, [storeId, token, activeLang, form])
+  }, [storeId, token, activeLang, setTranslationField])
 
   // fetch foods
   useEffect(() => {
@@ -450,50 +447,80 @@ export default function EditStorePopUpContent({
     void fetchStoreData()
   }, [])
 
-  // Update form when categories and types are loaded
-  useEffect(() => {
-    if (
-      storeCategories.length > 0 &&
-      storeTypes.length > 0 &&
-      storeDataForConversion
-    ) {
-      let categoryId = ""
-      if (storeDataForConversion.category) {
-        const categoryMatch = storeCategories.find(
-          cat =>
-            cat.TagName === storeDataForConversion.category ||
-            cat.TagNameFr === storeDataForConversion.category
-        )
-        categoryId = categoryMatch ? categoryMatch.id.toString() : ""
+  // Update form when lang changes or when session data changes
+  React.useEffect(() => {
+    const currentStoreData = storeData[activeLang]
+    const recreatePreview = async (): Promise<void> => {
+      if (currentStoreData?.storeImage) {
+        try {
+          if (currentStoreData.storeImage.startsWith("data:")) {
+            const response = await fetch(currentStoreData.storeImage)
+            const blob = await response.blob()
+            const previewUrl = URL.createObjectURL(blob)
+            setImagePreviewUrls([previewUrl])
+          } else {
+            setImagePreviewUrls([currentStoreData.storeImage])
+          }
+        } catch (error) {
+          console.error("Error creating preview from base64:", error)
+          setImagePreviewUrls([])
+        }
+      } else {
+        setImagePreviewUrls([])
       }
-
-      // Convert stored storeType name back to ID for form
-      let storeTypeId = ""
-      if (storeDataForConversion.storeType) {
-        const typeMatch = storeTypes.find(
-          type =>
-            type.TagName === storeDataForConversion.storeType ||
-            type.TagNameFr === storeDataForConversion.storeType
-        )
-        storeTypeId = typeMatch ? typeMatch.id.toString() : ""
-      }
-
-      // Update form with IDs without triggering hasChanges
-      if (categoryId) {
-        form.setValue("category", categoryId, { shouldValidate: false })
-      }
-      if (storeTypeId) {
-        form.setValue("storeType", storeTypeId, { shouldValidate: false })
-      }
-
-      // Reset hasChanges after data conversion
-      setHasChanges(false)
-
-      // Clear the stored data after conversion
-      setStoreDataForConversion(null)
     }
-  }, [storeCategories, storeTypes, storeDataForConversion, form])
 
+    // Convert stored TagName/TagNameFr back to IDs for form
+    let categoryId = ""
+    let storeTypeId = ""
+
+    if (currentStoreData?.category) {
+      const categoryMatch = storeCategories.find(
+        cat =>
+          (activeLang === "en" ? cat.TagName : cat.TagNameFr) ===
+          currentStoreData.category
+      )
+      categoryId = categoryMatch ? categoryMatch.id.toString() : ""
+    }
+
+    if (currentStoreData?.storeType) {
+      const typeMatch = storeTypes.find(
+        type =>
+          (activeLang === "en" ? type.TagName : type.TagNameFr) ===
+          currentStoreData.storeType
+      )
+      storeTypeId = typeMatch ? typeMatch.id.toString() : ""
+    }
+
+    const formData = {
+      ...currentStoreData,
+      storeImage: currentStoreData?.storeImage || "",
+      category: categoryId,
+      storeType: storeTypeId
+    }
+
+    if (isDataLoaded && Object.keys(formData).length > 0) {
+      form.reset(formData, { keepDirty: false })
+      // Reset hasChanges after form reset
+      setHasChanges(false)
+    }
+
+    void recreatePreview()
+  }, [activeLang, form, storeData, storeCategories, storeTypes, isDataLoaded])
+
+  // Sync availData with form value and filter by active language
+  useEffect(() => {
+    const currentStoreData = storeData[activeLang]
+    if (
+      currentStoreData?.availData &&
+      Array.isArray(currentStoreData.availData)
+    ) {
+      setAvailData(currentStoreData.availData)
+      form.setValue("availData", currentStoreData.availData)
+    }
+  }, [activeLang, storeData, form])
+
+  // Watch for form changes to set hasChanges
   useEffect(() => {
     if (!isDataLoaded) return
 
@@ -508,7 +535,12 @@ export default function EditStorePopUpContent({
   // Reset hasChanges to false after initial data load completes
   useEffect(() => {
     if (isDataLoaded) {
-      setHasChanges(false)
+      const timer = setTimeout(() => {
+        setHasChanges(false)
+      }, 100)
+      return () => {
+        clearTimeout(timer)
+      }
     }
   }, [isDataLoaded])
 
@@ -543,7 +575,7 @@ export default function EditStorePopUpContent({
     }
   }, [form, resetForm])
 
-  // Input change handler for fields that need translation
+  // Input change handler
   const handleInputChange = (
     fieldName:
       | "storeName"
@@ -573,26 +605,32 @@ export default function EditStorePopUpContent({
     value: string
   ): Promise<void> => {
     if (activeLang === "en" && value.trim()) {
-      // Handle translation if needed
+      setTranslationField("storeData", "fr", fieldName, value)
     }
   }
 
   const handleSubscriptionToggle = (value: boolean): void => {
     setIsPremium(value)
-    form.setValue("subscriptionType", value)
     setTranslationField("storeData", activeLang, "subscriptionType", value)
+
+    const opp = activeLang === "en" ? "fr" : "en"
+    setTranslationField("storeData", opp, "subscriptionType", value)
+    form.setValue("subscriptionType", value)
     setHasChanges(true)
   }
 
   const handleTimeChange =
     (field: any, name: "timeFrom" | "timeTo") => (value: string) => {
       field.onChange(value)
-      form.setValue(name, value)
       setTranslationField("storeData", activeLang, name, value)
+
+      const opp = activeLang === "en" ? "fr" : "en"
+      setTranslationField("storeData", opp, name, value)
+      form.setValue(name, value)
       setHasChanges(true)
     }
 
-  // Function to update select fields
+  // Function to update select fields (category, storeType)
   const handleSelectChange = (
     fieldName: "category" | "storeType",
     value: string
@@ -600,6 +638,7 @@ export default function EditStorePopUpContent({
     form.setValue(fieldName, value)
 
     if (fieldName === "category") {
+      // Find the selected category and store TagName/TagNameFr
       const selectedCategory = storeCategories.find(
         cat => cat.id.toString() === value
       )
@@ -618,6 +657,7 @@ export default function EditStorePopUpContent({
         )
       }
     } else if (fieldName === "storeType") {
+      // Find the selected store type and store TagName/TagNameFr
       const selectedType = storeTypes.find(type => type.id.toString() === value)
       if (selectedType) {
         setTranslationField("storeData", "en", fieldName, selectedType.TagName)
@@ -720,6 +760,15 @@ export default function EditStorePopUpContent({
     const updated = availData.filter(item => item.id !== id)
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
+    setTranslationField("storeData", activeLang, "availData", updated)
+
+    // Also remove from opposite language by matching ID
+    const oppLang = activeLang === "en" ? "fr" : "en"
+    const oppCurrentData =
+      (storeData[oppLang]?.availData as AvailableItem[]) || []
+    const oppUpdated = oppCurrentData.filter(item => item.id !== id)
+    setTranslationField("storeData", oppLang, "availData", oppUpdated)
+
     setHasChanges(true)
   }
 
@@ -732,14 +781,6 @@ export default function EditStorePopUpContent({
     setPageSize(newSize)
     setPage(1)
   }
-
-  // Sync availData with form value
-  useEffect(() => {
-    const formAvailData = form.watch("availData")
-    if (Array.isArray(formAvailData) && formAvailData !== availData) {
-      setAvailData(formAvailData)
-    }
-  }, [form.watch("availData")])
 
   // translated type/status using translations object
   const getTranslatedType = (type: string, lang: string): string => {
@@ -767,15 +808,39 @@ export default function EditStorePopUpContent({
       status: "Active"
     }
 
+    // Update current lang
     const updated = [...(form.getValues("availData") || []), entry]
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
     setTranslationField("storeData", activeLang, "availData", updated)
-    setHasChanges(true)
+
+    // Prepare translated entry for opposite lang
+    const oppLang = activeLang === "en" ? "fr" : "en"
+    let translatedName = name
+    try {
+      translatedName = await translateText(name)
+    } catch {
+      translatedName = name
+    }
+    const translatedType = getTranslatedType(entry.type, oppLang)
+    const translatedStatus = getTranslatedStatus(entry.status, oppLang)
+    const translatedEntry: AvailableItem = {
+      ...entry,
+      name: translatedName,
+      type: translatedType,
+      status: translatedStatus as "Active" | "Inactive"
+    }
+    // Only pass translated data to opposite lang
+    const oppUpdated = [
+      ...((storeData[oppLang]?.availData as AvailableItem[]) || []),
+      translatedEntry
+    ]
+    setTranslationField("storeData", oppLang, "availData", oppUpdated)
 
     // clear for next
     setSelected(null)
     setIngredientInput("")
+    setHasChanges(true)
   }
 
   // handler for "Add Category"
@@ -798,14 +863,38 @@ export default function EditStorePopUpContent({
       status: "Active"
     }
 
+    // Update current lang
     const updated = [...(form.getValues("availData") || []), entry]
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
     setTranslationField("storeData", activeLang, "availData", updated)
-    setHasChanges(true)
+
+    // Prepare translated entry for opposite lang
+    const oppLang = activeLang === "en" ? "fr" : "en"
+    let translatedName = name
+    try {
+      translatedName = await translateText(name)
+    } catch {
+      translatedName = name
+    }
+    const translatedType = getTranslatedType(entry.type, oppLang)
+    const translatedStatus = getTranslatedStatus(entry.status, oppLang)
+    const translatedEntry: AvailableItem = {
+      ...entry,
+      name: translatedName,
+      type: translatedType,
+      status: translatedStatus as "Active" | "Inactive"
+    }
+    // Only pass translated data to opposite lang
+    const oppUpdated = [
+      ...((storeData[oppLang]?.availData as AvailableItem[]) || []),
+      translatedEntry
+    ]
+    setTranslationField("storeData", oppLang, "availData", oppUpdated)
 
     setSelectedCategory(null)
     setCategoryInput("")
+    setHasChanges(true)
   }
 
   const handleImageSelect = async (files: File[] | null): Promise<void> => {
@@ -827,7 +916,11 @@ export default function EditStorePopUpContent({
           shouldDirty: true
         })
 
-        setTranslationField("storeData", activeLang, "storeImage", tempImageUrl)
+        setTranslationField("storeData", "en", "storeImage", tempImageUrl)
+        setTranslationField("storeData", "fr", "storeImage", tempImageUrl)
+        setTranslationField("storeData", "en", "storeImageName", file.name)
+        setTranslationField("storeData", "fr", "storeImageName", file.name)
+
         setImagePreviewUrls([tempImageUrl])
         setHasChanges(true)
       } catch (error) {
@@ -838,7 +931,10 @@ export default function EditStorePopUpContent({
       }
     } else {
       form.setValue("storeImage", "")
-      setTranslationField("storeData", activeLang, "storeImage", "")
+      setTranslationField("storeData", "en", "storeImage", "")
+      setTranslationField("storeData", "fr", "storeImage", "")
+      setTranslationField("storeData", "en", "storeImageName", "")
+      setTranslationField("storeData", "fr", "storeImageName", "")
       setImagePreviewUrls([])
       setHasChanges(true)
     }
@@ -846,6 +942,7 @@ export default function EditStorePopUpContent({
 
   const handleCancel = (): void => {
     form.reset()
+    // clear store and session
     resetForm()
     sessionStorage.removeItem("store-store")
     setHasChanges(false)
@@ -857,13 +954,38 @@ export default function EditStorePopUpContent({
   const onSubmit = async (
     data: z.infer<typeof EditStoreSchema>
   ): Promise<void> => {
-    if (onUpdateStore) {
-      await onUpdateStore()
-    } else {
-      toast(translations.formSubmittedSuccessfully, {})
-      sessionStorage.removeItem("store-store")
+    try {
+      const currentStoreData = storeData[activeLang]
+      const updatedStoreData = {
+        ...currentStoreData,
+        ...data,
+        availData
+      }
+
+      // Update the store data
+      Object.entries(updatedStoreData).forEach(([key, value]) => {
+        setTranslationField("storeData", activeLang, key, value)
+      })
+
+      const oppLang = activeLang === "en" ? "fr" : "en"
+      const oppCurrentData = storeData[oppLang] || {}
+      const oppAvailData = oppCurrentData.availData || []
+
+      if (Array.isArray(oppAvailData) && oppAvailData.length > 0) {
+        setTranslationField("storeData", oppLang, "availData", oppAvailData)
+      }
+
+      if (onUpdateStore) {
+        await onUpdateStore()
+      } else {
+        toast(translations.formSubmittedSuccessfully, {})
+        sessionStorage.removeItem("store-store")
+      }
+      setHasChanges(false)
+    } catch (error) {
+      console.error("Error in form submission:", error)
+      toast.error("Failed to update store. Please try again.")
     }
-    setHasChanges(false)
   }
 
   if (isTranslating && !isDataLoaded) {
