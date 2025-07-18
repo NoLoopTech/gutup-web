@@ -509,7 +509,7 @@ export default function ShopPromotionTab({
 
     const selectedLocation = {
       value: placeId,
-      label: `${name}, ${country}`,
+      label: `${name}`,
       lat,
       lng
     }

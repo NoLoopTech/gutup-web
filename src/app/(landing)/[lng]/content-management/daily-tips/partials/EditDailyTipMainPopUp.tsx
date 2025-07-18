@@ -59,8 +59,6 @@ export default function EditDailyTipMainPopUp({
     try {
       const res = await getDailyTipById(token, tipId)
 
-      console.log(res.data)
-
       if (res.status === 200) {
         const data = res.data
 
@@ -206,6 +204,175 @@ export default function EditDailyTipMainPopUp({
             "fr",
             "videoLink",
             data.videoForm.videoUrl
+          )
+        } else {
+          setTranslationField("shopPromotionData", "en", "reason", data.concern)
+          setTranslationField(
+            "shopPromotionData",
+            "fr",
+            "reason",
+            data.concernFR
+          )
+
+          setTranslationField(
+            "shopPromotionData",
+            "en",
+            "shopName",
+            data.shopPromote.name
+          )
+          setTranslationField(
+            "shopPromotionData",
+            "fr",
+            "shopName",
+            data.shopPromote.name
+          )
+
+          setTranslationField(
+            "shopPromotionData",
+            "en",
+            "email",
+            data.shopPromote.email
+          )
+          setTranslationField(
+            "shopPromotionData",
+            "fr",
+            "email",
+            data.shopPromote.email
+          )
+
+          setTranslationField(
+            "shopPromotionData",
+            "en",
+            "facebook",
+            data.shopPromote.facebook
+          )
+          setTranslationField(
+            "shopPromotionData",
+            "fr",
+            "facebook",
+            data.shopPromote.facebook
+          )
+
+          setTranslationField(
+            "shopPromotionData",
+            "en",
+            "image",
+            data.shopPromote.image
+          )
+          setTranslationField(
+            "shopPromotionData",
+            "fr",
+            "image",
+            data.shopPromote.image
+          )
+
+          setTranslationField(
+            "shopPromotionData",
+            "en",
+            "instagram",
+            data.shopPromote.instagram
+          )
+          setTranslationField(
+            "shopPromotionData",
+            "fr",
+            "instagram",
+            data.shopPromote.instagram
+          )
+
+          setTranslationField(
+            "shopPromotionData",
+            "en",
+            "mobileNumber",
+            data.shopPromote.phoneNumber
+          )
+          setTranslationField(
+            "shopPromotionData",
+            "fr",
+            "mobileNumber",
+            data.shopPromote.phoneNumber
+          )
+
+          setTranslationField(
+            "shopPromotionData",
+            "en",
+            "shopCategory",
+            data.shopPromote.category
+          )
+          setTranslationField(
+            "shopPromotionData",
+            "fr",
+            "shopCategory",
+            data.shopPromote.categoryFR
+          )
+
+          setTranslationField(
+            "shopPromotionData",
+            "en",
+            "shopLocation",
+            data.shopPromote.location
+          )
+          setTranslationField(
+            "shopPromotionData",
+            "fr",
+            "shopLocation",
+            data.shopPromote.location
+          )
+
+          const locationLatLng = {
+            lat: data.shopPromote.locationLat,
+            lng: data.shopPromote.locationLng
+          }
+
+          setTranslationField(
+            "shopPromotionData",
+            "en",
+            "shopLocationLatLng",
+            locationLatLng
+          )
+          setTranslationField(
+            "shopPromotionData",
+            "fr",
+            "shopLocationLatLng",
+            locationLatLng
+          )
+
+          setTranslationField(
+            "shopPromotionData",
+            "en",
+            "shopPromoteFoods",
+            data.shopPromote.shopPromoteFoods
+          )
+          setTranslationField(
+            "shopPromotionData",
+            "fr",
+            "shopPromoteFoods",
+            data.shopPromote.shopPromoteFoods
+          )
+
+          setTranslationField(
+            "shopPromotionData",
+            "en",
+            "subDescription",
+            data.shopPromote.desc
+          )
+          setTranslationField(
+            "shopPromotionData",
+            "fr",
+            "subDescription",
+            data.shopPromote.descFR
+          )
+
+          setTranslationField(
+            "shopPromotionData",
+            "en",
+            "website",
+            data.shopPromote.website
+          )
+          setTranslationField(
+            "shopPromotionData",
+            "fr",
+            "website",
+            data.shopPromote.website
           )
         }
       }

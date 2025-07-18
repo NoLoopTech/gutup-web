@@ -94,9 +94,16 @@ export default function DailyTipsPage({
     setSelectedTipId(id)
     setIsOpenEditDailyTip(true)
   }
-  const handleCloseEditDailyTip = (): void => {
+  const handleCloseEditDailyTip = async (): Promise<void> => {
     setIsOpenEditDailyTip(false)
     setSelectedTipId(0)
+
+    // clear store and session
+    await resetTranslations()
+    await resetUpdatedStore()
+
+    sessionStorage.removeItem("daily-tip-storage")
+    sessionStorage.removeItem("update-daily-tip-storage")
   }
 
   // handle open delete confirmation popup
@@ -192,26 +199,26 @@ export default function DailyTipsPage({
             ? currentTranslations.basicLayoutData.en.concern
             : currentTab === "videoForm"
             ? currentTranslations.videoTipData.en.concern
-            : "",
+            : currentTranslations.shopPromotionData.en.reason,
         concernFR:
           currentTab === "basicForm"
             ? currentTranslations.basicLayoutData.fr.concern
             : currentTab === "videoForm"
             ? currentTranslations.videoTipData.fr.concern
-            : "",
+            : currentTranslations.shopPromotionData.fr.reason,
 
         title:
           currentTab === "basicForm"
             ? currentTranslations.basicLayoutData.en.title
             : currentTab === "videoForm"
             ? currentTranslations.videoTipData.en.title
-            : "",
+            : currentTranslations.shopPromotionData.en.shopName,
         titleFR:
           currentTab === "basicForm"
             ? currentTranslations.basicLayoutData.fr.title
             : currentTab === "videoForm"
             ? currentTranslations.videoTipData.fr.title
-            : "",
+            : currentTranslations.shopPromotionData.en.shopName,
         type:
           currentTab === "basicForm"
             ? "basic"
@@ -240,8 +247,6 @@ export default function DailyTipsPage({
           image: uploadedImageUrl || ""
         },
         shopPromote: {
-          reason: currentTranslations.shopPromotionData.en.reason,
-          reasonFR: currentTranslations.shopPromotionData.fr.reason,
           name: currentTranslations.shopPromotionData.en.shopName,
           location: currentTranslations.shopPromotionData.en.shopLocation,
           locationLat:
@@ -254,7 +259,6 @@ export default function DailyTipsPage({
           descFR: currentTranslations.shopPromotionData.fr.subDescription,
           phoneNumber: currentTranslations.shopPromotionData.en.mobileNumber,
           email: currentTranslations.shopPromotionData.en.email,
-          mapsPin: currentTranslations.shopPromotionData.en.mapsPin,
           facebook: currentTranslations.shopPromotionData.en.facebook,
           instagram: currentTranslations.shopPromotionData.en.instagram,
           website: currentTranslations.shopPromotionData.en.website,
@@ -344,6 +348,21 @@ export default function DailyTipsPage({
           requestBody.titleFR = updatedState.videoTipData.fr.title as string
       }
 
+      if (activeTab === "shopPromote") {
+        if ("concern" in updatedState.shopPromotionData.en)
+          requestBody.concern = updatedState.shopPromotionData.en
+            .reason as string
+        if ("concern" in updatedState.shopPromotionData.fr)
+          requestBody.concernFR = updatedState.shopPromotionData.fr
+            .reason as string
+        if ("title" in updatedState.shopPromotionData.en)
+          requestBody.title = updatedState.shopPromotionData.en
+            .shopName as string
+        if ("title" in updatedState.shopPromotionData.fr)
+          requestBody.titleFR = updatedState.shopPromotionData.fr
+            .shopName as string
+      }
+
       // basicForm
       if (activeTab === "basicForm") {
         const basicData = updatedState.basicLayoutData
@@ -379,14 +398,16 @@ export default function DailyTipsPage({
         const shopData = updatedState.shopPromotionData
         const shopPromote: EditDailyTipTypes["shopPromote"] = {}
 
-        if ("reason" in shopData.en)
-          shopPromote.reason = shopData.en.reason as string
-        if ("reason" in shopData.fr)
-          shopPromote.reasonFR = shopData.fr.reason as string
         if ("shopName" in shopData.en)
           shopPromote.name = shopData.en.shopName as string
         if ("shopLocation" in shopData.en)
           shopPromote.location = shopData.en.shopLocation as string
+        if ("shopLocation" in shopData.en)
+          shopPromote.locationLat = shopData.en.shopLocationLatLng
+            ?.lat as number
+        if ("shopLocation" in shopData.en)
+          shopPromote.locationLng = shopData.en.shopLocationLatLng
+            ?.lng as number
         if ("shopCategory" in shopData.en)
           shopPromote.category = shopData.en.shopCategory as string
         if ("shopCategory" in shopData.fr)
@@ -399,8 +420,6 @@ export default function DailyTipsPage({
           shopPromote.phoneNumber = shopData.en.mobileNumber as string
         if ("email" in shopData.en)
           shopPromote.email = shopData.en.email as string
-        if ("mapsPin" in shopData.en)
-          shopPromote.mapsPin = shopData.en.mapsPin as string
         if ("facebook" in shopData.en)
           shopPromote.facebook = shopData.en.facebook as string
         if ("instagram" in shopData.en)
@@ -448,6 +467,12 @@ export default function DailyTipsPage({
           await deleteImageFromFirebase(previousImageUrl)
           setPreviousImageUrl(null)
         }
+
+        setSelectedTipId(0)
+
+        // clear store and session
+        resetTranslations()
+        resetUpdatedStore()
       } else {
         toast.error("Failed to update daily tip!")
         if (isImageChanged && uploadedImageUrl) {
