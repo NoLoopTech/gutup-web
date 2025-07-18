@@ -194,7 +194,7 @@ export default function AddStorePopUpContent({
     if (currentStoreData?.storeLocationLatLng) {
       setSelectedLocationName(currentStoreData.storeLocationLatLng)
     }
-  }, [activeLang, storeData]) // React to language and data changes
+  }, [activeLang, storeData])
 
   // fetch once on mount
   useEffect(() => {
@@ -232,7 +232,6 @@ export default function AddStorePopUpContent({
       try {
         const res = await getStoreCategories()
         if (res && res.status === 200 && Array.isArray(res.data)) {
-          // Filter data based on Tag field
           const categories = res.data.filter(
             (item: any) => item.Tag === "Category"
           )
@@ -265,7 +264,7 @@ export default function AddStorePopUpContent({
     }
   })
 
-  // Update form when lang changes - similar to ShopPromotionTab pattern
+  // Update form when lang changes
   useEffect(() => {
     const currentStoreData = storeData[activeLang]
     if (currentStoreData?.storeLocationLatLng) {
@@ -273,7 +272,7 @@ export default function AddStorePopUpContent({
     } else {
       setSelectedLocationName(null)
     }
-    
+
     form.reset({
       ...currentStoreData,
       category: currentStoreData?.category || "",
@@ -327,9 +326,7 @@ export default function AddStorePopUpContent({
       }
     }
 
-    // Restore location selection from stored data - handled by dedicated useEffect now
-
-    // Convert stored TagName/TagNameFr back to IDs for form
+    // Convert stored TagName/TagNameFr
     let categoryId = ""
     let storeTypeId = ""
 
@@ -468,7 +465,7 @@ export default function AddStorePopUpContent({
       form.setValue(name, value)
     }
 
-  // Function to update select fields (category, storeType)
+  // Function to update select fields
   const handleSelectChange = (
     fieldName: "category" | "storeType",
     value: string
