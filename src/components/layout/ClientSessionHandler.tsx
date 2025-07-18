@@ -37,6 +37,12 @@ const ClientSessionHandler = (): null => {
       if (!pathname.includes("/food-management/tag-overview/")) {
         sessionStorage.removeItem("tag-store")
       }
+
+      // Check if the current path is not '/store-management'
+      if (!pathname.includes("/store-management")) {
+        resetForm()
+        sessionStorage.removeItem("store-store")
+      }
     }
 
     void handleCheckPath()
