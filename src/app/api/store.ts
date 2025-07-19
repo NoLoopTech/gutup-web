@@ -1,6 +1,16 @@
 import axiosInstance from "@/query/axios.instance"
 import type { AddStoreRequestBody } from "@/types/storeTypes"
 
+// get store categories
+export const getStoreCategories = async (): Promise<any> => {
+  try {
+    const response = await axiosInstance.get("/store-category")
+    return response
+  } catch (error) {
+    return error
+  }
+}
+
 // get all stores
 export const getAllStores = async (token: string): Promise<any> => {
   try {
@@ -58,6 +68,26 @@ export const getUserFavorites = async (
   try {
     const response = await axiosInstance.get(
       `/user-favourite/admin/all/${userId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    )
+    return response
+  } catch (error) {
+    return error
+  }
+}
+
+// update store by id
+export const updateStoreById = async (
+  token: string,
+  storeId: number,
+  requestBody: AddStoreRequestBody
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.patch(
+      `/store/${storeId}`,
+      requestBody,
       {
         headers: { Authorization: `Bearer ${token}` }
       }

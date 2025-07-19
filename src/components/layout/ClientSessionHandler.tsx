@@ -25,6 +25,7 @@ const ClientSessionHandler = (): null => {
       if (pathname !== "/content-management/daily-tips/") {
         dailyTipResetTranslations()
         sessionStorage.removeItem("daily-tip-storage")
+        sessionStorage.removeItem("update-daily-tip-storage")
       }
 
       // Check if the current path is not '/store-management'
@@ -35,6 +36,12 @@ const ClientSessionHandler = (): null => {
       // Check if the current path is not '/food-management/tag-overview/'
       if (!pathname.includes("/food-management/tag-overview/")) {
         sessionStorage.removeItem("tag-store")
+      }
+
+      // Check if the current path is not '/store-management'
+      if (!pathname.includes("/store-management")) {
+        resetForm()
+        sessionStorage.removeItem("store-store")
       }
     }
 

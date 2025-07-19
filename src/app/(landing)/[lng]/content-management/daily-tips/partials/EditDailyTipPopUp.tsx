@@ -1,9 +1,6 @@
 "use client"
 
 import React from "react"
-import VideoTipTab from "./VideoTipTab"
-import BasicLayoutTab from "./BasicLayoutTab"
-import ShopPromotionTab from "./ShopPromotionTab"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -14,6 +11,9 @@ import {
 } from "@/components/ui/select"
 import { type translationsTypes } from "@/types/dailyTipTypes"
 import { useDailyTipStore } from "@/stores/useDailyTipStore"
+import EditBasicLayoutTab from "./EditBasicLayoutTab"
+import EditShopPromotionTab from "./EditShopPromotionTab"
+import EditVideoTipTab from "./EditVideoTipTab"
 
 // Tab option
 interface TabOption {
@@ -29,19 +29,19 @@ const tabOptions: TabOption[] = [
   { value: "videoForm", label: "Video Tip" }
 ]
 
-export default function AddDailyTipPopUp({
+export default function EditDailyTipPopUp({
   translations,
   onClose,
   token,
   userName,
-  addDailyTip,
+  editDailyTip,
   isLoading
 }: {
   translations: translationsTypes
   onClose: () => void
   token: string
   userName: string
-  addDailyTip: () => void
+  editDailyTip: () => void
   isLoading: boolean
 }): JSX.Element {
   const { activeTab, setActiveTab } = useDailyTipStore()
@@ -58,6 +58,7 @@ export default function AddDailyTipPopUp({
           onValueChange={val => {
             setActiveTab(val as LayoutOption)
           }}
+          disabled
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder={translations.selectLayoutType} />
@@ -76,29 +77,29 @@ export default function AddDailyTipPopUp({
       {/* Tab Content */}
       <div>
         {activeTab === "basicForm" && (
-          <BasicLayoutTab
+          <EditBasicLayoutTab
             translations={translations}
             onClose={onClose}
-            addDailyTip={addDailyTip}
+            editDailyTip={editDailyTip}
             userName={userName}
             isLoading={isLoading}
           />
         )}
         {activeTab === "shopPromote" && (
-          <ShopPromotionTab
+          <EditShopPromotionTab
             translations={translations}
             onClose={onClose}
             token={token}
             userName={userName}
-            addDailyTip={addDailyTip}
+            editDailyTip={editDailyTip}
             isLoading={isLoading}
           />
         )}
         {activeTab === "videoForm" && (
-          <VideoTipTab
+          <EditVideoTipTab
             translations={translations}
             onClose={onClose}
-            addDailyTip={addDailyTip}
+            editDailyTip={editDailyTip}
             isLoading={isLoading}
           />
         )}

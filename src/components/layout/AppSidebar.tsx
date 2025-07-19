@@ -4,8 +4,6 @@ import {
   ChevronDown,
   GalleryVerticalEnd,
   LogOut,
-  Bell,
-  BadgeCheck,
   UserRound,
   Ham,
   HandPlatter,
@@ -218,16 +216,6 @@ export function AppSidebar(): JSX.Element {
 
           {/* Dropdown Menu Content */}
           <DropdownMenuContent className="w-56">
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <BadgeCheck className="w-4 h-4" />
-              Account
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Bell className="w-4 h-4" />
-              Notifications
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={handleSignOut}
               className="cursor-pointer"

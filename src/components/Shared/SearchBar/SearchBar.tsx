@@ -69,12 +69,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
   }, [onSelect])
 
   return (
-    <div className="grid w-full items-center gap-2" ref={wrapperRef}>
+    <div className="grid gap-2 items-center w-full" ref={wrapperRef}>
       <Label htmlFor="search" className="text-sm font-medium text-black">
         {title}
       </Label>
       <div className="relative w-full">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <Search className="absolute left-3 top-1/2 w-5 h-5 text-gray-400 transform -translate-y-1/2" />
         <Input
           id="search"
           value={query}
@@ -87,11 +87,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
         />
 
         {onSelect && isOpen && filtered.length > 0 && (
-          <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5">
+          <ul className="overflow-auto absolute z-10 py-1 mt-1 w-full max-h-60 text-base bg-white rounded-md ring-1 ring-black ring-opacity-5 shadow-lg">
             {filtered.map(item => (
               <li
                 key={item.id}
-                className="cursor-pointer px-4 py-2 hover:bg-gray-100"
+                className="px-4 py-2 cursor-pointer hover:bg-gray-100"
                 onClick={() => {
                   handleSelect(item)
                 }}

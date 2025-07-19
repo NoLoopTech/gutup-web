@@ -1,21 +1,26 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import AddFoodPopUpContent from "./AddFoodPopUpContent"
 import { loadLanguage } from "@/../../src/i18n/locales"
-import { defaultTranslations, type translationsTypes } from "@/types/foodTypes"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useFoodStore } from "@/stores/useFoodStore"
+import { type translationsTypes } from "@/types/foodTypes"
+import { useEffect, useState } from "react"
+import AddFoodPopUpContent from "./AddFoodPopUpContent"
 
 interface Props {
   open: boolean
   onClose: () => void
+  getFoods: () => void // <-- add this prop
 }
 
-export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
+export default function AddFoodPopUp({
+  open,
+  onClose,
+  getFoods
+}: Props): JSX.Element {
   const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
     useFoodStore()
 
@@ -24,25 +29,31 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
   )
   // Load translations based on the selected language
   useEffect(() => {
-    const loadTranslations = async () => {
+    const loadTranslations = async (): Promise<void> => {
       const langData = await loadLanguage(activeLang, "food")
       setTranslations(langData)
     }
 
-    loadTranslations()
+    void loadTranslations()
   }, [activeLang])
 
   // Language toggle handler
-  const handleLanguageToggle = (val: boolean) => {
+  const handleLanguageToggle = (val: boolean): void => {
     setAllowMultiLang(val)
     if (!val) setActiveLang("en") // Default to English if multi-lang is disabled
   }
 
+  // Wrap the onClose to clear session key
+  const handleClose = (): void => {
+    sessionStorage.removeItem("food-store")
+    onClose()
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
         <div
-          className="overflow-y-auto p-2 h-full"
+          className="h-full p-2 overflow-y-auto"
           style={{
             scrollbarWidth: "none", // Firefox
             msOverflowStyle: "none" // IE/Edge
@@ -66,7 +77,7 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
             }}
             className="w-full"
           >
-            <div className="flex flex-col gap-4 justify-between items-start mt-4 mb-6 sm:flex-row sm:items-center">
+            <div className="flex flex-col items-start justify-between gap-4 mt-4 mb-6 sm:flex-row sm:items-center">
               <TabsList>
                 <TabsTrigger value="en">{translations.english}</TabsTrigger>
                 {allowMultiLang && (
@@ -74,7 +85,7 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
                 )}
               </TabsList>
 
-              <div className="flex gap-2 items-center">
+              <div className="flex items-center gap-2">
                 <Switch
                   id="multi-lang"
                   checked={allowMultiLang}
@@ -91,14 +102,18 @@ export default function AddFoodPopUp({ open, onClose }: Props): JSX.Element {
             {/* Render each tab’s content component */}
             <TabsContent value="en">
               <AddFoodPopUpContent
-                translations={{ ...defaultTranslations, ...translations }}
+                translations={translations}
+                onClose={handleClose}
+                getFoods={getFoods}
               />
             </TabsContent>
 
             {allowMultiLang && (
               <TabsContent value="fr">
                 <AddFoodPopUpContent
-                  translations={{ ...defaultTranslations, ...translations }}
+                  translations={translations}
+                  onClose={handleClose}
+                  getFoods={getFoods}
                 />
               </TabsContent>
             )}

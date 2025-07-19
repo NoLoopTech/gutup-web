@@ -26,7 +26,7 @@ import {
   uploadImageToFirebase
 } from "@/lib/firebaseImageUtils"
 import EditMoodMainPopUp from "./EditMoodMainPopup"
-import { useUpdatedTranslationStore } from "@/stores/useUpdatedTranslationStore"
+import { useUpdatedMoodTranslationStore } from "@/stores/useUpdatedMoodTranslationStore"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,7 +52,7 @@ interface MoodsDataType {
   title: string
   content: string
   dateCreated: string
-  status: string
+  status: boolean
   image?: string
 }
 
@@ -81,7 +81,8 @@ export default function MoodsPage({
     resetTranslations
   } = useMoodStore()
 
-  const { setUpdatedField, resetUpdatedStore } = useUpdatedTranslationStore()
+  const { setUpdatedField, resetUpdatedStore } =
+    useUpdatedMoodTranslationStore()
 
   // handle get users
   const getMoods = async (): Promise<void> => {
@@ -118,7 +119,7 @@ export default function MoodsPage({
               title,
               content,
               dateCreated: new Date(item.createdAt).toLocaleDateString(),
-              status: "Active",
+              status: item.status,
               image
             }
           }
@@ -182,6 +183,13 @@ export default function MoodsPage({
   }
 
   const handleAddMood = async () => {
+    const previousImage =
+      activeTab === "Food"
+        ? translationsData.foodData.en.image
+        : activeTab === "Recipe"
+        ? translationsData.recipeData.en.image
+        : ""
+
     try {
       setIsLoading(true)
       let uploadedImageUrl: string | null = null
@@ -199,6 +207,7 @@ export default function MoodsPage({
 
       const requestBody: AddMoodRequestBody = {
         allowMultiLang: currentAllowMultiLang,
+        status: true,
         activeLang: currentLang,
         activeTab: currentTab,
         translationsData: currentTranslations
@@ -216,8 +225,8 @@ export default function MoodsPage({
         resetUpdatedStore()
       } else {
         toast.error("Failed to add mood!")
-        if (uploadedImageUrl) {
-          await deleteImageFromFirebase(uploadedImageUrl)
+        if (previousImage) {
+          await deleteImageFromFirebase(previousImage)
         }
       }
     } catch (error) {
@@ -237,30 +246,30 @@ export default function MoodsPage({
 
       const { activeTab, activeLang } = useMoodStore.getState()
       const { translationsData: updatedTranslations } =
-        useUpdatedTranslationStore.getState()
+        useUpdatedMoodTranslationStore.getState()
 
       let uploadedImageUrl: string | null = null
 
-      // 🔍 Check if image was updated (only for Recipe or Food)
+      // Check if image was updated (only for Recipe or Food)
       const isImageChanged =
         (activeTab === "Recipe" &&
           updatedTranslations.recipeData[activeLang].image) ||
         (activeTab === "Food" && updatedTranslations.foodData[activeLang].image)
 
       if (isImageChanged) {
-        // 📤 Upload new image
+        // Upload new image
         uploadedImageUrl = await uploadMoodImageAndSetUrl()
       }
 
-      // 📦 Prepare request body
+      // Prepare request body
       const { translationsData: finalUpdatedTranslations } =
-        useUpdatedTranslationStore.getState()
+        useUpdatedMoodTranslationStore.getState()
 
       const requestBody: AddMoodRequestBody = {
         translationsData: finalUpdatedTranslations
       }
 
-      // 📡 Submit updated data
+      // Submit updated data
       const response = await updateNewMood(token, selectedMoodId, requestBody)
 
       if (response.status === 200 || response.status === 201) {
@@ -268,8 +277,8 @@ export default function MoodsPage({
         setIsOpenEditMood(false)
         getMoods()
 
-        // 🗑️ Delete old image from Firebase if it exists
-        if (previousImageUrl) {
+        // Delete old image from Firebase if it exists
+        if (isImageChanged && previousImageUrl) {
           await deleteImageFromFirebase(previousImageUrl)
           setPreviousImageUrl(null)
         }
@@ -282,6 +291,30 @@ export default function MoodsPage({
     } finally {
       sessionStorage.removeItem("mood-storage")
       sessionStorage.removeItem("updated-mood-fields")
+      setIsLoading(false)
+    }
+  }
+
+  // handle update mood status
+  const handleUpdateMoodStatus = async (
+    moodId: number,
+    status: boolean
+  ): Promise<void> => {
+    const requestBody = { status: status ? false : true }
+    try {
+      // Submit updated data
+      const response = await updateNewMood(token, moodId, requestBody)
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Mood updated successfully")
+        getMoods()
+      } else {
+        toast.error("Failed to update mood!")
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error("Something went wrong during update!")
+    } finally {
       setIsLoading(false)
     }
   }
@@ -365,14 +398,12 @@ export default function MoodsPage({
       cell: (row: MoodsDataType) => (
         <Badge
           className={
-            row.status === "Active"
+            row.status
               ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700"
-              : row.status === "Pending"
-              ? "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
-              : "bg-red-100 text-red-700 hover:bg-red-200 border border-red-700"
+              : "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
           }
         >
-          {row.status}
+          {row.status ? "Active" : "Inactive"}
         </Badge>
       )
     },
@@ -392,6 +423,11 @@ export default function MoodsPage({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
+            <DropdownMenuItem
+              onClick={() => handleUpdateMoodStatus(row.id, row.status)}
+            >
+              {row.status ? "Inactive" : "Active"}
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 handleOpenEditMood(row.id)
@@ -429,7 +465,7 @@ export default function MoodsPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end -mt-14 mb-5">
+      <div className="flex justify-end mb-5 -mt-14">
         <Button onClick={handleOpenAddMood}>Add New</Button>
       </div>
 

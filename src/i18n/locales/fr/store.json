@@ -66,5 +66,9 @@
   "pleaseenteravalidemail": "Veuillez saisir un e-mail valide.",
   "invalidurlformat": "Format d’URL invalide",
   "atleastoneingredientcategorymustbeadded": "Au moins un ingrédient/catégorie doit être ajouté.",
-  "formSubmittedSuccessfully": "Formulaire soumis avec succès!"
+  "formSubmittedSuccessfully": "Formulaire soumis avec succès!",
+  "storeCreationFailed": "Échec de la création du magasin. Veuillez réessayer.",
+  "phoneEmailAlreadyExists": "Le numéro de téléphone ou l'e-mail existe déjà.",
+  "phoneAlreadyExists": "Le numéro de téléphone existe déjà.",
+  "emailAlreadyExists": "L'e-mail existe déjà."
 }

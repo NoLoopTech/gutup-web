@@ -4,9 +4,10 @@ import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 
 interface shopPromoteFoodsTypes {
-  foodId: number
+  id: number
   name: string
-  dispalyStatus: boolean
+  status: boolean
+  display: boolean
 }
 
 interface BasicLayoutFields {
@@ -24,11 +25,14 @@ interface ShopPromotionFields {
   reason: string
   shopName: string
   shopLocation: string
+  shopLocationLatLng: {
+    lat: number
+    lng: number
+  }
   subDescription: string
   shopCategory: string
   mobileNumber: string
   email: string
-  mapsPin: string
   facebook: string
   instagram: string
   website: string
@@ -104,6 +108,10 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             reason: "",
             shopName: "",
             shopLocation: "",
+            shopLocationLatLng: {
+              lat: 0,
+              lng: 0
+            },
             subDescription: "",
             shopCategory: "",
             mobileNumber: "",
@@ -119,6 +127,10 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             reason: "",
             shopName: "",
             shopLocation: "",
+            shopLocationLatLng: {
+              lat: 0,
+              lng: 0
+            },
             subDescription: "",
             shopCategory: "",
             mobileNumber: "",
@@ -206,11 +218,14 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 reason: "",
                 shopName: "",
                 shopLocation: "",
+                shopLocationLatLng: {
+                  lat: 0,
+                  lng: 0
+                },
                 subDescription: "",
                 shopCategory: "",
                 mobileNumber: "",
                 email: "",
-                mapsPin: "",
                 facebook: "",
                 instagram: "",
                 website: "",
@@ -221,11 +236,14 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 reason: "",
                 shopName: "",
                 shopLocation: "",
+                shopLocationLatLng: {
+                  lat: 0,
+                  lng: 0
+                },
                 subDescription: "",
                 shopCategory: "",
                 mobileNumber: "",
                 email: "",
-                mapsPin: "",
                 facebook: "",
                 instagram: "",
                 website: "",

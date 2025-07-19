@@ -27,7 +27,7 @@ import { type translationsTypes } from "@/types/moodsTypes"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useUpdatedTranslationStore } from "@/stores/useUpdatedTranslationStore"
+import { useUpdatedMoodTranslationStore } from "@/stores/useUpdatedMoodTranslationStore"
 
 interface Option {
   value: string
@@ -73,7 +73,7 @@ export default function EditQuoteTab({
     translationsData: updatedTranslations,
     setUpdatedField,
     resetUpdatedStore
-  } = useUpdatedTranslationStore()
+  } = useUpdatedMoodTranslationStore()
 
   const hasQuoteUpdates =
     Object.keys(updatedTranslations.quoteData.en).length > 0 ||
