@@ -89,6 +89,8 @@ interface ViewFoodFrenchProps {
     value: string,
     lang: "en" | "fr"
   ) => void
+  handleImageSelect: (files: File[] | null) => Promise<void>
+  imagePreviewUrls: string[]
 }
 
 export default function ViewFoodFrench({
@@ -102,7 +104,9 @@ export default function ViewFoodFrench({
   benefitTags,
   updateEditedData,
   updateNestedData,
-  handleSelectSync
+  handleSelectSync,
+  handleImageSelect,
+  imagePreviewUrls
 }: ViewFoodFrenchProps): JSX.Element {
   const [formData, setFormData] = useState({
     name: "",
@@ -415,7 +419,12 @@ export default function ViewFoodFrench({
         </h3>
         <ImageUploader
           title="Sélectionnez des images pour votre aliment"
-          previewUrls={foodDetails?.images?.map(img => img.image) ?? []}
+          onChange={handleImageSelect}
+          previewUrls={
+            imagePreviewUrls.length > 0
+              ? imagePreviewUrls
+              : foodDetails?.images?.map(img => img.image) ?? []
+          }
         />
       </div>
     </TabsContent>

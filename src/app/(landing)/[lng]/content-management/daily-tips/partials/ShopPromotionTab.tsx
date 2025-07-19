@@ -1,45 +1,44 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
+import React, { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import { Label } from "@/components/ui/label"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
-import { Button } from "@/components/ui/button"
-import { CustomTable } from "@/components/Shared/Table/CustomTable"
 import SearchBar, {
-  SearchBarItem
+    SearchBarItem
 } from "@/components/Shared/SearchBar/SearchBar"
-import { Switch } from "@/components/ui/switch"
+import { CustomTable } from "@/components/Shared/Table/CustomTable"
+import { Button } from "@/components/ui/button"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage
 } from "@/components/ui/form"
-import { toast } from "sonner"
-import { type translationsTypes } from "@/types/dailyTipTypes"
-import { useTranslation } from "@/query/hooks/useTranslation"
-import { useDailyTipStore } from "@/stores/useDailyTipStore"
+import { Input } from "@/components/ui/input"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  deleteImageFromFirebase,
-  uploadImageToFirebase
+    deleteImageFromFirebase,
+    uploadImageToFirebase
 } from "@/lib/firebaseImageUtils"
 import { useFoodList } from "@/query/hooks/useFoodList"
+import { useTranslation } from "@/query/hooks/useTranslation"
+import { useDailyTipStore } from "@/stores/useDailyTipStore"
+import { type translationsTypes } from "@/types/dailyTipTypes"
+import { toast } from "sonner"
 
 interface Option {
   value: string

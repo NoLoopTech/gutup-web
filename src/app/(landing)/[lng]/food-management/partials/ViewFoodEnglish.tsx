@@ -57,6 +57,8 @@ interface ViewFoodEnglishProps {
     value: string,
     lang: "en" | "fr"
   ) => void
+  handleImageSelect: (files: File[] | null) => Promise<void>
+  imagePreviewUrls: string[]
 }
 
 const seasons: Option[] = [
@@ -147,7 +149,9 @@ export default function ViewFoodEnglish({
   benefitTags,
   updateEditedData,
   updateNestedData,
-  handleSelectSync
+  handleSelectSync,
+  handleImageSelect,
+  imagePreviewUrls
 }: ViewFoodEnglishProps): JSX.Element {
   // handle form submit
   const onSubmit = (data: z.infer<typeof FoodSchema>): void => {
@@ -173,8 +177,9 @@ export default function ViewFoodEnglish({
     field.onChange(val)
     updateNestedData("describe", "conservation", val)
   }
-  // Separate function for handling image upload
-  const handleImageUpload = (field: any) => (files: File[] | null) => {
+  // Update the image upload handler
+  const handleImageUpload = (field: any) => async (files: File[] | null) => {
+    await handleImageSelect(files)
     field.onChange(files && files.length > 0 ? files[0] : null)
   }
 
@@ -658,9 +663,10 @@ export default function ViewFoodEnglish({
                     <ImageUploader
                       title="Select Images for your food item"
                       onChange={handleImageUpload(field)}
-                      // Show preview if foodDetails has images
                       previewUrls={
-                        foodDetails?.images && foodDetails.images.length > 0
+                        imagePreviewUrls.length > 0
+                          ? imagePreviewUrls
+                          : foodDetails?.images && foodDetails.images.length > 0
                           ? foodDetails.images.map(img => img.image)
                           : []
                       }

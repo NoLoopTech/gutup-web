@@ -29,6 +29,7 @@ import {
   AlertDialogTitle
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { toast } from "sonner"
 import ViewFoodFranch from "./ViewFoodFranch"
 
@@ -114,6 +115,7 @@ export default function ViewFoodPopUp({
   >([])
   const [isLoading, setIsLoading] = useState(true)
   const [editedData, setEditedData] = useState<any>(null)
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
 
   useEffect(() => {
     if (token && foodId) {
@@ -214,7 +216,7 @@ export default function ViewFoodPopUp({
     { value: "dairy", label: "Dairy" },
     { value: "grains", label: "Grains" }
   ]
-  
+
   // Add translation mapping for seasons
   const seasonSyncMap = [
     { en: "January", fr: "Janvier", frLabel: "Janvier" },
@@ -230,7 +232,7 @@ export default function ViewFoodPopUp({
     { en: "November", fr: "Novembre", frLabel: "Novembre" },
     { en: "December", fr: "Décembre", frLabel: "Décembre" }
   ]
-  
+
   const seasons: Option[] = [
     { value: "January", label: "January", labelFr: "Janvier" },
     { value: "February", label: "February", labelFr: "Février" },
@@ -245,7 +247,7 @@ export default function ViewFoodPopUp({
     { value: "November", label: "November", labelFr: "Novembre" },
     { value: "December", label: "December", labelFr: "Décembre" }
   ]
-  
+
   const countries: Option[] = [
     { value: "switzerland", label: "Switzerland", labelFr: "Suisse" },
     { value: "france", label: "France", labelFr: "France" },
@@ -262,21 +264,51 @@ export default function ViewFoodPopUp({
     setConfirmDeleteOpen(false)
   }
 
+  // Add image upload handler
+  const handleImageSelect = async (files: File[] | null): Promise<void> => {
+    const file = files?.[0] ?? null
+    if (file) {
+      try {
+        setIsLoading(true)
+
+        // Upload image to Firebase
+        const imageUrl = await uploadImageToFirebase(
+          file,
+          "edit-food",
+          `${foodId}_${file.name}`
+        )
+
+        // Update session storage with the new image URL
+        updateEditedData("images", [{ image: imageUrl }])
+        setImagePreviewUrls([imageUrl])
+      } catch (error) {
+        toast.error("Image upload failed. Please try again.")
+        console.error("Firebase upload error:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    } else {
+      // Handle image removal
+      updateEditedData("images", [])
+      setImagePreviewUrls([])
+    }
+  }
+
   // Function to update session storage when data changes
   const updateEditedData = (field: string, value: any) => {
     const currentData = getFromSessionStorage() || editedData
     const updatedData = { ...currentData, [field]: value, foodId }
     setEditedData(updatedData)
     saveToSessionStorage(updatedData)
-    
+
     // Force re-render of both components when healthBenefits change
     if (field === "healthBenefits") {
       console.log("Updating healthBenefits in main component:", value)
       // Update the foodDetails state to trigger re-render in both tabs
       setFoodDetails(prev => {
         if (!prev) return null
-        const updated = { 
-          ...prev, 
+        const updated = {
+          ...prev,
           healthBenefits: value.map((benefit: any) => ({
             healthBenefit: benefit.healthBenefit || "",
             healthBenefitFR: benefit.healthBenefitFR || ""
@@ -285,7 +317,7 @@ export default function ViewFoodPopUp({
         console.log("Updated foodDetails:", updated.healthBenefits)
         return updated
       })
-      
+
       // Also update editedData to ensure consistency
       setEditedData(prev => ({
         ...prev,
@@ -389,7 +421,11 @@ export default function ViewFoodPopUp({
   }
 
   // Add category/season/country synchronization function
-  const handleSelectSync = (fieldName: "category" | "season" | "country", value: string, lang: "en" | "fr") => {
+  const handleSelectSync = (
+    fieldName: "category" | "season" | "country",
+    value: string,
+    lang: "en" | "fr"
+  ) => {
     if (fieldName === "category") {
       // Find the selected option from API categories
       const selected = categoryOptionsApi.find(
@@ -406,27 +442,31 @@ export default function ViewFoodPopUp({
       if (lang === "en") {
         const found = seasonSyncMap.find(m => m.en === value)
         if (found) {
-          updateEditedData("seasons", [{
-            season: found.en,
-            seasonFR: found.fr,
-            foodId: foodDetails?.seasons?.[0]?.foodId || 0
-          }])
+          updateEditedData("seasons", [
+            {
+              season: found.en,
+              seasonFR: found.fr,
+              foodId: foodDetails?.seasons?.[0]?.foodId || 0
+            }
+          ])
         }
       } else if (lang === "fr") {
         const found = seasonSyncMap.find(m => m.fr === value)
         if (found) {
-          updateEditedData("seasons", [{
-            season: found.en,
-            seasonFR: found.fr,
-            foodId: foodDetails?.seasons?.[0]?.foodId || 0
-          }])
+          updateEditedData("seasons", [
+            {
+              season: found.en,
+              seasonFR: found.fr,
+              foodId: foodDetails?.seasons?.[0]?.foodId || 0
+            }
+          ])
         }
       }
     }
 
     if (fieldName === "country") {
       // Sync country between languages
-      const countryOption = countries.find(c => 
+      const countryOption = countries.find(c =>
         lang === "en" ? c.value === value.toLowerCase() : c.labelFr === value
       )
       if (countryOption) {
@@ -436,11 +476,14 @@ export default function ViewFoodPopUp({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      if (!isOpen) {
-        handleClose()
-      }
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={isOpen => {
+        if (!isOpen) {
+          handleClose()
+        }
+      }}
+    >
       <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
@@ -475,9 +518,9 @@ export default function ViewFoodPopUp({
                   <Switch
                     id="multi-lang"
                     checked={allowMultiLang}
-                    disabled={!foodDetails?.allowMultiLang} // Disable if API says false
                     onCheckedChange={val => {
                       setAllowMultiLang(val)
+                      updateEditedData("allowMultiLang", val)
                       if (!val) setActiveTab("english")
                     }}
                   />
@@ -500,6 +543,8 @@ export default function ViewFoodPopUp({
                 updateEditedData={updateEditedData}
                 updateNestedData={updateNestedData}
                 handleSelectSync={handleSelectSync}
+                handleImageSelect={handleImageSelect}
+                imagePreviewUrls={imagePreviewUrls}
               />
 
               {allowMultiLang && (
@@ -515,6 +560,8 @@ export default function ViewFoodPopUp({
                   updateEditedData={updateEditedData}
                   updateNestedData={updateNestedData}
                   handleSelectSync={handleSelectSync}
+                  handleImageSelect={handleImageSelect}
+                  imagePreviewUrls={imagePreviewUrls}
                 />
               )}
             </Tabs>
