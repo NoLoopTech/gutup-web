@@ -43,12 +43,19 @@ interface ViewFoodEnglishProps {
   conservationRef: React.Ref<RichTextEditorHandle>
   foodDetails: FoodDetailsTypes | null
   categories: Option[]
+  seasons: Option[]
+  countries: Option[]
   benefitTags: Array<{ tagName: string; tagNameFr: string }>
   updateEditedData: (field: string, value: any) => void
   updateNestedData: (
     parentField: string,
     childField: string,
     value: any
+  ) => void
+  handleSelectSync: (
+    fieldName: "category" | "season" | "country",
+    value: string,
+    lang: "en" | "fr"
   ) => void
 }
 
@@ -135,9 +142,12 @@ export default function ViewFoodEnglish({
   conservationRef,
   foodDetails,
   categories,
+  seasons,
+  countries,
   benefitTags,
   updateEditedData,
-  updateNestedData
+  updateNestedData,
+  handleSelectSync
 }: ViewFoodEnglishProps): JSX.Element {
   // handle form submit
   const onSubmit = (data: z.infer<typeof FoodSchema>): void => {
@@ -273,7 +283,10 @@ export default function ViewFoodEnglish({
                     </FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value)
+                          handleSelectSync("category", value, "en")
+                        }}
                         value={foodDetails?.category ?? field.value}
                       >
                         <SelectTrigger className="w-full mt-1">
@@ -304,7 +317,10 @@ export default function ViewFoodEnglish({
                     </FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value)
+                          handleSelectSync("season", value, "en")
+                        }}
                         value={
                           foodDetails?.seasons && foodDetails.seasons.length > 0
                             ? foodDetails.seasons[0].season
@@ -339,7 +355,10 @@ export default function ViewFoodEnglish({
                     </FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value)
+                          handleSelectSync("country", value, "en")
+                        }}
                         value={foodDetails?.country ?? field.value}
                       >
                         <SelectTrigger className="w-full mt-1">
@@ -657,4 +676,3 @@ export default function ViewFoodEnglish({
     </Form>
   )
 }
-         

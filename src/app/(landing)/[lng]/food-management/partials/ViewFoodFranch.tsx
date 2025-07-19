@@ -39,7 +39,7 @@ interface ViewFoodFrenchProps {
     label: string
     labelFr?: string
   }>
-  countries: Array<{ value: string; label: string }>
+  countries: Array<{ value: string; label: string; labelFr?: string }>
   foodDetails?: {
     name: string
     nameFR: string
@@ -84,6 +84,11 @@ interface ViewFoodFrenchProps {
     childField: string,
     value: any
   ) => void
+  handleSelectSync: (
+    fieldName: "category" | "season" | "country",
+    value: string,
+    lang: "en" | "fr"
+  ) => void
 }
 
 export default function ViewFoodFrench({
@@ -96,7 +101,8 @@ export default function ViewFoodFrench({
   foodDetails,
   benefitTags,
   updateEditedData,
-  updateNestedData
+  updateNestedData,
+  handleSelectSync
 }: ViewFoodFrenchProps): JSX.Element {
   const [formData, setFormData] = useState({
     name: "",
@@ -125,7 +131,10 @@ export default function ViewFoodFrench({
         minerals: foodDetails.attributes?.mineralsFR || "",
         fat: foodDetails.attributes?.fat?.toString() || "",
         sugar: foodDetails.attributes?.sugar?.toString() || "",
-        benefits: foodDetails.healthBenefits?.map(b => b.healthBenefitFR).filter(Boolean) || []
+        benefits:
+          foodDetails.healthBenefits
+            ?.map(b => b.healthBenefitFR)
+            .filter(Boolean) || []
       })
     }
   }, [foodDetails])
@@ -137,18 +146,6 @@ export default function ViewFoodFrench({
     switch (field) {
       case "name":
         updateEditedData("nameFR", value)
-        break
-      case "category":
-        updateEditedData("categoryFR", value)
-        break
-      case "season":
-        updateEditedData("seasons", [
-          {
-            season: foodDetails?.seasons?.[0]?.season || "",
-            seasonFR: value,
-            foodId: foodDetails?.seasons?.[0]?.foodId || 0
-          }
-        ])
         break
       case "fiber":
       case "proteins":
@@ -163,6 +160,15 @@ export default function ViewFoodFrench({
         updateNestedData("attributes", "mineralsFR", value)
         break
     }
+  }
+
+  // New function to handle select changes with sync
+  const handleSelectChange = (
+    field: "category" | "season" | "country",
+    value: string
+  ) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+    handleSelectSync(field, value, "fr")
   }
 
   return (
@@ -181,7 +187,7 @@ export default function ViewFoodFrench({
           <Label className="block mb-1 text-black">Catégorie</Label>
           <Select
             value={formData.category}
-            onValueChange={value => handleInputChange("category", value)}
+            onValueChange={value => handleSelectChange("category", value)}
           >
             <SelectTrigger className="w-full mt-1">
               <SelectValue placeholder="Sélectionner une catégorie" />
@@ -190,7 +196,7 @@ export default function ViewFoodFrench({
               {categories.map(option => (
                 <SelectItem
                   key={option.value}
-                  value={option.valueFr ?? option.value}
+                  value={option.valueFr ?? option.labelFr ?? option.value}
                 >
                   {option.labelFr ?? option.label}
                 </SelectItem>
@@ -202,7 +208,7 @@ export default function ViewFoodFrench({
           <Label className="block mb-1 text-black">Mois</Label>
           <Select
             value={formData.season}
-            onValueChange={value => handleInputChange("season", value)}
+            onValueChange={value => handleSelectChange("season", value)}
           >
             <SelectTrigger className="w-full mt-1">
               <SelectValue placeholder="Sélectionner un mois" />
@@ -223,15 +229,18 @@ export default function ViewFoodFrench({
           <Label className="block mb-1 text-black">Pays</Label>
           <Select
             value={formData.country}
-            onValueChange={value => handleInputChange("country", value)}
+            onValueChange={value => handleSelectChange("country", value)}
           >
             <SelectTrigger className="w-full mt-1">
               <SelectValue placeholder="Sélectionner un pays" />
             </SelectTrigger>
             <SelectContent>
               {countries.map(option => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                <SelectItem
+                  key={option.value}
+                  value={option.labelFr ?? option.label}
+                >
+                  {option.labelFr ?? option.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -309,7 +318,7 @@ export default function ViewFoodFrench({
             console.log("French onSelectSuggestion:", benefit)
             // Get current benefits from foodDetails
             const currentData = foodDetails?.healthBenefits || []
-            
+
             // Add both EN and FR at the same index
             const updatedHealthBenefits = [
               ...currentData,
@@ -318,29 +327,33 @@ export default function ViewFoodFrench({
                 healthBenefitFR: benefit.tagNameFr
               }
             ]
-            
-            console.log("French updated health benefits:", updatedHealthBenefits)
-            
+
+            console.log(
+              "French updated health benefits:",
+              updatedHealthBenefits
+            )
+
             // Update session storage
             updateEditedData("healthBenefits", updatedHealthBenefits)
-            
+
             // Don't update local form state here - let useEffect handle it
           }}
           onRemoveBenefit={removed => {
             console.log("French onRemoveBenefit:", removed)
             const currentData = foodDetails?.healthBenefits || []
-            
+
             // Find and remove by matching either English or French name
-            const updatedHealthBenefits = currentData.filter(b => 
-              b.healthBenefit !== removed.tagName && 
-              b.healthBenefitFR !== removed.tagNameFr
+            const updatedHealthBenefits = currentData.filter(
+              b =>
+                b.healthBenefit !== removed.tagName &&
+                b.healthBenefitFR !== removed.tagNameFr
             )
-            
+
             console.log("French after removal:", updatedHealthBenefits)
-            
+
             // Update session storage
             updateEditedData("healthBenefits", updatedHealthBenefits)
-            
+
             // Don't update local form state here - let useEffect handle it
           }}
           onChange={(newBenefits: string[]) => {
@@ -351,7 +364,7 @@ export default function ViewFoodFrench({
               healthBenefit: currentData[index]?.healthBenefit || "",
               healthBenefitFR: benefit
             }))
-            
+
             updateEditedData("healthBenefits", healthBenefits)
             setFormData(prev => ({ ...prev, benefits: newBenefits }))
           }}
@@ -408,4 +421,3 @@ export default function ViewFoodFrench({
     </TabsContent>
   )
 }
-   

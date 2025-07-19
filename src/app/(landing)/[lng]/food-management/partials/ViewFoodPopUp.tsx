@@ -207,18 +207,35 @@ export default function ViewFoodPopUp({
   const preparationRef = useRef<RichTextEditorHandle>(null)
   const conservationRef = useRef<RichTextEditorHandle>(null)
 
-  // Shared data arrays
+  // Shared data arrays with proper French translations
   const categories: Option[] = [
     { value: "fruits", label: "Fruits" },
     { value: "vegetables", label: "Vegetables" },
     { value: "dairy", label: "Dairy" },
     { value: "grains", label: "Grains" }
   ]
+  
+  // Add translation mapping for seasons
+  const seasonSyncMap = [
+    { en: "January", fr: "Janvier", frLabel: "Janvier" },
+    { en: "February", fr: "Février", frLabel: "Février" },
+    { en: "March", fr: "Mars", frLabel: "Mars" },
+    { en: "April", fr: "Avril", frLabel: "Avril" },
+    { en: "May", fr: "Mai", frLabel: "Mai" },
+    { en: "June", fr: "Juin", frLabel: "Juin" },
+    { en: "July", fr: "Juillet", frLabel: "Juillet" },
+    { en: "August", fr: "Août", frLabel: "Août" },
+    { en: "September", fr: "Septembre", frLabel: "Septembre" },
+    { en: "October", fr: "Octobre", frLabel: "Octobre" },
+    { en: "November", fr: "Novembre", frLabel: "Novembre" },
+    { en: "December", fr: "Décembre", frLabel: "Décembre" }
+  ]
+  
   const seasons: Option[] = [
     { value: "January", label: "January", labelFr: "Janvier" },
     { value: "February", label: "February", labelFr: "Février" },
     { value: "March", label: "March", labelFr: "Mars" },
-    { value: "April", label: "April", labelFr: "Avril" }, // This matches your API response
+    { value: "April", label: "April", labelFr: "Avril" },
     { value: "May", label: "May", labelFr: "Mai" },
     { value: "June", label: "June", labelFr: "Juin" },
     { value: "July", label: "July", labelFr: "Juillet" },
@@ -228,11 +245,12 @@ export default function ViewFoodPopUp({
     { value: "November", label: "November", labelFr: "Novembre" },
     { value: "December", label: "December", labelFr: "Décembre" }
   ]
+  
   const countries: Option[] = [
-    { value: "switzerland", label: "Switzerland" },
-    { value: "france", label: "France" },
-    { value: "germany", label: "Germany" },
-    { value: "italy", label: "Italy" }
+    { value: "switzerland", label: "Switzerland", labelFr: "Suisse" },
+    { value: "france", label: "France", labelFr: "France" },
+    { value: "germany", label: "Germany", labelFr: "Allemagne" },
+    { value: "italy", label: "Italy", labelFr: "Italie" }
   ]
 
   // handle open delete confirmation popup
@@ -370,8 +388,59 @@ export default function ViewFoodPopUp({
     onClose()
   }
 
+  // Add category/season/country synchronization function
+  const handleSelectSync = (fieldName: "category" | "season" | "country", value: string, lang: "en" | "fr") => {
+    if (fieldName === "category") {
+      // Find the selected option from API categories
+      const selected = categoryOptionsApi.find(
+        opt => (lang === "en" ? opt.valueEn : opt.valueFr) === value
+      )
+      if (selected) {
+        updateEditedData("category", selected.valueEn || selected.value)
+        updateEditedData("categoryFR", selected.valueFr || selected.label)
+      }
+    }
+
+    if (fieldName === "season") {
+      // Sync season between languages
+      if (lang === "en") {
+        const found = seasonSyncMap.find(m => m.en === value)
+        if (found) {
+          updateEditedData("seasons", [{
+            season: found.en,
+            seasonFR: found.fr,
+            foodId: foodDetails?.seasons?.[0]?.foodId || 0
+          }])
+        }
+      } else if (lang === "fr") {
+        const found = seasonSyncMap.find(m => m.fr === value)
+        if (found) {
+          updateEditedData("seasons", [{
+            season: found.en,
+            seasonFR: found.fr,
+            foodId: foodDetails?.seasons?.[0]?.foodId || 0
+          }])
+        }
+      }
+    }
+
+    if (fieldName === "country") {
+      // Sync country between languages
+      const countryOption = countries.find(c => 
+        lang === "en" ? c.value === value.toLowerCase() : c.labelFr === value
+      )
+      if (countryOption) {
+        updateEditedData("country", countryOption.value)
+      }
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) {
+        handleClose()
+      }
+    }}>
       <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
@@ -425,9 +494,12 @@ export default function ViewFoodPopUp({
                 conservationRef={conservationRef}
                 foodDetails={editedData || foodDetails}
                 categories={categoryOptionsApi}
+                seasons={seasons}
+                countries={countries}
                 benefitTags={benefitTags}
                 updateEditedData={updateEditedData}
                 updateNestedData={updateNestedData}
+                handleSelectSync={handleSelectSync}
               />
 
               {allowMultiLang && (
@@ -442,6 +514,7 @@ export default function ViewFoodPopUp({
                   benefitTags={benefitTags}
                   updateEditedData={updateEditedData}
                   updateNestedData={updateNestedData}
+                  handleSelectSync={handleSelectSync}
                 />
               )}
             </Tabs>
