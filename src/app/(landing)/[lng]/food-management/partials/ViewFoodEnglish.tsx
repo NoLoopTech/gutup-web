@@ -3,7 +3,6 @@
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import LableInput from "@/components/Shared/LableInput/LableInput"
 import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
-import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -496,14 +495,54 @@ export default function ViewFoodEnglish({
                   width="w-[32%]"
                   disable={false}
                   suggestions={benefitTags}
+                  activeLang="en"
+                  onSelectSuggestion={benefit => {
+                    console.log("English onSelectSuggestion:", benefit)
+                    // Get current benefits from foodDetails
+                    const currentData = foodDetails?.healthBenefits || []
+                    
+                    // Add both EN and FR at the same index
+                    const updatedHealthBenefits = [
+                      ...currentData,
+                      {
+                        healthBenefit: benefit.tagName,
+                        healthBenefitFR: benefit.tagNameFr
+                      }
+                    ]
+                    
+                    console.log("Updated health benefits:", updatedHealthBenefits)
+                    
+                    // Update session storage
+                    updateEditedData("healthBenefits", updatedHealthBenefits)
+                    
+                    // Don't update form field here - let the benefits prop handle display
+                  }}
+                  onRemoveBenefit={removed => {
+                    console.log("English onRemoveBenefit:", removed)
+                    const currentData = foodDetails?.healthBenefits || []
+                    
+                    // Find and remove by matching either English or French name
+                    const updatedHealthBenefits = currentData.filter(b => 
+                      b.healthBenefit !== removed.tagName && 
+                      b.healthBenefitFR !== removed.tagNameFr
+                    )
+                    
+                    console.log("After removal:", updatedHealthBenefits)
+                    
+                    // Update session storage
+                    updateEditedData("healthBenefits", updatedHealthBenefits)
+                  }}
                   onChange={(newBenefits: string[]) => {
-                    field.onChange(newBenefits)
-                    // Update session storage with proper format
-                    const healthBenefits = newBenefits.map(benefit => ({
+                    console.log("English onChange:", newBenefits)
+                    // This is for manual typing - preserve structure
+                    const currentData = foodDetails?.healthBenefits || []
+                    const healthBenefits = newBenefits.map((benefit, index) => ({
                       healthBenefit: benefit,
-                      healthBenefitFR: ""
+                      healthBenefitFR: currentData[index]?.healthBenefitFR || ""
                     }))
+                    
                     updateEditedData("healthBenefits", healthBenefits)
+                    field.onChange(newBenefits)
                   }}
                 />
               )}
@@ -618,3 +657,4 @@ export default function ViewFoodEnglish({
     </Form>
   )
 }
+         

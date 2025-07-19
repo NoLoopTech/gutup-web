@@ -72,37 +72,59 @@ export default function LableInput({
       )
     }
 
-    // If not in suggestions, treat as new benefit
-    if (!matchedSuggestion && newItem.length > 0 && onAddNewBenefit) {
-      matchedSuggestion = await onAddNewBenefit(newItem)
-    }
-
-    // Only allow adding if matchedSuggestion exists
-    if (!matchedSuggestion) {
-      setValueState("") // Clear input if not valid
+    // If we have a matched suggestion and onSelectSuggestion handler, use it
+    if (matchedSuggestion && onSelectSuggestion) {
+      onSelectSuggestion(matchedSuggestion)
+      setValueState("") // Clear input
       return
     }
 
-    newItem =
-      activeLang === "en"
-        ? matchedSuggestion.tagName
-        : matchedSuggestion.tagNameFr
-
-    if (!items.includes(newItem) && items.length < 6) {
-      const updatedItems = [...items, newItem]
-      updateItems(updatedItems)
-      if (onSelectSuggestion) {
-        onSelectSuggestion(matchedSuggestion)
+    // If not in suggestions and we have onAddNewBenefit, create new
+    if (!matchedSuggestion && newItem.length > 0 && onAddNewBenefit) {
+      try {
+        matchedSuggestion = await onAddNewBenefit(newItem)
+        if (matchedSuggestion && onSelectSuggestion) {
+          onSelectSuggestion(matchedSuggestion)
+          setValueState("") // Clear input
+          return
+        }
+      } catch (error) {
+        console.error("Error adding new benefit:", error)
       }
     }
+
+    // Fallback to basic behavior if no special handlers
+    if (!onSelectSuggestion && matchedSuggestion) {
+      newItem =
+        activeLang === "en"
+          ? matchedSuggestion.tagName
+          : matchedSuggestion.tagNameFr
+
+      if (!items.includes(newItem) && items.length < 6) {
+        const updatedItems = [...items, newItem]
+        updateItems(updatedItems)
+      }
+    }
+    
     setValueState("") // Reset input field
   }
 
   const removeItem = (benefit: string): void => {
     if (disable) return // Don't remove items if disabled
 
-    const updatedItems = items.filter(b => b !== benefit)
-    updateItems(updatedItems)
+    // Find the suggestion object for removal
+    const suggestion = suggestions.find(
+      s => s.tagName === benefit || s.tagNameFr === benefit
+    ) ?? { tagName: benefit, tagNameFr: benefit } // fallback for custom benefits
+
+    // If we have onRemoveBenefit handler, use it
+    if (onRemoveBenefit) {
+      onRemoveBenefit(suggestion)
+    } else {
+      // Fallback to basic removal
+      const updatedItems = items.filter(b => b !== benefit)
+      updateItems(updatedItems)
+    }
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
@@ -171,10 +193,6 @@ export default function LableInput({
                   type="button"
                   onClick={() => {
                     removeItem(item)
-                    // Always call onRemoveBenefit with both EN and FR
-                    if (onRemoveBenefit) {
-                      onRemoveBenefit(suggestion)
-                    }
                   }}
                   className="text-gray-500 hover:text-red-500 focus:outline-none"
                 >
@@ -188,3 +206,4 @@ export default function LableInput({
     </div>
   )
 }
+

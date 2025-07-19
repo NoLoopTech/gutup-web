@@ -250,6 +250,30 @@ export default function ViewFoodPopUp({
     const updatedData = { ...currentData, [field]: value, foodId }
     setEditedData(updatedData)
     saveToSessionStorage(updatedData)
+    
+    // Force re-render of both components when healthBenefits change
+    if (field === "healthBenefits") {
+      console.log("Updating healthBenefits in main component:", value)
+      // Update the foodDetails state to trigger re-render in both tabs
+      setFoodDetails(prev => {
+        if (!prev) return null
+        const updated = { 
+          ...prev, 
+          healthBenefits: value.map((benefit: any) => ({
+            healthBenefit: benefit.healthBenefit || "",
+            healthBenefitFR: benefit.healthBenefitFR || ""
+          }))
+        }
+        console.log("Updated foodDetails:", updated.healthBenefits)
+        return updated
+      })
+      
+      // Also update editedData to ensure consistency
+      setEditedData(prev => ({
+        ...prev,
+        healthBenefits: value
+      }))
+    }
   }
 
   // Function to update nested data

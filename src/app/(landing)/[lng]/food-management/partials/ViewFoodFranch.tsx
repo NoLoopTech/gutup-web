@@ -125,7 +125,7 @@ export default function ViewFoodFrench({
         minerals: foodDetails.attributes?.mineralsFR || "",
         fat: foodDetails.attributes?.fat?.toString() || "",
         sugar: foodDetails.attributes?.sugar?.toString() || "",
-        benefits: foodDetails.healthBenefits?.map(b => b.healthBenefitFR) || []
+        benefits: foodDetails.healthBenefits?.map(b => b.healthBenefitFR).filter(Boolean) || []
       })
     }
   }, [foodDetails])
@@ -304,15 +304,56 @@ export default function ViewFoodFrench({
           width="w-[32%]"
           disable={false}
           suggestions={benefitTags}
+          activeLang="fr"
+          onSelectSuggestion={benefit => {
+            console.log("French onSelectSuggestion:", benefit)
+            // Get current benefits from foodDetails
+            const currentData = foodDetails?.healthBenefits || []
+            
+            // Add both EN and FR at the same index
+            const updatedHealthBenefits = [
+              ...currentData,
+              {
+                healthBenefit: benefit.tagName,
+                healthBenefitFR: benefit.tagNameFr
+              }
+            ]
+            
+            console.log("French updated health benefits:", updatedHealthBenefits)
+            
+            // Update session storage
+            updateEditedData("healthBenefits", updatedHealthBenefits)
+            
+            // Don't update local form state here - let useEffect handle it
+          }}
+          onRemoveBenefit={removed => {
+            console.log("French onRemoveBenefit:", removed)
+            const currentData = foodDetails?.healthBenefits || []
+            
+            // Find and remove by matching either English or French name
+            const updatedHealthBenefits = currentData.filter(b => 
+              b.healthBenefit !== removed.tagName && 
+              b.healthBenefitFR !== removed.tagNameFr
+            )
+            
+            console.log("French after removal:", updatedHealthBenefits)
+            
+            // Update session storage
+            updateEditedData("healthBenefits", updatedHealthBenefits)
+            
+            // Don't update local form state here - let useEffect handle it
+          }}
           onChange={(newBenefits: string[]) => {
-            setFormData(prev => ({ ...prev, benefits: newBenefits }))
-            // Update session storage with proper format
-            const currentHealthBenefits = foodDetails?.healthBenefits || []
-            const updatedHealthBenefits = newBenefits.map((benefit, index) => ({
-              healthBenefit: currentHealthBenefits[index]?.healthBenefit || "",
+            console.log("French onChange:", newBenefits)
+            // This is for manual typing - preserve structure
+            const currentData = foodDetails?.healthBenefits || []
+            const healthBenefits = newBenefits.map((benefit, index) => ({
+              healthBenefit: currentData[index]?.healthBenefit || "",
               healthBenefitFR: benefit
             }))
-            updateEditedData("healthBenefits", updatedHealthBenefits)
+            
+            updateEditedData("healthBenefits", healthBenefits)
+            setFormData(prev => ({ ...prev, benefits: newBenefits }))
           }}
         />
       </div>
@@ -367,3 +408,4 @@ export default function ViewFoodFrench({
     </TabsContent>
   )
 }
+   
