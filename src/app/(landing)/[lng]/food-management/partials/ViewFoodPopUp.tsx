@@ -253,7 +253,11 @@ export default function ViewFoodPopUp({
   }
 
   // Function to update nested data
-  const updateNestedData = (parentField: string, childField: string, value: any) => {
+  const updateNestedData = (
+    parentField: string,
+    childField: string,
+    value: any
+  ) => {
     const currentData = getFromSessionStorage() || editedData
     const updatedData = {
       ...currentData,
@@ -274,7 +278,7 @@ export default function ViewFoodPopUp({
 
     try {
       const { foodId: savedFoodId, ...rawData } = dataToSave
-      
+
       // Transform the session storage data to match CreateFoodDto format
       const updateData = {
         name: rawData.name,
@@ -282,11 +286,12 @@ export default function ViewFoodPopUp({
         category: rawData.category,
         categoryFR: rawData.categoryFR || "",
         country: rawData.country,
-        seasons: rawData.seasons?.map((season: any) => ({
-          foodId: savedFoodId,
-          season: season.season || season,
-          seasonFR: season.seasonFR || ""
-        })) || [],
+        seasons:
+          rawData.seasons?.map((season: any) => ({
+            foodId: savedFoodId,
+            season: season.season || season,
+            seasonFR: season.seasonFR || ""
+          })) || [],
         attributes: {
           fiber: Number(rawData.attributes?.fiber) || 0,
           proteins: Number(rawData.attributes?.proteins) || 0,
@@ -305,18 +310,22 @@ export default function ViewFoodPopUp({
           conservation: rawData.describe?.conservation || "",
           conservationFR: rawData.describe?.conservationFR || ""
         },
-        images: rawData.images?.map((img: any) => ({
-          image: typeof img === 'string' ? img : img.image
-        })) || [],
-        healthBenefits: rawData.healthBenefits?.map((benefit: any) => ({
-          healthBenefit: typeof benefit === 'string' ? benefit : benefit.healthBenefit,
-          healthBenefitFR: typeof benefit === 'string' ? "" : benefit.healthBenefitFR || ""
-        })) || [],
+        images:
+          rawData.images?.map((img: any) => ({
+            image: typeof img === "string" ? img : img.image
+          })) || [],
+        healthBenefits:
+          rawData.healthBenefits?.map((benefit: any) => ({
+            healthBenefit:
+              typeof benefit === "string" ? benefit : benefit.healthBenefit,
+            healthBenefitFR:
+              typeof benefit === "string" ? "" : benefit.healthBenefitFR || ""
+          })) || [],
         allowMultiLang: rawData.allowMultiLang || false
       }
 
-      console.log('Saving food with ID:', savedFoodId, 'Data:', updateData)
-      
+      console.log("Saving food with ID:", savedFoodId, "Data:", updateData)
+
       const response = await putFoodById(token, savedFoodId, updateData)
       if (response.status === 200 || response.status === 201) {
         toast.success("Food item updated successfully!")
@@ -423,9 +432,7 @@ export default function ViewFoodPopUp({
             >
               Delete Food
             </Button>
-            <Button onClick={handleSaveChanges}>
-              Save changes
-            </Button>
+            <Button onClick={handleSaveChanges}>Save changes</Button>
           </div>
         </DialogFooter>
       </DialogContent>

@@ -46,7 +46,11 @@ interface ViewFoodEnglishProps {
   categories: Option[]
   benefitTags: Array<{ tagName: string; tagNameFr: string }>
   updateEditedData: (field: string, value: any) => void
-  updateNestedData: (parentField: string, childField: string, value: any) => void
+  updateNestedData: (
+    parentField: string,
+    childField: string,
+    value: any
+  ) => void
 }
 
 const seasons: Option[] = [
@@ -191,31 +195,49 @@ export default function ViewFoodEnglish({
     const subscription = form.watch((value, { name }) => {
       if (name && value[name] !== undefined) {
         switch (name) {
-          case 'fiber':
-          case 'proteins':
-          case 'fat':
-          case 'sugar':
-            updateNestedData("attributes", name, parseFloat(value[name] as string) || 0)
+          case "fiber":
+          case "proteins":
+          case "fat":
+          case "sugar":
+            updateNestedData(
+              "attributes",
+              name,
+              parseFloat(value[name] as string) || 0
+            )
             break
-          case 'vitamins':
-          case 'minerals':
+          case "vitamins":
+          case "minerals":
             updateNestedData("attributes", name, value[name] as string)
             break
-          case 'name':
-          case 'category':
-          case 'country':
+          case "name":
+          case "category":
+          case "country":
             updateEditedData(name, value[name])
             break
-          case 'season':
-            updateEditedData("seasons", [{ season: value[name], seasonFR: "", foodId: foodDetails?.seasons?.[0]?.foodId || 0 }])
+          case "season":
+            updateEditedData("seasons", [
+              {
+                season: value[name],
+                seasonFR: "",
+                foodId: foodDetails?.seasons?.[0]?.foodId || 0
+              }
+            ])
             break
-          case 'benefits':
-            updateEditedData("healthBenefits", (value[name] as string[]).map(benefit => ({ healthBenefit: benefit, healthBenefitFR: "" })))
+          case "benefits":
+            updateEditedData(
+              "healthBenefits",
+              (value[name] as string[]).map(benefit => ({
+                healthBenefit: benefit,
+                healthBenefitFR: ""
+              }))
+            )
             break
         }
       }
     })
-    return () => subscription.unsubscribe()
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [form, updateEditedData, updateNestedData, foodDetails])
 
   return (
@@ -234,10 +256,7 @@ export default function ViewFoodEnglish({
                       Name
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Enter food name"
-                        {...field}
-                      />
+                      <Input placeholder="Enter food name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -256,7 +275,7 @@ export default function ViewFoodEnglish({
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
-                        value={foodDetails?.category || field.value}
+                        value={foodDetails?.category ?? field.value}
                       >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue placeholder="Select Category" />
@@ -322,7 +341,7 @@ export default function ViewFoodEnglish({
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
-                        value={foodDetails?.country || field.value}
+                        value={foodDetails?.country ?? field.value}
                       >
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue placeholder="Select Country" />
@@ -355,7 +374,9 @@ export default function ViewFoodEnglish({
                 name="fiber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="block mb-1 text-black">Fiber</FormLabel>
+                    <FormLabel className="block mb-1 text-black">
+                      Fiber
+                    </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Provide details if applicable"
@@ -372,7 +393,9 @@ export default function ViewFoodEnglish({
                 name="proteins"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="block mb-1 text-black">Proteins</FormLabel>
+                    <FormLabel className="block mb-1 text-black">
+                      Proteins
+                    </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Provide details if applicable"
@@ -389,7 +412,9 @@ export default function ViewFoodEnglish({
                 name="vitamins"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="block mb-1 text-black">Vitamins</FormLabel>
+                    <FormLabel className="block mb-1 text-black">
+                      Vitamins
+                    </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Provide details if applicable"
@@ -406,7 +431,9 @@ export default function ViewFoodEnglish({
                 name="minerals"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="block mb-1 text-black">Minerals</FormLabel>
+                    <FormLabel className="block mb-1 text-black">
+                      Minerals
+                    </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Provide details if applicable"
@@ -440,7 +467,9 @@ export default function ViewFoodEnglish({
                 name="sugar"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="block mb-1 text-black">Sugar</FormLabel>
+                    <FormLabel className="block mb-1 text-black">
+                      Sugar
+                    </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Provide details if applicable"
@@ -461,7 +490,7 @@ export default function ViewFoodEnglish({
                   title="Health Benefits"
                   placeholder="Add up to 6 food benefits or fewer"
                   benefits={
-                    foodDetails?.healthBenefits?.map(b => b.healthBenefit) || []
+                    foodDetails?.healthBenefits?.map(b => b.healthBenefit) ?? []
                   }
                   name="benefits"
                   width="w-[32%]"
@@ -584,11 +613,8 @@ export default function ViewFoodEnglish({
               )}
             />
           </div>
-
-         
         </TabsContent>
       </form>
     </Form>
   )
 }
-

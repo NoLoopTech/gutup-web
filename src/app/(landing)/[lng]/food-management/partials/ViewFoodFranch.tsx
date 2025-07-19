@@ -34,9 +34,9 @@ interface ViewFoodFrenchProps {
     labelEn?: string
     labelFr?: string
   }>
-  seasons: Array<{ 
+  seasons: Array<{
     value: string
-    label: string 
+    label: string
     labelFr?: string
   }>
   countries: Array<{ value: string; label: string }>
@@ -79,7 +79,11 @@ interface ViewFoodFrenchProps {
   }
   benefitTags: Array<{ tagName: string; tagNameFr: string }>
   updateEditedData: (field: string, value: any) => void
-  updateNestedData: (parentField: string, childField: string, value: any) => void
+  updateNestedData: (
+    parentField: string,
+    childField: string,
+    value: any
+  ) => void
 }
 
 export default function ViewFoodFrench({
@@ -128,32 +132,34 @@ export default function ViewFoodFrench({
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-    
+
     // Update session storage based on field type
     switch (field) {
-      case 'name':
-        updateEditedData('nameFR', value)
+      case "name":
+        updateEditedData("nameFR", value)
         break
-      case 'category':
-        updateEditedData('categoryFR', value)
+      case "category":
+        updateEditedData("categoryFR", value)
         break
-      case 'season':
-        updateEditedData("seasons", [{ 
-          season: foodDetails?.seasons?.[0]?.season || "", 
-          seasonFR: value, 
-          foodId: foodDetails?.seasons?.[0]?.foodId || 0 
-        }])
+      case "season":
+        updateEditedData("seasons", [
+          {
+            season: foodDetails?.seasons?.[0]?.season || "",
+            seasonFR: value,
+            foodId: foodDetails?.seasons?.[0]?.foodId || 0
+          }
+        ])
         break
-      case 'fiber':
-      case 'proteins':
-      case 'fat':
-      case 'sugar':
+      case "fiber":
+      case "proteins":
+      case "fat":
+      case "sugar":
         updateNestedData("attributes", field, parseFloat(value) || 0)
         break
-      case 'vitamins':
+      case "vitamins":
         updateNestedData("attributes", "vitaminsFR", value)
         break
-      case 'minerals':
+      case "minerals":
         updateNestedData("attributes", "mineralsFR", value)
         break
     }
@@ -168,14 +174,14 @@ export default function ViewFoodFrench({
           <Input
             placeholder="Entrez le nom de l'aliment"
             value={formData.name}
-            onChange={(e) => handleInputChange("name", e.target.value)}
+            onChange={e => handleInputChange("name", e.target.value)}
           />
         </div>
         <div>
           <Label className="block mb-1 text-black">Catégorie</Label>
-          <Select 
+          <Select
             value={formData.category}
-            onValueChange={(value) => handleInputChange("category", value)}
+            onValueChange={value => handleInputChange("category", value)}
           >
             <SelectTrigger className="w-full mt-1">
               <SelectValue placeholder="Sélectionner une catégorie" />
@@ -194,17 +200,17 @@ export default function ViewFoodFrench({
         </div>
         <div>
           <Label className="block mb-1 text-black">Mois</Label>
-          <Select 
+          <Select
             value={formData.season}
-            onValueChange={(value) => handleInputChange("season", value)}
+            onValueChange={value => handleInputChange("season", value)}
           >
             <SelectTrigger className="w-full mt-1">
               <SelectValue placeholder="Sélectionner un mois" />
             </SelectTrigger>
             <SelectContent>
               {seasons.map(option => (
-                <SelectItem 
-                  key={option.value} 
+                <SelectItem
+                  key={option.value}
                   value={option.labelFr ?? option.label}
                 >
                   {option.labelFr ?? option.label}
@@ -215,9 +221,9 @@ export default function ViewFoodFrench({
         </div>
         <div>
           <Label className="block mb-1 text-black">Pays</Label>
-          <Select 
+          <Select
             value={formData.country}
-            onValueChange={(value) => handleInputChange("country", value)}
+            onValueChange={value => handleInputChange("country", value)}
           >
             <SelectTrigger className="w-full mt-1">
               <SelectValue placeholder="Sélectionner un pays" />
@@ -244,7 +250,7 @@ export default function ViewFoodFrench({
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.fiber}
-            onChange={(e) => handleInputChange("fiber", e.target.value)}
+            onChange={e => handleInputChange("fiber", e.target.value)}
           />
         </div>
         <div>
@@ -252,7 +258,7 @@ export default function ViewFoodFrench({
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.proteins}
-            onChange={(e) => handleInputChange("proteins", e.target.value)}
+            onChange={e => handleInputChange("proteins", e.target.value)}
           />
         </div>
         <div>
@@ -260,7 +266,7 @@ export default function ViewFoodFrench({
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.vitamins}
-            onChange={(e) => handleInputChange("vitamins", e.target.value)}
+            onChange={e => handleInputChange("vitamins", e.target.value)}
           />
         </div>
         <div>
@@ -268,7 +274,7 @@ export default function ViewFoodFrench({
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.minerals}
-            onChange={(e) => handleInputChange("minerals", e.target.value)}
+            onChange={e => handleInputChange("minerals", e.target.value)}
           />
         </div>
         <div>
@@ -276,7 +282,7 @@ export default function ViewFoodFrench({
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.fat}
-            onChange={(e) => handleInputChange("fat", e.target.value)}
+            onChange={e => handleInputChange("fat", e.target.value)}
           />
         </div>
         <div>
@@ -284,7 +290,7 @@ export default function ViewFoodFrench({
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.sugar}
-            onChange={(e) => handleInputChange("sugar", e.target.value)}
+            onChange={e => handleInputChange("sugar", e.target.value)}
           />
         </div>
       </div>
@@ -322,7 +328,7 @@ export default function ViewFoodFrench({
           <RichTextEditor
             ref={selectionRef}
             initialContent={foodDetails?.describe?.selectionFR ?? ""}
-            onChange={(content) => {
+            onChange={content => {
               updateNestedData("describe", "selectionFR", content)
             }}
           />
@@ -332,7 +338,7 @@ export default function ViewFoodFrench({
           <RichTextEditor
             ref={preparationRef}
             initialContent={foodDetails?.describe?.preparationFR ?? ""}
-            onChange={(content) => {
+            onChange={content => {
               updateNestedData("describe", "preparationFR", content)
             }}
           />
@@ -342,7 +348,7 @@ export default function ViewFoodFrench({
           <RichTextEditor
             ref={conservationRef}
             initialContent={foodDetails?.describe?.conservationFR ?? ""}
-            onChange={(content) => {
+            onChange={content => {
               updateNestedData("describe", "conservationFR", content)
             }}
           />
@@ -361,4 +367,3 @@ export default function ViewFoodFrench({
     </TabsContent>
   )
 }
-
