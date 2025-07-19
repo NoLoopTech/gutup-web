@@ -243,7 +243,7 @@ export default function EditStorePopUpContent({
           const data = response.data
           setCurrentStoreData(data)
 
-          // Transform ingredients and categories data to availData format for both languages
+          // Transform ingredients and categories data
           const ingredientsData = data.ingredients || []
           const categoriesData = data.categories || data.ingAndCatData || []
 
@@ -269,7 +269,7 @@ export default function EditStorePopUpContent({
                   ? item.type === "ingredient"
                     ? "Ingredient"
                     : "Category"
-                  : "Ingredient", // Default to Ingredient if type is unclear
+                  : "Ingredient",
               status: item.availability ? "Active" : "Inactive",
               display: item.display !== undefined ? item.display : true,
               tags: ["InSystem"],
@@ -291,7 +291,7 @@ export default function EditStorePopUpContent({
                   ? item.type === "ingredient"
                     ? "Ingrédient"
                     : "Catégorie"
-                  : "Ingrédient", // Default to Ingrédient if type is unclear
+                  : "Ingrédient",
               status: item.availability ? "Active" : "Inactive",
               display: item.display !== undefined ? item.display : true,
               tags: ["InSystem"],
@@ -317,7 +317,6 @@ export default function EditStorePopUpContent({
           // Set location LatLng data if available
           if (data.storeMapLocation) {
             try {
-              // Try to parse as JSON first (for new format)
               const locationData = JSON.parse(data.storeMapLocation)
               const locationLatLng = {
                 value: locationData.placeId || "",
@@ -1010,7 +1009,7 @@ export default function EditStorePopUpContent({
     const entry: AvailableItem = {
       ingOrCatId: selected ? Number(selected.id) : 0,
       name,
-      type: "Ingredient",
+      type: activeLang === "en" ? "Ingredient" : "Ingrédient",
       tags: ["InSystem"],
       display: true,
       quantity: "",
@@ -1032,7 +1031,7 @@ export default function EditStorePopUpContent({
     } catch {
       translatedName = name
     }
-    const translatedType = getTranslatedType(entry.type, oppLang)
+    const translatedType = oppLang === "en" ? "Ingredient" : "Ingrédient"
     const translatedStatus = getTranslatedStatus(entry.status, oppLang)
     const translatedEntry: AvailableItem = {
       ...entry,
@@ -1065,7 +1064,7 @@ export default function EditStorePopUpContent({
     const entry: AvailableItem = {
       ingOrCatId: selectedCategory ? Number(selectedCategory.id) : 0,
       name,
-      type: "Category",
+      type: activeLang === "en" ? "Category" : "Catégorie",
       tags: ["InSystem"],
       display: true,
       quantity: "",
@@ -1087,7 +1086,7 @@ export default function EditStorePopUpContent({
     } catch {
       translatedName = name
     }
-    const translatedType = getTranslatedType(entry.type, oppLang)
+    const translatedType = oppLang === "en" ? "Category" : "Catégorie"
     const translatedStatus = getTranslatedStatus(entry.status, oppLang)
     const translatedEntry: AvailableItem = {
       ...entry,
@@ -1614,7 +1613,12 @@ export default function EditStorePopUpContent({
                     value={categoryInput}
                     onInputChange={setCategoryInput}
                     onSelect={item => {
-                      setSelectedCategory(item)
+                      const originalTag = categoryTags.find(
+                        tag => tag.id === item.id
+                      )
+                      if (originalTag) {
+                        setSelectedCategory(originalTag)
+                      }
                       setCategoryInput(item.name)
                     }}
                   />
