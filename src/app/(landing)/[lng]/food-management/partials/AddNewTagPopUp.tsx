@@ -82,6 +82,17 @@ export default function AddNewTagPopUp({
     void loadTranslations()
   }, [activeLang])
 
+  // Clear tagData when popup opens for the first time
+  useEffect(() => {
+    if (open) {
+      clearAllTagData()
+      form.reset({
+        category,
+        tagName: ""
+      })
+    }
+  }, [open, category, form])
+
   // Update form values when active language or tagData changes
   useEffect(() => {
     const currentLangData = tagData[activeLang]
@@ -100,6 +111,17 @@ export default function AddNewTagPopUp({
     if (!val) setActiveLang("en")
   }
 
+  // Helper function to clear all tag data
+  const clearAllTagData = (): void => {
+    setTranslationField("tagData", "en", "tagName", "")
+    setTranslationField("tagData", "fr", "tagName", "")
+    setTranslationField("tagData", "en", "category", "")
+    setTranslationField("tagData", "fr", "category", "")
+    setActiveLang("en")
+    setAllowMultiLang(false)
+    sessionStorage.removeItem("tag-store")
+  }
+
   const onSubmit = async (data: z.infer<typeof TagSchema>): Promise<void> => {
     try {
       setIsLoading(true)
@@ -111,8 +133,8 @@ export default function AddNewTagPopUp({
         toast.success("Tag added successfully!", {
           description: response.data.message
         })
-        // Remove session storage
-        sessionStorage.removeItem("tag-store")
+        // Clear all tag data and session storage
+        clearAllTagData()
         form.reset({
           category,
           tagName: ""
@@ -156,30 +178,21 @@ export default function AddNewTagPopUp({
   }
 
   const handleReset = async (): Promise<void> => {
+    clearAllTagData()
     form.reset({
       category,
       tagName: ""
     })
-    sessionStorage.removeItem("tag-store")
-
     onClose()
   }
 
   const handleClosePopup = (isOpen: boolean): void => {
     if (!isOpen) {
-      sessionStorage.removeItem("tag-store")
+      clearAllTagData()
       form.reset({
         category,
         tagName: ""
       })
-      // Clear all tag data
-      setTranslationField("tagData", "en", "tagName", "")
-      setTranslationField("tagData", "fr", "tagName", "")
-      setTranslationField("tagData", "en", "category", "")
-      setTranslationField("tagData", "fr", "category", "")
-      setActiveLang("en")
-      setAllowMultiLang(false)
-
       onClose()
     }
   }
