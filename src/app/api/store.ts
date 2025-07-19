@@ -60,6 +60,24 @@ export const getStoreById = async (token: string, id: number): Promise<any> => {
   }
 }
 
+// get user favorites (foods and recipes) by user id
+export const getUserFavorites = async (
+  token: string,
+  userId: number
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(
+      `/user-favourite/admin/all/${userId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    )
+    return response
+  } catch (error) {
+    return error
+  }
+}
+
 // update store by id
 export const updateStoreById = async (
   token: string,
@@ -79,5 +97,3 @@ export const updateStoreById = async (
     return error
   }
 }
-
-
