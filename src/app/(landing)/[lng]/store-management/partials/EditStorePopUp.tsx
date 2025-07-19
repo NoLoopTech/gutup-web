@@ -57,7 +57,7 @@ export default function EditStorePopUp({
           }}
         >
           <DialogTitle>
-            {translations.editStore ?? "Edit Store"}
+            {translations.editStore ?? "View / Edit Store"}
           </DialogTitle>
 
           <Tabs

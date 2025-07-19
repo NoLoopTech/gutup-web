@@ -47,7 +47,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog"
-import ViewStorePopUp from "./ViewStorePopUp"
 import EditStorePopUp from "./EditStorePopUp"
 import { transformStoreDataToApiRequest } from "@/helpers/storeHelpers"
 
@@ -299,20 +298,6 @@ export default function StoreManagementPage({
     setConfirmDeleteOpen(false)
   }
 
-  // handle view store
-  const handleViewStore = (store: StoreManagementDataType): void => {
-    setSelectedStoreForView(store)
-    setSelectedStoreId(store.id ?? null)
-    setViewStoreOpen(true)
-  }
-
-  // handle close view store popup
-  const handleCloseViewStorePopup = (): void => {
-    setViewStoreOpen(false)
-    setSelectedStoreForView(null)
-    setSelectedStoreId(null)
-  }
-
   // handle edit store
   const handleEditStore = (store: StoreManagementDataType): void => {
     setSelectedStoreId(store.id ?? null)
@@ -412,13 +397,13 @@ export default function StoreManagementPage({
         const ingredientsCount = row.ingredients?.length ?? 0
         const categoriesCount = row.categories?.length ?? 0
         const ingAndCatCount = row.ingAndCatData?.length ?? 0
-        
+
         // Use ingredients + categories if available, otherwise fall back to ingAndCatData
         const totalCount =
           row.ingredients ?? row.categories
             ? ingredientsCount + categoriesCount
             : ingAndCatCount
-        
+
         return <Label className="text-gray-500">{totalCount} Available</Label>
       }
     },
@@ -454,13 +439,6 @@ export default function StoreManagementPage({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem
-              onClick={() => {
-                handleViewStore(row)
-              }}
-            >
-              View
-            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 handleEditStore(row)
@@ -602,14 +580,6 @@ export default function StoreManagementPage({
         onClose={handleCloseAddStorePopUp}
         onAddStore={handleAddStore}
         isLoading={isLoading}
-      />
-
-      {/* view store popup */}
-      <ViewStorePopUp
-        open={viewStoreOpen}
-        onClose={handleCloseViewStorePopup}
-        storeId={selectedStoreId}
-        token={token}
       />
 
       {/* edit store popup */}
