@@ -39,6 +39,9 @@ import { Trash } from "lucide-react"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { getAllTags } from "@/app/api/tags"
 import { getStoreCategories } from "@/app/api/store"
+import { getLocationDetails } from "@/app/api/location"
+
+import LocationDropdown from "@/components/Shared/dropdown/LocationDropdown"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -78,7 +81,7 @@ interface StoreType {
 }
 
 interface AvailableItem {
-  id: number
+  ingOrCatId: number
   name: string
   type: string
   status: "Active" | "Inactive"
@@ -86,6 +89,13 @@ interface AvailableItem {
   tags: string[]
   quantity: string
   isMain: boolean
+}
+
+export interface OptionType {
+  value: string
+  label: string
+  lat?: number
+  lng?: number
 }
 
 export default function AddStorePopUpContent({
@@ -118,6 +128,8 @@ export default function AddStorePopUpContent({
   const [ingredientInput, setIngredientInput] = useState<string>("")
   const [categoryInput, setCategoryInput] = useState<string>("")
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
+  const [selectedLocationName, setSelectedLocationName] =
+    useState<OptionType | null>(null)
 
   // Validation schema using Zod
   const AddStoreSchema = z.object({
@@ -176,6 +188,14 @@ export default function AddStorePopUpContent({
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : ""
 
+  // Initialize selected location from stored data
+  useEffect(() => {
+    const currentStoreData = storeData[activeLang]
+    if (currentStoreData?.storeLocationLatLng) {
+      setSelectedLocationName(currentStoreData.storeLocationLatLng)
+    }
+  }, [activeLang, storeData])
+
   // fetch once on mount
   useEffect(() => {
     const fetchFoods = async (): Promise<void> => {
@@ -212,7 +232,6 @@ export default function AddStorePopUpContent({
       try {
         const res = await getStoreCategories()
         if (res && res.status === 200 && Array.isArray(res.data)) {
-          // Filter data based on Tag field
           const categories = res.data.filter(
             (item: any) => item.Tag === "Category"
           )
@@ -240,9 +259,27 @@ export default function AddStorePopUpContent({
     defaultValues: {
       ...storeData[activeLang],
       category: storeData[activeLang]?.category || "",
-      storeImage: storeData[activeLang]?.storeImage || ""
+      storeImage: storeData[activeLang]?.storeImage || "",
+      storeLocation: storeData[activeLang]?.storeLocation || ""
     }
   })
+
+  // Update form when lang changes
+  useEffect(() => {
+    const currentStoreData = storeData[activeLang]
+    if (currentStoreData?.storeLocationLatLng) {
+      setSelectedLocationName(currentStoreData.storeLocationLatLng)
+    } else {
+      setSelectedLocationName(null)
+    }
+
+    form.reset({
+      ...currentStoreData,
+      category: currentStoreData?.category || "",
+      storeImage: currentStoreData?.storeImage || "",
+      storeLocation: currentStoreData?.storeLocation || ""
+    })
+  }, [activeLang, form, storeData])
 
   // Convert store categories to dropdown options
   const getCategoryOptions = (): Option[] => {
@@ -289,7 +326,7 @@ export default function AddStorePopUpContent({
       }
     }
 
-    // Convert stored TagName/TagNameFr back to IDs for form
+    // Convert stored TagName/TagNameFr
     let categoryId = ""
     let storeTypeId = ""
 
@@ -315,7 +352,8 @@ export default function AddStorePopUpContent({
       ...currentStoreData,
       storeImage: currentStoreData?.storeImage || "",
       category: categoryId,
-      storeType: storeTypeId
+      storeType: storeTypeId,
+      storeLocation: currentStoreData?.storeLocation || ""
     }
 
     form.reset(formData)
@@ -323,11 +361,64 @@ export default function AddStorePopUpContent({
     void recreatePreview()
   }, [activeLang, form, storeData, storeCategories, storeTypes])
 
+  const handleLocationName = (value: OptionType | null): void => {
+    setSelectedLocationName(value)
+  }
+
+  const handleLocationSelect = async (value: string[]): Promise<void> => {
+    const placeId = value[0]
+
+    const location = await getLocationDetails(placeId)
+
+    if (!location) {
+      toast.error("Failed to load location details.")
+      return
+    }
+
+    const { name, country, lat, lng } = location
+
+    const selectedLocation = {
+      value: placeId,
+      label: `${name}, ${country}`,
+      lat,
+      lng
+    }
+
+    setSelectedLocationName(selectedLocation)
+
+    form.setValue("storeLocation", selectedLocation.label)
+
+    setTranslationField(
+      "storeData",
+      activeLang,
+      "storeLocation",
+      selectedLocation.label
+    )
+    setTranslationField(
+      "storeData",
+      activeLang === "en" ? "fr" : "en",
+      "storeLocation",
+      selectedLocation.label
+    )
+
+    setTranslationField(
+      "storeData",
+      activeLang,
+      "storeLocationLatLng",
+      selectedLocation
+    )
+    setTranslationField(
+      "storeData",
+      activeLang === "en" ? "fr" : "en",
+      "storeLocationLatLng",
+      selectedLocation
+    )
+  }
+
   // Input change handler for fields that need translation
   const handleInputChange = (
     fieldName:
       | "storeName"
-      | "storeLocation"
       | "phone"
       | "email"
       | "website"
@@ -343,7 +434,6 @@ export default function AddStorePopUpContent({
   const handleInputBlur = async (
     fieldName:
       | "storeName"
-      | "storeLocation"
       | "phone"
       | "email"
       | "website"
@@ -375,7 +465,7 @@ export default function AddStorePopUpContent({
       form.setValue(name, value)
     }
 
-  // Function to update select fields (category, storeType)
+  // Function to update select fields
   const handleSelectChange = (
     fieldName: "category" | "storeType",
     value: string
@@ -485,7 +575,7 @@ export default function AddStorePopUpContent({
           size="icon"
           className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
           onClick={() => {
-            handleDeleteAvailItem(row.id)
+            handleDeleteAvailItem(row.ingOrCatId)
           }}
           title={translations.delete}
         >
@@ -498,7 +588,7 @@ export default function AddStorePopUpContent({
 
   // Delete handler for availData
   const handleDeleteAvailItem = (id: number): void => {
-    const updated = availData.filter(item => item.id !== id)
+    const updated = availData.filter(item => item.ingOrCatId !== id)
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
     setTranslationField("storeData", activeLang, "availData", updated)
@@ -548,7 +638,7 @@ export default function AddStorePopUpContent({
     if (!name) return
 
     const entry: AvailableItem = {
-      id: selected ? Number(selected.id) : 0,
+      ingOrCatId: selected ? Number(selected.id) : 0,
       name,
       type: "Ingredient",
       tags: ["InSystem"],
@@ -602,7 +692,7 @@ export default function AddStorePopUpContent({
     if (!name) return
 
     const entry: AvailableItem = {
-      id: selectedCategory ? Number(selectedCategory.id) : 0,
+      ingOrCatId: selectedCategory ? Number(selectedCategory.id) : 0,
       name,
       type: "Category",
       tags: ["InSystem"],
@@ -798,15 +888,11 @@ export default function AddStorePopUpContent({
                       {translations.storeLocation}
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder={translations.enterStoreLocation}
-                        {...field}
-                        onChange={e => {
-                          handleInputChange("storeLocation", e.target.value)
-                        }}
-                        onBlur={async () => {
-                          await handleInputBlur("storeLocation", field.value)
-                        }}
+                      <LocationDropdown
+                        key={selectedLocationName?.value ?? activeLang}
+                        selectedOption={selectedLocationName}
+                        onSelect={handleLocationSelect}
+                        onSelectLocation={handleLocationName}
                       />
                     </FormControl>
                     <FormMessage />
@@ -965,7 +1051,6 @@ export default function AddStorePopUpContent({
                       />
                     </FormControl>
                     <FormMessage />
-                    {/* Add a small informational note */}
                     <div className="text-xs text-gray-500 mt-1">
                       {translations.required}
                     </div>
@@ -995,7 +1080,6 @@ export default function AddStorePopUpContent({
                       />
                     </FormControl>
                     <FormMessage />
-                    {/* Add a small informational note */}
                     <div className="text-xs text-gray-500 mt-1">
                       {translations.required}
                     </div>

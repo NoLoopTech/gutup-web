@@ -47,7 +47,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog"
-import ViewStorePopUp from "./ViewStorePopUp"
 import EditStorePopUp from "./EditStorePopUp"
 import { transformStoreDataToApiRequest } from "@/helpers/storeHelpers"
 
@@ -238,8 +237,7 @@ export default function StoreManagementPage({
       }
 
       const response = await AddNewStore(token, requestBody)
-
-      if (response?.data) {
+      if (response && (response.status === 201 || response.status === 200)) {
         toast.success(
           translations.formSubmittedSuccessfully || "Store added successfully"
         )
@@ -249,6 +247,7 @@ export default function StoreManagementPage({
         sessionStorage.removeItem("store-store")
       } else {
         console.error("Unexpected response structure:", response)
+        console.error("Response status was:", response?.status)
         toast.error(translations.storeCreationFailed || "Failed to add store")
       }
     } catch (error) {
@@ -297,20 +296,6 @@ export default function StoreManagementPage({
   // handle close delete confirmation popup
   const handleCloseDeleteConfirmationPopup = (): void => {
     setConfirmDeleteOpen(false)
-  }
-
-  // handle view store
-  const handleViewStore = (store: StoreManagementDataType): void => {
-    setSelectedStoreForView(store)
-    setSelectedStoreId(store.id ?? null)
-    setViewStoreOpen(true)
-  }
-
-  // handle close view store popup
-  const handleCloseViewStorePopup = (): void => {
-    setViewStoreOpen(false)
-    setSelectedStoreForView(null)
-    setSelectedStoreId(null)
   }
 
   // handle edit store
@@ -408,11 +393,19 @@ export default function StoreManagementPage({
     {
       accessor: "ingredients",
       header: "Products Available",
-      cell: (row: StoreManagementDataType) => (
-        <Label className="text-gray-500">
-          {row.ingAndCatData?.length ?? 0} Available
-        </Label>
-      )
+      cell: (row: StoreManagementDataType) => {
+        const ingredientsCount = row.ingredients?.length ?? 0
+        const categoriesCount = row.categories?.length ?? 0
+        const ingAndCatCount = row.ingAndCatData?.length ?? 0
+
+        // Use ingredients + categories if available, otherwise fall back to ingAndCatData
+        const totalCount =
+          row.ingredients ?? row.categories
+            ? ingredientsCount + categoriesCount
+            : ingAndCatCount
+
+        return <Label className="text-gray-500">{totalCount} Available</Label>
+      }
     },
     {
       accessor: "shopStatus",
@@ -446,13 +439,6 @@ export default function StoreManagementPage({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem
-              onClick={() => {
-                handleViewStore(row)
-              }}
-            >
-              View
-            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 handleEditStore(row)
@@ -522,7 +508,6 @@ export default function StoreManagementPage({
     <div className="space-y-4">
       <div className="flex flex-wrap justify-between gap-2">
         <div className="flex flex-wrap w-[80%] gap-2">
-          {/* search stores by name */}
           <Input
             className="max-w-xs"
             placeholder="Search by store name..."
@@ -595,14 +580,6 @@ export default function StoreManagementPage({
         onClose={handleCloseAddStorePopUp}
         onAddStore={handleAddStore}
         isLoading={isLoading}
-      />
-
-      {/* view store popup */}
-      <ViewStorePopUp
-        open={viewStoreOpen}
-        onClose={handleCloseViewStorePopup}
-        storeId={selectedStoreId}
-        token={token}
       />
 
       {/* edit store popup */}

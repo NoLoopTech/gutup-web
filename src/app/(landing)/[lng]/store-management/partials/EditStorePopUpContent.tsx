@@ -39,6 +39,9 @@ import { Trash } from "lucide-react"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { getAllTags } from "@/app/api/tags"
 import { getStoreById, getStoreCategories } from "@/app/api/store"
+import { getLocationDetails } from "@/app/api/location"
+
+import LocationDropdown from "@/components/Shared/dropdown/LocationDropdown"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -78,7 +81,7 @@ interface StoreType {
 }
 
 interface AvailableItem {
-  id: number
+  ingOrCatId: number
   name: string
   type: string
   status: "Active" | "Inactive"
@@ -86,6 +89,13 @@ interface AvailableItem {
   tags: string[]
   quantity: string
   isMain: boolean
+}
+
+export interface OptionType {
+  value: string
+  label: string
+  lat?: number
+  lng?: number
 }
 
 interface StoreData {
@@ -150,6 +160,8 @@ export default function EditStorePopUpContent({
   const [ingredientInput, setIngredientInput] = useState<string>("")
   const [categoryInput, setCategoryInput] = useState<string>("")
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
+  const [selectedLocationName, setSelectedLocationName] =
+    useState<OptionType | null>(null)
   const [, setCurrentStoreData] = useState<StoreData | null>(null)
   const [isDataLoaded, setIsDataLoaded] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
@@ -213,7 +225,8 @@ export default function EditStorePopUpContent({
     defaultValues: {
       ...storeData[activeLang],
       category: storeData[activeLang]?.category || "",
-      storeImage: storeData[activeLang]?.storeImage || ""
+      storeImage: storeData[activeLang]?.storeImage || "",
+      availData: storeData[activeLang]?.availData || []
     }
   })
 
@@ -230,30 +243,57 @@ export default function EditStorePopUpContent({
           const data = response.data
           setCurrentStoreData(data)
 
-          // Transform ingAndCatData to availData format for both languages
-          const transformedAvailDataEn =
-            data.ingAndCatData?.map((item: any, index: number) => ({
-              id: item.id || index + 1,
+          // Transform ingredients and categories data
+          const ingredientsData = data.ingredients || []
+          const categoriesData = data.categories || data.ingAndCatData || []
+
+          // Combine ingredients and categories
+          const allItemsData = [
+            ...ingredientsData,
+            ...categoriesData.filter(
+              (cat: any) =>
+                !ingredientsData.some(
+                  (ing: any) =>
+                    (ing.id || ing.foodId) === (cat.id || cat.foodId)
+                )
+            )
+          ]
+
+          const transformedAvailDataEn: AvailableItem[] =
+            allItemsData.map((item: any, index: number) => ({
+              ingOrCatId:
+                item.foodId || item.ingOrCatId || item.id || index + 1,
               name: item.name,
-              type: item.type === "ingredient" ? "Ingredient" : "Category",
-              status: item.availability
-                ? "Active"
-                : ("Inactive" as "Active" | "Inactive"),
-              display: item.display,
+              type:
+                item.type === "ingredient" || item.type === "category"
+                  ? item.type === "ingredient"
+                    ? "Ingredient"
+                    : "Category"
+                  : "Ingredient",
+              status: item.availability ? "Active" : "Inactive",
+              display: item.display !== undefined ? item.display : true,
               tags: ["InSystem"],
               quantity: "",
               isMain: false
             })) || []
 
-          const transformedAvailDataFr =
-            data.ingAndCatData?.map((item: any, index: number) => ({
-              id: item.id || index + 1,
+          const transformedAvailDataFr: AvailableItem[] =
+            allItemsData.map((item: any, index: number) => ({
+              ingOrCatId:
+                item.foodId || item.ingOrCatId || item.id || index + 1,
               name: item.nameFR || item.name,
-              type: item.typeFR === "ingrédient" ? "Ingrédient" : "Catégorie",
-              status: item.availability
-                ? "Actif"
-                : ("Inactif" as "Active" | "Inactive"),
-              display: item.display,
+              type:
+                item.typeFR === "ingrédient" || item.typeFR === "catégorie"
+                  ? item.typeFR === "ingrédient"
+                    ? "Ingrédient"
+                    : "Catégorie"
+                  : item.type === "ingredient" || item.type === "category"
+                  ? item.type === "ingredient"
+                    ? "Ingrédient"
+                    : "Catégorie"
+                  : "Ingrédient",
+              status: item.availability ? "Active" : "Inactive",
+              display: item.display !== undefined ? item.display : true,
               tags: ["InSystem"],
               quantity: "",
               isMain: false
@@ -274,6 +314,68 @@ export default function EditStorePopUpContent({
             "storeLocation",
             data.storeLocation
           )
+          // Set location LatLng data if available
+          if (data.storeMapLocation) {
+            try {
+              const locationData = JSON.parse(data.storeMapLocation)
+              const locationLatLng = {
+                value: locationData.placeId || "",
+                label: data.storeLocation,
+                lat: locationData.lat,
+                lng: locationData.lng
+              }
+              setTranslationField(
+                "storeData",
+                "en",
+                "storeLocationLatLng",
+                locationLatLng
+              )
+              setTranslationField(
+                "storeData",
+                "fr",
+                "storeLocationLatLng",
+                locationLatLng
+              )
+            } catch (error) {
+              const basicLocationLatLng = {
+                value: "",
+                label: data.storeLocation || data.storeMapLocation,
+                lat: undefined,
+                lng: undefined
+              }
+              setTranslationField(
+                "storeData",
+                "en",
+                "storeLocationLatLng",
+                basicLocationLatLng
+              )
+              setTranslationField(
+                "storeData",
+                "fr",
+                "storeLocationLatLng",
+                basicLocationLatLng
+              )
+            }
+          } else if (data.storeLocation) {
+            const basicLocationLatLng = {
+              value: "",
+              label: data.storeLocation,
+              lat: undefined,
+              lng: undefined
+            }
+            setTranslationField(
+              "storeData",
+              "en",
+              "storeLocationLatLng",
+              basicLocationLatLng
+            )
+            setTranslationField(
+              "storeData",
+              "fr",
+              "storeLocationLatLng",
+              basicLocationLatLng
+            )
+          }
           setTranslationField("storeData", "en", "storeType", data.storeType)
           setTranslationField(
             "storeData",
@@ -425,7 +527,6 @@ export default function EditStorePopUpContent({
       try {
         const res = await getStoreCategories()
         if (res && res.status === 200 && Array.isArray(res.data)) {
-          // Filter data based on Tag field
           const categories = res.data.filter(
             (item: any) => item.Tag === "Category"
           )
@@ -447,9 +548,37 @@ export default function EditStorePopUpContent({
     void fetchStoreData()
   }, [])
 
+  // Initialize selected location from stored data
+  useEffect(() => {
+    const currentStoreData = storeData[activeLang]
+    if (currentStoreData?.storeLocationLatLng) {
+      setSelectedLocationName(currentStoreData.storeLocationLatLng)
+    } else {
+      setSelectedLocationName(null)
+    }
+  }, [activeLang, storeData])
+
+  // Additional effect to ensure location is set when data is first loaded
+  useEffect(() => {
+    if (isDataLoaded) {
+      const currentStoreData = storeData[activeLang]
+      if (currentStoreData?.storeLocationLatLng) {
+        setSelectedLocationName(currentStoreData.storeLocationLatLng)
+      }
+    }
+  }, [isDataLoaded, activeLang, storeData])
+
   // Update form when lang changes or when session data changes
   React.useEffect(() => {
     const currentStoreData = storeData[activeLang]
+
+    // Update selected location
+    if (currentStoreData?.storeLocationLatLng) {
+      setSelectedLocationName(currentStoreData.storeLocationLatLng)
+    } else {
+      setSelectedLocationName(null)
+    }
+
     const recreatePreview = async (): Promise<void> => {
       if (currentStoreData?.storeImage) {
         try {
@@ -496,12 +625,12 @@ export default function EditStorePopUpContent({
       ...currentStoreData,
       storeImage: currentStoreData?.storeImage || "",
       category: categoryId,
-      storeType: storeTypeId
+      storeType: storeTypeId,
+      availData: currentStoreData?.availData || []
     }
 
     if (isDataLoaded && Object.keys(formData).length > 0) {
       form.reset(formData, { keepDirty: false })
-      // Reset hasChanges after form reset
       setHasChanges(false)
     }
 
@@ -579,7 +708,6 @@ export default function EditStorePopUpContent({
   const handleInputChange = (
     fieldName:
       | "storeName"
-      | "storeLocation"
       | "phone"
       | "email"
       | "website"
@@ -596,7 +724,6 @@ export default function EditStorePopUpContent({
   const handleInputBlur = async (
     fieldName:
       | "storeName"
-      | "storeLocation"
       | "phone"
       | "email"
       | "website"
@@ -607,6 +734,62 @@ export default function EditStorePopUpContent({
     if (activeLang === "en" && value.trim()) {
       setTranslationField("storeData", "fr", fieldName, value)
     }
+  }
+
+  const handleLocationName = (value: OptionType | null): void => {
+    setSelectedLocationName(value)
+  }
+
+  const handleLocationSelect = async (value: string[]): Promise<void> => {
+    const placeId = value[0]
+
+    const location = await getLocationDetails(placeId)
+
+    if (!location) {
+      toast.error("Failed to load location details.")
+      return
+    }
+
+    const { name, country, lat, lng } = location
+
+    const selectedLocation = {
+      value: placeId,
+      label: `${name}, ${country}`,
+      lat,
+      lng
+    }
+
+    setSelectedLocationName(selectedLocation)
+
+    form.setValue("storeLocation", selectedLocation.label)
+
+    setTranslationField(
+      "storeData",
+      activeLang,
+      "storeLocation",
+      selectedLocation.label
+    )
+    setTranslationField(
+      "storeData",
+      activeLang === "en" ? "fr" : "en",
+      "storeLocation",
+      selectedLocation.label
+    )
+
+    setTranslationField(
+      "storeData",
+      activeLang,
+      "storeLocationLatLng",
+      selectedLocation
+    )
+    setTranslationField(
+      "storeData",
+      activeLang === "en" ? "fr" : "en",
+      "storeLocationLatLng",
+      selectedLocation
+    )
+
+    setHasChanges(true)
   }
 
   const handleSubscriptionToggle = (value: boolean): void => {
@@ -732,7 +915,33 @@ export default function EditStorePopUpContent({
     {
       header: translations.displayStatus,
       accessor: (row: AvailableItem) => (
-        <Switch checked={row.display} className="scale-75" />
+        <Switch
+          checked={row.display}
+          className="scale-75"
+          onCheckedChange={checked => {
+            // Update the display status when switch is toggled
+            const updated = availData.map(item =>
+              item.ingOrCatId === row.ingOrCatId
+                ? { ...item, display: checked }
+                : item
+            )
+            setAvailData(updated)
+            form.setValue("availData", updated, { shouldValidate: true })
+            setTranslationField("storeData", activeLang, "availData", updated)
+
+            // Also update opposite language
+            const oppLang = activeLang === "en" ? "fr" : "en"
+            const oppCurrentData =
+              (storeData[oppLang]?.availData as AvailableItem[]) || []
+            const oppUpdated = oppCurrentData.map(item =>
+              item.ingOrCatId === row.ingOrCatId
+                ? { ...item, display: checked }
+                : item
+            )
+            setTranslationField("storeData", oppLang, "availData", oppUpdated)
+            setHasChanges(true)
+          }}
+        />
       )
     },
     {
@@ -744,7 +953,7 @@ export default function EditStorePopUpContent({
           size="icon"
           className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
           onClick={() => {
-            handleDeleteAvailItem(row.id)
+            handleDeleteAvailItem(row.ingOrCatId)
           }}
           title={translations.delete}
         >
@@ -757,7 +966,7 @@ export default function EditStorePopUpContent({
 
   // Delete handler for availData
   const handleDeleteAvailItem = (id: number): void => {
-    const updated = availData.filter(item => item.id !== id)
+    const updated = availData.filter(item => item.ingOrCatId !== id)
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
     setTranslationField("storeData", activeLang, "availData", updated)
@@ -766,7 +975,7 @@ export default function EditStorePopUpContent({
     const oppLang = activeLang === "en" ? "fr" : "en"
     const oppCurrentData =
       (storeData[oppLang]?.availData as AvailableItem[]) || []
-    const oppUpdated = oppCurrentData.filter(item => item.id !== id)
+    const oppUpdated = oppCurrentData.filter(item => item.ingOrCatId !== id)
     setTranslationField("storeData", oppLang, "availData", oppUpdated)
 
     setHasChanges(true)
@@ -798,9 +1007,9 @@ export default function EditStorePopUpContent({
     if (!name) return
 
     const entry: AvailableItem = {
-      id: selected ? Number(selected.id) : 0,
+      ingOrCatId: selected ? Number(selected.id) : 0,
       name,
-      type: "Ingredient",
+      type: activeLang === "en" ? "Ingredient" : "Ingrédient",
       tags: ["InSystem"],
       display: true,
       quantity: "",
@@ -822,7 +1031,7 @@ export default function EditStorePopUpContent({
     } catch {
       translatedName = name
     }
-    const translatedType = getTranslatedType(entry.type, oppLang)
+    const translatedType = oppLang === "en" ? "Ingredient" : "Ingrédient"
     const translatedStatus = getTranslatedStatus(entry.status, oppLang)
     const translatedEntry: AvailableItem = {
       ...entry,
@@ -853,9 +1062,9 @@ export default function EditStorePopUpContent({
     if (!name) return
 
     const entry: AvailableItem = {
-      id: selectedCategory ? Number(selectedCategory.id) : 0,
+      ingOrCatId: selectedCategory ? Number(selectedCategory.id) : 0,
       name,
-      type: "Category",
+      type: activeLang === "en" ? "Category" : "Catégorie",
       tags: ["InSystem"],
       display: true,
       quantity: "",
@@ -877,7 +1086,7 @@ export default function EditStorePopUpContent({
     } catch {
       translatedName = name
     }
-    const translatedType = getTranslatedType(entry.type, oppLang)
+    const translatedType = oppLang === "en" ? "Category" : "Catégorie"
     const translatedStatus = getTranslatedStatus(entry.status, oppLang)
     const translatedEntry: AvailableItem = {
       ...entry,
@@ -1078,15 +1287,11 @@ export default function EditStorePopUpContent({
                       {translations.storeLocation}
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder={translations.enterStoreLocation}
-                        {...field}
-                        onChange={e => {
-                          handleInputChange("storeLocation", e.target.value)
-                        }}
-                        onBlur={async () => {
-                          await handleInputBlur("storeLocation", field.value)
-                        }}
+                      <LocationDropdown
+                        key={selectedLocationName?.value ?? activeLang}
+                        selectedOption={selectedLocationName}
+                        onSelect={handleLocationSelect}
+                        onSelectLocation={handleLocationName}
                       />
                     </FormControl>
                     <FormMessage />
@@ -1408,7 +1613,12 @@ export default function EditStorePopUpContent({
                     value={categoryInput}
                     onInputChange={setCategoryInput}
                     onSelect={item => {
-                      setSelectedCategory(item)
+                      const originalTag = categoryTags.find(
+                        tag => tag.id === item.id
+                      )
+                      if (originalTag) {
+                        setSelectedCategory(originalTag)
+                      }
                       setCategoryInput(item.name)
                     }}
                   />

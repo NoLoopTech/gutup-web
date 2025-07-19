@@ -7,6 +7,7 @@ interface StoreField {
   storeName: string
   category: string
   storeLocation: string
+  storeLocationLatLng: any // Store location coordinates and details
   storeType: string
   subscriptionType: boolean
   timeFrom: string
@@ -39,7 +40,7 @@ interface StoreStoreState {
     section: "storeData",
     lang: "en" | "fr",
     field: keyof StoreField,
-    value: string | string[] | null
+    value: string | string[] | boolean | null | any
   ) => void
 
   resetForm: () => void
@@ -49,6 +50,7 @@ const emptyFields: StoreField = {
   storeName: "",
   category: "",
   storeLocation: "",
+  storeLocationLatLng: null,
   storeType: "",
   subscriptionType: false,
   timeFrom: "",
