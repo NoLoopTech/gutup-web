@@ -89,7 +89,7 @@ export default function RecipeManagementPage({
   const [viewRecipeId, setViewRecipeId] = useState<number>(0)
   const [tableData, setTableData] = useState<TableDataTypes[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const { resetRecipe } = useRecipeStore()
+  const { resetRecipe, removeTag } = useRecipeStore()
 
   // handle get users
   const getRecipes = async (): Promise<void> => {

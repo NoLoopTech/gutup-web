@@ -3,7 +3,7 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { X } from "lucide-react"
-import React, { useState, type KeyboardEvent } from "react"
+import React, { useEffect, useState, type KeyboardEvent } from "react"
 import { useFormContext } from "react-hook-form"
 
 interface Props {
@@ -46,6 +46,10 @@ export default function LableInput({
   } = useFormContext()
   const [value, setValueState] = useState("")
   const [items, setItems] = useState<string[]>(benefits)
+
+  useEffect(() => {
+    setItems(benefits)
+  }, [benefits])
 
   const updateItems = (updatedItems: string[]): void => {
     setItems(updatedItems)

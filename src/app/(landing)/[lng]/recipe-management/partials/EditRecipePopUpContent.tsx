@@ -124,6 +124,15 @@ export default function EditRecipePopUpContent({
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [availData, setAvailData] = useState<Ingredient[]>([])
 
+  const [benefits, setBenefits] = useState<string[]>([])
+
+  useEffect(() => {
+    // Initialize the benefits state with data from translationData store
+    if (translationData[activeLang]?.benefits) {
+      setBenefits(translationData[activeLang].benefits)
+    }
+  }, [activeLang, translationData])
+
   const RecipeSchema = z.object({
     name: z
       .string()
@@ -607,7 +616,7 @@ export default function EditRecipePopUpContent({
     )
 
     setAvailData(
-      (translationData.en.ingredientData || []).map(item => ({
+      (translationData[activeLang].ingredientData || []).map(item => ({
         available: true,
         display: true,
         ...item
@@ -811,7 +820,6 @@ export default function EditRecipePopUpContent({
               />
             </div>
           </div>
-
           <div className="w-[100%]">
             <FormField
               control={form.control}
@@ -820,7 +828,7 @@ export default function EditRecipePopUpContent({
                 <LableInput
                   title={translations.healthBenefits}
                   placeholder={translations.healthBenefits}
-                  benefits={field.value || ["sdasd", "sdasdas"]}
+                  benefits={benefits || []}
                   name="benefits"
                   width="w-[32%]"
                   activeLang={activeLang}
