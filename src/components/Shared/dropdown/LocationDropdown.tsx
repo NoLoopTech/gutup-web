@@ -6,7 +6,7 @@ interface LocationDropdownProps {
   onSelect: (selectedOptions: string[]) => void
   errorMessage?: string
   selectedOption: OptionType | null
-  defaultLocation: OptionType
+  defaultLocation?: OptionType
   onSelectLocation: (selectedOptions: OptionType) => void
 }
 

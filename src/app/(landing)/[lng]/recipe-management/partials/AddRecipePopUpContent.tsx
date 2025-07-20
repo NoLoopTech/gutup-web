@@ -12,7 +12,6 @@ import { CustomTable } from "@/components/Shared/Table/CustomTable"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { type RecipeFields } from "@/stores/useRecipeStore"
-import LabelInput from "@/components/Shared/LableInput/LableInput"
 import { Trash } from "lucide-react"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import {
@@ -38,25 +37,22 @@ import { useRecipeStore } from "@/stores/useRecipeStore"
 import { type translationsTypes } from "@/types/recipeTypes"
 import { getAllTagsByCategory } from "@/app/api/tags"
 import { getAllFoods } from "@/app/api/foods"
-import {
-  deleteImageFromFirebase,
-  uploadImageToFirebase
-} from "@/lib/firebaseImageUtils"
+import LableInput from "@/components/Shared/LableInput/LableInput"
+import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 
 interface Food {
-  id: string
+  id: number
   name: string
+  status: boolean
 }
 
 interface Ingredient {
-  id: number
-  name: string
-  type: string
-  status: "Active" | "Inactive"
-  display: boolean
+  foodId: number
+  ingredientName: string
   quantity: string
-  isMain: boolean
-  tags: string[]
+  mainIngredient: boolean
+  available: boolean
+  display: boolean
 }
 interface Option {
   value: string
@@ -90,13 +86,6 @@ const seasonOptions: Record<string, Option[]> = {
     { value: "autmn", label: "Automne" },
     { value: "winter", label: "Hiver" }
   ]
-}
-
-// Define function for handling RichTextEditor changes
-
-// Define function for handling image upload changes
-const handleImageUpload = (field: any) => (files: File[] | null) => {
-  field.onChange(files && files.length > 0 ? files[0] : null)
 }
 
 // Dynamically load RichTextEditor with SSR disabled
@@ -134,7 +123,12 @@ export default function AddRecipePopUpContent({
   token: string
   onClose: () => void
 }): JSX.Element {
-  const { activeLang, setTranslationField, allowMultiLang } = useRecipeStore()
+  const {
+    activeLang,
+    setTranslationField,
+    allowMultiLang,
+    translations: translationData
+  } = useRecipeStore()
   const { translateText } = useTranslation()
   const [isTranslating, setIsTranslating] = useState(false)
   const [foods, setFoods] = useState<Food[]>([])
@@ -145,7 +139,10 @@ export default function AddRecipePopUpContent({
   const [ingredientInput, setIngredientInput] = useState<string>("")
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
-  // const [allBenefits, setAllBenefits] = useState<string[]>([])
+  const [benefitTags, setBenefitTags] = useState<
+    Array<{ tagName: string; tagNameFr: string }>
+  >([])
+  const [availData, setAvailData] = useState<Ingredient[]>([])
 
   const handleSelectSync =
     (field: any, key: keyof RecipeFields) => async (value: string) => {
@@ -337,48 +334,7 @@ export default function AddRecipePopUpContent({
     }
     return { onChange }
   }
-  // Dummy data
-  // const ingredientData: Ingredient[] = []
 
-  // // Table columns
-  // const ingredientColumns = [
-  //   {
-  //     header: translations.ingredientName,
-  //     accessor: "name" as const
-  //   },
-  //   {
-  //     header: translations.quantity,
-  //     accessor: "quantity" as const
-  //   },
-  //   {
-  //     header: translations.mainIngredient,
-  //     accessor: (row: Ingredient) => (
-  //       <Switch
-  //         checked={row.isMain}
-  //         className="scale-75"
-  //         style={{ minWidth: 28, minHeight: 16 }}
-  //       />
-  //     )
-  //   },
-  //   {
-  //     header: translations.availableInIngredients,
-  //     accessor: (row: Ingredient) =>
-  //       row.tags.includes("InSystem") ? (
-  //         <Badge className="bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors">
-  //           In the System
-  //         </Badge>
-  //       ) : (
-  //         <Button
-  //           variant="ghost"
-  //           className="text-secondary-blue text-xs px-2 py-1 flex items-center gap-1 hover:bg-transparent focus:bg-transparent active:bg-transparent"
-  //           size="sm"
-  //         >
-  //           <CircleFadingPlus size={14} />
-  //           Add to Ingredients
-  //         </Button>
-  //       )
-  //   }
-  // ]
   // Define functions to handle page changes
   const handlePageChange = (newPage: number): void => {
     setPage(newPage)
@@ -389,65 +345,59 @@ export default function AddRecipePopUpContent({
     setPage(1)
   }
 
-  const handleRecipeChange = (field: any) => (val: string) => {
-    field.onChange(val)
-  }
-  const form = useForm<RecipeSchemaType>({
+  const form = useForm<z.infer<typeof RecipeSchema>>({
     resolver: zodResolver(RecipeSchema),
-    defaultValues: {
-      name: "",
-      category: "",
-      season: "",
-      preparation: "",
-      rest: "",
-      persons: "",
-      benefits: [],
-      authorName: "",
-      ingredientData: [],
-      authorCategory: "",
-      phone: "",
-      email: "",
-      website: "",
-      recipe: "",
-      authorimage: "",
-      foodimage: ""
-    }
+    defaultValues: translationData[activeLang]
   })
 
+  const handleToggleDisplayStatus = (name: string) => {
+    // Create a new updatedAvailData array by mapping over the existing availData
+    const updatedAvailData = availData.map(item => {
+      if (item.ingredientName === name) {
+        return { ...item, display: !item.display }
+      }
+      return item
+    })
+
+    // Update the state with the new updatedAvailData
+    setAvailData(updatedAvailData)
+
+    // Optionally, update translations/store or any other global state
+    setTranslationField("en", "ingredientData", updatedAvailData)
+    setTranslationField("fr", "ingredientData", updatedAvailData)
+
+    // Optionally show a success message
+    toast.success("Display status updated successfully!")
+  }
+
   // table columns for available ingredients and categories
-  const ingredientColumns = [
+  const availColumns = [
     {
-      header: translations.ingredientName,
-      accessor: "name" as const
+      header: "Item",
+      accessor: "ingredientName" as const
     },
     {
-      header: "Type",
-      accessor: (row: Ingredient) => (
-        <Badge className="bg-white text-black text-xs px-2 py-1 rounded-md border border-gray-100 hover:bg-white">
-          {getTranslatedType(row.type, activeLang)}
-        </Badge>
-      )
-    },
-    {
-      header: translations.availabilityStatus,
+      header: "Status",
       accessor: (row: Ingredient) => (
         <Badge
           className={
-            row.tags.includes("InSystem")
+            row.available
               ? "bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors"
               : "bg-gray-200 text-black text-xs px-2 py-1 rounded-md border border-gray-500 hover:bg-gray-100 transition-colors"
           }
         >
-          {translations[
-            row.status.toLowerCase() as keyof typeof translations
-          ] ?? row.status}
+          {row.available ? "Active" : "Inactive"}
         </Badge>
       )
     },
     {
       header: "Display Status",
       accessor: (row: Ingredient) => (
-        <Switch checked={row.display} className="scale-75" />
+        <Switch
+          checked={row.display}
+          onCheckedChange={() => handleToggleDisplayStatus(row.ingredientName)}
+          className="scale-75"
+        />
       )
     },
     {
@@ -457,13 +407,13 @@ export default function AddRecipePopUpContent({
           type="button"
           variant="ghost"
           size="icon"
-          className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
+          className="w-8 h-8 border border-gray-300 hover:bg-gray-100"
           onClick={() => {
-            handleDeleteAvailItem(row.id)
+            handleDeleteAvailItem(row.foodId)
           }}
-          title="Delete"
+          title={"Delete"}
         >
-          <Trash className="h-4 w-4 text-gray-500" />
+          <Trash className="w-4 h-4 text-gray-500" />
         </Button>
       ),
       id: "delete"
@@ -472,7 +422,7 @@ export default function AddRecipePopUpContent({
 
   // Delete handler for ingredientData
   const handleDeleteAvailItem = (id: number): void => {
-    const updated = ingredientData.filter(item => item.id !== id)
+    const updated = ingredientData.filter(item => item.foodId !== id)
     setIngredientData(updated)
     form.setValue("ingredientData", updated as any, { shouldValidate: true })
     setTranslationField(activeLang, "ingredientData", updated as any)
@@ -502,52 +452,78 @@ export default function AddRecipePopUpContent({
     return status
   }
 
-  // handler for “Add Ingredient”
-  const handleAddIngredient = async (): Promise<void> => {
-    const name = selected?.name ?? ingredientInput.trim()
-    if (!name) return
+  const handleAddIngredient = () => {
+    let updatedAvailData: Ingredient
 
-    const entry: Ingredient = {
-      id: selected ? Number(selected.id) : Date.now(),
-      name,
-      type: "Ingredient",
-      tags: ["InSystem"],
-      display: true,
-      quantity: "",
-      isMain: false,
-      status: "Active"
+    // Step 1: Check if the item is already in the availData list by item name
+    if (selected) {
+      // Check if the item name already exists in availData
+      const isItemExists = availData.some(
+        item => item.ingredientName === selected.name
+      )
+
+      if (isItemExists) {
+        // Show an error and return early if the item already exists in the table
+        toast.error("This food item is already in the list!")
+        setSelected(null)
+        setIngredientInput("")
+        return
+      }
+
+      // Add the selected item with "Inactive" status if not already added
+      updatedAvailData = {
+        foodId: selected.id,
+        ingredientName: selected.name ?? "",
+        available: true,
+        display: true,
+        quantity: "",
+        mainIngredient: true
+      }
+    } else if (ingredientInput.trim()) {
+      // Step 2: Check if the custom food item entered by the user already exists
+      const isCustomItemExists = availData.some(
+        item =>
+          item.ingredientName.toLowerCase() === ingredientInput.toLowerCase()
+      )
+
+      if (isCustomItemExists) {
+        // If a custom item already exists in the table, show an error and return
+        toast.error("This custom food item is already in the list!")
+        setIngredientInput("")
+        return
+      }
+
+      // Step 3: Add the custom item with "Inactive" status if it doesn't exist
+      updatedAvailData = {
+        foodId: 0,
+        ingredientName: ingredientInput ?? "",
+        available: false,
+        display: true,
+        quantity: "",
+        mainIngredient: true
+      }
+    } else {
+      toast.error("Please select or enter a food item first!")
+      return
     }
 
-    // Update current lang
-    const updated = [
-      ...(form.getValues("ingredientData") || []),
-      entry
-    ] as Ingredient[]
-    setIngredientData(updated)
-    form.setValue("ingredientData", updated as any, { shouldValidate: true })
-    setTranslationField(activeLang, "ingredientData", updated as any)
+    // Step 4: Add the new item (either selected or custom) to the availData state
+    setAvailData([...availData, updatedAvailData])
 
-    // Prepare translated entry for opposite lang
-    const oppLang = activeLang === "en" ? "fr" : "en"
-    let translatedName = name
-    try {
-      translatedName = await translateText(name)
-    } catch {
-      translatedName = name
-    }
-    const translatedType = getTranslatedType(entry.type, oppLang)
-    const translatedStatus = getTranslatedStatus(entry.status, oppLang)
-    const translatedEntry: Ingredient = {
-      ...entry,
-      name: translatedName,
-      type: translatedType,
-      status: translatedStatus as "Active" | "Inactive"
-    }
-    // Only pass translated data to opposite lang
-    const oppUpdated = [...ingredientData, translatedEntry]
-    setTranslationField(oppLang, "ingredientData", oppUpdated as any)
+    // Save the updated availData into the daily tips store
+    setTranslationField("en", "ingredientData", [
+      ...availData,
+      updatedAvailData
+    ])
+    setTranslationField("fr", "ingredientData", [
+      ...availData,
+      updatedAvailData
+    ])
 
-    // clear for next
+    // Optionally, show a success message
+    toast.success("Food item added successfully!")
+
+    // Reset selected food to null and clear the search bar after item is added
     setSelected(null)
     setIngredientInput("")
   }
@@ -575,34 +551,47 @@ export default function AddRecipePopUpContent({
     }
   }
 
-  const categories: Option[] = [
-    { value: "fruits", label: "Fruits" },
-    { value: "vegetables", label: "Vegetables" },
-    { value: "dairy", label: "Dairy" },
-    { value: "grains", label: "Grains" }
-  ]
-  const seasons: Option[] = [
-    { value: "spring", label: "Spring" },
-    { value: "summer", label: "Summer" },
-    { value: "autumn", label: "Autumn" },
-    { value: "winter", label: "Winter" }
-  ]
+  const handleShopCategoryChange = (value: string) => {
+    form.setValue("category", value)
+    setTranslationField(activeLang, "category", value)
 
-  //  // Form hook
-  //   const form = useForm<z.infer<typeof RecipeSchema>>({
-  //     resolver: zodResolver(RecipeSchema),
-  //     defaultValues: {
-  //       ...storeData[activeLang],
-  //       category: storeData[activeLang]?.category || ""
-  //     }
-  //   })
+    const current = categoryOptions[activeLang]
+    const oppositeLang = activeLang === "en" ? "fr" : "en"
+    const opposite = categoryOptions[oppositeLang]
+
+    const index = current.findIndex(opt => opt.value === value)
+    if (index !== -1) {
+      setTranslationField(oppositeLang, "category", opposite[index].value)
+    }
+  }
+
+  const handleseasonCategoryChange = (value: string) => {
+    form.setValue("season", value)
+    setTranslationField(activeLang, "season", value)
+
+    const current = seasonOptions[activeLang]
+    const oppositeLang = activeLang === "en" ? "fr" : "en"
+    const opposite = seasonOptions[oppositeLang]
+
+    const index = current.findIndex(opt => opt.value === value)
+    if (index !== -1) {
+      setTranslationField(oppositeLang, "season", opposite[index].value)
+    }
+  }
+
+  const handleAddNewBenefit = async (
+    benefit: string
+  ): Promise<{ tagName: string; tagNameFr: string }> => {
+    // Translate to French
+    const tagNameFr = await translateText(benefit)
+    return { tagName: benefit, tagNameFr }
+  }
+
   useEffect(() => {
     const fetchTags = async (): Promise<void> => {
       try {
         const token = localStorage.getItem("token") ?? ""
         await getAllTagsByCategory(token, "health-benefits")
-        // const tags = res?.data?.map((item: any) => item.category) || []
-        // setAllBenefits(tags)
       } catch (error) {
         console.error("Failed to fetch tags", error)
       }
@@ -610,44 +599,6 @@ export default function AddRecipePopUpContent({
 
     void fetchTags()
   }, [])
-
-  // Sync form values with store values for the current language
-  useEffect(() => {
-    const store = useRecipeStore.getState()
-    const validFields = [
-      "name",
-      "preparation",
-      "rest",
-      "persons",
-      "benefits",
-      "authorName",
-      "phone",
-      "email",
-      "website",
-      "recipe",
-      "category",
-      "season",
-      "ingredientData",
-      "authorCategory",
-      "foodimage",
-      "authorimage"
-    ] as const
-    validFields.forEach(field => {
-      const langData = store[activeLang]
-      const value = langData ? langData[field] : undefined
-      console.log(
-        "Syncing field:",
-        field,
-        "with value:",
-        value,
-        "for activeLang:",
-        activeLang
-      )
-      if (typeof value !== "undefined") {
-        form.setValue(field as any, value as any)
-      }
-    })
-  }, [activeLang])
 
   const handleImageSelect = async (files: File[] | null): Promise<void> => {
     const file = files?.[0] ?? null
@@ -679,8 +630,6 @@ export default function AddRecipePopUpContent({
   const handleImageSelectAuthor = async (
     files: File[] | null
   ): Promise<void> => {
-    console.log("handleImageSelect called with files:", files)
-
     const file = files?.[0] ?? null
     if (file) {
       try {
@@ -690,7 +639,6 @@ export default function AddRecipePopUpContent({
           "author",
           `author_${Date.now()}`
         )
-        console.log("Uploaded food image URL:", imageUrl)
 
         form.setValue("authorimage", imageUrl, {
           shouldValidate: true,
@@ -711,78 +659,20 @@ export default function AddRecipePopUpContent({
     }
   }
 
-  // useEffect(() => {
-  //   const langData = allowMultiLang[activeLang]
-  //   if (langData) {
-  //     const existingUrl = langData.foodimage
-  //     const existingAuthorUrl = langData.authorimage
-  //     const imageUrls = [existingUrl, existingAuthorUrl].filter(Boolean) // remove undefined/null
-
-  //     if (imageUrls.length > 0) {
-  //       setPreviewUrls([imageUrls])
-  //     } else {
-  //       setPreviewUrls([])
-  //     }
-  //     form.reset(langData)
-  //   }
-  // }, [activeLang, form.reset, allowMultiLang])
   useEffect(() => {
-    const store = useRecipeStore.getState()
-    const langData = store[activeLang]
-    if (langData) {
-      form.reset(langData as any)
-      if (langData.foodimage) setPreviewFoodUrls([langData.foodimage])
-      else setPreviewFoodUrls([])
-
-      if (langData.authorimage) setPreviewAuthorUrls([langData.authorimage])
-      else setPreviewAuthorUrls([])
-    }
-  }, [activeLang, form.reset])
-
-  const handleCancelImage = async (): Promise<void> => {
-    const store = useRecipeStore.getState()
-    //  Combine all possible image URLs (preview + stored)
-    const possibleImages = [
-      store[activeLang]?.foodimage,
-      store[activeLang]?.authorimage
-    ]
-    const uniqueImageUrls = Array.from(new Set(possibleImages)).filter(Boolean)
-
-    //  Delete images from Firebase
-    await Promise.all(
-      uniqueImageUrls.map(async url => {
-        try {
-          await deleteImageFromFirebase(url)
-        } catch (err) {
-          console.error("Image deletion failed:", url, err)
-        }
-      })
-    )
-
-    setTranslationField("en", "foodimage", "")
-    setTranslationField("en", "authorimage", "")
-
-    //  Remove session data
-    sessionStorage.removeItem("recipe-storage")
-
-    // Clear preview image state
-    setPreviewFoodUrls([])
-    setPreviewAuthorUrls([])
-
-    // Close the modal or section
-    onClose()
-  }
+    form.reset(translationData[activeLang])
+  }, [activeLang, form.reset, translationData])
 
   return (
     <div className="relative">
       {isTranslating && (
-        <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
+        <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/30">
           <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
         </div>
       )}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pb-6">
+          <div className="grid grid-cols-1 gap-4 pb-6 sm:grid-cols-2 md:grid-cols-3">
             <div>
               <FormField
                 control={form.control}
@@ -809,76 +699,64 @@ export default function AddRecipePopUpContent({
                 )}
               />
             </div>
-            <div>
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="block mb-1 text-black">
-                      {translations.category}
-                    </FormLabel>
-                    <FormControl>
-                      <Select
-                        onValueChange={handleSelectSync(field, "category")}
-                        value={field.value}
-                      >
-                        <SelectTrigger className="w-full mt-1">
-                          <SelectValue placeholder={"Select Category"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((option: Option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {translations[
-                                option.value.toLowerCase() as keyof translationsTypes
-                              ] || option.label}{" "}
-                            </SelectItem>
-                          ))}
-                          {/* <SelectItem value="fruits">Fruits</SelectItem>
-                        <SelectItem value="vegetables">Vegetables</SelectItem> */}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div>
-              <FormField
-                control={form.control}
-                name="season"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="block mb-1 text-black">
-                      {translations.season}
-                    </FormLabel>
-                    <FormControl>
-                      <Select
-                        onValueChange={handleSelectSync(field, "season")}
-                        value={field.value}
-                      >
-                        <SelectTrigger className="w-full mt-1">
-                          <SelectValue
-                            placeholder={translations.selectSeason}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {seasons.map((option: Option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {translations[
-                                option.value.toLowerCase() as keyof translationsTypes
-                              ] || option.label}{" "}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+
+            {/* Category */}
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{translations.category}</FormLabel>
+                  <FormControl>
+                    <Select
+                      value={field.value}
+                      onValueChange={handleShopCategoryChange}
+                    >
+                      <SelectTrigger className="mt-1 w-full">
+                        <SelectValue placeholder={"Select Category"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categoryOptions[activeLang].map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Category */}
+            <FormField
+              control={form.control}
+              name="season"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{translations.season}</FormLabel>
+                  <FormControl>
+                    <Select
+                      value={field.value}
+                      onValueChange={handleseasonCategoryChange}
+                    >
+                      <SelectTrigger className="mt-1 w-full">
+                        <SelectValue placeholder={translations.selectSeason} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {seasonOptions[activeLang].map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
           <Separator />
@@ -886,7 +764,7 @@ export default function AddRecipePopUpContent({
           <DialogTitle className="pt-4">
             {translations.recipeAttributes}
           </DialogTitle>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 mb-4">
+          <div className="grid grid-cols-1 gap-4 pt-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
             <div>
               <FormField
                 control={form.control}
@@ -966,23 +844,61 @@ export default function AddRecipePopUpContent({
               />
             </div>
           </div>
-          {/* Lable inputs for the health benefits */}
-          <div className="w-[100%] ">
-            {isTranslating && (
-              <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
-                <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 animate-spin" />
-              </div>
-            )}
+
+          <div className="w-[100%]">
             <FormField
               control={form.control}
               name="benefits"
               render={({ field }) => (
-                <LabelInput
+                <LableInput
                   title={translations.healthBenefits}
                   placeholder={translations.healthBenefits}
                   benefits={field.value || []}
                   name="benefits"
                   width="w-[32%]"
+                  suggestions={benefitTags}
+                  activeLang={activeLang}
+                  onAddNewBenefit={handleAddNewBenefit}
+                  onSelectSuggestion={benefit => {
+                    const enBenefits = [
+                      ...(translationData.en.benefits || []),
+                      benefit.tagName
+                    ]
+                    const frBenefits = [
+                      ...(translationData.fr.benefits || []),
+                      benefit.tagNameFr
+                    ]
+                    setTranslationField("en", "benefits", enBenefits)
+                    setTranslationField("fr", "benefits", frBenefits)
+                    form.setValue(
+                      "benefits",
+                      activeLang === "en" ? enBenefits : frBenefits
+                    )
+                  }}
+                  onRemoveBenefit={removed => {
+                    // Remove both at the same index
+                    const idxEn = (translationData.en.benefits || []).indexOf(
+                      removed.tagName
+                    )
+                    const idxFr = (translationData.fr.benefits || []).indexOf(
+                      removed.tagNameFr
+                    )
+                    const enBenefits = [...(translationData.en.benefits || [])]
+                    const frBenefits = [...(translationData.fr.benefits || [])]
+                    if (idxEn > -1) {
+                      enBenefits.splice(idxEn, 1)
+                      frBenefits.splice(idxEn, 1)
+                    } else if (idxFr > -1) {
+                      enBenefits.splice(idxFr, 1)
+                      frBenefits.splice(idxFr, 1)
+                    }
+                    setTranslationField("en", "benefits", enBenefits)
+                    setTranslationField("fr", "benefits", frBenefits)
+                    form.setValue(
+                      "benefits",
+                      activeLang === "en" ? enBenefits : frBenefits
+                    )
+                  }}
                   onChange={(newArr: string[]) => {
                     handleBenefitsChange(newArr)
                     field.onChange(newArr)
@@ -1000,52 +916,62 @@ export default function AddRecipePopUpContent({
 
           <DialogTitle>{translations.ingredientsSelection}</DialogTitle>
 
-          <div className="flex flex-row gap-2 items-center pt-4 mb-4">
-            <div className="flex-1">
-              <SearchBar
-                title={translations.selectYourIngredients}
-                placeholder={translations.searchForIngredient}
-                dataList={foods.map(f => ({ id: f.id, name: f.name }))}
-                value={ingredientInput}
-                onInputChange={setIngredientInput}
-                onSelect={item => {
-                  setSelected(item as Food)
-                  setIngredientInput(item.name)
-                }}
-              />
-            </div>
-            <div className="flex items-end h-full mt-7">
-              <Button type="button" onClick={handleAddIngredient}>
-                {translations.add}
-              </Button>
-            </div>
-          </div>
-          <FormField
-            control={form.control}
-            name="ingredientData"
-            render={({ field }) => (
-              <>
-                <CustomTable
-                  columns={ingredientColumns}
-                  data={ingredientData.slice(
-                    (page - 1) * pageSize,
-                    page * pageSize
-                  )}
-                  page={page}
-                  pageSize={pageSize}
-                  totalItems={ingredientData.length}
-                  pageSizeOptions={[1, 5, 10]}
-                  onPageChange={handlePageChange}
-                  onPageSizeChange={handlePageSizeChange}
+          <div className="flex flex-col gap-4 pt-4">
+            <div className="flex flex-row flex-1 gap-2 items-center mb-2">
+              <div className="flex-1">
+                <SearchBar
+                  title="Select Food"
+                  placeholder="Search for food..."
+                  dataList={foods.map(f => ({
+                    id: f.id,
+                    name: f.name ?? ""
+                  }))}
+                  value={ingredientInput}
+                  onInputChange={setIngredientInput}
+                  onSelect={item => {
+                    setSelected({
+                      id: Number(item.id),
+                      name: item.name,
+                      status: true // or whatever default you want
+                    })
+                    setIngredientInput(item.name)
+                  }}
                 />
-                {ingredientData.length === 0 && (
-                  <FormMessage className="text-red-500">
-                    {translations.availableInIngredients}
-                  </FormMessage>
-                )}
-              </>
-            )}
-          />
+              </div>
+              <div className="flex items-end mt-7 h-full">
+                <Button type="button" onClick={handleAddIngredient}>
+                  {translations.add}
+                </Button>
+              </div>
+            </div>
+
+            <FormField
+              control={form.control}
+              name="ingredientData"
+              render={({ field }) => (
+                <>
+                  <CustomTable
+                    columns={availColumns}
+                    data={availData.slice(
+                      (page - 1) * pageSize,
+                      page * pageSize
+                    )}
+                    page={page}
+                    pageSize={pageSize}
+                    totalItems={availData.length}
+                    pageSizeOptions={[1, 5, 10]}
+                    onPageChange={handlePageChange}
+                    onPageSizeChange={handlePageSizeChange}
+                  />
+                  {availData.length === 0 && (
+                    <FormMessage className="text-red-500">
+                      At least one ingredient category must be added
+                    </FormMessage>
+                  )}
+                </>
+              )}
+            />
+          </div>
 
           <Separator className="my-4" />
 
@@ -1059,11 +985,6 @@ export default function AddRecipePopUpContent({
                   const { onChange } = makeRichHandlers("recipe")
                   return (
                     <FormItem>
-                      {isTranslating && (
-                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-                          <span className="loader" />
-                        </div>
-                      )}
                       <FormLabel className="block mb-2 text-black">
                         {translations.recipe}
                       </FormLabel>
@@ -1091,9 +1012,9 @@ export default function AddRecipePopUpContent({
 
           <DialogTitle>{translations.addAuthor}</DialogTitle>
 
-          <div className="flex flex-col sm:flex-row gap-8 mb-4 pt-4 items-start">
+          <div className="flex flex-col gap-8 items-start pt-4 mb-4 sm:flex-row">
             {/* Left: Author Inputs */}
-            <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid flex-1 grid-cols-1 gap-4 w-full sm:grid-cols-2">
               <div className="w-full">
                 <FormField
                   control={form.control}
@@ -1234,7 +1155,7 @@ export default function AddRecipePopUpContent({
               </div>
             </div>
             {/* Right: Image Uploader */}
-            <div className="w-full sm:w-2/5 ">
+            <div className="w-full sm:w-2/5">
               <FormField
                 control={form.control}
                 name="authorimage"
@@ -1256,7 +1177,7 @@ export default function AddRecipePopUpContent({
 
           <DialogTitle>{translations.uploadImages}</DialogTitle>
 
-          <div className="mt-6 pb-2 w-full sm:w-2/5">
+          <div className="pb-2 mt-6 w-full sm:w-2/5">
             <FormField
               control={form.control}
               name="foodimage"
@@ -1277,7 +1198,7 @@ export default function AddRecipePopUpContent({
           <Separator className="my-4" />
           <DialogFooter>
             {/* Save and Cancel buttons */}
-            <div className="fixed bottom-0 left-0 w-full bg-white border-t py-4 px-4 flex justify-between gap-2 z-50">
+            <div className="flex fixed bottom-0 left-0 z-50 gap-2 justify-between px-4 py-4 w-full bg-white border-t">
               <Button
                 variant="outline"
                 onClick={() => {

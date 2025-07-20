@@ -455,10 +455,7 @@ export default function ShopPromotionTab({
 
   const handleCancel = async (): Promise<void> => {
     //  Combine all possible image URLs (preview + stored)
-    const possibleImages = [
-      translationsData.basicLayoutData[activeLang]?.image,
-      translationsData.shopPromotionData?.[activeLang]?.image
-    ]
+    const possibleImages = [translationsData.basicLayoutData[activeLang]?.image]
     const uniqueImageUrls = Array.from(new Set(possibleImages)).filter(Boolean)
 
     //  Delete images from Firebase
@@ -796,7 +793,6 @@ export default function ShopPromotionTab({
             <Separator />
 
             {/* Available Products */}
-
             <div className="flex flex-col gap-4 pt-4">
               <div className="flex flex-row flex-1 gap-2 items-center mb-2">
                 <div className="flex-1">

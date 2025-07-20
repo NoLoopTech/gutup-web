@@ -522,24 +522,6 @@ export default function EditShopPromotionTab({
   }, [activeLang, form.reset, translationsData.shopPromotionData])
 
   const handleCancel = async (): Promise<void> => {
-    //  Combine all possible image URLs (preview + stored)
-    const possibleImages = [
-      translationsData.basicLayoutData[activeLang]?.image,
-      translationsData.shopPromotionData?.[activeLang]?.image
-    ]
-    const uniqueImageUrls = Array.from(new Set(possibleImages)).filter(Boolean)
-
-    //  Delete images from Firebase
-    await Promise.all(
-      uniqueImageUrls.map(async url => {
-        try {
-          await deleteImageFromFirebase(url)
-        } catch (err) {
-          console.error("Image deletion failed:", url, err)
-        }
-      })
-    )
-
     setTranslationField("basicLayoutData", "en", "image", "")
     setTranslationField("basicLayoutData", "fr", "image", "")
     setTranslationField("shopPromotionData", "en", "image", "")
@@ -652,10 +634,6 @@ export default function EditShopPromotionTab({
     editDailyTip()
   }
 
-  const onError = (errors: any) => {
-    console.error("Validation errors:", errors)
-  }
-
   return (
     <div className="relative">
       {isTranslating && (
@@ -664,7 +642,7 @@ export default function EditShopPromotionTab({
         </div>
       )}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit, onError)}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-3 text-black">
             {/* Shop Name */}
             <div className="flex items-start lg:justify-end lg:-mt-[4.8rem]">

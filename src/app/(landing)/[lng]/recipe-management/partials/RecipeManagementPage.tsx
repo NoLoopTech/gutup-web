@@ -392,6 +392,7 @@ export default function RecipeManagementPage({
       <AddRecipePopup
         open={openAddRecipePopUp}
         onClose={handleCloseAddRecipePopUp}
+        token={token}
       />
 
       {/* view recipe pupup */}

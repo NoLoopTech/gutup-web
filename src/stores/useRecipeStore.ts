@@ -49,8 +49,6 @@ export interface LangData<T> {
 }
 
 export interface RecipeStoreState {
-  fr: RecipeFields
-  en: RecipeFields
   allowMultiLang: boolean
   activeLang: Lang
   translations: LangData<RecipeFields>
@@ -97,8 +95,6 @@ export const useRecipeStore = create<RecipeStoreState>()(
     set => ({
       allowMultiLang: false,
       activeLang: "en",
-      fr: { ...emptyRecipe },
-      en: { ...emptyRecipe },
       translations: {
         en: { ...emptyRecipe },
         fr: { ...emptyRecipe }

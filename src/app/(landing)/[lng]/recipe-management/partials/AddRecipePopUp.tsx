@@ -16,11 +16,21 @@ import {
 interface Props {
   open: boolean
   onClose: () => void
+  token: string
 }
 
-export default function AddRecipePopUp({ open, onClose }: Props): JSX.Element {
-  const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
-    useRecipeStore()
+export default function AddRecipePopUp({
+  open,
+  onClose,
+  token
+}: Props): JSX.Element {
+  const {
+    allowMultiLang,
+    setAllowMultiLang,
+    activeLang,
+    setActiveLang,
+    setTranslationField
+  } = useRecipeStore()
 
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
@@ -31,7 +41,6 @@ export default function AddRecipePopUp({ open, onClose }: Props): JSX.Element {
     const loadTranslationsAsync = async () => {
       const langData = await loadLanguage(activeLang, "recipe")
       setTranslations(langData)
-      console.log("Language", langData)
     }
     loadTranslationsAsync()
   }, [activeLang])
@@ -39,7 +48,7 @@ export default function AddRecipePopUp({ open, onClose }: Props): JSX.Element {
   // Language toggle handler
   const handleLanguageToggle = (val: boolean) => {
     setAllowMultiLang(val)
-    if (!val) setActiveLang("en") // Default to English when disabled
+    if (!val) setActiveLang("en")
   }
 
   return (
@@ -81,7 +90,7 @@ export default function AddRecipePopUp({ open, onClose }: Props): JSX.Element {
             <TabsContent value={activeLang}>
               <AddRecipePopUpContent
                 translations={{ ...defaultTranslations, ...translations }}
-                token=""
+                token={token}
                 onClose={onClose}
               />
             </TabsContent>
