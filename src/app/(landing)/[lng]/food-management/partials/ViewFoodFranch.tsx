@@ -143,7 +143,7 @@ export default function ViewFoodFrench({
     }
   }, [foodDetails])
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string): void => {
     setFormData(prev => ({ ...prev, [field]: value }))
 
     // Update session storage based on field type
@@ -170,7 +170,7 @@ export default function ViewFoodFrench({
   const handleSelectChange = (
     field: "category" | "season" | "country",
     value: string
-  ) => {
+  ): void => {
     setFormData(prev => ({ ...prev, [field]: value }))
     handleSelectSync(field, value, "fr")
   }
@@ -184,14 +184,18 @@ export default function ViewFoodFrench({
           <Input
             placeholder="Entrez le nom de l'aliment"
             value={formData.name}
-            onChange={e => handleInputChange("name", e.target.value)}
+            onChange={e => {
+              handleInputChange("name", e.target.value)
+            }}
           />
         </div>
         <div>
           <Label className="block mb-1 text-black">Catégorie</Label>
           <Select
             value={formData.category}
-            onValueChange={value => handleSelectChange("category", value)}
+            onValueChange={value => {
+              handleSelectChange("category", value)
+            }}
           >
             <SelectTrigger className="w-full mt-1">
               <SelectValue placeholder="Sélectionner une catégorie" />
@@ -212,7 +216,9 @@ export default function ViewFoodFrench({
           <Label className="block mb-1 text-black">Mois</Label>
           <Select
             value={formData.season}
-            onValueChange={value => handleSelectChange("season", value)}
+            onValueChange={value => {
+              handleSelectChange("season", value)
+            }}
           >
             <SelectTrigger className="w-full mt-1">
               <SelectValue placeholder="Sélectionner un mois" />
@@ -233,7 +239,9 @@ export default function ViewFoodFrench({
           <Label className="block mb-1 text-black">Pays</Label>
           <Select
             value={formData.country}
-            onValueChange={value => handleSelectChange("country", value)}
+            onValueChange={value => {
+              handleSelectChange("country", value)
+            }}
           >
             <SelectTrigger className="w-full mt-1">
               <SelectValue placeholder="Sélectionner un pays" />
@@ -263,7 +271,9 @@ export default function ViewFoodFrench({
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.fiber}
-            onChange={e => handleInputChange("fiber", e.target.value)}
+            onChange={e => {
+              handleInputChange("fiber", e.target.value)
+            }}
           />
         </div>
         <div>
@@ -271,7 +281,9 @@ export default function ViewFoodFrench({
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.proteins}
-            onChange={e => handleInputChange("proteins", e.target.value)}
+            onChange={e => {
+              handleInputChange("proteins", e.target.value)
+            }}
           />
         </div>
         <div>
@@ -279,7 +291,9 @@ export default function ViewFoodFrench({
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.vitamins}
-            onChange={e => handleInputChange("vitamins", e.target.value)}
+            onChange={e => {
+              handleInputChange("vitamins", e.target.value)
+            }}
           />
         </div>
         <div>
@@ -287,7 +301,9 @@ export default function ViewFoodFrench({
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.minerals}
-            onChange={e => handleInputChange("minerals", e.target.value)}
+            onChange={e => {
+              handleInputChange("minerals", e.target.value)
+            }}
           />
         </div>
         <div>
@@ -295,7 +311,9 @@ export default function ViewFoodFrench({
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.fat}
-            onChange={e => handleInputChange("fat", e.target.value)}
+            onChange={e => {
+              handleInputChange("fat", e.target.value)
+            }}
           />
         </div>
         <div>
@@ -303,7 +321,9 @@ export default function ViewFoodFrench({
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.sugar}
-            onChange={e => handleInputChange("sugar", e.target.value)}
+            onChange={e => {
+              handleInputChange("sugar", e.target.value)
+            }}
           />
         </div>
       </div>
@@ -321,7 +341,7 @@ export default function ViewFoodFrench({
           onSelectSuggestion={benefit => {
             console.log("French onSelectSuggestion:", benefit)
             // Get current benefits from foodDetails
-            const currentData = foodDetails?.healthBenefits || []
+            const currentData = foodDetails?.healthBenefits ?? []
 
             // Add both EN and FR at the same index
             const updatedHealthBenefits = [
@@ -344,7 +364,7 @@ export default function ViewFoodFrench({
           }}
           onRemoveBenefit={removed => {
             console.log("French onRemoveBenefit:", removed)
-            const currentData = foodDetails?.healthBenefits || []
+            const currentData = foodDetails?.healthBenefits ?? []
 
             // Find and remove by matching either English or French name
             const updatedHealthBenefits = currentData.filter(
@@ -363,7 +383,7 @@ export default function ViewFoodFrench({
           onChange={(newBenefits: string[]) => {
             console.log("French onChange:", newBenefits)
             // This is for manual typing - preserve structure
-            const currentData = foodDetails?.healthBenefits || []
+            const currentData = foodDetails?.healthBenefits ?? []
             const healthBenefits = newBenefits.map((benefit, index) => ({
               healthBenefit: currentData[index]?.healthBenefit || "",
               healthBenefitFR: benefit

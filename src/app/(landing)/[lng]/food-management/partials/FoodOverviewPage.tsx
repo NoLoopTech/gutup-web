@@ -421,14 +421,31 @@ export default function FoodOverviewPage(): React.ReactElement {
   // Actually delete after confirmation
   const handleDeleteFood = async (): Promise<void> => {
     if (!token || !foodIdToDelete) return
-    const response = await deleteFoodById(token, foodIdToDelete)
-    if (!response.error) {
-      await getFoods()
-    } else {
-      alert(response.message || "Failed to delete food.")
+    
+    try {
+      const response = await deleteFoodById(token, foodIdToDelete)
+      
+      if (response.error) {
+        toast.error("Failed to delete food", {
+          description: response.data?.message || "An error occurred"
+        })
+      } else if (response.status === 200 || response.status === 201) {
+        toast.success("Food deleted successfully")
+        await getFoods()
+      } else {
+        toast.error("Failed to delete food", {
+          description: response.data?.message || "Unknown error"
+        })
+      }
+    } catch (error) {
+      console.error("Delete error:", error)
+      toast.error("Failed to delete food", {
+        description: "An unexpected error occurred"
+      })
+    } finally {
+      setConfirmDeleteOpen(false)
+      setFoodIdToDelete(null)
     }
-    setConfirmDeleteOpen(false)
-    setFoodIdToDelete(null)
   }
 
   return (

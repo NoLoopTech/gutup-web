@@ -61,28 +61,6 @@ interface ViewFoodEnglishProps {
   imagePreviewUrls: string[]
 }
 
-const seasons: Option[] = [
-  { value: "January", label: "January" },
-  { value: "February", label: "February" },
-  { value: "March", label: "March" },
-  { value: "April", label: "April" },
-  { value: "May", label: "May" },
-  { value: "June", label: "June" },
-  { value: "July", label: "July" },
-  { value: "August", label: "August" },
-  { value: "September", label: "September" },
-  { value: "October", label: "October" },
-  { value: "November", label: "November" },
-  { value: "December", label: "December" }
-]
-
-const countries: Option[] = [
-  { value: "switzerland", label: "Switzerland" },
-  { value: "france", label: "France" },
-  { value: "germany", label: "Germany" },
-  { value: "italy", label: "Italy" }
-]
-
 const FoodSchema = z.object({
   name: z
     .string()
@@ -157,11 +135,6 @@ export default function ViewFoodEnglish({
   const onSubmit = (data: z.infer<typeof FoodSchema>): void => {
     toast("Form submitted successfully!", {})
   }
-  const handleCancel = (
-    form: ReturnType<typeof useForm<z.infer<typeof FoodSchema>>>
-  ): void => {
-    form.reset()
-  }
 
   const handleSelectionChange = (field: any) => (val: string) => {
     field.onChange(val)
@@ -186,28 +159,28 @@ export default function ViewFoodEnglish({
   const form = useForm<z.infer<typeof FoodSchema>>({
     resolver: zodResolver(FoodSchema),
     defaultValues: {
-      name: foodDetails?.name || "",
-      category: foodDetails?.category || "",
-      season: foodDetails?.seasons?.[0]?.season || "",
-      country: foodDetails?.country || "",
-      fiber: foodDetails?.attributes?.fiber?.toString() || "",
-      proteins: foodDetails?.attributes?.proteins?.toString() || "",
-      vitamins: foodDetails?.attributes?.vitamins || "",
-      minerals: foodDetails?.attributes?.minerals || "",
-      fat: foodDetails?.attributes?.fat?.toString() || "",
-      sugar: foodDetails?.attributes?.sugar?.toString() || "",
-      benefits: foodDetails?.healthBenefits?.map(b => b.healthBenefit) || [],
+      name: foodDetails?.name ?? "",
+      category: foodDetails?.category ?? "",
+      season: foodDetails?.seasons?.[0]?.season ?? "",
+      country: foodDetails?.country ?? "",
+      fiber: foodDetails?.attributes?.fiber?.toString() ?? "",
+      proteins: foodDetails?.attributes?.proteins?.toString() ?? "",
+      vitamins: foodDetails?.attributes?.vitamins ?? "",
+      minerals: foodDetails?.attributes?.minerals ?? "",
+      fat: foodDetails?.attributes?.fat?.toString() ?? "",
+      sugar: foodDetails?.attributes?.sugar?.toString() ?? "",
+      benefits: foodDetails?.healthBenefits?.map(b => b.healthBenefit) ?? [],
       image: null,
-      selection: foodDetails?.describe?.selection || "",
-      preparation: foodDetails?.describe?.preparation || "",
-      conservation: foodDetails?.describe?.conservation || ""
+      selection: foodDetails?.describe?.selection ?? "",
+      preparation: foodDetails?.describe?.preparation ?? "",
+      conservation: foodDetails?.describe?.conservation ?? ""
     }
   })
 
   // Watch for form changes and update session storage
   React.useEffect(() => {
     const subscription = form.watch((value, { name }) => {
-      if (name && value[name] !== undefined) {
+      if (name && value[name as keyof typeof value] !== undefined) {
         switch (name) {
           case "fiber":
           case "proteins":
@@ -233,7 +206,7 @@ export default function ViewFoodEnglish({
               {
                 season: value[name],
                 seasonFR: "",
-                foodId: foodDetails?.seasons?.[0]?.foodId || 0
+                foodId: foodDetails?.seasons?.[0]?.foodId ?? 0
               }
             ])
             break
@@ -288,7 +261,7 @@ export default function ViewFoodEnglish({
                     </FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={(value) => {
+                        onValueChange={value => {
                           field.onChange(value)
                           handleSelectSync("category", value, "en")
                         }}
@@ -322,7 +295,7 @@ export default function ViewFoodEnglish({
                     </FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={(value) => {
+                        onValueChange={value => {
                           field.onChange(value)
                           handleSelectSync("season", value, "en")
                         }}
@@ -360,7 +333,7 @@ export default function ViewFoodEnglish({
                     </FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={(value) => {
+                        onValueChange={value => {
                           field.onChange(value)
                           handleSelectSync("country", value, "en")
                         }}
@@ -523,8 +496,8 @@ export default function ViewFoodEnglish({
                   onSelectSuggestion={benefit => {
                     console.log("English onSelectSuggestion:", benefit)
                     // Get current benefits from foodDetails
-                    const currentData = foodDetails?.healthBenefits || []
-                    
+                    const currentData = foodDetails?.healthBenefits ?? []
+
                     // Add both EN and FR at the same index
                     const updatedHealthBenefits = [
                       ...currentData,
@@ -533,38 +506,41 @@ export default function ViewFoodEnglish({
                         healthBenefitFR: benefit.tagNameFr
                       }
                     ]
-                    
-                    console.log("Updated health benefits:", updatedHealthBenefits)
-                    
+
+                    console.log(
+                      "Updated health benefits:",
+                      updatedHealthBenefits
+                    )
+
                     // Update session storage
                     updateEditedData("healthBenefits", updatedHealthBenefits)
-                    
+
                     // Don't update form field here - let the benefits prop handle display
                   }}
                   onRemoveBenefit={removed => {
                     console.log("English onRemoveBenefit:", removed)
-                    const currentData = foodDetails?.healthBenefits || []
-                    
+                    const currentData = foodDetails?.healthBenefits ?? []
+
                     // Find and remove by matching either English or French name
-                    const updatedHealthBenefits = currentData.filter(b => 
-                      b.healthBenefit !== removed.tagName && 
-                      b.healthBenefitFR !== removed.tagNameFr
+                    const updatedHealthBenefits = currentData.filter(
+                      b => b.healthBenefit !== removed.tagName
                     )
-                    
+
                     console.log("After removal:", updatedHealthBenefits)
-                    
+
                     // Update session storage
                     updateEditedData("healthBenefits", updatedHealthBenefits)
                   }}
                   onChange={(newBenefits: string[]) => {
                     console.log("English onChange:", newBenefits)
                     // This is for manual typing - preserve structure
-                    const currentData = foodDetails?.healthBenefits || []
-                    const healthBenefits = newBenefits.map((benefit, index) => ({
-                      healthBenefit: benefit,
-                      healthBenefitFR: currentData[index]?.healthBenefitFR || ""
-                    }))
-                    
+                    const healthBenefits = newBenefits.map(
+                      (benefit, index) => ({
+                        healthBenefit: benefit,
+                        healthBenefitFR: ""
+                      })
+                    )
+
                     updateEditedData("healthBenefits", healthBenefits)
                     field.onChange(newBenefits)
                   }}

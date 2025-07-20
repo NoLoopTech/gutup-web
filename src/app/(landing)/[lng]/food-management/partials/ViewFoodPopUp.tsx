@@ -36,16 +36,56 @@ import ViewFoodFranch from "./ViewFoodFranch"
 // Add session storage utilities
 const EDIT_FOOD_STORAGE_KEY = "editfood-store"
 
-const saveToSessionStorage = (data: any) => {
+interface SessionStorageData {
+  foodId: number
+  name?: string
+  nameFR?: string
+  category?: string
+  categoryFR?: string
+  country?: string
+  allowMultiLang?: boolean
+  seasons?: Array<{ season: string; seasonFR?: string; foodId?: number }>
+  attributes?: {
+    fiber?: number
+    proteins?: number
+    vitamins?: string
+    vitaminsFR?: string
+    minerals?: string
+    mineralsFR?: string
+    fat?: number
+    sugar?: number
+  }
+  describe?: {
+    selection?: string
+    selectionFR?: string
+    preparation?: string
+    preparationFR?: string
+    conservation?: string
+    conservationFR?: string
+  }
+  images?: FoodImage[]
+  healthBenefits?: Array<{
+    healthBenefit: string
+    healthBenefitFR?: string
+  }>
+}
+
+interface ApiCategoryItem {
+  tagName: string
+  tagNameFr: string
+}
+
+// Updated session storage utilities with proper types
+const saveToSessionStorage = (data: SessionStorageData): void => {
   sessionStorage.setItem(EDIT_FOOD_STORAGE_KEY, JSON.stringify(data))
 }
 
-const getFromSessionStorage = () => {
+const getFromSessionStorage = (): SessionStorageData | null => {
   const stored = sessionStorage.getItem(EDIT_FOOD_STORAGE_KEY)
   return stored ? JSON.parse(stored) : null
 }
 
-const clearSessionStorage = () => {
+const clearSessionStorage = (): void => {
   sessionStorage.removeItem(EDIT_FOOD_STORAGE_KEY)
 }
 
@@ -60,6 +100,9 @@ interface Option {
   value: string
   label: string
   labelFr?: string // Add French label
+  valueEn?: string
+  valueFr?: string
+  labelEn?: string
 }
 
 interface FoodAttributes {
@@ -96,6 +139,7 @@ export interface FoodDetailsTypes {
   describe: FoodDescribe
   images: FoodImage[]
   healthBenefits: HealthBenefit[]
+  seasons?: Array<{ season: string; seasonFR?: string; foodId?: number }>
 }
 
 export default function ViewFoodPopUp({
@@ -114,7 +158,7 @@ export default function ViewFoodPopUp({
     Array<{ tagName: string; tagNameFr: string }>
   >([])
   const [isLoading, setIsLoading] = useState(true)
-  const [editedData, setEditedData] = useState<any>(null)
+  const [editedData, setEditedData] = useState<SessionStorageData | null>(null)
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
 
   useEffect(() => {
@@ -124,7 +168,7 @@ export default function ViewFoodPopUp({
         if (response.status === 200) {
           setFoodDetails(response.data)
           // Initialize session storage with API data including foodId
-          const dataWithId = { ...response.data, foodId }
+          const dataWithId: SessionStorageData = { ...response.data, foodId }
           saveToSessionStorage(dataWithId)
           setEditedData(dataWithId)
           setAllowMultiLang(response.data.allowMultiLang ?? false)
@@ -142,7 +186,7 @@ export default function ViewFoodPopUp({
       void getCatagoryFoodType(token, "Type").then(res => {
         if (res?.status === 200 && Array.isArray(res.data)) {
           setCategoryOptionsApi(
-            res.data.map((item: any) => ({
+            res.data.map((item: ApiCategoryItem) => ({
               value: item.tagName,
               label: item.tagName,
               valueEn: item.tagName,
@@ -159,7 +203,7 @@ export default function ViewFoodPopUp({
   // Update the useEffect for fetching benefit tags
   useEffect(() => {
     if (token) {
-      const fetchData = async () => {
+      const fetchData = async (): Promise<void> => {
         setIsLoading(true)
         try {
           // Fetch both food details and benefit tags in parallel
@@ -184,21 +228,39 @@ export default function ViewFoodPopUp({
           setIsLoading(false)
         }
       }
-      fetchData()
+      void fetchData()
     }
   }, [token, foodId])
 
   // handle delete user by id
   const handleDeleteFoodById = async (): Promise<void> => {
-    const response = await deleteFoodById(token, foodId)
-    if (response.status === 200 && response.data.success) {
-      toast.success(response.data.message)
-      onClose()
-      setConfirmDeleteOpen(false)
-      getFoods()
-    } else {
-      toast.error("Failed to delete user", {
-        description: response.data.message
+    try {
+      const response = await deleteFoodById(token, foodId)
+      
+      if (response.error) {
+        toast.error("Failed to delete food", {
+          description: response.data?.message || "An error occurred"
+        })
+        setConfirmDeleteOpen(false)
+        return
+      }
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Food deleted successfully")
+        clearSessionStorage() // Clear session storage on successful delete
+        onClose()
+        setConfirmDeleteOpen(false)
+        getFoods()
+      } else {
+        toast.error("Failed to delete food", {
+          description: response.data?.message || "Unknown error"
+        })
+        setConfirmDeleteOpen(false)
+      }
+    } catch (error) {
+      console.error("Delete error:", error)
+      toast.error("Failed to delete food", {
+        description: "An unexpected error occurred"
       })
       setConfirmDeleteOpen(false)
     }
@@ -210,12 +272,6 @@ export default function ViewFoodPopUp({
   const conservationRef = useRef<RichTextEditorHandle>(null)
 
   // Shared data arrays with proper French translations
-  const categories: Option[] = [
-    { value: "fruits", label: "Fruits" },
-    { value: "vegetables", label: "Vegetables" },
-    { value: "dairy", label: "Dairy" },
-    { value: "grains", label: "Grains" }
-  ]
 
   // Add translation mapping for seasons
   const seasonSyncMap = [
@@ -295,48 +351,67 @@ export default function ViewFoodPopUp({
   }
 
   // Function to update session storage when data changes
-  const updateEditedData = (field: string, value: any) => {
-    const currentData = getFromSessionStorage() || editedData
-    const updatedData = { ...currentData, [field]: value, foodId }
+  const updateEditedData = (
+    field: keyof SessionStorageData,
+    value: unknown
+  ): void => {
+    const currentData = getFromSessionStorage() ?? editedData
+    const updatedData: SessionStorageData = {
+      ...currentData,
+      [field]: value,
+      foodId
+    }
     setEditedData(updatedData)
     saveToSessionStorage(updatedData)
 
     // Force re-render of both components when healthBenefits change
-    if (field === "healthBenefits") {
+    if (field === "healthBenefits" && Array.isArray(value)) {
       console.log("Updating healthBenefits in main component:", value)
       // Update the foodDetails state to trigger re-render in both tabs
       setFoodDetails(prev => {
         if (!prev) return null
         const updated = {
           ...prev,
-          healthBenefits: value.map((benefit: any) => ({
-            healthBenefit: benefit.healthBenefit || "",
-            healthBenefitFR: benefit.healthBenefitFR || ""
-          }))
+          healthBenefits: value.map(
+            (benefit: {
+              healthBenefit?: string
+              healthBenefitFR?: string
+            }) => ({
+              healthBenefit: benefit.healthBenefit ?? "",
+              healthBenefitFR: benefit.healthBenefitFR ?? ""
+            })
+          )
         }
         console.log("Updated foodDetails:", updated.healthBenefits)
         return updated
       })
 
       // Also update editedData to ensure consistency
-      setEditedData(prev => ({
-        ...prev,
-        healthBenefits: value
-      }))
+      setEditedData(prev =>
+        prev
+          ? {
+              ...prev,
+              healthBenefits: value as Array<{
+                healthBenefit: string
+                healthBenefitFR?: string
+              }>
+            }
+          : null
+      )
     }
   }
 
   // Function to update nested data
   const updateNestedData = (
-    parentField: string,
+    parentField: keyof SessionStorageData,
     childField: string,
-    value: any
-  ) => {
-    const currentData = getFromSessionStorage() || editedData
-    const updatedData = {
+    value: unknown
+  ): void => {
+    const currentData = getFromSessionStorage() ?? editedData
+    const updatedData: SessionStorageData = {
       ...currentData,
       [parentField]: {
-        ...currentData[parentField],
+        ...((currentData?.[parentField] as Record<string, unknown>) ?? {}),
         [childField]: value
       },
       foodId
@@ -346,56 +421,54 @@ export default function ViewFoodPopUp({
   }
 
   // API function to save changes
-  const handleSaveChanges = async () => {
+  const handleSaveChanges = async (): Promise<void> => {
     const dataToSave = getFromSessionStorage()
-    if (!dataToSave || !dataToSave.foodId) return
+    if (!dataToSave?.foodId) return
 
     try {
       const { foodId: savedFoodId, ...rawData } = dataToSave
 
       // Transform the session storage data to match CreateFoodDto format
       const updateData = {
-        name: rawData.name,
-        nameFR: rawData.nameFR || "",
-        category: rawData.category,
-        categoryFR: rawData.categoryFR || "",
-        country: rawData.country,
+        name: rawData.name ?? "",
+        nameFR: rawData.nameFR ?? "",
+        category: rawData.category ?? "",
+        categoryFR: rawData.categoryFR ?? "",
+        country: rawData.country ?? "",
         seasons:
-          rawData.seasons?.map((season: any) => ({
+          rawData.seasons?.map(season => ({
             foodId: savedFoodId,
-            season: season.season || season,
-            seasonFR: season.seasonFR || ""
-          })) || [],
+            season: season.season ?? "",
+            seasonFR: season.seasonFR ?? ""
+          })) ?? [],
         attributes: {
-          fiber: Number(rawData.attributes?.fiber) || 0,
-          proteins: Number(rawData.attributes?.proteins) || 0,
-          vitamins: rawData.attributes?.vitamins || "",
-          vitaminsFR: rawData.attributes?.vitaminsFR || "",
-          minerals: rawData.attributes?.minerals || "",
-          mineralsFR: rawData.attributes?.mineralsFR || "",
-          fat: Number(rawData.attributes?.fat) || 0,
-          sugar: Number(rawData.attributes?.sugar) || 0
+          fiber: Number(rawData.attributes?.fiber) ?? 0,
+          proteins: Number(rawData.attributes?.proteins) ?? 0,
+          vitamins: rawData.attributes?.vitamins ?? "",
+          vitaminsFR: rawData.attributes?.vitaminsFR ?? "",
+          minerals: rawData.attributes?.minerals ?? "",
+          mineralsFR: rawData.attributes?.mineralsFR ?? "",
+          fat: Number(rawData.attributes?.fat) ?? 0,
+          sugar: Number(rawData.attributes?.sugar) ?? 0
         },
         describe: {
-          selection: rawData.describe?.selection || "",
-          selectionFR: rawData.describe?.selectionFR || "",
-          preparation: rawData.describe?.preparation || "",
-          preparationFR: rawData.describe?.preparationFR || "",
-          conservation: rawData.describe?.conservation || "",
-          conservationFR: rawData.describe?.conservationFR || ""
+          selection: rawData.describe?.selection ?? "",
+          selectionFR: rawData.describe?.selectionFR ?? "",
+          preparation: rawData.describe?.preparation ?? "",
+          preparationFR: rawData.describe?.preparationFR ?? "",
+          conservation: rawData.describe?.conservation ?? "",
+          conservationFR: rawData.describe?.conservationFR ?? ""
         },
         images:
-          rawData.images?.map((img: any) => ({
+          rawData.images?.map(img => ({
             image: typeof img === "string" ? img : img.image
-          })) || [],
+          })) ?? [],
         healthBenefits:
-          rawData.healthBenefits?.map((benefit: any) => ({
-            healthBenefit:
-              typeof benefit === "string" ? benefit : benefit.healthBenefit,
-            healthBenefitFR:
-              typeof benefit === "string" ? "" : benefit.healthBenefitFR || ""
-          })) || [],
-        allowMultiLang: rawData.allowMultiLang || false
+          rawData.healthBenefits?.map(benefit => ({
+            healthBenefit: benefit.healthBenefit ?? "",
+            healthBenefitFR: benefit.healthBenefitFR ?? ""
+          })) ?? [],
+        allowMultiLang: rawData.allowMultiLang ?? false
       }
 
       console.log("Saving food with ID:", savedFoodId, "Data:", updateData)
@@ -415,7 +488,7 @@ export default function ViewFoodPopUp({
     }
   }
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     clearSessionStorage()
     onClose()
   }
@@ -425,15 +498,15 @@ export default function ViewFoodPopUp({
     fieldName: "category" | "season" | "country",
     value: string,
     lang: "en" | "fr"
-  ) => {
+  ): void => {
     if (fieldName === "category") {
       // Find the selected option from API categories
       const selected = categoryOptionsApi.find(
         opt => (lang === "en" ? opt.valueEn : opt.valueFr) === value
       )
       if (selected) {
-        updateEditedData("category", selected.valueEn || selected.value)
-        updateEditedData("categoryFR", selected.valueFr || selected.label)
+        updateEditedData("category", selected.valueEn ?? selected.value)
+        updateEditedData("categoryFR", selected.labelFr ?? selected.label)
       }
     }
 
@@ -446,7 +519,7 @@ export default function ViewFoodPopUp({
             {
               season: found.en,
               seasonFR: found.fr,
-              foodId: foodDetails?.seasons?.[0]?.foodId || 0
+              foodId: foodDetails?.seasons?.[0]?.foodId ?? 0
             }
           ])
         }
@@ -457,7 +530,7 @@ export default function ViewFoodPopUp({
             {
               season: found.en,
               seasonFR: found.fr,
-              foodId: foodDetails?.seasons?.[0]?.foodId || 0
+              foodId: foodDetails?.seasons?.[0]?.foodId ?? 0
             }
           ])
         }
@@ -535,7 +608,7 @@ export default function ViewFoodPopUp({
                 selectionRef={selectionRef}
                 preparationRef={preparationRef}
                 conservationRef={conservationRef}
-                foodDetails={editedData || foodDetails}
+                foodDetails={editedData ?? foodDetails ?? undefined}
                 categories={categoryOptionsApi}
                 seasons={seasons}
                 countries={countries}
@@ -555,7 +628,7 @@ export default function ViewFoodPopUp({
                   categories={categoryOptionsApi}
                   seasons={seasons}
                   countries={countries}
-                  foodDetails={editedData || foodDetails}
+                  foodDetails={editedData ?? foodDetails}
                   benefitTags={benefitTags}
                   updateEditedData={updateEditedData}
                   updateNestedData={updateNestedData}
