@@ -560,7 +560,7 @@ export default function AddRecipePopUpContent({
         setTranslationField("en", "recipeImage", imageUrl)
         setTranslationField("fr", "recipeImage", imageUrl)
 
-        setPreviewFoodUrls([imageUrl]) // For single image preview
+        setPreviewFoodUrls([imageUrl])
       } catch (error) {
         toast.error("Image upload failed. Please try again.")
         console.error("Firebase upload error:", error)
@@ -590,7 +590,7 @@ export default function AddRecipePopUpContent({
         setTranslationField("en", "authorimage", imageUrl)
         setTranslationField("fr", "authorimage", imageUrl)
 
-        setPreviewAuthorUrls([imageUrl]) // For single image preview
+        setPreviewAuthorUrls([imageUrl])
       } catch (error) {
         toast.error("Image upload failed. Please try again.")
         console.error("Firebase upload error:", error)

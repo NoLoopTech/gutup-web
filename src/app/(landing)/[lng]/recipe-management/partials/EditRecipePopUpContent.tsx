@@ -605,6 +605,14 @@ export default function EditRecipePopUpContent({
     setPreviewFoodUrls(
       translationData.en.recipeImage ? [translationData.en.recipeImage[0]] : []
     )
+
+    setAvailData(
+      (translationData.en.ingredientData || []).map(item => ({
+        available: true,
+        display: true,
+        ...item
+      }))
+    )
   }, [activeLang, form.reset, translationData])
 
   const onSubmit = (data: RecipeSchemaType): void => {
