@@ -30,6 +30,9 @@ import React, { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
+import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
+import { useUpdatedMoodTranslationStore } from "@/stores/useUpdatedMoodTranslationStore"
+
 
 interface Option {
   value: string
@@ -74,7 +77,7 @@ export default function EditRecipeTab({
     translationsData: updatedTranslations,
     setUpdatedField,
     resetUpdatedStore
-  } = useUpdatedTranslationStore()
+  } = useUpdatedMoodTranslationStore()
 
   const { translateText } = useTranslation()
   const [isTranslating, setIsTranslating] = useState(false)

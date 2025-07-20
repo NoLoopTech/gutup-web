@@ -1,4 +1,3 @@
-// UserOverviewPopup.tsx
 "use client"
 
 import React, { useEffect, useState } from "react"
@@ -16,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import Sample from "@/../../public/images/sample-image.png"
 import { deleteUserById, getUserById } from "@/app/api/user"
+import { getUserFavorites } from "@/app/api/store"
 import dayjs from "dayjs"
 import {
   AlertDialog,
@@ -50,6 +50,29 @@ export interface UserDetails {
   updatedAt: string
 }
 
+interface FavoriteFood {
+  id: number
+  food: {
+    id: number
+    name: string
+    images: string[]
+  }
+}
+
+interface FavoriteRecipe {
+  id: number
+  recipe: {
+    id: number
+    name: string
+    images: string[]
+  }
+}
+
+interface UserFavorites {
+  favouriteFoods: FavoriteFood[]
+  favouriteRecipes: FavoriteRecipe[]
+}
+
 export default function UserOverviewPopup({
   open,
   onClose,
@@ -59,9 +82,16 @@ export default function UserOverviewPopup({
 }: Props): JSX.Element {
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
+  const [userFavorites, setUserFavorites] = useState<UserFavorites | null>(null)
+
+  // Reset state only when userId changes
+  useEffect(() => {
+    setUserDetails(null)
+    setUserFavorites(null)
+  }, [userId])
 
   useEffect(() => {
-    if (token && userId) {
+    if (open && token && userId) {
       const getUserDetailsByUserId = async (): Promise<void> => {
         const response = await getUserById(token, userId)
         if (response.status === 200) {
@@ -70,9 +100,20 @@ export default function UserOverviewPopup({
           console.error("Failed to get user details")
         }
       }
+
+      const fetchUserFavorites = async (): Promise<void> => {
+        const response = await getUserFavorites(token, userId)
+        if (response.status === 200) {
+          setUserFavorites(response.data)
+        } else {
+          console.error("Failed to get user favorites")
+        }
+      }
+
       void getUserDetailsByUserId()
+      void fetchUserFavorites()
     }
-  }, [token, userId])
+  }, [open, token, userId])
 
   // handle delete user by id
   const handleDeleteUserById = async (): Promise<void> => {
@@ -100,7 +141,7 @@ export default function UserOverviewPopup({
     setConfirmDeleteOpen(false)
   }
 
-  const badges: Array<{ label: string; value: string }> = [
+  const badges: any[] = [
     {
       label: "Stress",
       value: "stress"
@@ -112,27 +153,6 @@ export default function UserOverviewPopup({
     {
       label: "Weight",
       value: "weight"
-    }
-  ]
-
-  const food: Array<{ name: string; image: string }> = []
-
-  const recipes: Array<{ name: string; image: string }> = [
-    {
-      name: "Pizza1 ",
-      image: Sample.src
-    },
-    {
-      name: "Pizza2",
-      image: Sample.src
-    },
-    {
-      name: "Pizza3",
-      image: Sample.src
-    },
-    {
-      name: "Pizza4",
-      image: Sample.src
     }
   ]
 
@@ -241,17 +261,28 @@ export default function UserOverviewPopup({
           <div>
             <div className="flex items-center justify-between">
               <DialogTitle>Favorite Food</DialogTitle>
-              <h3 className="text-base text-gray-500 ">{food.length} Items</h3>
+              <h3 className="text-base text-gray-500 ">
+                {userFavorites?.favouriteFoods.length ?? 0} Items
+              </h3>
             </div>
             <div className="flex flex-wrap gap-2 text-center">
-              {food.map(f => (
-                <div key={f.name}>
-                  <Image src={f.image} alt={f.name} width={100} height={100} />
-                  <Label>{f.name}</Label>
+              {userFavorites?.favouriteFoods.map(f => (
+                <div key={f.id} className="flex flex-col items-center">
+                  <Image
+                    src={
+                      f.food.images?.[0] ? `${f.food.images[0]}` : Sample.src
+                    }
+                    alt={f.food.name}
+                    width={100}
+                    height={100}
+                    className="rounded-lg object-cover"
+                  />
+                  <Label className="mt-2 text-sm">{f.food.name}</Label>
                 </div>
               ))}
 
-              {food.length === 0 && (
+              {(!userFavorites?.favouriteFoods ||
+                userFavorites.favouriteFoods.length === 0) && (
                 <Label className="mt-4 text-gray-500">
                   No favorite foods added yet
                 </Label>
@@ -266,18 +297,29 @@ export default function UserOverviewPopup({
             <div className="flex items-center justify-between">
               <DialogTitle>Favorite Recipes</DialogTitle>
               <h3 className="text-base text-gray-500 ">
-                {recipes.length} Items
+                {userFavorites?.favouriteRecipes.length ?? 0} Items
               </h3>
             </div>
             <div className="flex flex-wrap gap-2 text-center">
-              {recipes.map(f => (
-                <div key={f.name}>
-                  <Image src={f.image} alt={f.name} width={100} height={100} />
-                  <Label>{f.name}</Label>
+              {userFavorites?.favouriteRecipes.map(f => (
+                <div key={f.id} className="flex flex-col items-center">
+                  <Image
+                    src={
+                      f.recipe.images?.[0]
+                        ? `${f.recipe.images[0]}`
+                        : Sample.src
+                    }
+                    alt={f.recipe.name}
+                    width={100}
+                    height={100}
+                    className="rounded-lg object-cover"
+                  />
+                  <Label className="mt-2 text-sm">{f.recipe.name}</Label>
                 </div>
               ))}
 
-              {recipes.length === 0 && (
+              {(!userFavorites?.favouriteRecipes ||
+                userFavorites.favouriteRecipes.length === 0) && (
                 <Label className="mt-4 text-gray-500">
                   No favorite recipes added yet
                 </Label>

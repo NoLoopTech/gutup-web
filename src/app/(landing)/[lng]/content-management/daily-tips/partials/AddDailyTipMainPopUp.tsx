@@ -50,6 +50,7 @@ export default function AddDailyTipMainPopUp({
     setAllowMultiLang(val)
     if (!val) setActiveLang("en")
   }
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">

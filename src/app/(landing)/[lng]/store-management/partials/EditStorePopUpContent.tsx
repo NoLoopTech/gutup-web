@@ -38,7 +38,7 @@ import { getAllFoods } from "@/app/api/foods"
 import { Trash } from "lucide-react"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { getAllTags } from "@/app/api/tags"
-import { getStoreCategories } from "@/app/api/store"
+import { getStoreById, getStoreCategories } from "@/app/api/store"
 import { getLocationDetails } from "@/app/api/location"
 
 import LocationDropdown from "@/components/Shared/dropdown/LocationDropdown"
@@ -98,20 +98,52 @@ export interface OptionType {
   lng?: number
 }
 
-export default function AddStorePopUpContent({
+interface StoreData {
+  id: number
+  storeName: string
+  category: string
+  categoryFR: string
+  storeLocation: string
+  shopStatus: boolean
+  deliverible: boolean
+  storeMapLocation: string
+  startTime: string
+  endTime: string
+  storeType: string
+  storeTypeFR: string
+  subscriptionType: string
+  subscriptionTypeFR: string
+  phoneNumber: string
+  email: string
+  mapsPin: string
+  facebook: string
+  instagram: string
+  website: string
+  description: string
+  descriptionFR: string
+  storeImage: string
+  ingAndCatData: any[]
+}
+
+export default function EditStorePopUpContent({
   translations,
-  onAddStore,
+  onUpdateStore,
   isLoading,
-  onClose
+  onClose,
+  storeId,
+  token,
+  activeLang
 }: {
   translations: translationsTypes
-  onAddStore?: () => Promise<void>
+  onUpdateStore?: () => Promise<void>
   isLoading?: boolean
   onClose?: () => void
+  storeId: number | null
+  token: string
+  activeLang: "en" | "fr"
 }): JSX.Element {
   const { translateText } = useTranslation()
-  const { activeLang, storeData, setTranslationField, resetForm } =
-    useStoreStore() as any
+  const { storeData, setTranslationField, resetForm } = useStoreStore() as any
   const [isTranslating, setIsTranslating] = useState(false)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
@@ -130,9 +162,12 @@ export default function AddStorePopUpContent({
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
   const [selectedLocationName, setSelectedLocationName] =
     useState<OptionType | null>(null)
+  const [, setCurrentStoreData] = useState<StoreData | null>(null)
+  const [isDataLoaded, setIsDataLoaded] = useState(false)
+  const [hasChanges, setHasChanges] = useState(false)
 
   // Validation schema using Zod
-  const AddStoreSchema = z.object({
+  const EditStoreSchema = z.object({
     storeName: z
       .string()
       .nonempty(translations.required)
@@ -184,19 +219,277 @@ export default function AddStorePopUpContent({
     storeImage: z.string().min(1, translations.required)
   })
 
-  // Retrieve token
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : ""
-
-  // Initialize selected location from stored data
-  useEffect(() => {
-    const currentStoreData = storeData[activeLang]
-    if (currentStoreData?.storeLocationLatLng) {
-      setSelectedLocationName(currentStoreData.storeLocationLatLng)
+  // Form hook
+  const form = useForm<z.infer<typeof EditStoreSchema>>({
+    resolver: zodResolver(EditStoreSchema),
+    defaultValues: {
+      ...storeData[activeLang],
+      category: storeData[activeLang]?.category || "",
+      storeImage: storeData[activeLang]?.storeImage || "",
+      availData: storeData[activeLang]?.availData || []
     }
-  }, [activeLang, storeData])
+  })
 
-  // fetch once on mount
+  // fetch store data for editing
+  useEffect(() => {
+    const fetchStoreData = async (): Promise<void> => {
+      if (!storeId || !token) return
+
+      try {
+        setIsTranslating(true)
+        const response = await getStoreById(token, storeId)
+
+        if (response?.data) {
+          const data = response.data
+          setCurrentStoreData(data)
+
+          // Transform ingredients and categories data
+          const ingredientsData = data.ingredients || []
+          const categoriesData = data.categories || data.ingAndCatData || []
+
+          // Combine ingredients and categories
+          const allItemsData = [
+            ...ingredientsData,
+            ...categoriesData.filter(
+              (cat: any) =>
+                !ingredientsData.some(
+                  (ing: any) =>
+                    (ing.id || ing.foodId) === (cat.id || cat.foodId)
+                )
+            )
+          ]
+
+          const transformedAvailDataEn: AvailableItem[] =
+            allItemsData.map((item: any, index: number) => ({
+              ingOrCatId:
+                item.foodId || item.ingOrCatId || item.id || index + 1,
+              name: item.name,
+              type:
+                item.type === "ingredient" || item.type === "category"
+                  ? item.type === "ingredient"
+                    ? "Ingredient"
+                    : "Category"
+                  : "Ingredient",
+              status: item.availability ? "Active" : "Inactive",
+              display: item.display !== undefined ? item.display : true,
+              tags: ["InSystem"],
+              quantity: "",
+              isMain: false
+            })) || []
+
+          const transformedAvailDataFr: AvailableItem[] =
+            allItemsData.map((item: any, index: number) => ({
+              ingOrCatId:
+                item.foodId || item.ingOrCatId || item.id || index + 1,
+              name: item.nameFR || item.name,
+              type:
+                item.typeFR === "ingrédient" || item.typeFR === "catégorie"
+                  ? item.typeFR === "ingrédient"
+                    ? "Ingrédient"
+                    : "Catégorie"
+                  : item.type === "ingredient" || item.type === "category"
+                  ? item.type === "ingredient"
+                    ? "Ingrédient"
+                    : "Catégorie"
+                  : "Ingrédient",
+              status: item.availability ? "Active" : "Inactive",
+              display: item.display !== undefined ? item.display : true,
+              tags: ["InSystem"],
+              quantity: "",
+              isMain: false
+            })) || []
+
+          // Set availData for current language
+          if (activeLang === "en") {
+            setAvailData(transformedAvailDataEn)
+          } else {
+            setAvailData(transformedAvailDataFr)
+          }
+
+          setTranslationField("storeData", "en", "storeName", data.storeName)
+          setTranslationField("storeData", "en", "category", data.category)
+          setTranslationField(
+            "storeData",
+            "en",
+            "storeLocation",
+            data.storeLocation
+          )
+          // Set location LatLng data if available
+          if (data.storeMapLocation) {
+            try {
+              const locationData = JSON.parse(data.storeMapLocation)
+              const locationLatLng = {
+                value: locationData.placeId || "",
+                label: data.storeLocation,
+                lat: locationData.lat,
+                lng: locationData.lng
+              }
+              setTranslationField(
+                "storeData",
+                "en",
+                "storeLocationLatLng",
+                locationLatLng
+              )
+              setTranslationField(
+                "storeData",
+                "fr",
+                "storeLocationLatLng",
+                locationLatLng
+              )
+            } catch (error) {
+              const basicLocationLatLng = {
+                value: "",
+                label: data.storeLocation || data.storeMapLocation,
+                lat: undefined,
+                lng: undefined
+              }
+              setTranslationField(
+                "storeData",
+                "en",
+                "storeLocationLatLng",
+                basicLocationLatLng
+              )
+              setTranslationField(
+                "storeData",
+                "fr",
+                "storeLocationLatLng",
+                basicLocationLatLng
+              )
+            }
+          } else if (data.storeLocation) {
+            const basicLocationLatLng = {
+              value: "",
+              label: data.storeLocation,
+              lat: undefined,
+              lng: undefined
+            }
+            setTranslationField(
+              "storeData",
+              "en",
+              "storeLocationLatLng",
+              basicLocationLatLng
+            )
+            setTranslationField(
+              "storeData",
+              "fr",
+              "storeLocationLatLng",
+              basicLocationLatLng
+            )
+          }
+          setTranslationField("storeData", "en", "storeType", data.storeType)
+          setTranslationField(
+            "storeData",
+            "en",
+            "subscriptionType",
+            data.subscriptionType === "premium"
+          )
+          setTranslationField("storeData", "en", "timeFrom", data.startTime)
+          setTranslationField("storeData", "en", "timeTo", data.endTime)
+          setTranslationField("storeData", "en", "phone", data.phoneNumber)
+          setTranslationField("storeData", "en", "email", data.email)
+          setTranslationField("storeData", "en", "website", data.website || "")
+          setTranslationField(
+            "storeData",
+            "en",
+            "facebook",
+            data.facebook || ""
+          )
+          setTranslationField(
+            "storeData",
+            "en",
+            "instagram",
+            data.instagram || ""
+          )
+          setTranslationField("storeData", "en", "about", data.description)
+          setTranslationField(
+            "storeData",
+            "en",
+            "availData",
+            transformedAvailDataEn
+          )
+          setTranslationField("storeData", "en", "storeImage", data.storeImage)
+
+          // French data
+          setTranslationField("storeData", "fr", "storeName", data.storeName)
+          setTranslationField(
+            "storeData",
+            "fr",
+            "category",
+            data.categoryFR || data.category
+          )
+          setTranslationField(
+            "storeData",
+            "fr",
+            "storeLocation",
+            data.storeLocation
+          )
+          setTranslationField(
+            "storeData",
+            "fr",
+            "storeType",
+            data.storeTypeFR || data.storeType
+          )
+          setTranslationField(
+            "storeData",
+            "fr",
+            "subscriptionType",
+            data.subscriptionType === "premium"
+          )
+          setTranslationField("storeData", "fr", "timeFrom", data.startTime)
+          setTranslationField("storeData", "fr", "timeTo", data.endTime)
+          setTranslationField("storeData", "fr", "phone", data.phoneNumber)
+          setTranslationField("storeData", "fr", "email", data.email)
+          setTranslationField("storeData", "fr", "website", data.website || "")
+          setTranslationField(
+            "storeData",
+            "fr",
+            "facebook",
+            data.facebook || ""
+          )
+          setTranslationField(
+            "storeData",
+            "fr",
+            "instagram",
+            data.instagram || ""
+          )
+          setTranslationField(
+            "storeData",
+            "fr",
+            "about",
+            data.descriptionFR || data.description
+          )
+          setTranslationField(
+            "storeData",
+            "fr",
+            "availData",
+            transformedAvailDataFr
+          )
+          setTranslationField("storeData", "fr", "storeImage", data.storeImage)
+
+          setIsPremium(data.subscriptionType === "premium")
+
+          // Set image preview
+          if (data.storeImage) {
+            setImagePreviewUrls([data.storeImage])
+          }
+
+          setIsDataLoaded(true)
+          setHasChanges(false)
+        } else {
+          toast.error("Failed to load store data")
+        }
+      } catch (error) {
+        console.error("Error fetching store data:", error)
+        toast.error("Failed to load store data")
+      } finally {
+        setIsTranslating(false)
+      }
+    }
+
+    void fetchStoreData()
+  }, [storeId, token, activeLang, setTranslationField])
+
+  // fetch foods
   useEffect(() => {
     const fetchFoods = async (): Promise<void> => {
       const res = await getAllFoods(token)
@@ -209,6 +502,7 @@ export default function AddStorePopUpContent({
     void fetchFoods()
   }, [token])
 
+  // fetch tags
   useEffect(() => {
     const fetchTags = async (): Promise<void> => {
       try {
@@ -227,6 +521,7 @@ export default function AddStorePopUpContent({
     void fetchTags()
   }, [token])
 
+  // fetch store categories and types
   useEffect(() => {
     const fetchStoreData = async (): Promise<void> => {
       try {
@@ -253,18 +548,7 @@ export default function AddStorePopUpContent({
     void fetchStoreData()
   }, [])
 
-  // Form hook
-  const form = useForm<z.infer<typeof AddStoreSchema>>({
-    resolver: zodResolver(AddStoreSchema),
-    defaultValues: {
-      ...storeData[activeLang],
-      category: storeData[activeLang]?.category || "",
-      storeImage: storeData[activeLang]?.storeImage || "",
-      storeLocation: storeData[activeLang]?.storeLocation || ""
-    }
-  })
-
-  // Update form when lang changes
+  // Initialize selected location from stored data
   useEffect(() => {
     const currentStoreData = storeData[activeLang]
     if (currentStoreData?.storeLocationLatLng) {
@@ -272,40 +556,29 @@ export default function AddStorePopUpContent({
     } else {
       setSelectedLocationName(null)
     }
+  }, [activeLang, storeData])
 
-    form.reset({
-      ...currentStoreData,
-      category: currentStoreData?.category || "",
-      storeImage: currentStoreData?.storeImage || "",
-      storeLocation: currentStoreData?.storeLocation || ""
-    })
-  }, [activeLang, form, storeData])
-
-  // Convert store categories to dropdown options
-  const getCategoryOptions = (): Option[] => {
-    if (!Array.isArray(storeCategories) || storeCategories.length === 0) {
-      return []
+  // Additional effect to ensure location is set when data is first loaded
+  useEffect(() => {
+    if (isDataLoaded) {
+      const currentStoreData = storeData[activeLang]
+      if (currentStoreData?.storeLocationLatLng) {
+        setSelectedLocationName(currentStoreData.storeLocationLatLng)
+      }
     }
-    return storeCategories.map(category => ({
-      value: category.id.toString(),
-      label: activeLang === "en" ? category.TagName : category.TagNameFr
-    }))
-  }
+  }, [isDataLoaded, activeLang, storeData])
 
-  // Convert store types to dropdown options
-  const getStoreTypeOptions = (): Option[] => {
-    if (!Array.isArray(storeTypes) || storeTypes.length === 0) {
-      return []
-    }
-    return storeTypes.map(type => ({
-      value: type.id.toString(),
-      label: activeLang === "en" ? type.TagName : type.TagNameFr
-    }))
-  }
-
-  // Update form when lang changes
+  // Update form when lang changes or when session data changes
   React.useEffect(() => {
     const currentStoreData = storeData[activeLang]
+
+    // Update selected location
+    if (currentStoreData?.storeLocationLatLng) {
+      setSelectedLocationName(currentStoreData.storeLocationLatLng)
+    } else {
+      setSelectedLocationName(null)
+    }
+
     const recreatePreview = async (): Promise<void> => {
       if (currentStoreData?.storeImage) {
         try {
@@ -326,7 +599,7 @@ export default function AddStorePopUpContent({
       }
     }
 
-    // Convert stored TagName/TagNameFr
+    // Convert stored TagName/TagNameFr back to IDs for form
     let categoryId = ""
     let storeTypeId = ""
 
@@ -353,13 +626,115 @@ export default function AddStorePopUpContent({
       storeImage: currentStoreData?.storeImage || "",
       category: categoryId,
       storeType: storeTypeId,
-      storeLocation: currentStoreData?.storeLocation || ""
+      availData: currentStoreData?.availData || []
     }
 
-    form.reset(formData)
+    if (isDataLoaded && Object.keys(formData).length > 0) {
+      form.reset(formData, { keepDirty: false })
+      setHasChanges(false)
+    }
 
     void recreatePreview()
-  }, [activeLang, form, storeData, storeCategories, storeTypes])
+  }, [activeLang, form, storeData, storeCategories, storeTypes, isDataLoaded])
+
+  // Sync availData with form value and filter by active language
+  useEffect(() => {
+    const currentStoreData = storeData[activeLang]
+    if (
+      currentStoreData?.availData &&
+      Array.isArray(currentStoreData.availData)
+    ) {
+      setAvailData(currentStoreData.availData)
+      form.setValue("availData", currentStoreData.availData)
+    }
+  }, [activeLang, storeData, form])
+
+  // Watch for form changes to set hasChanges
+  useEffect(() => {
+    if (!isDataLoaded) return
+
+    const subscription = form.watch(() => {
+      setHasChanges(true)
+    })
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [form, isDataLoaded])
+
+  // Reset hasChanges to false after initial data load completes
+  useEffect(() => {
+    if (isDataLoaded) {
+      const timer = setTimeout(() => {
+        setHasChanges(false)
+      }, 100)
+      return () => {
+        clearTimeout(timer)
+      }
+    }
+  }, [isDataLoaded])
+
+  // Convert store categories to dropdown options
+  const getCategoryOptions = (): Option[] => {
+    if (!Array.isArray(storeCategories) || storeCategories.length === 0) {
+      return []
+    }
+    return storeCategories.map(category => ({
+      value: category.id.toString(),
+      label: activeLang === "en" ? category.TagName : category.TagNameFr
+    }))
+  }
+
+  // Convert store types to dropdown options
+  const getStoreTypeOptions = (): Option[] => {
+    if (!Array.isArray(storeTypes) || storeTypes.length === 0) {
+      return []
+    }
+    return storeTypes.map(type => ({
+      value: type.id.toString(),
+      label: activeLang === "en" ? type.TagName : type.TagNameFr
+    }))
+  }
+
+  // Clean up session storage
+  useEffect(() => {
+    return () => {
+      form.reset()
+      resetForm()
+      sessionStorage.removeItem("store-store")
+    }
+  }, [form, resetForm])
+
+  // Input change handler
+  const handleInputChange = (
+    fieldName:
+      | "storeName"
+      | "phone"
+      | "email"
+      | "website"
+      | "facebook"
+      | "instagram",
+    value: string
+  ): void => {
+    form.setValue(fieldName, value)
+    setTranslationField("storeData", activeLang, fieldName, value)
+    setHasChanges(true)
+  }
+
+  // Input blur handler for translation
+  const handleInputBlur = async (
+    fieldName:
+      | "storeName"
+      | "phone"
+      | "email"
+      | "website"
+      | "facebook"
+      | "instagram",
+    value: string
+  ): Promise<void> => {
+    if (activeLang === "en" && value.trim()) {
+      setTranslationField("storeData", "fr", fieldName, value)
+    }
+  }
 
   const handleLocationName = (value: OptionType | null): void => {
     setSelectedLocationName(value)
@@ -413,37 +788,8 @@ export default function AddStorePopUpContent({
       "storeLocationLatLng",
       selectedLocation
     )
-  }
 
-  // Input change handler for fields that need translation
-  const handleInputChange = (
-    fieldName:
-      | "storeName"
-      | "phone"
-      | "email"
-      | "website"
-      | "facebook"
-      | "instagram",
-    value: string
-  ): void => {
-    form.setValue(fieldName, value)
-    setTranslationField("storeData", activeLang, fieldName, value)
-  }
-
-  // Input blur handler for translation
-  const handleInputBlur = async (
-    fieldName:
-      | "storeName"
-      | "phone"
-      | "email"
-      | "website"
-      | "facebook"
-      | "instagram",
-    value: string
-  ): Promise<void> => {
-    if (activeLang === "en" && value.trim()) {
-      setTranslationField("storeData", "fr", fieldName, value)
-    }
+    setHasChanges(true)
   }
 
   const handleSubscriptionToggle = (value: boolean): void => {
@@ -453,6 +799,7 @@ export default function AddStorePopUpContent({
     const opp = activeLang === "en" ? "fr" : "en"
     setTranslationField("storeData", opp, "subscriptionType", value)
     form.setValue("subscriptionType", value)
+    setHasChanges(true)
   }
 
   const handleTimeChange =
@@ -463,9 +810,10 @@ export default function AddStorePopUpContent({
       const opp = activeLang === "en" ? "fr" : "en"
       setTranslationField("storeData", opp, name, value)
       form.setValue(name, value)
+      setHasChanges(true)
     }
 
-  // Function to update select fields
+  // Function to update select fields (category, storeType)
   const handleSelectChange = (
     fieldName: "category" | "storeType",
     value: string
@@ -504,6 +852,8 @@ export default function AddStorePopUpContent({
         )
       }
     }
+
+    setHasChanges(true)
   }
 
   const makeRichHandlers = (
@@ -512,9 +862,11 @@ export default function AddStorePopUpContent({
     const onChange = (val: string): void => {
       form.setValue(fieldName, val)
       setTranslationField("storeData", activeLang, fieldName, val)
+      setHasChanges(true)
     }
     return { onChange }
   }
+
   const richTextFieldOnBlur = async (fieldName: "about"): Promise<void> => {
     if (activeLang === "en") {
       const val = form.getValues(fieldName)
@@ -522,13 +874,16 @@ export default function AddStorePopUpContent({
         setIsTranslating(true)
         try {
           const translated = await translateText(val)
-          setTranslationField("storeData", "fr", fieldName, translated)
+          if (translated) {
+            setTranslationField("storeData", "fr", fieldName, translated)
+          }
         } finally {
           setIsTranslating(false)
         }
       }
     }
   }
+
   // table columns for available ingredients and categories
   const availColumns = [
     {
@@ -539,8 +894,7 @@ export default function AddStorePopUpContent({
       header: translations.type,
       accessor: (row: AvailableItem) => (
         <Badge className="bg-white text-black text-xs px-2 py-1 rounded-md border border-gray-100 hover:bg-white">
-          {translations[row.type?.toLowerCase() as keyof typeof translations] ||
-            row.type}
+          {getTranslatedType(row.type, activeLang)}
         </Badge>
       )
     },
@@ -554,20 +908,44 @@ export default function AddStorePopUpContent({
               : "bg-gray-200 text-black text-xs px-2 py-1 rounded-md border border-gray-500 hover:bg-gray-100 transition-colors"
           }
         >
-          {translations[
-            row.status.toLowerCase() as keyof typeof translations
-          ] ?? row.status}
+          {getTranslatedStatus(row.status, activeLang)}
         </Badge>
       )
     },
     {
       header: translations.displayStatus,
       accessor: (row: AvailableItem) => (
-        <Switch checked={row.display} className="scale-75" />
+        <Switch
+          checked={row.display}
+          className="scale-75"
+          onCheckedChange={checked => {
+            // Update the display status when switch is toggled
+            const updated = availData.map(item =>
+              item.ingOrCatId === row.ingOrCatId
+                ? { ...item, display: checked }
+                : item
+            )
+            setAvailData(updated)
+            form.setValue("availData", updated, { shouldValidate: true })
+            setTranslationField("storeData", activeLang, "availData", updated)
+
+            // Also update opposite language
+            const oppLang = activeLang === "en" ? "fr" : "en"
+            const oppCurrentData =
+              (storeData[oppLang]?.availData as AvailableItem[]) || []
+            const oppUpdated = oppCurrentData.map(item =>
+              item.ingOrCatId === row.ingOrCatId
+                ? { ...item, display: checked }
+                : item
+            )
+            setTranslationField("storeData", oppLang, "availData", oppUpdated)
+            setHasChanges(true)
+          }}
+        />
       )
     },
     {
-      header: "", // No header for delete column
+      header: "",
       accessor: (row: AvailableItem) => (
         <Button
           type="button"
@@ -592,12 +970,15 @@ export default function AddStorePopUpContent({
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
     setTranslationField("storeData", activeLang, "availData", updated)
-    setTranslationField(
-      "storeData",
-      activeLang === "en" ? "fr" : "en",
-      "availData",
-      updated
-    )
+
+    // Also remove from opposite language by matching ID
+    const oppLang = activeLang === "en" ? "fr" : "en"
+    const oppCurrentData =
+      (storeData[oppLang]?.availData as AvailableItem[]) || []
+    const oppUpdated = oppCurrentData.filter(item => item.ingOrCatId !== id)
+    setTranslationField("storeData", oppLang, "availData", oppUpdated)
+
+    setHasChanges(true)
   }
 
   // Define functions to handle page changes
@@ -610,29 +991,17 @@ export default function AddStorePopUpContent({
     setPage(1)
   }
 
-  // Sync availData with form value and filter by active language
-  useEffect(() => {
-    const currentStoreData = storeData[activeLang]
-    if (
-      currentStoreData?.availData &&
-      Array.isArray(currentStoreData.availData)
-    ) {
-      setAvailData(currentStoreData.availData)
-      form.setValue("availData", currentStoreData.availData)
-    }
-  }, [activeLang, storeData, form])
-
   // translated type/status using translations object
   const getTranslatedType = (type: string, lang: string): string => {
     const key = type.toLowerCase()
-    return translations[key] || type
+    return translations[key as keyof typeof translations] || type
   }
   const getTranslatedStatus = (status: string, lang: string): string => {
     const key = status.toLowerCase()
-    return translations[key] || status
+    return translations[key as keyof typeof translations] || status
   }
 
-  // handler for “Add Ingredient”
+  // handler for "Add Ingredient"
   const handleAddIngredient = async (): Promise<void> => {
     const name = selected?.name ?? ingredientInput.trim()
     if (!name) return
@@ -640,7 +1009,7 @@ export default function AddStorePopUpContent({
     const entry: AvailableItem = {
       ingOrCatId: selected ? Number(selected.id) : 0,
       name,
-      type: "Ingredient",
+      type: activeLang === "en" ? "Ingredient" : "Ingrédient",
       tags: ["InSystem"],
       display: true,
       quantity: "",
@@ -662,7 +1031,7 @@ export default function AddStorePopUpContent({
     } catch {
       translatedName = name
     }
-    const translatedType = getTranslatedType(entry.type, oppLang)
+    const translatedType = oppLang === "en" ? "Ingredient" : "Ingrédient"
     const translatedStatus = getTranslatedStatus(entry.status, oppLang)
     const translatedEntry: AvailableItem = {
       ...entry,
@@ -680,9 +1049,10 @@ export default function AddStorePopUpContent({
     // clear for next
     setSelected(null)
     setIngredientInput("")
+    setHasChanges(true)
   }
 
-  // handler for “Add Category”
+  // handler for "Add Category"
   const handleAddCategory = async (): Promise<void> => {
     const name = selectedCategory
       ? (activeLang === "en"
@@ -694,7 +1064,7 @@ export default function AddStorePopUpContent({
     const entry: AvailableItem = {
       ingOrCatId: selectedCategory ? Number(selectedCategory.id) : 0,
       name,
-      type: "Category",
+      type: activeLang === "en" ? "Category" : "Catégorie",
       tags: ["InSystem"],
       display: true,
       quantity: "",
@@ -716,7 +1086,7 @@ export default function AddStorePopUpContent({
     } catch {
       translatedName = name
     }
-    const translatedType = getTranslatedType(entry.type, oppLang)
+    const translatedType = oppLang === "en" ? "Category" : "Catégorie"
     const translatedStatus = getTranslatedStatus(entry.status, oppLang)
     const translatedEntry: AvailableItem = {
       ...entry,
@@ -733,6 +1103,7 @@ export default function AddStorePopUpContent({
 
     setSelectedCategory(null)
     setCategoryInput("")
+    setHasChanges(true)
   }
 
   const handleImageSelect = async (files: File[] | null): Promise<void> => {
@@ -741,10 +1112,6 @@ export default function AddStorePopUpContent({
       try {
         setIsTranslating(true)
 
-        const token =
-          typeof window !== "undefined"
-            ? localStorage.getItem("token") ?? ""
-            : ""
         const userName = token ? "user" : "anonymous"
 
         const tempImageUrl = await uploadImageToFirebase(
@@ -764,6 +1131,7 @@ export default function AddStorePopUpContent({
         setTranslationField("storeData", "fr", "storeImageName", file.name)
 
         setImagePreviewUrls([tempImageUrl])
+        setHasChanges(true)
       } catch (error) {
         toast.error("Image upload failed. Please try again.")
         console.error("Firebase upload error:", error)
@@ -777,33 +1145,64 @@ export default function AddStorePopUpContent({
       setTranslationField("storeData", "en", "storeImageName", "")
       setTranslationField("storeData", "fr", "storeImageName", "")
       setImagePreviewUrls([])
+      setHasChanges(true)
     }
   }
 
-  const handleCancel = (
-    form: ReturnType<typeof useForm<z.infer<typeof AddStoreSchema>>>
-  ): void => {
+  const handleCancel = (): void => {
     form.reset()
     // clear store and session
     resetForm()
     sessionStorage.removeItem("store-store")
-
+    setHasChanges(false)
     if (onClose) {
       onClose()
     }
   }
 
   const onSubmit = async (
-    data: z.infer<typeof AddStoreSchema>
+    data: z.infer<typeof EditStoreSchema>
   ): Promise<void> => {
-    if (onAddStore) {
-      await onAddStore()
-    } else {
-      toast(translations.formSubmittedSuccessfully, {})
+    try {
+      const currentStoreData = storeData[activeLang]
+      const updatedStoreData = {
+        ...currentStoreData,
+        ...data,
+        availData
+      }
+
+      // Update the store data
+      Object.entries(updatedStoreData).forEach(([key, value]) => {
+        setTranslationField("storeData", activeLang, key, value)
+      })
+
+      const oppLang = activeLang === "en" ? "fr" : "en"
+      const oppCurrentData = storeData[oppLang] || {}
+      const oppAvailData = oppCurrentData.availData || []
+
+      if (Array.isArray(oppAvailData) && oppAvailData.length > 0) {
+        setTranslationField("storeData", oppLang, "availData", oppAvailData)
+      }
+
+      if (onUpdateStore) {
+        await onUpdateStore()
+      } else {
+        toast(translations.formSubmittedSuccessfully, {})
+        sessionStorage.removeItem("store-store")
+      }
+      setHasChanges(false)
+    } catch (error) {
+      console.error("Error in form submission:", error)
+      toast.error("Failed to update store. Please try again.")
     }
-    // Clear session after successful submission
-    resetForm()
-    sessionStorage.removeItem("store-store")
+  }
+
+  if (isTranslating && !isDataLoaded) {
+    return (
+      <div className="flex justify-center items-center p-8">
+        <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
+      </div>
+    )
   }
 
   return (
@@ -1214,10 +1613,12 @@ export default function AddStorePopUpContent({
                     value={categoryInput}
                     onInputChange={setCategoryInput}
                     onSelect={item => {
-                      const selectedTag = categoryTags.find(
+                      const originalTag = categoryTags.find(
                         tag => tag.id === item.id
                       )
-                      setSelectedCategory(selectedTag ?? null)
+                      if (originalTag) {
+                        setSelectedCategory(originalTag)
+                      }
                       setCategoryInput(item.name)
                     }}
                   />
@@ -1327,16 +1728,13 @@ export default function AddStorePopUpContent({
         <DialogFooter>
           {/* Save and Cancel buttons */}
           <div className="fixed bottom-0 left-0 w-full bg-white border-t py-4 px-4 flex justify-between gap-2 z-50">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                handleCancel(form)
-              }}
-            >
+            <Button type="button" variant="outline" onClick={handleCancel}>
               {translations.cancel}
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button
+              type="submit"
+              disabled={(isLoading ?? false) || !hasChanges}
+            >
               {isLoading ? (
                 <div className="flex gap-2 items-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />

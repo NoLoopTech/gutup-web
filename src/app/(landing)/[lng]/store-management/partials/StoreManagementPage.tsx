@@ -19,16 +19,21 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
 import { useState, useEffect, useMemo } from "react"
-import { AddNewStore, getAllStores, deleteStoreById } from "@/app/api/store"
+import {
+  AddNewStore,
+  getAllStores,
+  deleteStoreById,
+  updateStoreById
+} from "@/app/api/store"
 import { Badge } from "@/components/ui/badge"
 import AddStorePopUp from "./AddStorePopUp"
 import { Label } from "@/components/ui/label"
 import { useStoreStore } from "@/stores/useStoreStore"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import {
-  transformStoreDataToApiRequest,
   type translationsTypes,
-  defaultTranslations
+  defaultTranslations,
+  type StoreManagementDataType
 } from "@/types/storeTypes"
 import { toast } from "sonner"
 import { loadLanguage } from "@/../../src/i18n/locales"
@@ -42,7 +47,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog"
-import ViewStorePopUp from "./ViewStorePopUp"
+import EditStorePopUp from "./EditStorePopUp"
+import { transformStoreDataToApiRequest } from "@/helpers/storeHelpers"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -50,18 +56,6 @@ interface Column<T> {
   id?: string
   cell?: (row: T) => React.ReactNode
   className?: string
-}
-
-interface StoreManagementDataType {
-  id?: number
-  storeName: string
-  storeLocation: string
-  storeType: string
-  phoneNumber: string
-  email: string
-  shopStatus: boolean
-  ingredients: string
-  subscriptionType: string
 }
 
 interface dataListTypes {
@@ -95,6 +89,7 @@ export default function StoreManagementPage({
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
   const [viewStoreOpen, setViewStoreOpen] = useState<boolean>(false)
+  const [editStoreOpen, setEditStoreOpen] = useState<boolean>(false)
   const [, setSelectedStoreForView] = useState<StoreManagementDataType | null>(
     null
   )
@@ -129,6 +124,8 @@ export default function StoreManagementPage({
 
   // handle close add food popup
   const handleCloseAddStorePopUp = (): void => {
+    resetForm()
+    sessionStorage.removeItem("store-store")
     setOpenAddStorePopUp(false)
   }
 
@@ -175,7 +172,6 @@ export default function StoreManagementPage({
     let fileToUpload: File | Blob
 
     if (typeof imageFile === "string") {
-      // Convert data URL or blob URL to Blob
       try {
         const blob = await fetch(imageFile).then(async res => await res.blob())
         fileToUpload = blob
@@ -206,11 +202,16 @@ export default function StoreManagementPage({
       // Upload image first and wait for it to complete
       await uploadStoreImageAndSetUrl()
 
-      const requestBody = transformStoreDataToApiRequest(
+      const transformedData = transformStoreDataToApiRequest(
         storeData,
         activeLang,
         allowMultiLang
       )
+
+      const requestBody = {
+        ...transformedData,
+        allowMultiLang
+      }
 
       const existingPhone = stores.some(
         store => store.phoneNumber === requestBody.phoneNumber
@@ -220,33 +221,38 @@ export default function StoreManagementPage({
       )
 
       if (existingPhone && existingEmail) {
-        toast.error(translations.phoneEmailAlreadyExists)
+        toast.error(
+          translations.phoneEmailAlreadyExists ||
+            "Phone number and email already exist"
+        )
         return
       } else if (existingPhone) {
-        toast.error(translations.phoneAlreadyExists)
+        toast.error(
+          translations.phoneAlreadyExists || "Phone number already exists"
+        )
         return
       } else if (existingEmail) {
-        toast.error(translations.emailAlreadyExists)
+        toast.error(translations.emailAlreadyExists || "Email already exists")
         return
       }
 
       const response = await AddNewStore(token, requestBody)
-
-      if (response?.data) {
+      if (response && (response.status === 201 || response.status === 200)) {
         toast.success(
           translations.formSubmittedSuccessfully || "Store added successfully"
         )
         setOpenAddStorePopUp(false)
         await getStores()
         resetForm()
+        sessionStorage.removeItem("store-store")
       } else {
         console.error("Unexpected response structure:", response)
+        console.error("Response status was:", response?.status)
         toast.error(translations.storeCreationFailed || "Failed to add store")
       }
     } catch (error) {
       toast.error("System error. Please try again later.")
     } finally {
-      sessionStorage.removeItem("store-store")
       setIsLoading(false)
     }
   }
@@ -292,18 +298,59 @@ export default function StoreManagementPage({
     setConfirmDeleteOpen(false)
   }
 
-  // handle view store
-  const handleViewStore = (store: StoreManagementDataType): void => {
-    setSelectedStoreForView(store)
+  // handle edit store
+  const handleEditStore = (store: StoreManagementDataType): void => {
     setSelectedStoreId(store.id ?? null)
-    setViewStoreOpen(true)
+    setEditStoreOpen(true)
   }
 
-  // handle close view store popup
-  const handleCloseViewStorePopup = (): void => {
-    setViewStoreOpen(false)
-    setSelectedStoreForView(null)
+  // handle close edit store popup
+  const handleCloseEditStorePopup = (): void => {
+    setEditStoreOpen(false)
     setSelectedStoreId(null)
+  }
+
+  // handle update store
+  const handleUpdateStore = async (): Promise<void> => {
+    if (!selectedStoreId) return
+
+    try {
+      setIsLoading(true)
+
+      // Get current store and build update request
+      const transformedData = transformStoreDataToApiRequest(
+        storeData,
+        activeLang,
+        allowMultiLang
+      )
+
+      const requestBody = {
+        ...transformedData,
+        allowMultiLang
+      }
+
+      const response = await updateStoreById(
+        token,
+        selectedStoreId,
+        requestBody
+      )
+
+      if (response?.data) {
+        toast.success("Store updated successfully")
+        setEditStoreOpen(false)
+        await getStores()
+        resetForm()
+        sessionStorage.removeItem("store-store")
+      } else {
+        console.error("Unexpected response structure:", response)
+        toast.error("Failed to update store")
+      }
+    } catch (error) {
+      console.error("Error updating store:", error)
+      toast.error("System error. Please try again later.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const columns: Column<StoreManagementDataType>[] = [
@@ -346,11 +393,19 @@ export default function StoreManagementPage({
     {
       accessor: "ingredients",
       header: "Products Available",
-      cell: (row: StoreManagementDataType) => (
-        <Label className="text-gray-500">
-          {row.ingredients.length} Available
-        </Label>
-      )
+      cell: (row: StoreManagementDataType) => {
+        const ingredientsCount = row.ingredients?.length ?? 0
+        const categoriesCount = row.categories?.length ?? 0
+        const ingAndCatCount = row.ingAndCatData?.length ?? 0
+
+        // Use ingredients + categories if available, otherwise fall back to ingAndCatData
+        const totalCount =
+          row.ingredients ?? row.categories
+            ? ingredientsCount + categoriesCount
+            : ingAndCatCount
+
+        return <Label className="text-gray-500">{totalCount} Available</Label>
+      }
     },
     {
       accessor: "shopStatus",
@@ -386,14 +441,11 @@ export default function StoreManagementPage({
           <DropdownMenuContent align="end" className="w-32">
             <DropdownMenuItem
               onClick={() => {
-                handleViewStore(row)
+                handleEditStore(row)
               }}
             >
-              View
+              Edit
             </DropdownMenuItem>
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem>Make a copy</DropdownMenuItem>
-            <DropdownMenuItem>Favorite</DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 if (row.id) {
@@ -456,7 +508,6 @@ export default function StoreManagementPage({
     <div className="space-y-4">
       <div className="flex flex-wrap justify-between gap-2">
         <div className="flex flex-wrap w-[80%] gap-2">
-          {/* search stores by name */}
           <Input
             className="max-w-xs"
             placeholder="Search by store name..."
@@ -531,10 +582,12 @@ export default function StoreManagementPage({
         isLoading={isLoading}
       />
 
-      {/* view store popup */}
-      <ViewStorePopUp
-        open={viewStoreOpen}
-        onClose={handleCloseViewStorePopup}
+      {/* edit store popup */}
+      <EditStorePopUp
+        open={editStoreOpen}
+        onClose={handleCloseEditStorePopup}
+        onUpdateStore={handleUpdateStore}
+        isLoading={isLoading}
         storeId={selectedStoreId}
         token={token}
       />

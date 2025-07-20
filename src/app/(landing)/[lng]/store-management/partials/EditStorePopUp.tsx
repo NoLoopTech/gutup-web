@@ -5,23 +5,27 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import ViewStorePopUpContent from "./ViewStorePopUpContent"
+import EditStorePopUpContent from "./EditStorePopUpContent"
 import { loadLanguage } from "@/../../src/i18n/locales"
 import { defaultTranslations, type translationsTypes } from "@/types/storeTypes"
 
-interface ViewStorePopUpProps {
+interface EditStorePopUpProps {
   open: boolean
   onClose: () => void
+  onUpdateStore: () => Promise<void>
+  isLoading: boolean
   storeId: number | null
   token: string
 }
 
-export default function ViewStorePopUp({
+export default function EditStorePopUp({
   open,
   onClose,
+  onUpdateStore,
+  isLoading,
   storeId,
   token
-}: ViewStorePopUpProps): JSX.Element {
+}: EditStorePopUpProps): JSX.Element {
   const [allowMultiLang, setAllowMultiLang] = useState(true)
   const [activeLang, setActiveLang] = useState<"en" | "fr">("en")
   const [translations, setTranslations] = useState<Partial<translationsTypes>>({})
@@ -53,7 +57,7 @@ export default function ViewStorePopUp({
           }}
         >
           <DialogTitle>
-            {translations.viewStoreDetails ?? "View Store Details"}
+            {translations.editStore ?? "View / Edit Store"}
           </DialogTitle>
 
           <Tabs
@@ -87,13 +91,15 @@ export default function ViewStorePopUp({
 
             {/* English Tab Content */}
             <TabsContent value="en">
-              <ViewStorePopUpContent
+              <EditStorePopUpContent
                 translations={{
                   ...defaultTranslations,
                   ...Object.fromEntries(
                     Object.entries(translations).map(([k, v]) => [k, v ?? ""])
                   )
                 }}
+                onUpdateStore={onUpdateStore}
+                isLoading={isLoading}
                 onClose={onClose}
                 storeId={storeId}
                 token={token}
@@ -104,13 +110,15 @@ export default function ViewStorePopUp({
             {/* French Tab Content (if multi-language is allowed) */}
             {allowMultiLang && (
               <TabsContent value="fr">
-                <ViewStorePopUpContent
+                <EditStorePopUpContent
                   translations={{
                     ...defaultTranslations,
                     ...Object.fromEntries(
                       Object.entries(translations).map(([k, v]) => [k, v ?? ""])
                     )
                   }}
+                  onUpdateStore={onUpdateStore}
+                  isLoading={isLoading}
                   onClose={onClose}
                   storeId={storeId}
                   token={token}
