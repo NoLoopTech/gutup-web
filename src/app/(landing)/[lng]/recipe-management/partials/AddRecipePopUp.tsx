@@ -17,20 +17,19 @@ interface Props {
   open: boolean
   onClose: () => void
   token: string
+  addRecipe: () => void
+  isLoading: boolean
 }
 
 export default function AddRecipePopUp({
   open,
   onClose,
-  token
+  token,
+  addRecipe,
+  isLoading
 }: Props): JSX.Element {
-  const {
-    allowMultiLang,
-    setAllowMultiLang,
-    activeLang,
-    setActiveLang,
-    setTranslationField
-  } = useRecipeStore()
+  const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
+    useRecipeStore()
 
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
@@ -92,6 +91,8 @@ export default function AddRecipePopUp({
                 translations={{ ...defaultTranslations, ...translations }}
                 token={token}
                 onClose={onClose}
+                addRecipe={addRecipe}
+                isLoading={isLoading}
               />
             </TabsContent>
           </Tabs>

@@ -93,17 +93,17 @@ const RichTextEditor = dynamic(
   { ssr: false }
 )
 
-export default function AddRecipePopUpContent({
+export default function EditRecipePopUpContent({
   translations,
   token,
   onClose,
-  addRecipe,
+  editRecipe,
   isLoading
 }: {
   translations: translationsTypes
   token: string
   onClose: () => void
-  addRecipe: () => void
+  editRecipe: () => void
   isLoading: boolean
 }): JSX.Element {
   const {
@@ -296,7 +296,11 @@ export default function AddRecipePopUpContent({
 
   const form = useForm<z.infer<typeof RecipeSchema>>({
     resolver: zodResolver(RecipeSchema),
-    defaultValues: translationData[activeLang]
+    defaultValues: {
+      ...translationData[activeLang],
+      ingredientData: ingredientData,
+      recipeImage: previewFoodUrls[0] || ""
+    }
   })
 
   const handleToggleDisplayStatus = (name: string) => {
@@ -406,17 +410,6 @@ export default function AddRecipePopUpContent({
       updated as any
     )
   }
-
-  // Sync ingredientData with form value
-  useEffect(() => {
-    const formIngredientData = form.watch("ingredientData")
-    if (
-      Array.isArray(formIngredientData) &&
-      formIngredientData !== ingredientData
-    ) {
-      setIngredientData(formIngredientData as Ingredient[])
-    }
-  }, [form, ingredientData])
 
   const handleAddIngredient = () => {
     let updatedAvailData: Ingredient
@@ -605,6 +598,15 @@ export default function AddRecipePopUpContent({
     form.reset(translationData[activeLang])
   }, [activeLang, form.reset, translationData])
 
+  useEffect(() => {
+    setPreviewAuthorUrls(
+      translationData.en.authorimage ? [translationData.en.authorimage] : []
+    )
+    setPreviewFoodUrls(
+      translationData.en.recipeImage ? [translationData.en.recipeImage[0]] : []
+    )
+  }, [activeLang, form.reset, translationData])
+
   const onSubmit = (data: RecipeSchemaType): void => {
     const invalidIngredients = data.ingredientData.filter(item => {
       const ing = item as Ingredient
@@ -616,7 +618,7 @@ export default function AddRecipePopUpContent({
       return
     }
 
-    addRecipe()
+    editRecipe()
   }
 
   return (
@@ -810,7 +812,7 @@ export default function AddRecipePopUpContent({
                 <LableInput
                   title={translations.healthBenefits}
                   placeholder={translations.healthBenefits}
-                  benefits={field.value || []}
+                  benefits={field.value || ["sdasd", "sdasdas"]}
                   name="benefits"
                   width="w-[32%]"
                   activeLang={activeLang}

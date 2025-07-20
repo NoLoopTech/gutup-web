@@ -9,8 +9,8 @@ export interface Ingredient {
   foodId: number
   ingredientName: string
   quantity: string
-  mainIngredient: boolean
-  availableInIngredient: boolean
+  mainIngredient: string
+  availableInIngredient: string
 }
 
 export interface RecipeFields {

@@ -137,3 +137,70 @@ export const defaultTranslations: translationsTypes = {
   invalidurlformat: "",
   formSubmittedSuccessfully: ""
 }
+
+// rercipe types
+// Ingredient type
+interface Ingredient {
+  ingredientName: string
+  ingredientNameFR: string
+  quantity: string
+  quantityFR: string
+  mainIngredient: boolean
+  foodId: number
+  available: boolean
+}
+
+// Health Benefit type
+interface HealthBenefit {
+  healthBenefit: string
+  healthBenefitFR: string
+}
+
+// Author type
+interface Author {
+  authorName: string
+  authorCategory: string
+  authorCategoryFR: string
+  authorPhone: string
+  authorEmail: string
+  authorWebsite: string
+  authorImage: string
+}
+
+// Attribute type
+interface RecipeAttributes {
+  preparation: string
+  preparationFR: string
+  rest: string
+  restFR: string
+  persons: number
+}
+
+// Description type
+interface RecipeDescription {
+  description: string
+  descriptionFR: string
+}
+
+// Image type
+interface RecipeImage {
+  imageUrl: string
+}
+
+// Main Recipe type
+export interface NewRecipeTypes {
+  name: string
+  nameFR: string
+  category: string
+  categoryFR: string
+  season: string
+  seasonFR: string
+  isActive: boolean
+  allowMultiLang: boolean
+  attribute: RecipeAttributes
+  describe: RecipeDescription
+  images: RecipeImage[]
+  healthBenefits: HealthBenefit[]
+  author: Author
+  ingredients: Ingredient[]
+}

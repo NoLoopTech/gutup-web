@@ -882,6 +882,7 @@ export default function ShopPromotionTab({
               onClick={async () => {
                 await handleCancel()
               }}
+              disabled={isLoading}
             >
               {translations.cancel}
             </Button>

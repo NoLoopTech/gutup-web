@@ -22,10 +22,17 @@ import { useEffect, useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import AddRecipePopup from "./AddRecipePopUp"
-import { getAllRecipes } from "@/app/api/recipe"
+import { createNewRecipe, getAllRecipes } from "@/app/api/recipe"
 import { Label } from "@/components/ui/label"
 import dayjs from "dayjs"
-import ViewRecipePopUp from "./ViewRecipePopUp"
+import { NewRecipeTypes } from "@/types/recipeTypes"
+import {
+  deleteImageFromFirebase,
+  uploadImageToFirebase
+} from "@/lib/firebaseImageUtils"
+import { useRecipeStore } from "@/stores/useRecipeStore"
+import { toast } from "sonner"
+import EditRecipePopUp from "./EditRecipePopUp"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -42,11 +49,23 @@ interface RecipeDataType {
   createdAt: string
   isActive: boolean
   images: string[]
-  healthBenefits: string[]
+  healthBenefits: { healthBenefit: string }[]
   preparation: string
   rest: string
   persons: number
-  ingredients: string[]
+  ingredients: { ingredientName: string }[]
+}
+
+interface TableDataTypes {
+  id: number
+  imageUrl: string
+  recipeName: string
+  category: string
+  servings: number
+  mainIngredient: string[]
+  benifits: string[]
+  createDate: string
+  status: boolean
 }
 
 interface dataListTypes {
@@ -62,20 +81,39 @@ export default function RecipeManagementPage({
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [openAddRecipePopUp, setOpenAddRecipePopUp] = useState(false)
-  const [recipes, seRecipes] = useState<RecipeDataType[]>([])
   const [searchText, setSearchText] = useState<string>("")
   const [selectedCategory, setSelectedCategory] = useState<string>("")
   const [selectedPersons, setSelectedPersons] = useState<string>("")
   const [selectedBenefit, setSelectedBenefit] = useState<string>("")
   const [viewRecipe, setViewRecipe] = useState<boolean>(false)
   const [viewRecipeId, setViewRecipeId] = useState<number>(0)
+  const [tableData, setTableData] = useState<TableDataTypes[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const { resetRecipe } = useRecipeStore()
 
   // handle get users
   const getRecipes = async (): Promise<void> => {
     try {
       const response = await getAllRecipes(token)
       if (response.status === 200) {
-        seRecipes(response.data)
+        const tableData: TableDataTypes[] = response.data.map(
+          (recipe: RecipeDataType) => ({
+            id: recipe.id,
+            imageUrl: recipe.images,
+            recipeName: recipe.name,
+            category: recipe.category,
+            servings: recipe.persons,
+            mainIngredient: recipe.ingredients.map(
+              ingredient => ingredient.ingredientName
+            ),
+            benefits: recipe.healthBenefits.map(
+              benefit => benefit.healthBenefit
+            ),
+            createDate: dayjs(recipe.createdAt).format("DD-MM-YYYY"),
+            status: recipe.isActive
+          })
+        )
+        setTableData(tableData)
       } else {
         console.log(response)
       }
@@ -104,7 +142,13 @@ export default function RecipeManagementPage({
   }
   // handle close view Recipe popup
   const handleCloseViewRecipePopUp = (): void => {
+    setViewRecipeId(0)
     setViewRecipe(false)
+
+    // clear store and session
+    resetRecipe()
+
+    sessionStorage.removeItem("recipe-storage")
   }
 
   // handle search text change
@@ -114,14 +158,14 @@ export default function RecipeManagementPage({
     setSearchText(e.target.value)
   }
 
-  const columns: Array<Column<RecipeDataType>> = [
+  const columns: Array<Column<TableDataTypes>> = [
     {
-      accessor: "images",
+      accessor: "imageUrl",
       header: "Media",
-      cell: (row: RecipeDataType) => (
+      cell: (row: TableDataTypes) => (
         <Image
-          src={row.images[0]}
-          alt={row.name}
+          src={row.imageUrl[0]}
+          alt={row.recipeName}
           width={40}
           height={40}
           className="rounded"
@@ -129,31 +173,31 @@ export default function RecipeManagementPage({
       )
     },
     {
-      accessor: "name",
+      accessor: "recipeName",
       header: "Recipe Name"
     },
     {
       accessor: "category",
       header: "Category",
       className: "w-40",
-      cell: (row: RecipeDataType) => (
+      cell: (row: TableDataTypes) => (
         <Badge variant={"outline"}>{row.category}</Badge>
       )
     },
     {
-      accessor: "persons",
+      accessor: "servings",
       header: "Servings",
       className: "w-28",
-      cell: (row: RecipeDataType) => (
-        <Label className="text-gray-500">{row.persons} Servings</Label>
+      cell: (row: TableDataTypes) => (
+        <Label className="text-gray-500">{row.servings} Servings</Label>
       )
     },
     {
-      accessor: "ingredients",
+      accessor: "mainIngredient",
       header: "Main Ingredients",
-      cell: (row: RecipeDataType) => (
+      cell: (row: TableDataTypes) => (
         <div className="flex flex-wrap gap-2">
-          {row.ingredients.map((ingredient, idx) => (
+          {row.mainIngredient.map((ingredient, idx) => (
             <Badge key={`${ingredient}-${idx}`} variant={"outline"}>
               {ingredient}
             </Badge>
@@ -162,43 +206,30 @@ export default function RecipeManagementPage({
       )
     },
     {
-      accessor: "healthBenefits",
-      header: "Health Benefits",
-      cell: (row: RecipeDataType) => (
-        <div className="flex flex-wrap gap-2">
-          {row.healthBenefits.map((benefit, idx) => (
-            <Badge key={`${benefit}-${idx}`} variant={"outline"}>
-              {benefit}
-            </Badge>
-          ))}
-        </div>
-      )
-    },
-    {
-      accessor: "createdAt",
+      accessor: "createDate",
       header: "Date Added",
       cell: (row: any) => dayjs(row.createdAt).format("DD/MM/YYYY")
     },
     {
-      accessor: "isActive",
+      accessor: "status",
       header: "Status",
       className: "w-28",
-      cell: (row: RecipeDataType) => (
+      cell: (row: TableDataTypes) => (
         <Badge
           className={
-            row.isActive
+            row.status
               ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700"
               : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700"
           }
         >
-          {row.isActive ? "Active" : "Inactive"}
+          {row.status ? "Active" : "Inactive"}
         </Badge>
       )
     },
     {
       id: "actions",
       className: "w-12",
-      cell: (row: RecipeDataType) => (
+      cell: (row: TableDataTypes) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -224,21 +255,28 @@ export default function RecipeManagementPage({
 
   // filter recipes
   const filteredRecipes = useMemo(() => {
-    return recipes.filter(recipe => {
-      const nameMatch = recipe.name
+    return tableData.filter(recipe => {
+      const nameMatch = recipe.recipeName
         .toLowerCase()
         .includes(searchText.toLowerCase())
       const scoreMatch =
-        selectedPersons === "" || recipe.persons === Number(selectedPersons)
+        selectedPersons === "" || recipe.servings === Number(selectedPersons)
       const categoryMatch =
         selectedCategory === "" || recipe.category === selectedCategory
       const benefitMatch =
         selectedBenefit === "" ||
-        recipe.healthBenefits.includes(selectedBenefit)
-
+        recipe.benifits.some(benefit =>
+          benefit.toLowerCase().includes(selectedBenefit.toLowerCase())
+        )
       return nameMatch && categoryMatch && scoreMatch && benefitMatch
     })
-  }, [recipes, searchText, selectedCategory, selectedPersons, selectedBenefit])
+  }, [
+    tableData,
+    searchText,
+    selectedCategory,
+    selectedPersons,
+    selectedBenefit
+  ])
 
   const totalItems = filteredRecipes.length
 
@@ -301,6 +339,141 @@ export default function RecipeManagementPage({
     { value: "Skin Health", label: "Skin Health" },
     { value: "Eye Health", label: "Eye Health" }
   ]
+
+  const uploadMoodImageAndSetUrl = async (): Promise<{
+    recipeImageUrl: string | null
+    authorImageUrl: string | null
+  }> => {
+    const { translations } = useRecipeStore.getState()
+    const recipeImage = translations.en.recipeImage
+    const authorImage = translations.en.authorimage
+
+    let recipeImageUrl: string | null = null
+    let authorImageUrl: string | null = null
+
+    const uploadImage = async (
+      imageFile: string | File | undefined,
+      prefix: string
+    ): Promise<string | null> => {
+      if (!imageFile) return null
+
+      const folder = "recipe"
+      const fileName = `${prefix}-${Date.now()}`
+
+      let fileToUpload: File | Blob
+
+      if (typeof imageFile === "string") {
+        try {
+          const blob = await fetch(imageFile).then(res => res.blob())
+          fileToUpload = blob
+        } catch (err) {
+          console.error(`Failed to convert ${prefix} string to Blob`, err)
+          return null
+        }
+      } else {
+        fileToUpload = imageFile
+      }
+
+      return await uploadImageToFirebase(fileToUpload, folder, fileName)
+    }
+
+    if (recipeImage) {
+      recipeImageUrl = await uploadImage(recipeImage, "recipe-image")
+    }
+
+    if (authorImage) {
+      authorImageUrl = await uploadImage(authorImage, "recipe-author-image")
+    }
+
+    return { recipeImageUrl, authorImageUrl }
+  }
+
+  // handle create new recipe
+  const handleCreateNewRecipe = async () => {
+    setIsLoading(true)
+
+    const { translations, allowMultiLang } = useRecipeStore.getState()
+    const { recipeImageUrl, authorImageUrl } = await uploadMoodImageAndSetUrl()
+
+    await uploadMoodImageAndSetUrl()
+
+    const requestBody: NewRecipeTypes = {
+      name: translations.en.name,
+      nameFR: translations.fr.name,
+      category: translations.en.category,
+      categoryFR: translations.fr.category,
+      season: translations.en.season,
+      seasonFR: translations.fr.season,
+      isActive: true,
+      allowMultiLang: allowMultiLang,
+      attribute: {
+        preparation: translations.en.preparation,
+        preparationFR: translations.fr.preparation,
+        rest: translations.en.rest,
+        restFR: translations.fr.rest,
+        persons: Number(translations.en.persons)
+      },
+      describe: {
+        description: translations.en.recipe,
+        descriptionFR: translations.fr.recipe
+      },
+      images: [
+        {
+          imageUrl: recipeImageUrl || ""
+        }
+      ],
+      healthBenefits: translations.en.benefits.map((benefit, index) => ({
+        healthBenefit: benefit,
+        healthBenefitFR: translations.fr.benefits[index] || ""
+      })),
+      author: {
+        authorName: translations.en.authorName,
+        authorCategory: translations.en.authorCategory,
+        authorCategoryFR: translations.fr.authorCategory,
+        authorPhone: translations.en.phone,
+        authorEmail: translations.en.email,
+        authorWebsite: translations.en.website,
+        authorImage: authorImageUrl || ""
+      },
+      ingredients: translations.en.ingredientData.map((ingredient, index) => ({
+        ingredientName: ingredient.ingredientName,
+        ingredientNameFR:
+          translations.fr.ingredientData[index].ingredientName || "",
+        quantity: translations.en.ingredientData[index].quantity || "",
+        quantityFR: translations.fr.ingredientData[index].quantity || "",
+        mainIngredient: true,
+        foodId: translations.en.ingredientData[index].foodId,
+        available: Boolean(
+          translations.en.ingredientData[index].availableInIngredient
+        )
+      }))
+    }
+
+    try {
+      const res = await createNewRecipe(token, requestBody)
+
+      if (res.status === 200 || res.status === 201) {
+        toast.success("Recipe added successfully")
+        setOpenAddRecipePopUp(false)
+        getRecipes()
+
+        // clear store and session
+        resetRecipe()
+
+        sessionStorage.removeItem("recipe-storage")
+      } else {
+        toast.error("Failed to add recipe!")
+        if (recipeImageUrl && authorImageUrl) {
+          await deleteImageFromFirebase(recipeImageUrl)
+          await deleteImageFromFirebase(authorImageUrl)
+        }
+      }
+    } catch (error) {
+      console.log("error creating new recipe", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -393,14 +566,20 @@ export default function RecipeManagementPage({
         open={openAddRecipePopUp}
         onClose={handleCloseAddRecipePopUp}
         token={token}
+        addRecipe={handleCreateNewRecipe}
+        isLoading={isLoading}
       />
 
       {/* view recipe pupup */}
-      <ViewRecipePopUp
+      <EditRecipePopUp
         open={viewRecipe}
         token={token}
         recipeId={viewRecipeId}
         onClose={handleCloseViewRecipePopUp}
+        editRecipe={function (): void {
+          throw new Error("Function not implemented.")
+        }}
+        isLoading={false}
       />
     </div>
   )
