@@ -300,7 +300,7 @@ export default function DailyTipsPage({
         resetTranslations()
         resetUpdatedStore()
       } else {
-        toast.error("Failed to add daily tip!")
+        toast.error(response.data.message[0])
         if (uploadedImageUrl) {
           await deleteImageFromFirebase(uploadedImageUrl)
         }
@@ -503,7 +503,7 @@ export default function DailyTipsPage({
         resetTranslations()
         resetUpdatedStore()
       } else {
-        toast.error("Failed to update daily tip!")
+        toast.error(response.data.message[0])
         if (isImageChanged && uploadedImageUrl) {
           await deleteImageFromFirebase(uploadedImageUrl)
         }

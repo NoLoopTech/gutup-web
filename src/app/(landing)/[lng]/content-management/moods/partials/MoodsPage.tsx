@@ -214,7 +214,7 @@ export default function MoodsPage({
       }
 
       const response = await addNewMood(token, requestBody)
-
+      console.log(response)
       if (response.status === 200 || response.status === 201) {
         toast.success("Mood added successfully")
         setIsOpenAddMood(false)
@@ -224,7 +224,7 @@ export default function MoodsPage({
         resetTranslations()
         resetUpdatedStore()
       } else {
-        toast.error("Failed to add mood!")
+        toast.error(response.data.message[0])
         if (previousImage) {
           await deleteImageFromFirebase(previousImage)
         }
@@ -283,7 +283,7 @@ export default function MoodsPage({
           setPreviousImageUrl(null)
         }
       } else {
-        toast.error("Failed to update mood!")
+        toast.error(response.data.message[0])
       }
     } catch (error) {
       console.error(error)
@@ -465,7 +465,7 @@ export default function MoodsPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end mb-5 -mt-14">
+      <div className="flex justify-end -mt-14 mb-5">
         <Button onClick={handleOpenAddMood}>Add New</Button>
       </div>
 

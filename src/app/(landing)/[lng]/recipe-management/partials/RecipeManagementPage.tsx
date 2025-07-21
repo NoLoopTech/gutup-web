@@ -520,7 +520,7 @@ export default function RecipeManagementPage({
 
         sessionStorage.removeItem("recipe-storage")
       } else {
-        toast.error("Failed to add recipe!")
+        toast.error(res.data.message[0])
         if (recipeImageUrl && authorImageUrl) {
           await deleteImageFromFirebase(recipeImageUrl)
           await deleteImageFromFirebase(authorImageUrl)
@@ -721,7 +721,7 @@ export default function RecipeManagementPage({
         resetUpdatedStore()
         sessionStorage.removeItem("update-recipe-storage")
       } else {
-        toast.error("Failed to update recipe!")
+        toast.error(res.data.message[0])
         if (recipeImageUrl) {
           await deleteImageFromFirebase(recipeImageUrl)
         }
