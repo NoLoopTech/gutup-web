@@ -568,36 +568,67 @@ export default function AddStorePopUpContent({
     },
     {
       header: "", // No header for delete column
-      accessor: (row: AvailableItem) => (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
-          onClick={() => {
-            handleDeleteAvailItem(row.ingOrCatId)
-          }}
-          title={translations.delete}
-        >
-          <Trash className="h-4 w-4 text-gray-500" />
-        </Button>
-      ),
+      accessor: (row: AvailableItem) => {
+        const index = availData.findIndex(
+          item =>
+            item.ingOrCatId === row.ingOrCatId &&
+            item.type === row.type &&
+            item.name === row.name
+        )
+        return (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
+            onClick={() => {
+              handleDeleteAvailItem(index)
+            }}
+            title={translations.delete}
+          >
+            <Trash className="h-4 w-4 text-gray-500" />
+          </Button>
+        )
+      },
       id: "delete"
     }
   ]
 
   // Delete handler for availData
-  const handleDeleteAvailItem = (id: number): void => {
-    const updated = availData.filter(item => item.ingOrCatId !== id)
+  const handleDeleteAvailItem = (index: number): void => {
+    if (index < 0 || index >= availData.length) {
+      toast.error("Invalid item selection")
+      return
+    }
+
+    // Get the item to be deleted
+    const itemToDelete = availData[index]
+
+    // Update current language data
+    const updated = availData.filter((_, i) => i !== index)
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
     setTranslationField("storeData", activeLang, "availData", updated)
-    setTranslationField(
-      "storeData",
-      activeLang === "en" ? "fr" : "en",
-      "availData",
-      updated
-    )
+
+    // Update opposite language data
+    const oppLang = activeLang === "en" ? "fr" : "en"
+    const oppLangData = (storeData[oppLang]?.availData as AvailableItem[]) || []
+
+    let oppUpdated: AvailableItem[]
+
+    if (itemToDelete.ingOrCatId === 0) {
+      oppUpdated = oppLangData.filter((_, i) => i !== index)
+    } else {
+      oppUpdated = oppLangData.filter(
+        item =>
+          !(
+            item.ingOrCatId === itemToDelete.ingOrCatId &&
+            item.type === itemToDelete.type
+          )
+      )
+    }
+
+    setTranslationField("storeData", oppLang, "availData", oppUpdated)
   }
 
   // Define functions to handle page changes
@@ -636,8 +667,6 @@ export default function AddStorePopUpContent({
   const handleAddIngredient = async (): Promise<void> => {
     const name = selected?.name ?? ingredientInput.trim()
     if (!name) return
-
-    // Check if typed name matches an existing food item
     const matchingFood =
       selected || foods.find(f => f.name?.toLowerCase() === name.toLowerCase())
 
@@ -697,8 +726,6 @@ export default function AddStorePopUpContent({
       translatedEntry
     ]
     setTranslationField("storeData", oppLang, "availData", oppUpdated)
-
-    // Show success message and clear for next
     toast.success(
       translations.itemAddedSuccessfully || "Item added successfully"
     )

@@ -917,7 +917,6 @@ export default function EditStorePopUpContent({
           checked={row.display}
           className="scale-75"
           onCheckedChange={checked => {
-            // Update the display status when switch is toggled
             const updated = availData.map(item =>
               item.ingOrCatId === row.ingOrCatId
                 ? { ...item, display: checked }
@@ -944,36 +943,50 @@ export default function EditStorePopUpContent({
     },
     {
       header: "",
-      accessor: (row: AvailableItem) => (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
-          onClick={() => {
-            handleDeleteAvailItem(row.ingOrCatId)
-          }}
-          title={translations.delete}
-        >
-          <Trash className="h-4 w-4 text-gray-500" />
-        </Button>
-      ),
+      accessor: (row: AvailableItem) => {
+        // Delete button by index
+        const index = availData.findIndex(
+          item =>
+            item.ingOrCatId === row.ingOrCatId &&
+            item.name === row.name &&
+            item.type === row.type
+        )
+        return (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
+            onClick={() => {
+              handleDeleteAvailItem(index)
+            }}
+            title={translations.delete}
+          >
+            <Trash className="h-4 w-4 text-gray-500" />
+          </Button>
+        )
+      },
       id: "delete"
     }
   ]
 
   // Delete handler for availData
-  const handleDeleteAvailItem = (id: number): void => {
-    const updated = availData.filter(item => item.ingOrCatId !== id)
+  const handleDeleteAvailItem = (index: number): void => {
+    if (index < 0 || index >= availData.length) {
+      toast.error("Invalid item selection")
+      return
+    }
+
+    const updated = availData.filter((_, i) => i !== index)
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
     setTranslationField("storeData", activeLang, "availData", updated)
 
-    // Also remove from opposite language by matching ID
+    // Also remove from opposite language by matching the same index
     const oppLang = activeLang === "en" ? "fr" : "en"
     const oppCurrentData =
       (storeData[oppLang]?.availData as AvailableItem[]) || []
-    const oppUpdated = oppCurrentData.filter(item => item.ingOrCatId !== id)
+    const oppUpdated = oppCurrentData.filter((_, i) => i !== index)
     setTranslationField("storeData", oppLang, "availData", oppUpdated)
 
     setHasChanges(true)
@@ -1083,7 +1096,6 @@ export default function EditStorePopUpContent({
       : categoryInput.trim()
     if (!name) return
 
-    // Check if typed name matches an existing category tag (case-insensitive)
     const matchingCategory =
       selectedCategory ||
       categoryTags.find(tag => {
