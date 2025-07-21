@@ -637,10 +637,26 @@ export default function AddStorePopUpContent({
     const name = selected?.name ?? ingredientInput.trim()
     if (!name) return
 
-    // Check if typed name matches an existing food item (case-insensitive)
-    const matchingFood = selected || foods.find(f => 
-      f.name?.toLowerCase() === name.toLowerCase()
-    )
+    // Check if typed name matches an existing food item
+    const matchingFood =
+      selected || foods.find(f => f.name?.toLowerCase() === name.toLowerCase())
+
+    const isAlreadyAdded = availData.some(item => {
+      if (item.type !== "Ingredient") {
+        return false
+      }
+
+      if (matchingFood) {
+        return item.ingOrCatId === Number(matchingFood.id)
+      } else {
+        return item.name.toLowerCase() === name.toLowerCase()
+      }
+    })
+
+    if (isAlreadyAdded) {
+      toast.error(translations.itemAlreadyAdded || "Item already added")
+      return
+    }
 
     const entry: AvailableItem = {
       ingOrCatId: matchingFood ? Number(matchingFood.id) : 0,
@@ -682,7 +698,10 @@ export default function AddStorePopUpContent({
     ]
     setTranslationField("storeData", oppLang, "availData", oppUpdated)
 
-    // clear for next
+    // Show success message and clear for next
+    toast.success(
+      translations.itemAddedSuccessfully || "Item added successfully"
+    )
     setSelected(null)
     setIngredientInput("")
   }
@@ -696,20 +715,37 @@ export default function AddStorePopUpContent({
       : categoryInput.trim()
     if (!name) return
 
-    // Check if typed name matches an existing category tag (case-insensitive)
-    const matchingCategory = selectedCategory || categoryTags.find(tag => {
-      const tagDisplayName = activeLang === "en" 
-        ? tag.tagName ?? "" 
-        : tag.tagNameFr ?? ""
-      return tagDisplayName.toLowerCase() === name.toLowerCase()
+    const matchingCategory =
+      selectedCategory ||
+      categoryTags.find(tag => {
+        const tagDisplayName =
+          activeLang === "en" ? tag.tagName ?? "" : tag.tagNameFr ?? ""
+        return tagDisplayName.toLowerCase() === name.toLowerCase()
+      })
+
+    const isAlreadyAdded = availData.some(item => {
+      if (item.type !== "Category") {
+        return false
+      }
+
+      if (matchingCategory) {
+        return item.ingOrCatId === Number(matchingCategory.id)
+      } else {
+        return item.name.toLowerCase() === name.toLowerCase()
+      }
     })
+
+    if (isAlreadyAdded) {
+      toast.error(translations.itemAlreadyAdded || "Item already added")
+      return
+    }
 
     const entry: AvailableItem = {
       ingOrCatId: matchingCategory ? Number(matchingCategory.id) : 0,
-      name: matchingCategory 
-        ? (activeLang === "en" 
-            ? matchingCategory.tagName ?? name 
-            : matchingCategory.tagNameFr ?? name)
+      name: matchingCategory
+        ? activeLang === "en"
+          ? matchingCategory.tagName ?? name
+          : matchingCategory.tagNameFr ?? name
         : name,
       type: "Category",
       tags: ["InSystem"],
@@ -748,6 +784,10 @@ export default function AddStorePopUpContent({
     ]
     setTranslationField("storeData", oppLang, "availData", oppUpdated)
 
+    // Show success message and clear for next
+    toast.success(
+      translations.itemAddedSuccessfully || "Item added successfully"
+    )
     setSelectedCategory(null)
     setCategoryInput("")
   }
