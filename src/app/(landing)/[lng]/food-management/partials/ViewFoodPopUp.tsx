@@ -69,6 +69,7 @@ interface SessionStorageData {
     healthBenefit: string
     healthBenefitFR?: string
   }>
+  [key: string]: any // Add index signature to allow string indexing
 }
 
 interface ApiCategoryItem {
@@ -237,7 +238,7 @@ export default function ViewFoodPopUp({
   const handleDeleteFoodById = async (): Promise<void> => {
     try {
       const response = await deleteFoodById(token, foodId)
-      
+
       if (response.error) {
         toast.error("Failed to delete food", {
           description: response.data?.message || "An error occurred"
@@ -353,8 +354,8 @@ export default function ViewFoodPopUp({
 
   // Function to update session storage when data changes
   const updateEditedData = (
-    field: keyof SessionStorageData,
-    value: unknown
+    field: string,
+    value: any
   ): void => {
     const currentData = getFromSessionStorage() ?? editedData
     const updatedData: SessionStorageData = {
@@ -404,9 +405,9 @@ export default function ViewFoodPopUp({
 
   // Function to update nested data
   const updateNestedData = (
-    parentField: keyof SessionStorageData,
+    parentField: string,
     childField: string,
-    value: unknown
+    value: any
   ): void => {
     const currentData = getFromSessionStorage() ?? editedData
     const updatedData: SessionStorageData = {
@@ -430,7 +431,9 @@ export default function ViewFoodPopUp({
       const { foodId: savedFoodId, ...rawData } = dataToSave
 
       // Get pending new benefits from session storage
-      const pendingBenefits = JSON.parse(sessionStorage.getItem('pendingNewBenefits') || '[]') as Array<{tagName: string; tagNameFr: string}>
+      const pendingBenefits = JSON.parse(
+        sessionStorage.getItem("pendingNewBenefits") ?? "[]"
+      ) as Array<{ tagName: string; tagNameFr: string }>
 
       // First, add new benefits to database if any exist
       if (pendingBenefits.length > 0) {
@@ -448,19 +451,23 @@ export default function ViewFoodPopUp({
                 tagName: benefit.tagName,
                 tagNameFr: benefit.tagNameFr
               })
-              
+
               if (response.status === 200 || response.status === 201) {
-                console.log(`Benefit "${benefit.tagName}" added to database successfully`)
+                console.log(
+                  `Benefit "${benefit.tagName}" added to database successfully`
+                )
               }
             } catch (error) {
-              console.error(`Failed to add benefit "${benefit.tagName}" to database:`, error)
+              console.error(
+                `Failed to add benefit "${benefit.tagName}" to database:`,
+                error
+              )
             }
           }
         }
-        
+
         // Clear pending benefits after adding to database
-        sessionStorage.removeItem('pendingNewBenefits')
-        toast.success("New benefits added to database successfully!")
+        sessionStorage.removeItem("pendingNewBenefits")
       }
 
       // Transform the session storage data to match CreateFoodDto format
@@ -525,7 +532,7 @@ export default function ViewFoodPopUp({
 
   const handleClose = (): void => {
     clearSessionStorage()
-    sessionStorage.removeItem('pendingNewBenefits') // Clear pending benefits on close
+    sessionStorage.removeItem("pendingNewBenefits") // Clear pending benefits on close
     onClose()
   }
 
@@ -644,7 +651,9 @@ export default function ViewFoodPopUp({
                 selectionRef={selectionRef}
                 preparationRef={preparationRef}
                 conservationRef={conservationRef}
-                foodDetails={editedData ?? foodDetails ?? undefined}
+                foodDetails={
+                  (editedData ?? foodDetails) as FoodDetailsTypes | null
+                }
                 categories={categoryOptionsApi}
                 seasons={seasons}
                 countries={countries}
@@ -665,7 +674,11 @@ export default function ViewFoodPopUp({
                   categories={categoryOptionsApi}
                   seasons={seasons}
                   countries={countries}
-                  foodDetails={editedData ?? foodDetails}
+                  foodDetails={
+                    (editedData ?? foodDetails) as NonNullable<
+                      Parameters<typeof ViewFoodFranch>[0]
+                    >["foodDetails"]
+                  }
                   benefitTags={benefitTags}
                   updateEditedData={updateEditedData}
                   updateNestedData={updateNestedData}
