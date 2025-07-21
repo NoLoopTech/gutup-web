@@ -1,58 +1,75 @@
 "use client"
 
-import { useEffect } from "react"
-import { usePathname } from "next/navigation"
-import { useMoodStore } from "@/stores/useMoodStore"
-import { useDailyTipStore } from "@/stores/useDailyTipStore"
-import { useStoreStore } from "@/stores/useStoreStore"
-import { useRecipeStore } from "@/stores/useRecipeStore"
+// components/layout/ClientSessionHandler.tsx
+import { useEffect, useState } from "react"
+import { signOut, useSession } from "next-auth/react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
+import axiosInstance from "@/query/axios.instance"
 
-const ClientSessionHandler = (): null => {
-  const pathname = usePathname()
-  const { resetTranslations } = useMoodStore()
-  const { resetTranslations: dailyTipResetTranslations } = useDailyTipStore()
-  const { resetForm } = useStoreStore()
-  const { resetRecipe } = useRecipeStore()
+const ClientSessionHandler = () => {
+  const { data: session, status } = useSession()
+  const [isSessionExpired, setIsSessionExpired] = useState(false)
 
+  // Add the useEffect for the interceptor and session check
   useEffect(() => {
-    const handleCheckPath = async (): Promise<void> => {
-      // Check if the current path is not '/content-management/moods/'
-      if (pathname !== "/content-management/moods/") {
-        resetTranslations()
-        sessionStorage.removeItem("mood-storage")
-        sessionStorage.removeItem("updated-mood-fields")
+    const interceptor = axiosInstance.interceptors.response.use(
+      response => response,
+      error => {
+        if (error.message === "Session expired") {
+          setIsSessionExpired(true)
+        }
+        return Promise.reject(error)
       }
+    )
 
-      // Check if the current path is not '/content-management/daily-tips/'
-      if (pathname !== "/content-management/daily-tips/") {
-        dailyTipResetTranslations()
-        sessionStorage.removeItem("daily-tip-storage")
-        sessionStorage.removeItem("update-daily-tip-storage")
-      }
-
-      // Check if the current path is not '/store-management'
-      if (!pathname.includes("/store-management")) {
-        resetForm()
-        sessionStorage.removeItem("store-store")
-      }
-
-      // Check if the current path is not '/food-management/tag-overview/'
-      if (!pathname.includes("/food-management/tag-overview/")) {
-        sessionStorage.removeItem("tag-store")
-      }
-
-      // Check if the current path is not '/food-management/tag-overview/'
-      if (!pathname.includes("/recipe-management/")) {
-        resetRecipe()
-        sessionStorage.removeItem("recipe-storage")
-        sessionStorage.removeItem("update-recipe-storage")
-      }
+    return () => {
+      axiosInstance.interceptors.response.eject(interceptor)
     }
+  }, [])
 
-    void handleCheckPath()
-  }, [pathname, resetTranslations, dailyTipResetTranslations, resetForm])
+  // Handle unauthenticated status
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      setIsSessionExpired(true)
+    }
+  }, [status])
 
-  return null
+  const handleLogout = async () => {
+    await signOut()
+    window.location.href = "/login"
+  }
+
+  return (
+    <>
+      {/* Session expired confirmation popup */}
+      <AlertDialog
+        open={isSessionExpired}
+        onOpenChange={() => setIsSessionExpired(false)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Session Expired</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your session has expired. Please log in again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleLogout}>
+              Go to Login
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  )
 }
 
 export default ClientSessionHandler
