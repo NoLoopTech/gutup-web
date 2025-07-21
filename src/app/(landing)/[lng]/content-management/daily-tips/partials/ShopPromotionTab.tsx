@@ -20,7 +20,6 @@ import {
     FormLabel,
     FormMessage
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import {
     Select,
     SelectContent,
@@ -28,7 +27,6 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -556,8 +554,8 @@ export default function ShopPromotionTab({
   return (
     <div className="relative">
       {isTranslating && (
-        <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
-          <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60">
+          <span className="w-10 h-10 border-t-4 border-blue-500 border-solid rounded-full animate-spin" />
         </div>
       )}
       <Form {...form}>
@@ -802,7 +800,7 @@ export default function ShopPromotionTab({
             {/* Available Products */}
 
             <div className="flex flex-col gap-4 pt-4">
-              <div className="flex flex-row flex-1 gap-2 items-center mb-2">
+              <div className="flex flex-row items-center flex-1 gap-2 mb-2">
                 <div className="flex-1">
                   <SearchBar
                     title="Select Food"
@@ -819,7 +817,7 @@ export default function ShopPromotionTab({
                     }}
                   />
                 </div>
-                <div className="flex items-end mt-7 h-full">
+                <div className="flex items-end h-full mt-7">
                   <Button type="button" onClick={handleAddIngredient}>
                     {translations.add}
                   </Button>
@@ -856,14 +854,14 @@ export default function ShopPromotionTab({
 
             <Separator />
 
-            <div className="flex justify-between items-center mt-4 mb-4">
+            <div className="flex items-center justify-between mt-4 mb-4">
               <h2 className="text-lg font-bold text-black">
                 {translations.uploadImages}
               </h2>
             </div>
 
             {/* Image Uploader */}
-            <div className="pb-8 w-full">
+            <div className="w-full pb-8">
               <FormField
                 control={form.control}
                 name="image"
@@ -884,7 +882,7 @@ export default function ShopPromotionTab({
           </div>
 
           {/* Buttons */}
-          <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
+          <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
             <Button
               variant="outline"
               onClick={async () => {
@@ -895,8 +893,8 @@ export default function ShopPromotionTab({
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? (
-                <div className="flex gap-2 items-center">
-                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                <div className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white rounded-full animate-spin border-t-transparent" />
                   {translations.save}
                 </div>
               ) : (
