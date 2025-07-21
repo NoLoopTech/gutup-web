@@ -175,6 +175,7 @@ export interface BasicForm {
 export interface ShopPromoteFood {
   id?: number
   name?: string
+  nameFR?: string
   status?: boolean
   display?: boolean
 }

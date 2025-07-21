@@ -137,7 +137,7 @@ export default function ShopPromotionTab({
     void fetchFoods()
   }, [token])
 
-  const handleAddIngredient = () => {
+  const handleAddIngredient = async (): Promise<void> => {
     let updatedAvailData: AvailableItem
 
     // Step 1: Check if the item is already in the availData list by item name
@@ -188,17 +188,28 @@ export default function ShopPromotionTab({
     // Step 4: Add the new item (either selected or custom) to the availData state
     setAvailData([...availData, updatedAvailData])
 
-    // Save the updated availData into the daily tips store
-    setTranslationField("shopPromotionData", activeLang, "shopPromoteFoods", [
-      ...availData,
-      updatedAvailData
-    ])
-    setTranslationField(
-      "shopPromotionData",
-      activeLang === "en" ? "fr" : "en",
-      "shopPromoteFoods",
-      [...availData, updatedAvailData]
-    )
+    // Translate the name if needed
+    try {
+      const translatedName =
+        activeLang === "en"
+          ? await translateText(updatedAvailData.name)
+          : updatedAvailData.name // if current lang is fr, no need to translate
+
+      const enList = [...availData, updatedAvailData]
+      const frList = [
+        ...availData,
+        {
+          ...updatedAvailData,
+          name: translatedName
+        }
+      ]
+
+      setTranslationField("shopPromotionData", "en", "shopPromoteFoods", enList)
+      setTranslationField("shopPromotionData", "fr", "shopPromoteFoods", frList)
+    } catch (err) {
+      console.error("Translation failed:", err)
+      toast.error("Failed to translate food name.")
+    }
 
     // Optionally, show a success message
     toast.success("Food item added successfully!")
@@ -502,7 +513,7 @@ export default function ShopPromotionTab({
       return
     }
 
-    const { name, country, lat, lng } = location
+    const { name, lat, lng } = location
 
     const selectedLocation = {
       value: placeId,
@@ -541,6 +552,12 @@ export default function ShopPromotionTab({
       selectedLocation
     )
   }
+
+  useEffect(() => {
+    const foods =
+      translationsData.shopPromotionData[activeLang]?.shopPromoteFoods ?? []
+    setAvailData(foods)
+  }, [activeLang, translationsData.shopPromotionData])
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
     addDailyTip()

@@ -192,6 +192,20 @@ export default function DailyTipsPage({
         translationsData: currentTranslations
       } = useDailyTipStore.getState()
 
+      const shopFoods =
+        currentTranslations.shopPromotionData.en.shopPromoteFoods ?? []
+
+      const updateShopPromoteFoods = shopFoods.map((item, index) => {
+        // Access the corresponding French item by index
+        const translatedItem =
+          currentTranslations.shopPromotionData.fr.shopPromoteFoods[index]
+
+        return {
+          ...item,
+          nameFR: translatedItem ? translatedItem.name : item.name
+        }
+      })
+
       const requestBody = {
         allowMultiLang: currentAllowMultiLang,
         concern:
@@ -263,8 +277,7 @@ export default function DailyTipsPage({
           instagram: currentTranslations.shopPromotionData.en.instagram,
           website: currentTranslations.shopPromotionData.en.website,
           image: uploadedImageUrl || "",
-          shopPromoteFoods:
-            currentTranslations.shopPromotionData.en.shopPromoteFoods
+          shopPromoteFoods: updateShopPromoteFoods
         },
         videoForm: {
           subTitle: currentTranslations.videoTipData.en.subTitle,
@@ -426,8 +439,24 @@ export default function DailyTipsPage({
           shopPromote.instagram = shopData.en.instagram as string
         if ("website" in shopData.en)
           shopPromote.website = shopData.en.website as string
-        if ("shopPromoteFoods" in shopData.en)
-          shopPromote.shopPromoteFoods = shopData.en.shopPromoteFoods
+        if (
+          "shopPromoteFoods" in shopData.en ||
+          "shopPromoteFoods" in shopData.fr
+        ) {
+          const enFoods = shopData.en.shopPromoteFoods ?? []
+          const frFoods = shopData.fr.shopPromoteFoods ?? []
+
+          const updatedShopPromoteFoods = enFoods.map((item, index) => {
+            const translatedItem = frFoods[index]
+
+            return {
+              ...item,
+              nameFR: translatedItem ? translatedItem.name : item.name
+            }
+          })
+
+          shopPromote.shopPromoteFoods = updatedShopPromoteFoods
+        }
         if (uploadedImageUrl) shopPromote.image = uploadedImageUrl
 
         if (Object.keys(shopPromote).length > 0) {

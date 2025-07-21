@@ -336,18 +336,34 @@ export default function EditDailyTipMainPopUp({
             locationLatLng
           )
 
-          setTranslationField(
-            "shopPromotionData",
-            "en",
-            "shopPromoteFoods",
-            data.shopPromote.shopPromoteFoods
-          )
-          setTranslationField(
-            "shopPromotionData",
-            "fr",
-            "shopPromoteFoods",
-            data.shopPromote.shopPromoteFoods
-          )
+          // Handling Shop Promotion Data (set English and French shopPromoteFoods)
+          if ("shopPromoteFoods" in data.shopPromote) {
+            // Set English shopPromoteFoods
+            setTranslationField(
+              "shopPromotionData",
+              "en",
+              "shopPromoteFoods",
+              data.shopPromote.shopPromoteFoods
+            )
+
+            // Set French shopPromoteFoods with nameFR for each item
+            type ShopPromoteFood = { nameFR: string; [key: string]: any }
+            const updatedShopPromoteFoods =
+              data.shopPromote.shopPromoteFoods.map(
+                (item: ShopPromoteFood) => ({
+                  ...item,
+                  name: item.nameFR
+                })
+              )
+
+            // Set French shopPromoteFoods
+            setTranslationField(
+              "shopPromotionData",
+              "fr",
+              "shopPromoteFoods",
+              updatedShopPromoteFoods
+            )
+          }
 
           setTranslationField(
             "shopPromotionData",
