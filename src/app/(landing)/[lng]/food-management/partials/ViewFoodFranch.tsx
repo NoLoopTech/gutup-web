@@ -1,14 +1,10 @@
 "use client"
 
-import React from "react"
-import { TabsContent } from "@/components/ui/tabs"
+import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
+import LableInput from "@/components/Shared/LableInput/LableInput"
+import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
-import dynamic from "next/dynamic"
-import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
-import LableInput from "@/components/Shared/LableInput/LableInput"
 import {
   Select,
   SelectContent,
@@ -16,6 +12,11 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
+import { TabsContent } from "@/components/ui/tabs"
+import { useTranslation } from "@/query/hooks/useTranslation"
+import dynamic from "next/dynamic"
+import React, { useEffect, useState } from "react"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -26,9 +27,72 @@ interface ViewFoodFrenchProps {
   selectionRef: React.Ref<RichTextEditorHandle>
   preparationRef: React.Ref<RichTextEditorHandle>
   conservationRef: React.Ref<RichTextEditorHandle>
-  categories: Array<{ value: string; label: string }>
-  seasons: Array<{ value: string; label: string }>
-  countries: Array<{ value: string; label: string }>
+  categories: Array<{
+    value: string
+    label: string
+    valueEn?: string
+    valueFr?: string
+    labelEn?: string
+    labelFr?: string
+  }>
+  seasons: Array<{
+    value: string
+    label: string
+    labelFr?: string
+  }>
+  countries: Array<{ value: string; label: string; labelFr?: string }>
+  foodDetails?: {
+    name: string
+    nameFR: string
+    category: string
+    categoryFR: string
+    country: string
+    seasons: Array<{
+      season: string
+      seasonFR: string
+      foodId: number
+    }>
+    attributes: {
+      fiber: number
+      proteins: number
+      vitamins: string
+      vitaminsFR: string
+      minerals: string
+      mineralsFR: string
+      fat: number
+      sugar: number
+    }
+    describe: {
+      selection: string
+      selectionFR: string
+      preparation: string
+      preparationFR: string
+      conservation: string
+      conservationFR: string
+    }
+    healthBenefits: Array<{
+      healthBenefit: string
+      healthBenefitFR: string
+    }>
+    images: Array<{
+      image: string
+    }>
+  }
+  benefitTags: Array<{ tagName: string; tagNameFr: string }>
+  updateEditedData: (field: string, value: any) => void
+  updateNestedData: (
+    parentField: string,
+    childField: string,
+    value: any
+  ) => void
+  handleSelectSync: (
+    fieldName: "category" | "season" | "country",
+    value: string,
+    lang: "en" | "fr"
+  ) => void
+  handleImageSelect: (files: File[] | null) => Promise<void>
+  imagePreviewUrls: string[]
+  token: string
 }
 
 export default function ViewFoodFrench({
@@ -37,49 +101,174 @@ export default function ViewFoodFrench({
   conservationRef,
   categories,
   seasons,
-  countries
+  countries,
+  foodDetails,
+  benefitTags,
+  updateEditedData,
+  updateNestedData,
+  handleSelectSync,
+  handleImageSelect,
+  imagePreviewUrls,
+  token
 }: ViewFoodFrenchProps): JSX.Element {
+  const { translateText } = useTranslation()
+  const [pendingNewBenefitsFr, setPendingNewBenefitsFr] = useState<Array<{tagName: string; tagNameFr: string}>>([])
+
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "",
+    season: "",
+    country: "",
+    fiber: "",
+    proteins: "",
+    vitamins: "",
+    minerals: "",
+    fat: "",
+    sugar: "",
+    benefits: [] as string[]
+  })
+
+  useEffect(() => {
+    if (foodDetails) {
+      setFormData({
+        name: foodDetails.nameFR || "",
+        category: foodDetails.categoryFR || "",
+        season: foodDetails.seasons?.[0]?.seasonFR || "",
+        country: foodDetails.country || "",
+        fiber: foodDetails.attributes?.fiber?.toString() || "",
+        proteins: foodDetails.attributes?.proteins?.toString() || "",
+        vitamins: foodDetails.attributes?.vitaminsFR || "",
+        minerals: foodDetails.attributes?.mineralsFR || "",
+        fat: foodDetails.attributes?.fat?.toString() || "",
+        sugar: foodDetails.attributes?.sugar?.toString() || "",
+        benefits:
+          foodDetails.healthBenefits
+            ?.map(b => b.healthBenefitFR)
+            .filter(Boolean) || []
+      })
+    }
+  }, [foodDetails])
+
+  const handleInputChange = (field: string, value: string): void => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+
+    // Update session storage based on field type
+    switch (field) {
+      case "name":
+        updateEditedData("nameFR", value)
+        break
+      case "fiber":
+      case "proteins":
+      case "fat":
+      case "sugar":
+        updateNestedData("attributes", field, parseFloat(value) || 0)
+        break
+      case "vitamins":
+        updateNestedData("attributes", "vitaminsFR", value)
+        break
+      case "minerals":
+        updateNestedData("attributes", "mineralsFR", value)
+        break
+    }
+  }
+
+  // New function to handle select changes with sync
+  const handleSelectChange = (
+    field: "category" | "season" | "country",
+    value: string
+  ): void => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+    handleSelectSync(field, value, "fr")
+  }
+
+  // Modified to not add to database immediately
+  const handleAddNewBenefit = async (
+    benefit: string
+  ): Promise<{ tagName: string; tagNameFr: string }> => {
+    try {
+      const tagName = await translateText(benefit)
+      const newBenefit = { tagName, tagNameFr: benefit }
+      
+      // Store pending benefit instead of adding to database
+      setPendingNewBenefitsFr(prev => [...prev, newBenefit])
+      
+      return newBenefit
+    } catch (error) {
+      console.error("Error translating new benefit:", error)
+      const newBenefit = { tagName: benefit, tagNameFr: benefit }
+      setPendingNewBenefitsFr(prev => [...prev, newBenefit])
+      return newBenefit
+    }
+  }
+
+  // Store pending benefits in session storage
+  React.useEffect(() => {
+    if (pendingNewBenefitsFr.length > 0) {
+      const existing = JSON.parse(sessionStorage.getItem('pendingNewBenefits') || '[]')
+      const combined = [...existing, ...pendingNewBenefitsFr]
+      // Remove duplicates
+      const unique = combined.filter((benefit, index, self) => 
+        index === self.findIndex(b => b.tagName === benefit.tagName)
+      )
+      sessionStorage.setItem('pendingNewBenefits', JSON.stringify(unique))
+    }
+  }, [pendingNewBenefitsFr])
+
   return (
     <TabsContent value="french">
       {/* French Tab Content */}
       <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
         <div>
           <Label className="block mb-1 text-black">Nom</Label>
-          <Input placeholder="Entrez le nom de l'aliment" />
+          <Input
+            placeholder="Entrez le nom de l'aliment"
+            value={formData.name}
+            onChange={e => {
+              handleInputChange("name", e.target.value)
+            }}
+          />
         </div>
         <div>
           <Label className="block mb-1 text-black">Catégorie</Label>
-          <Select>
-            <SelectTrigger
-              id="categorySelect"
-              name="categorySelect"
-              className="mt-1 w-full"
-            >
+          <Select
+            value={formData.category}
+            onValueChange={value => {
+              handleSelectChange("category", value)
+            }}
+          >
+            <SelectTrigger className="w-full mt-1">
               <SelectValue placeholder="Sélectionner une catégorie" />
             </SelectTrigger>
             <SelectContent>
               {categories.map(option => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                <SelectItem
+                  key={option.value}
+                  value={option.valueFr ?? option.labelFr ?? option.value}
+                >
+                  {option.labelFr ?? option.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label className="block mb-1 text-black">Saison</Label>
-          <Select>
-            <SelectTrigger
-              id="seasonSelect"
-              name="seasonSelect"
-              className="mt-1 w-full"
-            >
-              <SelectValue placeholder="Sélectionner une saison" />
+          <Label className="block mb-1 text-black">Mois</Label>
+          <Select
+            value={formData.season}
+            onValueChange={value => {
+              handleSelectChange("season", value)
+            }}
+          >
+            <SelectTrigger className="w-full mt-1">
+              <SelectValue placeholder="Sélectionner un mois" />
             </SelectTrigger>
             <SelectContent>
               {seasons.map(option => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                <SelectItem
+                  key={option.value}
+                  value={option.labelFr ?? option.label}
+                >
+                  {option.labelFr ?? option.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -87,18 +276,22 @@ export default function ViewFoodFrench({
         </div>
         <div>
           <Label className="block mb-1 text-black">Pays</Label>
-          <Select>
-            <SelectTrigger
-              id="countrySelect"
-              name="countrySelect"
-              className="mt-1 w-full"
-            >
-              <SelectValue placeholder="Sélectionner un comptoir" />
+          <Select
+            value={formData.country}
+            onValueChange={value => {
+              handleSelectChange("country", value)
+            }}
+          >
+            <SelectTrigger className="w-full mt-1">
+              <SelectValue placeholder="Sélectionner un pays" />
             </SelectTrigger>
             <SelectContent>
               {countries.map(option => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                <SelectItem
+                  key={option.value}
+                  value={option.labelFr ?? option.label}
+                >
+                  {option.labelFr ?? option.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -114,39 +307,119 @@ export default function ViewFoodFrench({
       <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
         <div>
           <Label className="block mb-1 text-black">Fibres</Label>
-          <Input placeholder="Détails du fournisseur si applicable" />
+          <Input
+            placeholder="Détails du fournisseur si applicable"
+            value={formData.fiber}
+            onChange={e => {
+              handleInputChange("fiber", e.target.value)
+            }}
+          />
         </div>
         <div>
           <Label className="block mb-1 text-black">Protéines</Label>
-          <Input placeholder="Détails du fournisseur si applicable" />
+          <Input
+            placeholder="Détails du fournisseur si applicable"
+            value={formData.proteins}
+            onChange={e => {
+              handleInputChange("proteins", e.target.value)
+            }}
+          />
         </div>
         <div>
           <Label className="block mb-1 text-black">Vitamines</Label>
-          <Input placeholder="Détails du fournisseur si applicable" />
+          <Input
+            placeholder="Détails du fournisseur si applicable"
+            value={formData.vitamins}
+            onChange={e => {
+              handleInputChange("vitamins", e.target.value)
+            }}
+          />
         </div>
         <div>
           <Label className="block mb-1 text-black">Minéraux</Label>
-          <Input placeholder="Détails du fournisseur si applicable" />
+          <Input
+            placeholder="Détails du fournisseur si applicable"
+            value={formData.minerals}
+            onChange={e => {
+              handleInputChange("minerals", e.target.value)
+            }}
+          />
         </div>
         <div>
           <Label className="block mb-1 text-black">Graisses</Label>
-          <Input placeholder="Détails du fournisseur si applicable" />
+          <Input
+            placeholder="Détails du fournisseur si applicable"
+            value={formData.fat}
+            onChange={e => {
+              handleInputChange("fat", e.target.value)
+            }}
+          />
         </div>
         <div>
           <Label className="block mb-1 text-black">Sucres</Label>
-          <Input placeholder="Détails du fournisseur si applicable" />
-        </div>
-        <div
-          className="col-span-1 sm:col-span-2 md:col-span-1"
-          style={{ width: "100%" }}
-        >
-          <LableInput
-            title="Bienfaits pour la santé"
-            placeholder="Add up to 6 food benefits or lower"
-            benefits={[]}
-            name={""}
+          <Input
+            placeholder="Détails du fournisseur si applicable"
+            value={formData.sugar}
+            onChange={e => {
+              handleInputChange("sugar", e.target.value)
+            }}
           />
         </div>
+      </div>
+
+      <div className="w-[100%]">
+        <LableInput
+          title="Bienfaits pour la santé"
+          placeholder="Ajoutez jusqu'à 6 bienfaits alimentaires ou moins"
+          benefits={formData.benefits}
+          name="benefits"
+          width="w-[32%]"
+          disable={false}
+          suggestions={benefitTags}
+          activeLang="fr"
+          onAddNewBenefit={handleAddNewBenefit}
+          onSelectSuggestion={benefit => {
+            console.log("French onSelectSuggestion:", benefit)
+            const currentData = foodDetails?.healthBenefits ?? []
+
+            const updatedHealthBenefits = [
+              ...currentData,
+              {
+                healthBenefit: benefit.tagName,
+                healthBenefitFR: benefit.tagNameFr
+              }
+            ]
+
+            updateEditedData("healthBenefits", updatedHealthBenefits)
+          }}
+          onRemoveBenefit={removed => {
+            console.log("French onRemoveBenefit:", removed)
+            const currentData = foodDetails?.healthBenefits ?? []
+
+            const updatedHealthBenefits = currentData.filter(
+              b =>
+                b.healthBenefit !== removed.tagName &&
+                b.healthBenefitFR !== removed.tagNameFr
+            )
+
+            updateEditedData("healthBenefits", updatedHealthBenefits)
+            // Also remove from pending benefits if it exists
+            setPendingNewBenefitsFr(prev => 
+              prev.filter(p => p.tagNameFr !== removed.tagNameFr)
+            )
+          }}
+          onChange={(newBenefits: string[]) => {
+            console.log("French onChange:", newBenefits)
+            const currentData = foodDetails?.healthBenefits ?? []
+            const healthBenefits = newBenefits.map((benefit, index) => ({
+              healthBenefit: currentData[index]?.healthBenefit || "",
+              healthBenefitFR: benefit
+            }))
+
+            updateEditedData("healthBenefits", healthBenefits)
+            setFormData(prev => ({ ...prev, benefits: newBenefits }))
+          }}
+        />
       </div>
 
       <Separator className="my-2" />
@@ -159,8 +432,9 @@ export default function ViewFoodFrench({
           <span className="block mb-2 text-sm text-black">Sélection</span>
           <RichTextEditor
             ref={selectionRef}
-            onChange={function (value: string): void {
-              throw new Error("Function not implemented.")
+            initialContent={foodDetails?.describe?.selectionFR ?? ""}
+            onChange={content => {
+              updateNestedData("describe", "selectionFR", content)
             }}
           />
         </div>
@@ -168,8 +442,9 @@ export default function ViewFoodFrench({
           <span className="block mb-2 text-sm text-black">Préparation</span>
           <RichTextEditor
             ref={preparationRef}
-            onChange={function (value: string): void {
-              throw new Error("Function not implemented.")
+            initialContent={foodDetails?.describe?.preparationFR ?? ""}
+            onChange={content => {
+              updateNestedData("describe", "preparationFR", content)
             }}
           />
         </div>
@@ -177,19 +452,29 @@ export default function ViewFoodFrench({
           <span className="block mb-2 text-sm text-black">Conservation</span>
           <RichTextEditor
             ref={conservationRef}
-            onChange={function (value: string): void {
-              throw new Error("Function not implemented.")
+            initialContent={foodDetails?.describe?.conservationFR ?? ""}
+            onChange={content => {
+              updateNestedData("describe", "conservationFR", content)
             }}
           />
         </div>
       </div>
 
-      <div className="pb-6 mt-6 w-full sm:w-2/5">
+      <div className="w-full pb-6 mt-6 sm:w-2/5">
         <h3 className="mb-4 text-lg font-semibold text-black">
           Télécharger des images
         </h3>
-        <ImageUploader title="Sélectionnez des images pour votre aliment" />
+        <ImageUploader
+          title="Sélectionnez des images pour votre aliment"
+          onChange={handleImageSelect}
+          previewUrls={
+            imagePreviewUrls.length > 0
+              ? imagePreviewUrls
+              : foodDetails?.images?.map(img => img.image) ?? []
+          }
+        />
       </div>
     </TabsContent>
   )
+
 }

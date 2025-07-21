@@ -48,5 +48,7 @@
   "pleaseselectaseason": "Please select a season",
   "pleaseselectacountry": "Please select a country",
   "pleaseenteratleastonebenefit": "Please enter at least one Benefit",
-  "formSubmittedSuccessfully": "Form submitted successfully!"
+  "formSubmittedSuccessfully": "Form submitted successfully!",
+  "benefitAddedSuccessfully": "Benefit added successfully!",
+  "failedToAddBenefit": "Failed to add benefit to database"
 }

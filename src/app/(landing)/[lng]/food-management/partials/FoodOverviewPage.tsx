@@ -1,44 +1,45 @@
 "use client"
 
 import {
-  deleteFoodById,
-  getAllFoods,
-  getCatagoryFoodType
+    deleteFoodById,
+    getAllFoods,
+    getCatagoryFoodType
 } from "@/app/api/foods"
 import { CustomTable } from "@/components/Shared/Table/CustomTable"
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
 } from "@/components/ui/select"
 import dayjs from "dayjs"
 import { MoreVertical } from "lucide-react"
 import { useSession } from "next-auth/react"
 import Image from "next/image"
 import { useEffect, useMemo, useState } from "react"
+import { toast } from "sonner"
 import AddFoodPopUp from "./AddFoodPopUp"
 import ViewFoodPopUp from "./ViewFoodPopUp"
 
@@ -421,14 +422,31 @@ export default function FoodOverviewPage(): React.ReactElement {
   // Actually delete after confirmation
   const handleDeleteFood = async (): Promise<void> => {
     if (!token || !foodIdToDelete) return
-    const response = await deleteFoodById(token, foodIdToDelete)
-    if (!response.error) {
-      await getFoods()
-    } else {
-      alert(response.message || "Failed to delete food.")
+    
+    try {
+      const response = await deleteFoodById(token, foodIdToDelete)
+      
+      if (response.error) {
+        toast.error("Failed to delete food", {
+          description: response.data?.message || "An error occurred"
+        })
+      } else if (response.status === 200 || response.status === 201) {
+        toast.success("Food deleted successfully")
+        await getFoods()
+      } else {
+        toast.error("Failed to delete food", {
+          description: response.data?.message || "Unknown error"
+        })
+      }
+    } catch (error) {
+      console.error("Delete error:", error)
+      toast.error("Failed to delete food", {
+        description: "An unexpected error occurred"
+      })
+    } finally {
+      setConfirmDeleteOpen(false)
+      setFoodIdToDelete(null)
     }
-    setConfirmDeleteOpen(false)
-    setFoodIdToDelete(null)
   }
 
   return (

@@ -1,35 +1,37 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
+import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { Button } from "@/components/ui/button"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage
 } from "@/components/ui/form"
-import { type translationsTypes } from "@/types/moodsTypes"
-import { useMoodStore } from "@/stores/useMoodStore"
-import { useTranslation } from "@/query/hooks/useTranslation"
-import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
+import { Input } from "@/components/ui/input"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
+import { useTranslation } from "@/query/hooks/useTranslation"
+import { useMoodStore } from "@/stores/useMoodStore"
+import { useUpdatedTranslationStore } from "@/stores/useUpdatedTranslationStore"
+import { type translationsTypes } from "@/types/moodsTypes"
+import { zodResolver } from "@hookform/resolvers/zod"
+import React, { useEffect, useState } from "react"
+import { useForm } from "react-hook-form"
 import { toast } from "sonner"
+import { z } from "zod"
 import { useUpdatedMoodTranslationStore } from "@/stores/useUpdatedMoodTranslationStore"
+
 
 interface Option {
   value: string
@@ -163,7 +165,7 @@ export default function EditFoodTab({
         setUpdatedField("foodData", "en", "image", imageUrl)
         setUpdatedField("foodData", "fr", "image", imageUrl)
 
-        setPreviewUrls([imageUrl]) // For single image preview
+        setPreviewUrls([imageUrl])
       } catch (error) {
         toast.error("Image upload failed. Please try again.")
         console.error("Firebase upload error:", error)

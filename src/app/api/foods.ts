@@ -34,12 +34,15 @@ export const deleteFoodById = async (
     const response = await axiosInstance.delete(`/food/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-    return response.data // Return only the data, not the whole response
+    return response // Return the full response with status
   } catch (error: any) {
     // Return a consistent error object
     return {
       error: true,
-      message: error?.response?.data?.message || error.message || "Delete failed"
+      status: error?.response?.status || 500,
+      data: {
+        message: error?.response?.data?.message || error.message || "Delete failed"
+      }
     }
   }
 }
@@ -110,3 +113,18 @@ export const postFoodTag = async (
   }
 }
 
+// put food by id
+export const putFoodById = async (
+  token: string,
+  id: number,
+  data: CreateFoodDto
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.put(`/food/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response
+  } catch (error) {
+    return error
+  }
+}

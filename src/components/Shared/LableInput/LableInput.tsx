@@ -3,8 +3,7 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { X } from "lucide-react"
-import React, { useState, type KeyboardEvent } from "react"
-import { useFormContext } from "react-hook-form"
+import React, { useEffect, useState, type KeyboardEvent } from "react"
 
 interface Props {
   title: string
@@ -31,35 +30,34 @@ export default function LableInput({
   name,
   disable,
   width = "w-64",
-  onChange,
-  onBlur,
   suggestions = [],
   activeLang = "en",
   onSelectSuggestion,
   onRemoveBenefit,
-  onAddNewBenefit
+  onAddNewBenefit,
+  ...props
 }: Props): React.ReactElement {
-  const {
-    setValue,
-    formState: { errors },
-    trigger
-  } = useFormContext()
   const [value, setValueState] = useState("")
   const [items, setItems] = useState<string[]>(benefits)
 
+  // Update items when benefits prop changes
+  useEffect(() => {
+    setItems(benefits)
+  }, [benefits])
+
   const updateItems = (updatedItems: string[]): void => {
     setItems(updatedItems)
-    setValue(name, updatedItems)
-    if (onChange) {
-      onChange(updatedItems)
+    if (props.onChange) {
+      props.onChange(updatedItems)
     }
-    void trigger(name)
   }
 
   const addItem = async (suggestion?: {
     tagName: string
     tagNameFr: string
   }): Promise<void> => {
+    if (disable) return // Don't add items if disabled
+
     let newItem = value.trim()
     let matchedSuggestion = suggestion
 
@@ -74,35 +72,59 @@ export default function LableInput({
       )
     }
 
-    // If not in suggestions, treat as new benefit
-    if (!matchedSuggestion && newItem.length > 0 && onAddNewBenefit) {
-      matchedSuggestion = await onAddNewBenefit(newItem)
-    }
-
-    // Only allow adding if matchedSuggestion exists
-    if (!matchedSuggestion) {
-      setValueState("") // Clear input if not valid
+    // If we have a matched suggestion and onSelectSuggestion handler, use it
+    if (matchedSuggestion && onSelectSuggestion) {
+      onSelectSuggestion(matchedSuggestion)
+      setValueState("") // Clear input
       return
     }
 
-    newItem =
-      activeLang === "en"
-        ? matchedSuggestion.tagName
-        : matchedSuggestion.tagNameFr
-
-    if (!items.includes(newItem) && items.length < 6) {
-      const updatedItems = [...items, newItem]
-      updateItems(updatedItems)
-      if (onSelectSuggestion) {
-        onSelectSuggestion(matchedSuggestion)
+    // If not in suggestions and we have onAddNewBenefit, create new
+    if (!matchedSuggestion && newItem.length > 0 && onAddNewBenefit) {
+      try {
+        matchedSuggestion = await onAddNewBenefit(newItem)
+        if (matchedSuggestion && onSelectSuggestion) {
+          onSelectSuggestion(matchedSuggestion)
+          setValueState("") // Clear input
+          return
+        }
+      } catch (error) {
+        console.error("Error adding new benefit:", error)
       }
     }
+
+    // Fallback to basic behavior if no special handlers
+    if (!onSelectSuggestion && matchedSuggestion) {
+      newItem =
+        activeLang === "en"
+          ? matchedSuggestion.tagName
+          : matchedSuggestion.tagNameFr
+
+      if (!items.includes(newItem) && items.length < 6) {
+        const updatedItems = [...items, newItem]
+        updateItems(updatedItems)
+      }
+    }
+    
     setValueState("") // Reset input field
   }
 
   const removeItem = (benefit: string): void => {
-    const updatedItems = items.filter(b => b !== benefit)
-    updateItems(updatedItems)
+    if (disable) return // Don't remove items if disabled
+
+    // Find the suggestion object for removal
+    const suggestion = suggestions.find(
+      s => s.tagName === benefit || s.tagNameFr === benefit
+    ) ?? { tagName: benefit, tagNameFr: benefit } // fallback for custom benefits
+
+    // If we have onRemoveBenefit handler, use it
+    if (onRemoveBenefit) {
+      onRemoveBenefit(suggestion)
+    } else {
+      // Fallback to basic removal
+      const updatedItems = items.filter(b => b !== benefit)
+      updateItems(updatedItems)
+    }
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
@@ -166,28 +188,22 @@ export default function LableInput({
               className="flex items-center max-w-full px-2 py-1 text-sm text-black bg-white border border-gray-300 rounded shadow-sm"
             >
               <span className="mr-1">{item}</span>
-              <button
-                type="button"
-                onClick={() => {
-                  removeItem(item)
-                  // Always call onRemoveBenefit with both EN and FR
-                  if (onRemoveBenefit) {
-                    onRemoveBenefit(suggestion)
-                  }
-                }}
-                className="text-gray-500 hover:text-red-500 focus:outline-none"
-              >
-                <X size={12} />
-              </button>
+              {!disable && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    removeItem(item)
+                  }}
+                  className="text-gray-500 hover:text-red-500 focus:outline-none"
+                >
+                  <X size={12} />
+                </button>
+              )}
             </div>
           )
         })}
       </div>
-      {errors[name]?.message && (
-        <div className="text-sm text-red-500">
-          {String(errors[name]?.message)}
-        </div>
-      )}
     </div>
   )
 }
+

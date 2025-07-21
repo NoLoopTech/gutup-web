@@ -1,14 +1,17 @@
 "use client"
 
-import React from "react"
-import { TabsContent } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
-import dynamic from "next/dynamic"
-import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
 import LableInput from "@/components/Shared/LableInput/LableInput"
+import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -16,19 +19,15 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
+import { Separator } from "@/components/ui/separator"
+import { TabsContent } from "@/components/ui/tabs"
+import { useTranslation } from "@/query/hooks/useTranslation"
 import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormControl
-} from "@/components/ui/form"
+import dynamic from "next/dynamic"
+import React, { useState } from "react"
+import { useForm } from "react-hook-form"
 import { toast } from "sonner"
+import { z } from "zod"
 import { type FoodDetailsTypes } from "./ViewFoodPopUp"
 
 const RichTextEditor = dynamic(
@@ -44,35 +43,25 @@ interface ViewFoodEnglishProps {
   preparationRef: React.Ref<RichTextEditorHandle>
   conservationRef: React.Ref<RichTextEditorHandle>
   foodDetails: FoodDetailsTypes | null
+  categories: Option[]
+  seasons: Option[]
+  countries: Option[]
+  benefitTags: Array<{ tagName: string; tagNameFr: string }>
+  updateEditedData: (field: string, value: any) => void
+  updateNestedData: (
+    parentField: string,
+    childField: string,
+    value: any
+  ) => void
+  handleSelectSync: (
+    fieldName: "category" | "season" | "country",
+    value: string,
+    lang: "en" | "fr"
+  ) => void
+  handleImageSelect: (files: File[] | null) => Promise<void>
+  imagePreviewUrls: string[]
+  token: string
 }
-
-const categories: Option[] = [
-  { value: "Fruit", label: "Fruit" },
-  { value: "Meat", label: "Meat" },
-  { value: "Fish", label: "Fish" },
-  { value: "grains", label: "Grains" }
-]
-
-const seasons: Option[] = [
-  { value: "January", label: "January" },
-  { value: "February", label: "February" },
-  { value: "March", label: "March" },
-  { value: "April", label: "April" },
-  { value: "May", label: "May" },
-  { value: "June", label: "June" },
-  { value: "July", label: "July" },
-  { value: "August", label: "August" },
-  { value: "September", label: "September" },
-  { value: "October", label: "October" },
-  { value: "November", label: "November" },
-  { value: "December", label: "December" }
-]
-
-const countries: Option[] = [
-  { value: "Ecuador", label: "Ecuador" },
-  { value: "USA", label: "USA" },
-  { value: "Norway", label: "Norway" }
-]
 
 const FoodSchema = z.object({
   name: z
@@ -82,6 +71,12 @@ const FoodSchema = z.object({
   category: z.string().nonempty("Please select a category"),
   season: z.string().nonempty("Please select a season"),
   country: z.string().nonempty("Please select a country"),
+  fiber: z.string().optional(),
+  proteins: z.string().optional(),
+  vitamins: z.string().optional(),
+  minerals: z.string().optional(),
+  fat: z.string().optional(),
+  sugar: z.string().optional(),
   benefits: z
     .array(z.string())
     .refine(arr => arr.some(item => item.trim().length > 0), {
@@ -127,48 +122,142 @@ export default function ViewFoodEnglish({
   selectionRef,
   preparationRef,
   conservationRef,
-  foodDetails
+  foodDetails,
+  categories,
+  seasons,
+  countries,
+  benefitTags,
+  updateEditedData,
+  updateNestedData,
+  handleSelectSync,
+  handleImageSelect,
+  imagePreviewUrls,
+  token
 }: ViewFoodEnglishProps): JSX.Element {
+  const { translateText } = useTranslation()
+  const [pendingNewBenefits, setPendingNewBenefits] = useState<Array<{tagName: string; tagNameFr: string}>>([])
+
+  const handleAddNewBenefit = async (
+    benefit: string
+  ): Promise<{ tagName: string; tagNameFr: string }> => {
+    try {
+      const tagNameFr = await translateText(benefit)
+      const newBenefit = { tagName: benefit, tagNameFr }
+      
+      setPendingNewBenefits(prev => [...prev, newBenefit])
+      
+      return newBenefit
+    } catch (error) {
+      console.error("Error translating new benefit:", error)
+      const newBenefit = { tagName: benefit, tagNameFr: benefit }
+      setPendingNewBenefits(prev => [...prev, newBenefit])
+      return newBenefit
+    }
+  }
+
+  // Expose function to parent component for saving pending benefits
+  React.useEffect(() => {
+    // Store pending benefits in session storage so parent can access them
+    if (pendingNewBenefits.length > 0) {
+      sessionStorage.setItem('pendingNewBenefits', JSON.stringify(pendingNewBenefits))
+    }
+  }, [pendingNewBenefits])
+
   // handle form submit
   const onSubmit = (data: z.infer<typeof FoodSchema>): void => {
     toast("Form submitted successfully!", {})
   }
-  const handleCancel = (
-    form: ReturnType<typeof useForm<z.infer<typeof FoodSchema>>>
-  ): void => {
-    form.reset()
-  }
 
   const handleSelectionChange = (field: any) => (val: string) => {
     field.onChange(val)
+    updateNestedData("describe", "selection", val)
   }
 
   const handlePreparationChange = (field: any) => (val: string) => {
     field.onChange(val)
+    updateNestedData("describe", "preparation", val)
   }
 
   const handleConservationChange = (field: any) => (val: string) => {
     field.onChange(val)
+    updateNestedData("describe", "conservation", val)
   }
-  // Separate function for handling image upload
-  const handleImageUpload = (field: any) => (files: File[] | null) => {
+  // Update the image upload handler
+  const handleImageUpload = (field: any) => async (files: File[] | null) => {
+    await handleImageSelect(files)
     field.onChange(files && files.length > 0 ? files[0] : null)
   }
 
   const form = useForm<z.infer<typeof FoodSchema>>({
     resolver: zodResolver(FoodSchema),
     defaultValues: {
-      name: "",
-      category: "",
-      season: "",
-      country: "",
-      benefits: [],
+      name: foodDetails?.name ?? "",
+      category: foodDetails?.category ?? "",
+      season: foodDetails?.seasons?.[0]?.season ?? "",
+      country: foodDetails?.country ?? "",
+      fiber: foodDetails?.attributes?.fiber?.toString() ?? "",
+      proteins: foodDetails?.attributes?.proteins?.toString() ?? "",
+      vitamins: foodDetails?.attributes?.vitamins ?? "",
+      minerals: foodDetails?.attributes?.minerals ?? "",
+      fat: foodDetails?.attributes?.fat?.toString() ?? "",
+      sugar: foodDetails?.attributes?.sugar?.toString() ?? "",
+      benefits: foodDetails?.healthBenefits?.map(b => b.healthBenefit) ?? [],
       image: null,
-      selection: "",
-      preparation: "",
-      conservation: ""
+      selection: foodDetails?.describe?.selection ?? "",
+      preparation: foodDetails?.describe?.preparation ?? "",
+      conservation: foodDetails?.describe?.conservation ?? ""
     }
   })
+
+  // Watch for form changes and update session storage
+  React.useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name && value[name as keyof typeof value] !== undefined) {
+        switch (name) {
+          case "fiber":
+          case "proteins":
+          case "fat":
+          case "sugar":
+            updateNestedData(
+              "attributes",
+              name,
+              parseFloat(value[name] as string) || 0
+            )
+            break
+          case "vitamins":
+          case "minerals":
+            updateNestedData("attributes", name, value[name] as string)
+            break
+          case "name":
+          case "category":
+          case "country":
+            updateEditedData(name, value[name])
+            break
+          case "season":
+            updateEditedData("seasons", [
+              {
+                season: value[name],
+                seasonFR: "",
+                foodId: foodDetails?.seasons?.[0]?.foodId ?? 0
+              }
+            ])
+            break
+          case "benefits":
+            updateEditedData(
+              "healthBenefits",
+              (value[name] as string[]).map(benefit => ({
+                healthBenefit: benefit,
+                healthBenefitFR: ""
+              }))
+            )
+            break
+        }
+      }
+    })
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [form, updateEditedData, updateNestedData, foodDetails])
 
   return (
     <Form {...form}>
@@ -186,12 +275,7 @@ export default function ViewFoodEnglish({
                       Name
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Enter food name"
-                        {...field}
-                        value={foodDetails?.name}
-                        disabled
-                      />
+                      <Input placeholder="Enter food name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -209,11 +293,13 @@ export default function ViewFoodEnglish({
                     </FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={field.onChange}
-                        value={field.value || foodDetails?.category}
-                        disabled
+                        onValueChange={value => {
+                          field.onChange(value)
+                          handleSelectSync("category", value, "en")
+                        }}
+                        value={foodDetails?.category ?? field.value}
                       >
-                        <SelectTrigger className="mt-1 w-full">
+                        <SelectTrigger className="w-full mt-1">
                           <SelectValue placeholder="Select Category" />
                         </SelectTrigger>
                         <SelectContent>
@@ -241,11 +327,17 @@ export default function ViewFoodEnglish({
                     </FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={field.onChange}
-                        value={field.value || foodDetails?.season}
-                        disabled
+                        onValueChange={value => {
+                          field.onChange(value)
+                          handleSelectSync("season", value, "en")
+                        }}
+                        value={
+                          foodDetails?.seasons && foodDetails.seasons.length > 0
+                            ? foodDetails.seasons[0].season
+                            : field.value
+                        }
                       >
-                        <SelectTrigger className="mt-1 w-full">
+                        <SelectTrigger className="w-full mt-1">
                           <SelectValue placeholder="Select Season" />
                         </SelectTrigger>
                         <SelectContent>
@@ -273,11 +365,13 @@ export default function ViewFoodEnglish({
                     </FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={field.onChange}
-                        value={field.value || foodDetails?.country}
-                        disabled
+                        onValueChange={value => {
+                          field.onChange(value)
+                          handleSelectSync("country", value, "en")
+                        }}
+                        value={foodDetails?.country ?? field.value}
                       >
-                        <SelectTrigger className="mt-1 w-full">
+                        <SelectTrigger className="w-full mt-1">
                           <SelectValue placeholder="Select Country" />
                         </SelectTrigger>
                         <SelectContent>
@@ -303,55 +397,119 @@ export default function ViewFoodEnglish({
           </h3>
           <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
             <div>
-              <Label className="block mb-1 text-black">Fiber</Label>
-              <Input
-                placeholder="Provide details if applicable"
-                value={foodDetails?.attributes.fiber}
-                disabled
+              <FormField
+                control={form.control}
+                name="fiber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="block mb-1 text-black">
+                      Fiber
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Provide details if applicable"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
             </div>
             <div>
-              <Label className="block mb-1 text-black">Proteins</Label>
-              <Input
-                placeholder="Provide details if applicable"
-                value={foodDetails?.attributes.proteins}
-                disabled
+              <FormField
+                control={form.control}
+                name="proteins"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="block mb-1 text-black">
+                      Proteins
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Provide details if applicable"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
             </div>
             <div>
-              <Label className="block mb-1 text-black">Vitamins</Label>
-              <Input
-                placeholder="Provide details if applicable"
-                value={foodDetails?.attributes.vitamins}
-                disabled
+              <FormField
+                control={form.control}
+                name="vitamins"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="block mb-1 text-black">
+                      Vitamins
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Provide details if applicable"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
             </div>
             <div>
-              <Label className="block mb-1 text-black">Minerals</Label>
-              <Input
-                placeholder="Provide details if applicable"
-                value={foodDetails?.attributes.minerals}
-                disabled
+              <FormField
+                control={form.control}
+                name="minerals"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="block mb-1 text-black">
+                      Minerals
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Provide details if applicable"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
             </div>
             <div>
-              <Label className="block mb-1 text-black">Fat</Label>
-              <Input
-                placeholder="Provide details if applicable"
-                value={foodDetails?.attributes.fat}
-                disabled
+              <FormField
+                control={form.control}
+                name="fat"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="block mb-1 text-black">Fat</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Provide details if applicable"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
             </div>
             <div>
-              <Label className="block mb-1 text-black">Sugar</Label>
-              <Input
-                placeholder="Provide details if applicable"
-                value={foodDetails?.attributes.sugar}
-                disabled
+              <FormField
+                control={form.control}
+                name="sugar"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="block mb-1 text-black">
+                      Sugar
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Provide details if applicable"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
             </div>
           </div>
-          <div className="w-[100%] ">
+          <div className="w-[100%]">
             <FormField
               control={form.control}
               name="benefits"
@@ -359,9 +517,55 @@ export default function ViewFoodEnglish({
                 <LableInput
                   title="Health Benefits"
                   placeholder="Add up to 6 food benefits or fewer"
-                  benefits={field.value || foodDetails?.healthBenefits || []}
+                  benefits={
+                    foodDetails?.healthBenefits?.map(b => b.healthBenefit) ?? []
+                  }
                   name="benefits"
                   width="w-[32%]"
+                  disable={false}
+                  suggestions={benefitTags}
+                  activeLang="en"
+                  onAddNewBenefit={handleAddNewBenefit}
+                  onSelectSuggestion={benefit => {
+                    console.log("English onSelectSuggestion:", benefit)
+                    const currentData = foodDetails?.healthBenefits ?? []
+
+                    const updatedHealthBenefits = [
+                      ...currentData,
+                      {
+                        healthBenefit: benefit.tagName,
+                        healthBenefitFR: benefit.tagNameFr
+                      }
+                    ]
+
+                    updateEditedData("healthBenefits", updatedHealthBenefits)
+                  }}
+                  onRemoveBenefit={removed => {
+                    console.log("English onRemoveBenefit:", removed)
+                    const currentData = foodDetails?.healthBenefits ?? []
+
+                    const updatedHealthBenefits = currentData.filter(
+                      b => b.healthBenefit !== removed.tagName
+                    )
+
+                    updateEditedData("healthBenefits", updatedHealthBenefits)
+                    // Also remove from pending benefits if it exists
+                    setPendingNewBenefits(prev => 
+                      prev.filter(p => p.tagName !== removed.tagName)
+                    )
+                  }}
+                  onChange={(newBenefits: string[]) => {
+                    console.log("English onChange:", newBenefits)
+                    const healthBenefits = newBenefits.map(
+                      (benefit, index) => ({
+                        healthBenefit: benefit,
+                        healthBenefitFR: ""
+                      })
+                    )
+
+                    updateEditedData("healthBenefits", healthBenefits)
+                    field.onChange(newBenefits)
+                  }}
                 />
               )}
             />
@@ -446,10 +650,8 @@ export default function ViewFoodEnglish({
             </div>
           </div>
 
-          <div className="pb-12 mt-6 w-full sm:w-2/5">
-            <h3 className="mb-4 text-lg font-semibold text-black">
-              Upload Images
-            </h3>
+          <div className="w-full pb-12 mt-6 sm:w-2/5">
+            <h3 className="mb-4 text-lg font-semibold text-black">Images</h3>
             <FormField
               control={form.control}
               name="image"
@@ -459,25 +661,19 @@ export default function ViewFoodEnglish({
                     <ImageUploader
                       title="Select Images for your food item"
                       onChange={handleImageUpload(field)}
+                      previewUrls={
+                        imagePreviewUrls.length > 0
+                          ? imagePreviewUrls
+                          : foodDetails?.images && foodDetails.images.length > 0
+                          ? foodDetails.images.map(img => img.image)
+                          : []
+                      }
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </div>
-
-          {/* Save and Cancel buttons */}
-          <div className="flex fixed bottom-0 left-0 z-50 gap-2 justify-between px-4 py-4 w-full bg-white border-t">
-            <Button
-              variant="outline"
-              onClick={() => {
-                handleCancel(form)
-              }}
-            >
-              Cancel
-            </Button>
-            <Button type="submit">Save</Button>
           </div>
         </TabsContent>
       </form>
