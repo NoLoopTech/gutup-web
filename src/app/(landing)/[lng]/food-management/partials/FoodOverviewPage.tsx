@@ -39,6 +39,7 @@ import { MoreVertical } from "lucide-react"
 import { useSession } from "next-auth/react"
 import Image from "next/image"
 import { useEffect, useMemo, useState } from "react"
+import { toast } from "sonner"
 import AddFoodPopUp from "./AddFoodPopUp"
 import ViewFoodPopUp from "./ViewFoodPopUp"
 
@@ -110,7 +111,7 @@ export default function FoodOverviewPage(): React.ReactElement {
   const [nutritional, setNutritional] = useState("")
   const [season, setSeason] = useState("")
   const [viewFood, setViewFood] = useState(false)
-  const [foodId, setFoodId] = useState(0)
+  const [foodId, setFoodId] = useState<number | null>(null)
   const [selectedMonths, setSelectedMonths] = useState<string[]>([])
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [foodIdToDelete, setFoodIdToDelete] = useState<number | null>(null)
@@ -421,14 +422,31 @@ export default function FoodOverviewPage(): React.ReactElement {
   // Actually delete after confirmation
   const handleDeleteFood = async (): Promise<void> => {
     if (!token || !foodIdToDelete) return
-    const response = await deleteFoodById(token, foodIdToDelete)
-    if (!response.error) {
-      await getFoods()
-    } else {
-      alert(response.message || "Failed to delete food.")
+
+    try {
+      const response = await deleteFoodById(token, foodIdToDelete)
+
+      if (response.error) {
+        toast.error("Failed to delete food", {
+          description: response.data?.message || "An error occurred"
+        })
+      } else if (response.status === 200 || response.status === 201) {
+        toast.success("Food deleted successfully")
+        await getFoods()
+      } else {
+        toast.error("Failed to delete food", {
+          description: response.data?.message || "Unknown error"
+        })
+      }
+    } catch (error) {
+      console.error("Delete error:", error)
+      toast.error("Failed to delete food", {
+        description: "An unexpected error occurred"
+      })
+    } finally {
+      setConfirmDeleteOpen(false)
+      setFoodIdToDelete(null)
     }
-    setConfirmDeleteOpen(false)
-    setFoodIdToDelete(null)
   }
 
   return (
@@ -509,7 +527,9 @@ export default function FoodOverviewPage(): React.ReactElement {
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem disabled>No categories found</SelectItem>
+                  <SelectItem value="no-categories" disabled>
+                    No categories found
+                  </SelectItem>
                 )}
               </SelectGroup>
             </SelectContent>
@@ -569,13 +589,15 @@ export default function FoodOverviewPage(): React.ReactElement {
       />
 
       {/* View Food Details Popup */}
-      <ViewFoodPopUp
-        open={viewFood}
-        onClose={handleCloseViewFoodPopUp}
-        token={token ?? ""}
-        foodId={foodId}
-        getFoods={getFoods}
-      />
+      {foodId !== null && (
+        <ViewFoodPopUp
+          open={viewFood}
+          onClose={handleCloseViewFoodPopUp}
+          token={token ?? ""}
+          foodId={foodId}
+          getFoods={getFoods}
+        />
+      )}
 
       {/* Delete confirmation popup */}
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>

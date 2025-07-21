@@ -5,7 +5,7 @@ import { UploadCloud, X } from "lucide-react"
 import Image from "next/image"
 
 interface ImageUploaderProps {
-  title: string
+  title: string | undefined
   onChange?: (files: File[] | null) => void
   previewUrls?: string[]
   disabled?: boolean // Add the disabled prop
@@ -77,31 +77,31 @@ export default function ImageUploader({
         <div className="">
           {/* Loop through all preview images and display them */}
           {Array.isArray(imageList) &&
-          imageList.map((image, index) => (
-            <div
-              key={index}
-              className="relative w-[100%] flex items-center justify-center h-48 overflow-hidden border border-gray-300 rounded-lg bg-gray-50"
-            >
-              <Image
-                src={image}
-                alt={`Uploaded preview ${index}`}
-                width={192}
-                height={192}
-                className="object-contain max-w-full max-h-full"
-              />
-              {/* Remove button */}
-              {!disabled && (
-                <button
-                  onClick={() => {
-                    handleRemoveImage(image)
-                  }}
-                  className="absolute p-1 transition bg-white rounded-full shadow top-2 right-2 hover:bg-gray-100"
-                >
-                  <X className="w-4 h-4 text-gray-600" />
-                </button>
-              )}
-            </div>
-          ))}
+            imageList.map((image, index) => (
+              <div
+                key={index}
+                className="relative w-[100%] flex items-center justify-center h-48 overflow-hidden border border-gray-300 rounded-lg bg-gray-50"
+              >
+                <Image
+                  src={image}
+                  alt={`Uploaded preview ${index}`}
+                  width={192}
+                  height={192}
+                  className="object-contain max-w-full max-h-full"
+                />
+                {/* Remove button */}
+                {!disabled && (
+                  <button
+                    onClick={() => {
+                      handleRemoveImage(image)
+                    }}
+                    className="absolute p-1 transition bg-white rounded-full shadow top-2 right-2 hover:bg-gray-100"
+                  >
+                    <X className="w-4 h-4 text-gray-600" />
+                  </button>
+                )}
+              </div>
+            ))}
         </div>
       ) : (
         <div
