@@ -49,7 +49,6 @@ export default function EditRecipePopUp({
   const getRecipeDataById = async () => {
     try {
       const res = await getRecipeById(token, recipeId)
-      console.log(res.data)
       if (res.status === 200 || res.status === 201) {
         const data = res.data
         setAllowMultiLang(data.allowMultiLang)

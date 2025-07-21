@@ -1234,6 +1234,7 @@ export default function EditRecipePopUpContent({
             <div className="flex fixed bottom-0 left-0 z-50 gap-2 justify-between px-4 py-4 w-full bg-white border-t">
               <Button
                 variant="outline"
+                type="button"
                 onClick={async () => {
                   await handleCancel()
                 }}
