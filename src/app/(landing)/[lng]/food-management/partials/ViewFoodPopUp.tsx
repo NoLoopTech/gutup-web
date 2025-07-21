@@ -95,7 +95,7 @@ interface Props {
   open: boolean
   onClose: () => void
   token: string
-  foodId: number
+  foodId: number | null
   getFoods: () => void
 }
 interface Option {
@@ -164,7 +164,7 @@ export default function ViewFoodPopUp({
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
 
   useEffect(() => {
-    if (token && foodId) {
+    if (token && foodId !== null && foodId > 0) {
       const getfoodsDetailsByFoodId = async (): Promise<void> => {
         const response = await getFoodsById(token, foodId)
         if (response.status === 200) {
@@ -204,7 +204,7 @@ export default function ViewFoodPopUp({
 
   // Update the useEffect for fetching benefit tags
   useEffect(() => {
-    if (token) {
+    if (token && foodId !== null && foodId > 0) {
       const fetchData = async (): Promise<void> => {
         setIsLoading(true)
         try {
@@ -236,6 +236,8 @@ export default function ViewFoodPopUp({
 
   // handle delete user by id
   const handleDeleteFoodById = async (): Promise<void> => {
+    if (foodId === null || foodId <= 0) return
+
     try {
       const response = await deleteFoodById(token, foodId)
 
@@ -323,9 +325,14 @@ export default function ViewFoodPopUp({
   }
 
   // Add image upload handler
-  const handleImageSelect = async (files: File[] | null): Promise<void> => {
+  const handleImageChange = async (files: File[] | null): Promise<void> => {
     const file = files?.[0] ?? null
     if (file) {
+      if (foodId === null || foodId <= 0) {
+        toast.error("Invalid food ID")
+        return
+      }
+
       try {
         setIsLoading(true)
 
@@ -353,10 +360,9 @@ export default function ViewFoodPopUp({
   }
 
   // Function to update session storage when data changes
-  const updateEditedData = (
-    field: string,
-    value: any
-  ): void => {
+  const updateEditedData = (field: string, value: any): void => {
+    if (foodId === null) return
+
     const currentData = getFromSessionStorage() ?? editedData
     const updatedData: SessionStorageData = {
       ...currentData,
@@ -409,6 +415,8 @@ export default function ViewFoodPopUp({
     childField: string,
     value: any
   ): void => {
+    if (foodId === null) return
+
     const currentData = getFromSessionStorage() ?? editedData
     const updatedData: SessionStorageData = {
       ...currentData,
@@ -661,7 +669,7 @@ export default function ViewFoodPopUp({
                 updateEditedData={updateEditedData}
                 updateNestedData={updateNestedData}
                 handleSelectSync={handleSelectSync}
-                handleImageSelect={handleImageSelect}
+                handleImageSelect={handleImageChange}
                 imagePreviewUrls={imagePreviewUrls}
                 token={token}
               />
@@ -683,7 +691,7 @@ export default function ViewFoodPopUp({
                   updateEditedData={updateEditedData}
                   updateNestedData={updateNestedData}
                   handleSelectSync={handleSelectSync}
-                  handleImageSelect={handleImageSelect}
+                  handleImageSelect={handleImageChange}
                   imagePreviewUrls={imagePreviewUrls}
                   token={token}
                 />

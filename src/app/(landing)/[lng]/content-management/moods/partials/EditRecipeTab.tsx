@@ -1,37 +1,35 @@
 "use client"
 
-import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { Button } from "@/components/ui/button"
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { useMoodStore } from "@/stores/useMoodStore"
-import { useUpdatedTranslationStore } from "@/stores/useUpdatedTranslationStore"
 import { type translationsTypes } from "@/types/moodsTypes"
 import { zodResolver } from "@hookform/resolvers/zod"
 import React, { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
+import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { useUpdatedMoodTranslationStore } from "@/stores/useUpdatedMoodTranslationStore"
-
 
 interface Option {
   value: string
@@ -203,8 +201,8 @@ export default function EditRecipeTab({
   return (
     <div className="relative">
       {isTranslating && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60">
-          <span className="w-10 h-10 border-t-4 border-blue-500 border-solid rounded-full animate-spin" />
+        <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
+          <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
         </div>
       )}
       <Form {...form}>
@@ -225,7 +223,7 @@ export default function EditRecipeTab({
                       value={field.value}
                       onValueChange={handleMoodChange}
                     >
-                      <SelectTrigger className="w-full mt-1">
+                      <SelectTrigger className="mt-1 w-full">
                         <SelectValue placeholder={translations.selectMood} />
                       </SelectTrigger>
                       <SelectContent>
@@ -257,7 +255,7 @@ export default function EditRecipeTab({
                     placeholder={translations.searchForRecipe}
                     {...field}
                     onChange={e => handleInputChange(e, "recipe")}
-                    onBlur={() => handleInputBlur(field.value, "recipe")}
+                    onBlur={async () => handleInputBlur(field.value, "recipe")}
                   />
                 </FormControl>
                 <FormMessage />
@@ -286,7 +284,7 @@ export default function EditRecipeTab({
           />
 
           {/* Image Uploader */}
-          <div className="w-full pb-8">
+          <div className="pb-8 w-full">
             <FormField
               control={form.control}
               name="image"
@@ -310,14 +308,14 @@ export default function EditRecipeTab({
           </div>
 
           {/* Actions */}
-          <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
+          <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
             <Button variant="outline" type="button" onClick={handleResetForm}>
               {translations.cancel}
             </Button>
             <Button type="submit" disabled={isLoading || !hasRecipeUpdates}>
               {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white rounded-full animate-spin border-t-transparent" />
+                <div className="flex gap-2 items-center">
+                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
                   {translations.save}
                 </div>
               ) : (

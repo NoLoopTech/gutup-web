@@ -1,38 +1,38 @@
 "use client"
 
 import {
-    deleteFoodById,
-    getAllFoods,
-    getCatagoryFoodType
+  deleteFoodById,
+  getAllFoods,
+  getCatagoryFoodType
 } from "@/app/api/foods"
 import { CustomTable } from "@/components/Shared/Table/CustomTable"
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select"
 import dayjs from "dayjs"
 import { MoreVertical } from "lucide-react"
@@ -111,7 +111,7 @@ export default function FoodOverviewPage(): React.ReactElement {
   const [nutritional, setNutritional] = useState("")
   const [season, setSeason] = useState("")
   const [viewFood, setViewFood] = useState(false)
-  const [foodId, setFoodId] = useState(0)
+  const [foodId, setFoodId] = useState<number | null>(null)
   const [selectedMonths, setSelectedMonths] = useState<string[]>([])
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [foodIdToDelete, setFoodIdToDelete] = useState<number | null>(null)
@@ -422,10 +422,10 @@ export default function FoodOverviewPage(): React.ReactElement {
   // Actually delete after confirmation
   const handleDeleteFood = async (): Promise<void> => {
     if (!token || !foodIdToDelete) return
-    
+
     try {
       const response = await deleteFoodById(token, foodIdToDelete)
-      
+
       if (response.error) {
         toast.error("Failed to delete food", {
           description: response.data?.message || "An error occurred"
@@ -527,7 +527,9 @@ export default function FoodOverviewPage(): React.ReactElement {
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem disabled>No categories found</SelectItem>
+                  <SelectItem value="no-categories" disabled>
+                    No categories found
+                  </SelectItem>
                 )}
               </SelectGroup>
             </SelectContent>
@@ -587,13 +589,15 @@ export default function FoodOverviewPage(): React.ReactElement {
       />
 
       {/* View Food Details Popup */}
-      <ViewFoodPopUp
-        open={viewFood}
-        onClose={handleCloseViewFoodPopUp}
-        token={token ?? ""}
-        foodId={foodId}
-        getFoods={getFoods}
-      />
+      {foodId !== null && (
+        <ViewFoodPopUp
+          open={viewFood}
+          onClose={handleCloseViewFoodPopUp}
+          token={token ?? ""}
+          foodId={foodId}
+          getFoods={getFoods}
+        />
+      )}
 
       {/* Delete confirmation popup */}
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>

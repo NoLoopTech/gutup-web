@@ -3,27 +3,26 @@
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { Button } from "@/components/ui/button"
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { useMoodStore } from "@/stores/useMoodStore"
-import { useUpdatedTranslationStore } from "@/stores/useUpdatedTranslationStore"
 import { type translationsTypes } from "@/types/moodsTypes"
 import { zodResolver } from "@hookform/resolvers/zod"
 import React, { useEffect, useState } from "react"
@@ -31,7 +30,6 @@ import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 import { useUpdatedMoodTranslationStore } from "@/stores/useUpdatedMoodTranslationStore"
-
 
 interface Option {
   value: string
