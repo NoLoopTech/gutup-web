@@ -37,8 +37,7 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator
+  DropdownMenuItem
 } from "@/components/ui/dropdown-menu"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -57,13 +56,13 @@ export function AppSidebar(): JSX.Element {
   return (
     <Sidebar>
       {/* Sidebar header  */}
-      <SidebarHeader className="p-4 ">
+      <SidebarHeader className="p-4">
         <div className="flex justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 text-white bg-black rounded-lg">
+          <div className="flex gap-3 items-center">
+            <div className="flex justify-center items-center w-10 h-10 text-white bg-black rounded-lg">
               <GalleryVerticalEnd className="w-5 h-5" />
             </div>
-            <div className="flex flex-col ">
+            <div className="flex flex-col">
               <Label className="text-sm font-semibold leading-tight">
                 GutUp
               </Label>
@@ -74,7 +73,7 @@ export function AppSidebar(): JSX.Element {
           </div>
 
           <div className="lg:hidden">
-            <SidebarTrigger className="w-10 h-10 " closeIcon />
+            <SidebarTrigger className="w-10 h-10" closeIcon />
           </div>
         </div>
       </SidebarHeader>
@@ -89,7 +88,7 @@ export function AppSidebar(): JSX.Element {
               {/* Dashboard */}
               {/* <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="/" className="flex items-center gap-2">
+                  <Link href="/" className="flex gap-2 items-center">
                     <Inbox className="w-4 h-4" />
                     <span>Dashboard</span>
                   </Link>
@@ -101,7 +100,7 @@ export function AppSidebar(): JSX.Element {
                 <SidebarMenuButton asChild>
                   <Link
                     href="/user-management"
-                    className="flex items-center gap-2"
+                    className="flex gap-2 items-center"
                   >
                     <UserRound className="w-4 h-4" />
                     <span>User Management</span>
@@ -113,15 +112,14 @@ export function AppSidebar(): JSX.Element {
               <Collapsible open={isOpen} onOpenChange={setIsOpen}>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className="flex items-center justify-between w-full">
-                      <span className="flex items-center gap-2">
+                    <SidebarMenuButton className="flex justify-between items-center w-full">
+                      <span className="flex gap-2 items-center">
                         <Ham className="w-4 h-4" />
                         <span>Food Management</span>
                       </span>
                       <ChevronDown
                         className={`h-4 w-4 transition-transform ${
-                          isOpen ? "rotate-180" : ""
-                        }`}
+                          isOpen ? "rotate-180" : ""}`}
                       />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
@@ -152,7 +150,7 @@ export function AppSidebar(): JSX.Element {
                 <SidebarMenuButton asChild>
                   <Link
                     href="/recipe-management"
-                    className="flex items-center gap-2"
+                    className="flex gap-2 items-center"
                   >
                     <HandPlatter className="w-4 h-4" />
                     <span>Recipe Management</span>
@@ -165,7 +163,7 @@ export function AppSidebar(): JSX.Element {
                 <SidebarMenuButton asChild>
                   <Link
                     href="/store-management"
-                    className="flex items-center gap-2"
+                    className="flex gap-2 items-center"
                   >
                     <ShoppingBasket className="w-4 h-4" />
                     <span>Store Management</span>
@@ -178,7 +176,7 @@ export function AppSidebar(): JSX.Element {
                 <SidebarMenuButton asChild>
                   <Link
                     href="/content-management"
-                    className="flex items-center gap-2"
+                    className="flex gap-2 items-center"
                   >
                     <ClipboardPenLine className="w-4 h-4" />
                     <span>Content Management</span>
@@ -220,7 +218,7 @@ export function AppSidebar(): JSX.Element {
               onClick={handleSignOut}
               className="cursor-pointer"
             >
-              <LogOut className="w-4 h-4 mr-2" />
+              <LogOut className="mr-2 w-4 h-4" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
