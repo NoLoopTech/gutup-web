@@ -568,36 +568,67 @@ export default function AddStorePopUpContent({
     },
     {
       header: "", // No header for delete column
-      accessor: (row: AvailableItem) => (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
-          onClick={() => {
-            handleDeleteAvailItem(row.ingOrCatId)
-          }}
-          title={translations.delete}
-        >
-          <Trash className="h-4 w-4 text-gray-500" />
-        </Button>
-      ),
+      accessor: (row: AvailableItem) => {
+        const index = availData.findIndex(
+          item =>
+            item.ingOrCatId === row.ingOrCatId &&
+            item.type === row.type &&
+            item.name === row.name
+        )
+        return (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
+            onClick={() => {
+              handleDeleteAvailItem(index)
+            }}
+            title={translations.delete}
+          >
+            <Trash className="h-4 w-4 text-gray-500" />
+          </Button>
+        )
+      },
       id: "delete"
     }
   ]
 
   // Delete handler for availData
-  const handleDeleteAvailItem = (id: number): void => {
-    const updated = availData.filter(item => item.ingOrCatId !== id)
+  const handleDeleteAvailItem = (index: number): void => {
+    if (index < 0 || index >= availData.length) {
+      toast.error("Invalid item selection")
+      return
+    }
+
+    // Get the item to be deleted
+    const itemToDelete = availData[index]
+
+    // Update current language data
+    const updated = availData.filter((_, i) => i !== index)
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
     setTranslationField("storeData", activeLang, "availData", updated)
-    setTranslationField(
-      "storeData",
-      activeLang === "en" ? "fr" : "en",
-      "availData",
-      updated
-    )
+
+    // Update opposite language data
+    const oppLang = activeLang === "en" ? "fr" : "en"
+    const oppLangData = (storeData[oppLang]?.availData as AvailableItem[]) || []
+
+    let oppUpdated: AvailableItem[]
+
+    if (itemToDelete.ingOrCatId === 0) {
+      oppUpdated = oppLangData.filter((_, i) => i !== index)
+    } else {
+      oppUpdated = oppLangData.filter(
+        item =>
+          !(
+            item.ingOrCatId === itemToDelete.ingOrCatId &&
+            item.type === itemToDelete.type
+          )
+      )
+    }
+
+    setTranslationField("storeData", oppLang, "availData", oppUpdated)
   }
 
   // Define functions to handle page changes
@@ -636,10 +667,29 @@ export default function AddStorePopUpContent({
   const handleAddIngredient = async (): Promise<void> => {
     const name = selected?.name ?? ingredientInput.trim()
     if (!name) return
+    const matchingFood =
+      selected || foods.find(f => f.name?.toLowerCase() === name.toLowerCase())
+
+    const isAlreadyAdded = availData.some(item => {
+      if (item.type !== "Ingredient") {
+        return false
+      }
+
+      if (matchingFood) {
+        return item.ingOrCatId === Number(matchingFood.id)
+      } else {
+        return item.name.toLowerCase() === name.toLowerCase()
+      }
+    })
+
+    if (isAlreadyAdded) {
+      toast.error(translations.itemAlreadyAdded || "Item already added")
+      return
+    }
 
     const entry: AvailableItem = {
-      ingOrCatId: selected ? Number(selected.id) : 0,
-      name,
+      ingOrCatId: matchingFood ? Number(matchingFood.id) : 0,
+      name: matchingFood ? matchingFood.name ?? name : name,
       type: "Ingredient",
       tags: ["InSystem"],
       display: true,
@@ -676,8 +726,9 @@ export default function AddStorePopUpContent({
       translatedEntry
     ]
     setTranslationField("storeData", oppLang, "availData", oppUpdated)
-
-    // clear for next
+    toast.success(
+      translations.itemAddedSuccessfully || "Item added successfully"
+    )
     setSelected(null)
     setIngredientInput("")
   }
@@ -691,9 +742,38 @@ export default function AddStorePopUpContent({
       : categoryInput.trim()
     if (!name) return
 
+    const matchingCategory =
+      selectedCategory ||
+      categoryTags.find(tag => {
+        const tagDisplayName =
+          activeLang === "en" ? tag.tagName ?? "" : tag.tagNameFr ?? ""
+        return tagDisplayName.toLowerCase() === name.toLowerCase()
+      })
+
+    const isAlreadyAdded = availData.some(item => {
+      if (item.type !== "Category") {
+        return false
+      }
+
+      if (matchingCategory) {
+        return item.ingOrCatId === Number(matchingCategory.id)
+      } else {
+        return item.name.toLowerCase() === name.toLowerCase()
+      }
+    })
+
+    if (isAlreadyAdded) {
+      toast.error(translations.itemAlreadyAdded || "Item already added")
+      return
+    }
+
     const entry: AvailableItem = {
-      ingOrCatId: selectedCategory ? Number(selectedCategory.id) : 0,
-      name,
+      ingOrCatId: matchingCategory ? Number(matchingCategory.id) : 0,
+      name: matchingCategory
+        ? activeLang === "en"
+          ? matchingCategory.tagName ?? name
+          : matchingCategory.tagNameFr ?? name
+        : name,
       type: "Category",
       tags: ["InSystem"],
       display: true,
@@ -731,6 +811,10 @@ export default function AddStorePopUpContent({
     ]
     setTranslationField("storeData", oppLang, "availData", oppUpdated)
 
+    // Show success message and clear for next
+    toast.success(
+      translations.itemAddedSuccessfully || "Item added successfully"
+    )
     setSelectedCategory(null)
     setCategoryInput("")
   }

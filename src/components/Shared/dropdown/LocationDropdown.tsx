@@ -80,7 +80,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({
         loadOptions={fetchLocations}
         defaultOptions
         value={
-          localSelectedOption === null ? defaultLocation : localSelectedOption
+          localSelectedOption === null ? (defaultLocation || null) : localSelectedOption
         }
         placeholder="Enter location"
         onChange={(option: OptionType | OptionType[] | null) => {

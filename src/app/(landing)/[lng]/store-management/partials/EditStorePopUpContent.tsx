@@ -571,8 +571,6 @@ export default function EditStorePopUpContent({
   // Update form when lang changes or when session data changes
   React.useEffect(() => {
     const currentStoreData = storeData[activeLang]
-
-    // Update selected location
     if (currentStoreData?.storeLocationLatLng) {
       setSelectedLocationName(currentStoreData.storeLocationLatLng)
     } else {
@@ -919,7 +917,6 @@ export default function EditStorePopUpContent({
           checked={row.display}
           className="scale-75"
           onCheckedChange={checked => {
-            // Update the display status when switch is toggled
             const updated = availData.map(item =>
               item.ingOrCatId === row.ingOrCatId
                 ? { ...item, display: checked }
@@ -946,36 +943,50 @@ export default function EditStorePopUpContent({
     },
     {
       header: "",
-      accessor: (row: AvailableItem) => (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
-          onClick={() => {
-            handleDeleteAvailItem(row.ingOrCatId)
-          }}
-          title={translations.delete}
-        >
-          <Trash className="h-4 w-4 text-gray-500" />
-        </Button>
-      ),
+      accessor: (row: AvailableItem) => {
+        // Delete button by index
+        const index = availData.findIndex(
+          item =>
+            item.ingOrCatId === row.ingOrCatId &&
+            item.name === row.name &&
+            item.type === row.type
+        )
+        return (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 border border-gray-300 hover:bg-gray-100"
+            onClick={() => {
+              handleDeleteAvailItem(index)
+            }}
+            title={translations.delete}
+          >
+            <Trash className="h-4 w-4 text-gray-500" />
+          </Button>
+        )
+      },
       id: "delete"
     }
   ]
 
   // Delete handler for availData
-  const handleDeleteAvailItem = (id: number): void => {
-    const updated = availData.filter(item => item.ingOrCatId !== id)
+  const handleDeleteAvailItem = (index: number): void => {
+    if (index < 0 || index >= availData.length) {
+      toast.error("Invalid item selection")
+      return
+    }
+
+    const updated = availData.filter((_, i) => i !== index)
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
     setTranslationField("storeData", activeLang, "availData", updated)
 
-    // Also remove from opposite language by matching ID
+    // Also remove from opposite language by matching the same index
     const oppLang = activeLang === "en" ? "fr" : "en"
     const oppCurrentData =
       (storeData[oppLang]?.availData as AvailableItem[]) || []
-    const oppUpdated = oppCurrentData.filter(item => item.ingOrCatId !== id)
+    const oppUpdated = oppCurrentData.filter((_, i) => i !== index)
     setTranslationField("storeData", oppLang, "availData", oppUpdated)
 
     setHasChanges(true)
@@ -1006,9 +1017,30 @@ export default function EditStorePopUpContent({
     const name = selected?.name ?? ingredientInput.trim()
     if (!name) return
 
+    const matchingFood =
+      selected || foods.find(f => f.name?.toLowerCase() === name.toLowerCase())
+
+    // Check if the item is already added to the table
+    const isAlreadyAdded = availData.some(item => {
+      if (!(item.type === "Ingredient" || item.type === "Ingrédient")) {
+        return false
+      }
+
+      if (matchingFood) {
+        return item.ingOrCatId === Number(matchingFood.id)
+      } else {
+        return item.name.toLowerCase() === name.toLowerCase()
+      }
+    })
+
+    if (isAlreadyAdded) {
+      toast.error(translations.itemAlreadyAdded || "Item already added")
+      return
+    }
+
     const entry: AvailableItem = {
-      ingOrCatId: selected ? Number(selected.id) : 0,
-      name,
+      ingOrCatId: matchingFood ? Number(matchingFood.id) : 0,
+      name: matchingFood ? matchingFood.name ?? name : name,
       type: activeLang === "en" ? "Ingredient" : "Ingrédient",
       tags: ["InSystem"],
       display: true,
@@ -1046,7 +1078,10 @@ export default function EditStorePopUpContent({
     ]
     setTranslationField("storeData", oppLang, "availData", oppUpdated)
 
-    // clear for next
+    // Show success message and clear for next
+    toast.success(
+      translations.itemAddedSuccessfully || "Item added successfully"
+    )
     setSelected(null)
     setIngredientInput("")
     setHasChanges(true)
@@ -1061,9 +1096,39 @@ export default function EditStorePopUpContent({
       : categoryInput.trim()
     if (!name) return
 
+    const matchingCategory =
+      selectedCategory ||
+      categoryTags.find(tag => {
+        const tagDisplayName =
+          activeLang === "en" ? tag.tagName ?? "" : tag.tagNameFr ?? ""
+        return tagDisplayName.toLowerCase() === name.toLowerCase()
+      })
+
+    // Check if the category is already added to the table
+    const isAlreadyAdded = availData.some(item => {
+      if (!(item.type === "Category" || item.type === "Catégorie")) {
+        return false
+      }
+
+      if (matchingCategory) {
+        return item.ingOrCatId === Number(matchingCategory.id)
+      } else {
+        return item.name.toLowerCase() === name.toLowerCase()
+      }
+    })
+
+    if (isAlreadyAdded) {
+      toast.error(translations.itemAlreadyAdded || "Item already added")
+      return
+    }
+
     const entry: AvailableItem = {
-      ingOrCatId: selectedCategory ? Number(selectedCategory.id) : 0,
-      name,
+      ingOrCatId: matchingCategory ? Number(matchingCategory.id) : 0,
+      name: matchingCategory
+        ? activeLang === "en"
+          ? matchingCategory.tagName ?? name
+          : matchingCategory.tagNameFr ?? name
+        : name,
       type: activeLang === "en" ? "Category" : "Catégorie",
       tags: ["InSystem"],
       display: true,
@@ -1101,6 +1166,10 @@ export default function EditStorePopUpContent({
     ]
     setTranslationField("storeData", oppLang, "availData", oppUpdated)
 
+    // Show success message and clear for next
+    toast.success(
+      translations.itemAddedSuccessfully || "Item added successfully"
+    )
     setSelectedCategory(null)
     setCategoryInput("")
     setHasChanges(true)
