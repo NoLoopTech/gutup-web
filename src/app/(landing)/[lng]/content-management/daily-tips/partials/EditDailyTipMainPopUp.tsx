@@ -419,9 +419,7 @@ export default function EditDailyTipMainPopUp({
             msOverflowStyle: "none"
           }}
         >
-          <DialogTitle>
-            {translations.addDailyTipTitle || "Add New Daily Tip"}
-          </DialogTitle>
+          <DialogTitle>Daily Tip</DialogTitle>
 
           <Tabs
             value={activeLang}
