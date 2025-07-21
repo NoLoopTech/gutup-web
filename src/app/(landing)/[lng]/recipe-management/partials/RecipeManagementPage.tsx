@@ -64,7 +64,7 @@ interface TableDataTypes {
   category: string
   servings: number
   mainIngredient: string[]
-  benifits: string[]
+  benefits: string[]
   createDate: string
   status: boolean
   authorImage: string
@@ -212,6 +212,19 @@ export default function RecipeManagementPage({
       )
     },
     {
+      accessor: "benefits",
+      header: "Benefits",
+      cell: (row: TableDataTypes) => (
+        <div className="flex flex-wrap gap-2">
+          {row.benefits.map((benefit, idx) => (
+            <Badge key={`${benefit}-${idx}`} variant={"outline"}>
+              {benefit}
+            </Badge>
+          ))}
+        </div>
+      )
+    },
+    {
       accessor: "createDate",
       header: "Date Added",
       cell: (row: any) => dayjs(row.createdAt).format("DD/MM/YYYY")
@@ -275,8 +288,8 @@ export default function RecipeManagementPage({
         selectedCategory === "" || recipe.category === selectedCategory
       const benefitMatch =
         selectedBenefit === "" ||
-        (Array.isArray(recipe.benifits) &&
-          recipe.benifits.some(benefit =>
+        (Array.isArray(recipe.benefits) &&
+          recipe.benefits.some(benefit =>
             benefit.toLowerCase().includes(selectedBenefit.toLowerCase())
           ))
 
@@ -334,8 +347,8 @@ export default function RecipeManagementPage({
   }
 
   const categories: dataListTypes[] = [
-    { value: "Breakfast", label: "Breakfast" },
-    { value: "Lunch", label: "Lunch" },
+    { value: "vegetables", label: "vegetables" },
+    { value: "dairy", label: "dairy" },
     { value: "Dinner", label: "Dinner" },
     { value: "Italian", label: "Italian" }
   ]
@@ -347,9 +360,9 @@ export default function RecipeManagementPage({
   }))
 
   const healthBenefits: dataListTypes[] = [
-    { value: "Immune Support", label: "Immune Support" },
-    { value: "Skin Health", label: "Skin Health" },
-    { value: "Eye Health", label: "Eye Health" }
+    { value: "qqqqq", label: "qqqqq" },
+    { value: "aaaaa", label: "aaaaa" },
+    { value: "loading", label: "loading" }
   ]
 
   const uploadMoodImageAndSetUrl = async (): Promise<{
