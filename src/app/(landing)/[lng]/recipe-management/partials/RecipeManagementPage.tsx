@@ -661,12 +661,17 @@ export default function RecipeManagementPage({
           await deleteImageFromFirebase(previousAuthorImg)
         }
 
-        resetUpdatedStore()
-
         handleCloseViewRecipePopUp()
 
         setPreviousAuthorImg("")
         setPreviousRecipeImg("")
+
+        // clear store and session
+        resetRecipe()
+        sessionStorage.removeItem("recipe-storage")
+
+        resetUpdatedStore()
+        sessionStorage.removeItem("update-recipe-storage")
       } else {
         toast.error("Failed to update recipe!")
         if (recipeImageUrl) {

@@ -127,7 +127,7 @@ export default function EditRecipePopUpContent({
   const [benefits, setBenefits] = useState<string[]>([])
   const isEditorUserEdit = useRef(true)
 
-  const { setUpdatedField, resetUpdatedStore } = useUpdateRecipeStore()
+  const { setUpdatedField } = useUpdateRecipeStore()
 
   useEffect(() => {
     // Initialize the benefits state with data from translationData store
@@ -207,13 +207,6 @@ export default function EditRecipePopUpContent({
     setPreviewFoodUrls([])
     setPreviewAuthorUrls([])
 
-    // clear store and session
-    resetRecipe()
-    sessionStorage.removeItem("recipe-storage")
-
-    resetUpdatedStore()
-    sessionStorage.removeItem("update-recipe-storage")
-
     // Close the modal or section
     onClose()
   }
@@ -253,6 +246,7 @@ export default function EditRecipePopUpContent({
       }
     }
   }
+
   const handleInputBlurWithoutTranslate = async (
     value: string,
     fieldName: keyof RecipeFields
