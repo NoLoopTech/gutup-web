@@ -47,6 +47,7 @@ interface Food {
   id: number
   name?: string
   tagName?: string
+  status?: boolean
 }
 
 interface AvailableItem {
@@ -140,7 +141,6 @@ export default function ShopPromotionTab({
   const handleAddIngredient = async (): Promise<void> => {
     let updatedAvailData: AvailableItem
 
-    // Step 1: Check if the item is already in the availData list by item name
     if (selected) {
       // Check if the item name already exists in availData
       const isItemExists = availData.some(item => item.name === selected.name)
@@ -153,47 +153,55 @@ export default function ShopPromotionTab({
         return
       }
 
-      // Add the selected item with "Inactive" status if not already added
       updatedAvailData = {
         id: selected.id,
         name: selected.name ?? "",
-        status: true,
+        status: selected.status ?? false,
         display: true
       }
     } else if (ingredientInput.trim()) {
-      // Step 2: Check if the custom food item entered by the user already exists
-      const isCustomItemExists = availData.some(
-        item => item.name.toLowerCase() === ingredientInput.toLowerCase()
+      // Check if the entered ingredient exists in the foods list
+      const matchedFood = foods.find(
+        food => food.name?.toLowerCase() === ingredientInput.toLowerCase()
       )
 
-      if (isCustomItemExists) {
-        // If a custom item already exists in the table, show an error and return
-        toast.error("This custom food item is already in the list!")
-        setIngredientInput("")
-        return
-      }
+      if (matchedFood) {
+        updatedAvailData = {
+          id: matchedFood.id,
+          name: matchedFood.name ?? "",
+          status: matchedFood.status ?? false,
+          display: true
+        }
+      } else {
+        const isCustomItemExists = availData.some(
+          item => item.name.toLowerCase() === ingredientInput.toLowerCase()
+        )
 
-      // Step 3: Add the custom item with "Inactive" status if it doesn't exist
-      updatedAvailData = {
-        id: 0,
-        name: ingredientInput,
-        status: false,
-        display: true
+        if (isCustomItemExists) {
+          toast.error("This custom food item is already in the list!")
+          setIngredientInput("")
+          return
+        }
+
+        updatedAvailData = {
+          id: 0, // Custom item doesn't have an ID in foods list
+          name: ingredientInput,
+          status: false,
+          display: true
+        }
       }
     } else {
       toast.error("Please select or enter a food item first!")
       return
     }
 
-    // Step 4: Add the new item (either selected or custom) to the availData state
     setAvailData([...availData, updatedAvailData])
 
-    // Translate the name if needed
     try {
       const translatedName =
         activeLang === "en"
           ? await translateText(updatedAvailData.name)
-          : updatedAvailData.name // if current lang is fr, no need to translate
+          : updatedAvailData.name
 
       const enList = [...availData, updatedAvailData]
       const frList = [
