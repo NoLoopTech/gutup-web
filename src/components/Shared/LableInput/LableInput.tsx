@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { X } from "lucide-react"
 import React, { useEffect, useState, type KeyboardEvent } from "react"
+import { useFormContext } from "react-hook-form"
 
 interface Props {
   title: string | undefined
@@ -144,7 +145,7 @@ export default function LableInput({
   )
 
   return (
-    <div className="w-full col-span-1 sm:col-span-2 md:col-span-1">
+    <div className="col-span-1 w-full sm:col-span-2 md:col-span-1">
       <Label className="block mb-1 text-black">{title}</Label>
       {!disable && (
         <div className="relative">
@@ -159,7 +160,7 @@ export default function LableInput({
             disabled={disable}
           />
           {value && filteredAllBenefits.length > 0 && (
-            <div className="absolute z-50 w-full mt-1 overflow-auto bg-white border border-gray-300 rounded-md shadow-md max-h-48">
+            <div className="overflow-auto absolute z-50 mt-1 w-full max-h-48 bg-white rounded-md border border-gray-300 shadow-md">
               {filteredAllBenefits.map((item, idx) => (
                 <div
                   key={idx}
@@ -185,7 +186,7 @@ export default function LableInput({
           return (
             <div
               key={item}
-              className="flex items-center max-w-full px-2 py-1 text-sm text-black bg-white border border-gray-300 rounded shadow-sm"
+              className="flex items-center px-2 py-1 max-w-full text-sm text-black bg-white rounded border border-gray-300 shadow-sm"
             >
               <span className="mr-1">{item}</span>
               {!disable && (

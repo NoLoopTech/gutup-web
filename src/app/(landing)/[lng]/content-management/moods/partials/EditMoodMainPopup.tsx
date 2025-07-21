@@ -192,7 +192,7 @@ export default function EditMoodMainPopUp({
             msOverflowStyle: "none"
           }}
         >
-          <DialogTitle>{translations.Mood || "Mood"}</DialogTitle>
+          <DialogTitle>Mood</DialogTitle>
 
           <Tabs
             value={activeLang}

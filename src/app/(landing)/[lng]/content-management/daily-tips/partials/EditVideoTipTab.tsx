@@ -110,25 +110,6 @@ export default function EditVideoTipTab({
   }, [activeLang, form.reset, translationsData.videoTipData])
 
   const handleCancel = async (): Promise<void> => {
-    // Collect unique image URLs
-    const imageUrls = [
-      translationsData.basicLayoutData[activeLang]?.image,
-      translationsData.shopPromotionData?.[activeLang]?.image
-    ].filter(
-      (url, index, arr): url is string => !!url && arr.indexOf(url) === index
-    )
-
-    //  Delete all images from Firebase
-    await Promise.all(
-      imageUrls.map(async url => {
-        try {
-          await deleteImageFromFirebase(url)
-        } catch (error) {
-          console.error(`Failed to delete image: ${url}`, error)
-        }
-      })
-    )
-
     setTranslationField("basicLayoutData", "en", "image", "")
     setTranslationField("basicLayoutData", "fr", "image", "")
     setTranslationField("shopPromotionData", "en", "image", "")

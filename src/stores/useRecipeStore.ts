@@ -6,10 +6,11 @@ import { createJSONStorage, persist } from "zustand/middleware"
 type Lang = "en" | "fr"
 
 export interface Ingredient {
+  foodId: number
   ingredientName: string
   quantity: string
-  mainIngredient: string
-  availableInIngredient: string
+  mainIngredient: boolean
+  availableInIngredient: boolean
 }
 
 export interface RecipeFields {
@@ -19,7 +20,6 @@ export interface RecipeFields {
   preparation: string
   rest: string
   persons: string
-  description: string
   recipe: string
   benefits: string[]
   ingredientData: Ingredient[]
@@ -28,7 +28,7 @@ export interface RecipeFields {
   phone: string
   email: string
   website: string
-  foodimage: string
+  recipeImage: string
   authorimage: string
 }
 
@@ -49,8 +49,6 @@ export interface LangData<T> {
 }
 
 export interface RecipeStoreState {
-  fr: RecipeFields
-  en: RecipeFields
   allowMultiLang: boolean
   activeLang: Lang
   translations: LangData<RecipeFields>
@@ -79,7 +77,6 @@ const emptyRecipe: RecipeFields = {
   preparation: "",
   rest: "",
   persons: "",
-  description: "",
   recipe: "",
   benefits: [],
   ingredientData: [],
@@ -88,7 +85,7 @@ const emptyRecipe: RecipeFields = {
   phone: "",
   email: "",
   website: "",
-  foodimage: "",
+  recipeImage: "",
   authorimage: ""
 }
 
@@ -97,8 +94,6 @@ export const useRecipeStore = create<RecipeStoreState>()(
     set => ({
       allowMultiLang: false,
       activeLang: "en",
-      fr: { ...emptyRecipe },
-      en: { ...emptyRecipe },
       translations: {
         en: { ...emptyRecipe },
         fr: { ...emptyRecipe }

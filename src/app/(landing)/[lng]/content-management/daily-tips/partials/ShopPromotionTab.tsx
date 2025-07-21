@@ -49,6 +49,7 @@ interface Food {
   id: number
   name?: string
   tagName?: string
+  status?: boolean
 }
 
 interface AvailableItem {
@@ -139,10 +140,9 @@ export default function ShopPromotionTab({
     void fetchFoods()
   }, [token])
 
-  const handleAddIngredient = () => {
+  const handleAddIngredient = async (): Promise<void> => {
     let updatedAvailData: AvailableItem
 
-    // Step 1: Check if the item is already in the availData list by item name
     if (selected) {
       // Check if the item name already exists in availData
       const isItemExists = availData.some(item => item.name === selected.name)
@@ -155,52 +155,71 @@ export default function ShopPromotionTab({
         return
       }
 
-      // Add the selected item with "Inactive" status if not already added
       updatedAvailData = {
         id: selected.id,
         name: selected.name ?? "",
-        status: true,
+        status: selected.status ?? false,
         display: true
       }
     } else if (ingredientInput.trim()) {
-      // Step 2: Check if the custom food item entered by the user already exists
-      const isCustomItemExists = availData.some(
-        item => item.name.toLowerCase() === ingredientInput.toLowerCase()
+      // Check if the entered ingredient exists in the foods list
+      const matchedFood = foods.find(
+        food => food.name?.toLowerCase() === ingredientInput.toLowerCase()
       )
 
-      if (isCustomItemExists) {
-        // If a custom item already exists in the table, show an error and return
-        toast.error("This custom food item is already in the list!")
-        setIngredientInput("")
-        return
-      }
+      if (matchedFood) {
+        updatedAvailData = {
+          id: matchedFood.id,
+          name: matchedFood.name ?? "",
+          status: matchedFood.status ?? false,
+          display: true
+        }
+      } else {
+        const isCustomItemExists = availData.some(
+          item => item.name.toLowerCase() === ingredientInput.toLowerCase()
+        )
 
-      // Step 3: Add the custom item with "Inactive" status if it doesn't exist
-      updatedAvailData = {
-        id: 0,
-        name: ingredientInput,
-        status: false,
-        display: true
+        if (isCustomItemExists) {
+          toast.error("This custom food item is already in the list!")
+          setIngredientInput("")
+          return
+        }
+
+        updatedAvailData = {
+          id: 0, // Custom item doesn't have an ID in foods list
+          name: ingredientInput,
+          status: false,
+          display: true
+        }
       }
     } else {
       toast.error("Please select or enter a food item first!")
       return
     }
 
-    // Step 4: Add the new item (either selected or custom) to the availData state
     setAvailData([...availData, updatedAvailData])
 
-    // Save the updated availData into the daily tips store
-    setTranslationField("shopPromotionData", activeLang, "shopPromoteFoods", [
-      ...availData,
-      updatedAvailData
-    ])
-    setTranslationField(
-      "shopPromotionData",
-      activeLang === "en" ? "fr" : "en",
-      "shopPromoteFoods",
-      [...availData, updatedAvailData]
-    )
+    try {
+      const translatedName =
+        activeLang === "en"
+          ? await translateText(updatedAvailData.name)
+          : updatedAvailData.name
+
+      const enList = [...availData, updatedAvailData]
+      const frList = [
+        ...availData,
+        {
+          ...updatedAvailData,
+          name: translatedName
+        }
+      ]
+
+      setTranslationField("shopPromotionData", "en", "shopPromoteFoods", enList)
+      setTranslationField("shopPromotionData", "fr", "shopPromoteFoods", frList)
+    } catch (err) {
+      console.error("Translation failed:", err)
+      toast.error("Failed to translate food name.")
+    }
 
     // Optionally, show a success message
     toast.success("Food item added successfully!")
@@ -457,10 +476,7 @@ export default function ShopPromotionTab({
 
   const handleCancel = async (): Promise<void> => {
     //  Combine all possible image URLs (preview + stored)
-    const possibleImages = [
-      translationsData.basicLayoutData[activeLang]?.image,
-      translationsData.shopPromotionData?.[activeLang]?.image
-    ]
+    const possibleImages = [translationsData.basicLayoutData[activeLang]?.image]
     const uniqueImageUrls = Array.from(new Set(possibleImages)).filter(Boolean)
 
     //  Delete images from Firebase
@@ -507,7 +523,7 @@ export default function ShopPromotionTab({
       return
     }
 
-    const { name, country, lat, lng } = location
+    const { name, lat, lng } = location
 
     const selectedLocation = {
       value: placeId,
@@ -546,6 +562,12 @@ export default function ShopPromotionTab({
       selectedLocation
     )
   }
+
+  useEffect(() => {
+    const foods =
+      translationsData.shopPromotionData[activeLang]?.shopPromoteFoods ?? []
+    setAvailData(foods)
+  }, [activeLang, translationsData.shopPromotionData])
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
     addDailyTip()
@@ -798,7 +820,6 @@ export default function ShopPromotionTab({
             <Separator />
 
             {/* Available Products */}
-
             <div className="flex flex-col gap-4 pt-4">
               <div className="flex flex-row items-center flex-1 gap-2 mb-2">
                 <div className="flex-1">
@@ -888,6 +909,7 @@ export default function ShopPromotionTab({
               onClick={async () => {
                 await handleCancel()
               }}
+              disabled={isLoading}
             >
               {translations.cancel}
             </Button>
