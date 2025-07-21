@@ -15,6 +15,7 @@ import {
   deleteFoodById,
   getCatagoryFoodType,
   getFoodsById,
+  postFoodTag,
   putFoodById
 } from "@/app/api/foods"
 import type { RichTextEditorHandle } from "@/components/Shared/TextEditor/RichTextEditor"
@@ -428,6 +429,40 @@ export default function ViewFoodPopUp({
     try {
       const { foodId: savedFoodId, ...rawData } = dataToSave
 
+      // Get pending new benefits from session storage
+      const pendingBenefits = JSON.parse(sessionStorage.getItem('pendingNewBenefits') || '[]') as Array<{tagName: string; tagNameFr: string}>
+
+      // First, add new benefits to database if any exist
+      if (pendingBenefits.length > 0) {
+        // Check existing benefits to avoid duplicates
+        const benefitResponse = await getCatagoryFoodType(token, "Benefit")
+        const existingTags = Array.isArray(benefitResponse?.data)
+          ? benefitResponse.data.map((b: any) => b.tagName)
+          : []
+
+        // Add only new benefits that don't exist
+        for (const benefit of pendingBenefits) {
+          if (!existingTags.includes(benefit.tagName)) {
+            try {
+              const response = await postFoodTag(token, {
+                tagName: benefit.tagName,
+                tagNameFr: benefit.tagNameFr
+              })
+              
+              if (response.status === 200 || response.status === 201) {
+                console.log(`Benefit "${benefit.tagName}" added to database successfully`)
+              }
+            } catch (error) {
+              console.error(`Failed to add benefit "${benefit.tagName}" to database:`, error)
+            }
+          }
+        }
+        
+        // Clear pending benefits after adding to database
+        sessionStorage.removeItem('pendingNewBenefits')
+        toast.success("New benefits added to database successfully!")
+      }
+
       // Transform the session storage data to match CreateFoodDto format
       const updateData = {
         name: rawData.name ?? "",
@@ -490,6 +525,7 @@ export default function ViewFoodPopUp({
 
   const handleClose = (): void => {
     clearSessionStorage()
+    sessionStorage.removeItem('pendingNewBenefits') // Clear pending benefits on close
     onClose()
   }
 
@@ -618,6 +654,7 @@ export default function ViewFoodPopUp({
                 handleSelectSync={handleSelectSync}
                 handleImageSelect={handleImageSelect}
                 imagePreviewUrls={imagePreviewUrls}
+                token={token}
               />
 
               {allowMultiLang && (
@@ -635,6 +672,7 @@ export default function ViewFoodPopUp({
                   handleSelectSync={handleSelectSync}
                   handleImageSelect={handleImageSelect}
                   imagePreviewUrls={imagePreviewUrls}
+                  token={token}
                 />
               )}
             </Tabs>

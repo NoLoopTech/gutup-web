@@ -21,9 +21,10 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { TabsContent } from "@/components/ui/tabs"
+import { useTranslation } from "@/query/hooks/useTranslation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import dynamic from "next/dynamic"
-import React from "react"
+import React, { useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -59,6 +60,7 @@ interface ViewFoodEnglishProps {
   ) => void
   handleImageSelect: (files: File[] | null) => Promise<void>
   imagePreviewUrls: string[]
+  token: string
 }
 
 const FoodSchema = z.object({
@@ -129,8 +131,38 @@ export default function ViewFoodEnglish({
   updateNestedData,
   handleSelectSync,
   handleImageSelect,
-  imagePreviewUrls
+  imagePreviewUrls,
+  token
 }: ViewFoodEnglishProps): JSX.Element {
+  const { translateText } = useTranslation()
+  const [pendingNewBenefits, setPendingNewBenefits] = useState<Array<{tagName: string; tagNameFr: string}>>([])
+
+  const handleAddNewBenefit = async (
+    benefit: string
+  ): Promise<{ tagName: string; tagNameFr: string }> => {
+    try {
+      const tagNameFr = await translateText(benefit)
+      const newBenefit = { tagName: benefit, tagNameFr }
+      
+      setPendingNewBenefits(prev => [...prev, newBenefit])
+      
+      return newBenefit
+    } catch (error) {
+      console.error("Error translating new benefit:", error)
+      const newBenefit = { tagName: benefit, tagNameFr: benefit }
+      setPendingNewBenefits(prev => [...prev, newBenefit])
+      return newBenefit
+    }
+  }
+
+  // Expose function to parent component for saving pending benefits
+  React.useEffect(() => {
+    // Store pending benefits in session storage so parent can access them
+    if (pendingNewBenefits.length > 0) {
+      sessionStorage.setItem('pendingNewBenefits', JSON.stringify(pendingNewBenefits))
+    }
+  }, [pendingNewBenefits])
+
   // handle form submit
   const onSubmit = (data: z.infer<typeof FoodSchema>): void => {
     toast("Form submitted successfully!", {})
@@ -493,12 +525,11 @@ export default function ViewFoodEnglish({
                   disable={false}
                   suggestions={benefitTags}
                   activeLang="en"
+                  onAddNewBenefit={handleAddNewBenefit}
                   onSelectSuggestion={benefit => {
                     console.log("English onSelectSuggestion:", benefit)
-                    // Get current benefits from foodDetails
                     const currentData = foodDetails?.healthBenefits ?? []
 
-                    // Add both EN and FR at the same index
                     const updatedHealthBenefits = [
                       ...currentData,
                       {
@@ -507,33 +538,24 @@ export default function ViewFoodEnglish({
                       }
                     ]
 
-                    console.log(
-                      "Updated health benefits:",
-                      updatedHealthBenefits
-                    )
-
-                    // Update session storage
                     updateEditedData("healthBenefits", updatedHealthBenefits)
-
-                    // Don't update form field here - let the benefits prop handle display
                   }}
                   onRemoveBenefit={removed => {
                     console.log("English onRemoveBenefit:", removed)
                     const currentData = foodDetails?.healthBenefits ?? []
 
-                    // Find and remove by matching either English or French name
                     const updatedHealthBenefits = currentData.filter(
                       b => b.healthBenefit !== removed.tagName
                     )
 
-                    console.log("After removal:", updatedHealthBenefits)
-
-                    // Update session storage
                     updateEditedData("healthBenefits", updatedHealthBenefits)
+                    // Also remove from pending benefits if it exists
+                    setPendingNewBenefits(prev => 
+                      prev.filter(p => p.tagName !== removed.tagName)
+                    )
                   }}
                   onChange={(newBenefits: string[]) => {
                     console.log("English onChange:", newBenefits)
-                    // This is for manual typing - preserve structure
                     const healthBenefits = newBenefits.map(
                       (benefit, index) => ({
                         healthBenefit: benefit,

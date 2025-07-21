@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { TabsContent } from "@/components/ui/tabs"
+import { useTranslation } from "@/query/hooks/useTranslation"
 import dynamic from "next/dynamic"
 import React, { useEffect, useState } from "react"
 
@@ -91,6 +92,7 @@ interface ViewFoodFrenchProps {
   ) => void
   handleImageSelect: (files: File[] | null) => Promise<void>
   imagePreviewUrls: string[]
+  token: string
 }
 
 export default function ViewFoodFrench({
@@ -106,8 +108,12 @@ export default function ViewFoodFrench({
   updateNestedData,
   handleSelectSync,
   handleImageSelect,
-  imagePreviewUrls
+  imagePreviewUrls,
+  token
 }: ViewFoodFrenchProps): JSX.Element {
+  const { translateText } = useTranslation()
+  const [pendingNewBenefitsFr, setPendingNewBenefitsFr] = useState<Array<{tagName: string; tagNameFr: string}>>([])
+
   const [formData, setFormData] = useState({
     name: "",
     category: "",
@@ -174,6 +180,39 @@ export default function ViewFoodFrench({
     setFormData(prev => ({ ...prev, [field]: value }))
     handleSelectSync(field, value, "fr")
   }
+
+  // Modified to not add to database immediately
+  const handleAddNewBenefit = async (
+    benefit: string
+  ): Promise<{ tagName: string; tagNameFr: string }> => {
+    try {
+      const tagName = await translateText(benefit)
+      const newBenefit = { tagName, tagNameFr: benefit }
+      
+      // Store pending benefit instead of adding to database
+      setPendingNewBenefitsFr(prev => [...prev, newBenefit])
+      
+      return newBenefit
+    } catch (error) {
+      console.error("Error translating new benefit:", error)
+      const newBenefit = { tagName: benefit, tagNameFr: benefit }
+      setPendingNewBenefitsFr(prev => [...prev, newBenefit])
+      return newBenefit
+    }
+  }
+
+  // Store pending benefits in session storage
+  React.useEffect(() => {
+    if (pendingNewBenefitsFr.length > 0) {
+      const existing = JSON.parse(sessionStorage.getItem('pendingNewBenefits') || '[]')
+      const combined = [...existing, ...pendingNewBenefitsFr]
+      // Remove duplicates
+      const unique = combined.filter((benefit, index, self) => 
+        index === self.findIndex(b => b.tagName === benefit.tagName)
+      )
+      sessionStorage.setItem('pendingNewBenefits', JSON.stringify(unique))
+    }
+  }, [pendingNewBenefitsFr])
 
   return (
     <TabsContent value="french">
@@ -338,12 +377,11 @@ export default function ViewFoodFrench({
           disable={false}
           suggestions={benefitTags}
           activeLang="fr"
+          onAddNewBenefit={handleAddNewBenefit}
           onSelectSuggestion={benefit => {
             console.log("French onSelectSuggestion:", benefit)
-            // Get current benefits from foodDetails
             const currentData = foodDetails?.healthBenefits ?? []
 
-            // Add both EN and FR at the same index
             const updatedHealthBenefits = [
               ...currentData,
               {
@@ -352,37 +390,26 @@ export default function ViewFoodFrench({
               }
             ]
 
-            console.log(
-              "French updated health benefits:",
-              updatedHealthBenefits
-            )
-
-            // Update session storage
             updateEditedData("healthBenefits", updatedHealthBenefits)
-
-            // Don't update local form state here - let useEffect handle it
           }}
           onRemoveBenefit={removed => {
             console.log("French onRemoveBenefit:", removed)
             const currentData = foodDetails?.healthBenefits ?? []
 
-            // Find and remove by matching either English or French name
             const updatedHealthBenefits = currentData.filter(
               b =>
                 b.healthBenefit !== removed.tagName &&
                 b.healthBenefitFR !== removed.tagNameFr
             )
 
-            console.log("French after removal:", updatedHealthBenefits)
-
-            // Update session storage
             updateEditedData("healthBenefits", updatedHealthBenefits)
-
-            // Don't update local form state here - let useEffect handle it
+            // Also remove from pending benefits if it exists
+            setPendingNewBenefitsFr(prev => 
+              prev.filter(p => p.tagNameFr !== removed.tagNameFr)
+            )
           }}
           onChange={(newBenefits: string[]) => {
             console.log("French onChange:", newBenefits)
-            // This is for manual typing - preserve structure
             const currentData = foodDetails?.healthBenefits ?? []
             const healthBenefits = newBenefits.map((benefit, index) => ({
               healthBenefit: currentData[index]?.healthBenefit || "",
@@ -449,4 +476,5 @@ export default function ViewFoodFrench({
       </div>
     </TabsContent>
   )
+
 }
