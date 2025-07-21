@@ -38,6 +38,7 @@ import { type translationsTypes } from "@/types/recipeTypes"
 import { getAllFoods } from "@/app/api/foods"
 import LableInput from "@/components/Shared/LableInput/LableInput"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
+import { useUpdateRecipeStore } from "@/stores/useUpdateRecipeStore"
 
 interface Food {
   id: number
@@ -123,8 +124,9 @@ export default function EditRecipePopUpContent({
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [availData, setAvailData] = useState<Ingredient[]>([])
-
   const [benefits, setBenefits] = useState<string[]>([])
+
+  const { setUpdatedField, resetUpdatedStore } = useUpdateRecipeStore()
 
   useEffect(() => {
     // Initialize the benefits state with data from translationData store
@@ -205,8 +207,11 @@ export default function EditRecipePopUpContent({
     setPreviewAuthorUrls([])
 
     // clear store and session
-    await resetRecipe()
+    resetRecipe()
     sessionStorage.removeItem("recipe-storage")
+
+    resetUpdatedStore()
+    sessionStorage.removeItem("update-recipe-storage")
 
     // Close the modal or section
     onClose()
@@ -229,6 +234,7 @@ export default function EditRecipePopUpContent({
     const value = e.target.value
     form.setValue(fieldName, value)
     setTranslationField(activeLang, fieldName, value)
+    setUpdatedField(activeLang, fieldName, value)
   }
 
   const handleInputBlur = async (
@@ -240,6 +246,7 @@ export default function EditRecipePopUpContent({
         setIsTranslating(true)
         const translated = await translateText(value)
         setTranslationField("fr", fieldName, translated)
+        setUpdatedField("fr", fieldName, translated)
       } finally {
         setIsTranslating(false)
       }
@@ -253,6 +260,7 @@ export default function EditRecipePopUpContent({
       try {
         setIsTranslating(true)
         setTranslationField("fr", fieldName, value)
+        setUpdatedField("fr", fieldName, value)
       } finally {
         setIsTranslating(false)
       }
@@ -266,7 +274,9 @@ export default function EditRecipePopUpContent({
         setIsTranslating(true)
         try {
           const translated = await translateText(val)
+
           setTranslationField("fr", fieldName, translated)
+          setUpdatedField("fr", fieldName, translated)
         } finally {
           setIsTranslating(false)
         }
@@ -276,19 +286,24 @@ export default function EditRecipePopUpContent({
           const trArr = await Promise.all(
             val.map(async v => await translateText(v))
           )
+
           setTranslationField("fr", fieldName, trArr)
+          setUpdatedField("fr", fieldName, trArr)
         } finally {
           setIsTranslating(false)
         }
       }
     }
   }
+
   const makeRichHandlers = (
     fieldName: "recipe"
   ): { onChange: (val: string) => void } => {
     const onChange = (val: string): void => {
       form.setValue(fieldName, val)
+
       setTranslationField(activeLang, fieldName, val)
+      setUpdatedField(activeLang, fieldName, val)
     }
     return { onChange }
   }
@@ -328,6 +343,9 @@ export default function EditRecipePopUpContent({
     setTranslationField("en", "ingredientData", updatedAvailData)
     setTranslationField("fr", "ingredientData", updatedAvailData)
 
+    setUpdatedField("en", "ingredientData", updatedAvailData)
+    setUpdatedField("fr", "ingredientData", updatedAvailData)
+
     // Optionally show a success message
     toast.success("Display status updated successfully!")
   }
@@ -343,6 +361,9 @@ export default function EditRecipePopUpContent({
     setAvailData(updatedAvailData)
     setTranslationField("en", "ingredientData", updatedAvailData)
     setTranslationField("fr", "ingredientData", updatedAvailData)
+
+    setUpdatedField("en", "ingredientData", updatedAvailData)
+    setUpdatedField("fr", "ingredientData", updatedAvailData)
   }
 
   // table columns for available ingredients and categories
@@ -412,12 +433,11 @@ export default function EditRecipePopUpContent({
     const updated = ingredientData.filter(item => item.foodId !== id)
     setIngredientData(updated)
     form.setValue("ingredientData", updated as any, { shouldValidate: true })
-    setTranslationField(activeLang, "ingredientData", updated as any)
-    setTranslationField(
-      activeLang === "en" ? "fr" : "en",
-      "ingredientData",
-      updated as any
-    )
+    setTranslationField("en", "ingredientData", updated as any)
+    setTranslationField("fr", "ingredientData", updated as any)
+
+    setUpdatedField("en", "ingredientData", updated as any)
+    setUpdatedField("fr", "ingredientData", updated as any)
   }
 
   const handleAddIngredient = () => {
@@ -479,6 +499,9 @@ export default function EditRecipePopUpContent({
       updatedAvailData
     ])
 
+    setUpdatedField("en", "ingredientData", [...availData, updatedAvailData])
+    setUpdatedField("fr", "ingredientData", [...availData, updatedAvailData])
+
     toast.success("Food item added successfully!")
 
     setSelected(null)
@@ -489,6 +512,7 @@ export default function EditRecipePopUpContent({
   function handleBenefitsChange(vals: string[]): void {
     form.setValue("benefits", vals)
     setTranslationField(activeLang, "benefits", vals as any)
+    setUpdatedField(activeLang, "benefits", vals as any)
   }
 
   async function handleBenefitsBlur(): Promise<void> {
@@ -501,6 +525,7 @@ export default function EditRecipePopUpContent({
             vals.map(async v => await translateText(v))
           )
           setTranslationField("fr", "benefits", trArr as any)
+          setUpdatedField("fr", "benefits", trArr as any)
         } finally {
           setIsTranslating(false)
         }
@@ -511,6 +536,7 @@ export default function EditRecipePopUpContent({
   const handleShopCategoryChange = (value: string) => {
     form.setValue("category", value)
     setTranslationField(activeLang, "category", value)
+    setUpdatedField(activeLang, "category", value)
 
     const current = categoryOptions[activeLang]
     const oppositeLang = activeLang === "en" ? "fr" : "en"
@@ -519,12 +545,14 @@ export default function EditRecipePopUpContent({
     const index = current.findIndex(opt => opt.value === value)
     if (index !== -1) {
       setTranslationField(oppositeLang, "category", opposite[index].value)
+      setUpdatedField(oppositeLang, "category", opposite[index].value)
     }
   }
 
   const handleseasonCategoryChange = (value: string) => {
     form.setValue("season", value)
     setTranslationField(activeLang, "season", value)
+    setUpdatedField(activeLang, "season", value)
 
     const current = seasonOptions[activeLang]
     const oppositeLang = activeLang === "en" ? "fr" : "en"
@@ -533,6 +561,7 @@ export default function EditRecipePopUpContent({
     const index = current.findIndex(opt => opt.value === value)
     if (index !== -1) {
       setTranslationField(oppositeLang, "season", opposite[index].value)
+      setUpdatedField(oppositeLang, "season", opposite[index].value)
     }
   }
 
@@ -561,6 +590,9 @@ export default function EditRecipePopUpContent({
         })
         setTranslationField("en", "recipeImage", imageUrl)
         setTranslationField("fr", "recipeImage", imageUrl)
+
+        setUpdatedField("en", "recipeImage", imageUrl)
+        setUpdatedField("fr", "recipeImage", imageUrl)
 
         setPreviewFoodUrls([imageUrl]) // For single image preview
       } catch (error) {
@@ -592,6 +624,9 @@ export default function EditRecipePopUpContent({
         setTranslationField("en", "authorimage", imageUrl)
         setTranslationField("fr", "authorimage", imageUrl)
 
+        setUpdatedField("en", "authorimage", imageUrl)
+        setUpdatedField("fr", "authorimage", imageUrl)
+
         setPreviewAuthorUrls([imageUrl]) // For single image preview
       } catch (error) {
         toast.error("Image upload failed. Please try again.")
@@ -605,14 +640,14 @@ export default function EditRecipePopUpContent({
 
   useEffect(() => {
     form.reset(translationData[activeLang])
-  }, [activeLang, form.reset, translationData])
+  }, [activeLang, translationData, form])
 
   useEffect(() => {
     setPreviewAuthorUrls(
       translationData.en.authorimage ? [translationData.en.authorimage] : []
     )
     setPreviewFoodUrls(
-      translationData.en.recipeImage ? [translationData.en.recipeImage[0]] : []
+      translationData.en.recipeImage ? [translationData.en.recipeImage] : []
     )
 
     setAvailData(
@@ -844,6 +879,9 @@ export default function EditRecipePopUpContent({
                     ]
                     setTranslationField("en", "benefits", enBenefits)
                     setTranslationField("fr", "benefits", frBenefits)
+
+                    setUpdatedField("en", "benefits", enBenefits)
+                    setUpdatedField("fr", "benefits", frBenefits)
                     form.setValue(
                       "benefits",
                       activeLang === "en" ? enBenefits : frBenefits
@@ -868,6 +906,9 @@ export default function EditRecipePopUpContent({
                     }
                     setTranslationField("en", "benefits", enBenefits)
                     setTranslationField("fr", "benefits", frBenefits)
+
+                    setUpdatedField("en", "benefits", enBenefits)
+                    setUpdatedField("fr", "benefits", frBenefits)
                     form.setValue(
                       "benefits",
                       activeLang === "en" ? enBenefits : frBenefits
@@ -1183,7 +1224,14 @@ export default function EditRecipePopUpContent({
                 {translations.cancel}
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {translations.save}
+                {isLoading ? (
+                  <div className="flex gap-2 items-center">
+                    <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                    {translations.save}
+                  </div>
+                ) : (
+                  translations.save
+                )}
               </Button>
             </div>
           </DialogFooter>

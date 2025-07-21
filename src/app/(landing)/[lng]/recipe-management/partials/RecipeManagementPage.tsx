@@ -22,7 +22,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import AddRecipePopup from "./AddRecipePopUp"
-import { createNewRecipe, getAllRecipes } from "@/app/api/recipe"
+import { createNewRecipe, getAllRecipes, updateRecipe } from "@/app/api/recipe"
 import { Label } from "@/components/ui/label"
 import dayjs from "dayjs"
 import { NewRecipeTypes } from "@/types/recipeTypes"
@@ -33,6 +33,7 @@ import {
 import { useRecipeStore } from "@/stores/useRecipeStore"
 import { toast } from "sonner"
 import EditRecipePopUp from "./EditRecipePopUp"
+import { useUpdateRecipeStore } from "@/stores/useUpdateRecipeStore"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -66,6 +67,7 @@ interface TableDataTypes {
   benifits: string[]
   createDate: string
   status: boolean
+  authorImage: string
 }
 
 interface dataListTypes {
@@ -89,7 +91,9 @@ export default function RecipeManagementPage({
   const [viewRecipeId, setViewRecipeId] = useState<number>(0)
   const [tableData, setTableData] = useState<TableDataTypes[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const { resetRecipe, removeTag } = useRecipeStore()
+  const { resetRecipe } = useRecipeStore()
+  const [previousRecipeImg, setPreviousRecipeImg] = useState<string>("")
+  const [previousAuthorImg, setPreviousAuthorImg] = useState<string>("")
 
   // handle get users
   const getRecipes = async (): Promise<void> => {
@@ -110,7 +114,8 @@ export default function RecipeManagementPage({
               benefit => benefit.healthBenefit
             ),
             createDate: dayjs(recipe.createdAt).format("DD-MM-YYYY"),
-            status: recipe.isActive
+            status: recipe.isActive,
+            authorImage: recipe.images[0]
           })
         )
         setTableData(tableData)
@@ -136,19 +141,20 @@ export default function RecipeManagementPage({
   }
 
   // handle open view Recipe popup
-  const handleOpenViewRecipePopUp = (id: number): void => {
+  const handleOpenViewRecipePopUp = (
+    id: number,
+    authorImg: string,
+    recipeImg: string
+  ): void => {
     setViewRecipeId(id)
     setViewRecipe(true)
+    setPreviousAuthorImg(authorImg)
+    setPreviousRecipeImg(recipeImg)
   }
   // handle close view Recipe popup
   const handleCloseViewRecipePopUp = (): void => {
     setViewRecipeId(0)
     setViewRecipe(false)
-
-    // clear store and session
-    resetRecipe()
-
-    sessionStorage.removeItem("recipe-storage")
   }
 
   // handle search text change
@@ -242,7 +248,11 @@ export default function RecipeManagementPage({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem onClick={() => handleOpenViewRecipePopUp(row.id)}>
+            <DropdownMenuItem
+              onClick={() =>
+                handleOpenViewRecipePopUp(row.id, row.authorImage, row.imageUrl)
+              }
+            >
               View
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -475,6 +485,205 @@ export default function RecipeManagementPage({
     }
   }
 
+  // handle update recipe
+  const handleUpdateRecipe = async () => {
+    setIsLoading(true)
+
+    const { translationsData, resetUpdatedStore } =
+      useUpdateRecipeStore.getState()
+
+    const recipeImage = translationsData.en.recipeImage
+    const authorImage = translationsData.en.authorimage
+
+    let recipeImageUrl: string | null = null
+    let authorImageUrl: string | null = null
+
+    const uploadImage = async (
+      imageFile: string | File | undefined,
+      prefix: string
+    ): Promise<string | null> => {
+      if (!imageFile) return null
+
+      const folder = "recipe"
+      const fileName = `${prefix}-${Date.now()}`
+
+      let fileToUpload: File | Blob
+
+      if (typeof imageFile === "string") {
+        try {
+          const blob = await fetch(imageFile).then(res => res.blob())
+          fileToUpload = blob
+        } catch (err) {
+          console.error(`Failed to convert ${prefix} string to Blob`, err)
+          return null
+        }
+      } else {
+        fileToUpload = imageFile
+      }
+
+      return await uploadImageToFirebase(fileToUpload, folder, fileName)
+    }
+
+    // Upload recipe image only if it's a new file or data URL
+    if (recipeImage) {
+      recipeImageUrl = await uploadImage(recipeImage, "recipe-image")
+    } else {
+      recipeImageUrl = translationsData.en.recipeImage || null
+    }
+
+    // Upload author image only if it's a new file or data URL
+    if (authorImage) {
+      authorImageUrl = await uploadImage(authorImage, "recipe-author-image")
+    } else {
+      authorImageUrl = translationsData.en.authorimage || null
+    }
+
+    const requestBody: Partial<NewRecipeTypes> = {}
+
+    // Root fields
+    if (translationsData.en.name) requestBody.name = translationsData.en.name
+    if (translationsData.fr.name) requestBody.nameFR = translationsData.fr.name
+
+    if (translationsData.en.category)
+      requestBody.category = translationsData.en.category
+    if (translationsData.fr.category)
+      requestBody.categoryFR = translationsData.fr.category
+
+    if (translationsData.en.season)
+      requestBody.season = translationsData.en.season
+    if (translationsData.fr.season)
+      requestBody.seasonFR = translationsData.fr.season
+
+    // Images
+    if (recipeImageUrl) {
+      requestBody.images = [{ imageUrl: recipeImageUrl }]
+    }
+
+    // Description
+    if (translationsData.en.recipe || translationsData.fr.recipe) {
+      requestBody.describe = {
+        description: translationsData.en.recipe ?? "",
+        descriptionFR: translationsData.fr.recipe ?? ""
+      }
+    }
+
+    // Attributes
+    const attribute: Partial<NewRecipeTypes["attribute"]> = {}
+    if (translationsData.en.preparation)
+      attribute.preparation = translationsData.en.preparation
+    if (translationsData.fr.preparation)
+      attribute.preparationFR = translationsData.fr.preparation
+    if (translationsData.en.rest) attribute.rest = translationsData.en.rest
+    if (translationsData.fr.rest) attribute.restFR = translationsData.fr.rest
+    if (translationsData.en.persons)
+      attribute.persons = Number(translationsData.en.persons)
+
+    if (Object.keys(attribute).length > 0) {
+      requestBody.attribute = attribute
+    }
+
+    // Health Benefits
+    if (
+      Array.isArray(translationsData.en.benefits) &&
+      translationsData.en.benefits.length > 0
+    ) {
+      requestBody.healthBenefits = translationsData.en.benefits.map(
+        (benefit, index) => ({
+          healthBenefit: benefit,
+          healthBenefitFR: translationsData.fr.benefits?.[index] || ""
+        })
+      )
+    }
+
+    // Author
+    const author: Partial<NewRecipeTypes["author"]> = {}
+
+    if (translationsData.en.authorName) {
+      author.authorName = translationsData.en.authorName
+    }
+    if (translationsData.en.authorCategory) {
+      author.authorCategory = translationsData.en.authorCategory
+    }
+    if (translationsData.fr.authorCategory) {
+      author.authorCategoryFR = translationsData.fr.authorCategory
+    }
+    if (translationsData.en.phone) {
+      author.authorPhone = translationsData.en.phone
+    }
+    if (translationsData.en.email) {
+      author.authorEmail = translationsData.en.email
+    }
+    if (translationsData.en.website) {
+      author.authorWebsite = translationsData.en.website
+    }
+    if (authorImageUrl) {
+      author.authorImage = authorImageUrl
+    }
+
+    // Only include author in requestBody if any property was added
+    if (Object.keys(author).length > 0) {
+      requestBody.author = author
+    }
+
+    // Ingredients
+    if (
+      Array.isArray(translationsData.en.ingredientData) &&
+      translationsData.en.ingredientData.length > 0
+    ) {
+      requestBody.ingredients = translationsData.en.ingredientData.map(
+        (ingredient, index) => ({
+          ingredientName: ingredient.ingredientName,
+          ingredientNameFR:
+            translationsData.fr.ingredientData?.[index]?.ingredientName || "",
+          quantity: ingredient.quantity || "",
+          quantityFR:
+            translationsData.fr.ingredientData?.[index]?.quantity || "",
+          mainIngredient: true,
+          foodId: ingredient.foodId,
+          available: Boolean(ingredient.availableInIngredient)
+        })
+      )
+    }
+
+    try {
+      const res = await updateRecipe(token, viewRecipeId, requestBody)
+
+      if (res.status === 200 || res.status === 201) {
+        toast.success("Recipe updated successfully")
+        setViewRecipe(false)
+        getRecipes()
+
+        if (recipeImageUrl && previousRecipeImg) {
+          await deleteImageFromFirebase(previousRecipeImg)
+        }
+
+        if (authorImageUrl && previousAuthorImg) {
+          await deleteImageFromFirebase(previousAuthorImg)
+        }
+
+        resetUpdatedStore()
+
+        handleCloseViewRecipePopUp()
+
+        setPreviousAuthorImg("")
+        setPreviousRecipeImg("")
+      } else {
+        toast.error("Failed to update recipe!")
+        if (recipeImageUrl) {
+          await deleteImageFromFirebase(recipeImageUrl)
+        }
+
+        if (authorImageUrl) {
+          await deleteImageFromFirebase(authorImageUrl)
+        }
+      }
+    } catch (error) {
+      console.log("Error updating recipe", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2 justify-between">
@@ -576,9 +785,7 @@ export default function RecipeManagementPage({
         token={token}
         recipeId={viewRecipeId}
         onClose={handleCloseViewRecipePopUp}
-        editRecipe={function (): void {
-          throw new Error("Function not implemented.")
-        }}
+        editRecipe={handleUpdateRecipe}
         isLoading={false}
       />
     </div>

@@ -42,3 +42,19 @@ export const createNewRecipe = async (
     return error
   }
 }
+
+// update daily tip by id
+export const updateRecipe = async (
+  token: string,
+  id: number,
+  requestBody: NewRecipeTypes
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.patch(`/recipe/${id}`, requestBody, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response
+  } catch (error) {
+    return error
+  }
+}

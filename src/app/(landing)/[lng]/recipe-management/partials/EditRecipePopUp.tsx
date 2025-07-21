@@ -99,8 +99,8 @@ export default function EditRecipePopUp({
           (image: { imageUrl: string }) => image.imageUrl
         )
 
-        setTranslationField("en", "recipeImage", recipeImage)
-        setTranslationField("fr", "recipeImage", recipeImage)
+        setTranslationField("en", "recipeImage", recipeImage[0])
+        setTranslationField("fr", "recipeImage", recipeImage[0])
 
         const benefits = data.healthBenefits.map(
           (benifits: { healthBenefit: string }) => benifits.healthBenefit
@@ -207,6 +207,7 @@ export default function EditRecipePopUp({
                   id="multi-lang"
                   checked={allowMultiLang}
                   onCheckedChange={handleLanguageToggle}
+                  disabled
                 />
                 <Label htmlFor="multi-lang" className="text-Primary-300">
                   {translations.allowMultiLang}

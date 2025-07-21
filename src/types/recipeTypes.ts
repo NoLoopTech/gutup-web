@@ -158,22 +158,22 @@ interface HealthBenefit {
 
 // Author type
 interface Author {
-  authorName: string
-  authorCategory: string
-  authorCategoryFR: string
-  authorPhone: string
-  authorEmail: string
-  authorWebsite: string
-  authorImage: string
+  authorName?: string
+  authorCategory?: string
+  authorCategoryFR?: string
+  authorPhone?: string
+  authorEmail?: string
+  authorWebsite?: string
+  authorImage?: string
 }
 
 // Attribute type
 interface RecipeAttributes {
-  preparation: string
-  preparationFR: string
-  rest: string
-  restFR: string
-  persons: number
+  preparation?: string
+  preparationFR?: string
+  rest?: string
+  restFR?: string
+  persons?: number
 }
 
 // Description type
@@ -189,18 +189,18 @@ interface RecipeImage {
 
 // Main Recipe type
 export interface NewRecipeTypes {
-  name: string
-  nameFR: string
-  category: string
-  categoryFR: string
-  season: string
-  seasonFR: string
-  isActive: boolean
-  allowMultiLang: boolean
-  attribute: RecipeAttributes
-  describe: RecipeDescription
-  images: RecipeImage[]
-  healthBenefits: HealthBenefit[]
-  author: Author
-  ingredients: Ingredient[]
+  name?: string
+  nameFR?: string
+  category?: string
+  categoryFR?: string
+  season?: string
+  seasonFR?: string
+  isActive?: boolean
+  allowMultiLang?: boolean
+  attribute?: RecipeAttributes
+  describe?: RecipeDescription
+  images?: RecipeImage[]
+  healthBenefits?: HealthBenefit[]
+  author?: Author
+  ingredients?: Ingredient[]
 }

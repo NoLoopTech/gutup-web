@@ -9,8 +9,8 @@ export interface Ingredient {
   foodId: number
   ingredientName: string
   quantity: string
-  mainIngredient: string
-  availableInIngredient: string
+  mainIngredient: boolean
+  availableInIngredient: boolean
 }
 
 export interface RecipeFields {
@@ -32,171 +32,62 @@ export interface RecipeFields {
   authorimage: string
 }
 
-export interface ValidationErrors {
-  name?: string
-  category?: string
-  season?: string
-  preparationTime?: string
-  restTime?: string
-  persons?: string
-  healthBenefits?: string
-  ingredients?: string
+interface LangData<T> {
+  en: Partial<T>
+  fr: Partial<T>
 }
 
-export interface LangData<T> {
-  en: T
-  fr: T
+interface RecipeStoreState {
+  translationsData: LangData<RecipeFields>
+  setUpdatedField: (lang: Lang, field: keyof RecipeFields, value: any) => void
+  resetUpdatedStore: () => void
 }
 
-export interface RecipeStoreState {
-  allowMultiLang: boolean
-  activeLang: Lang
-  translations: LangData<RecipeFields>
-  errors: ValidationErrors
-  setTranslationField: (
-    lang: Lang,
-    field: keyof RecipeFields,
-    value: any
-  ) => void
-  setActiveLang: (lang: Lang) => void
-  setAllowMultiLang: (val: boolean) => void
-  setField: (lang: Lang, field: keyof RecipeFields, value: any) => void
-  addTag: (lang: Lang, tag: string) => void
-  removeTag: (lang: Lang, tag: string) => void
-  addIngredient: (lang: Lang, ing: Ingredient) => void
-  removeIngredient: (lang: Lang, name: string) => void
-  setErrors: (errors: ValidationErrors) => void
-  resetErrors: () => void
-  resetRecipe: () => void
+// Optional helper
+function isLangDataEmpty<T>(data: LangData<T>): boolean {
+  return Object.keys(data.en).length === 0 && Object.keys(data.fr).length === 0
 }
 
-const emptyRecipe: RecipeFields = {
-  name: "",
-  category: "",
-  season: "",
-  preparation: "",
-  rest: "",
-  persons: "",
-  recipe: "",
-  benefits: [],
-  ingredientData: [],
-  authorName: "",
-  authorCategory: "",
-  phone: "",
-  email: "",
-  website: "",
-  recipeImage: "",
-  authorimage: ""
-}
-
-export const useRecipeStore = create<RecipeStoreState>()(
+export const useUpdateRecipeStore = create<RecipeStoreState>()(
   persist(
-    set => ({
-      allowMultiLang: false,
-      activeLang: "en",
-      translations: {
-        en: { ...emptyRecipe },
-        fr: { ...emptyRecipe }
+    (set, get) => ({
+      translationsData: {
+        en: {},
+        fr: {}
       },
-      errors: {},
 
-      setAllowMultiLang: (val: boolean) =>
+      setUpdatedField: (lang, field, value) => {
         set(state => ({
-          allowMultiLang: val,
-          activeLang: val ? state.activeLang : "en"
-        })),
-
-      setActiveLang: (lang: Lang) => set({ activeLang: lang }),
-
-      setField: (lang: Lang, field: keyof RecipeFields, value: any) =>
-        set(state => ({
-          translations: {
-            ...state.translations,
+          translationsData: {
+            ...state.translationsData,
             [lang]: {
-              ...state.translations[lang],
+              ...state.translationsData[lang],
               [field]: value
             }
-          }
-        })),
-
-      setTranslationField: (lang, field, value) =>
-        set(state => ({
-          translations: {
-            ...state.translations,
-            [lang]: {
-              ...state.translations[lang],
-              [field]: value
-            }
-          }
-        })),
-
-      addTag: (lang: Lang, tag: string) =>
-        set(state => {
-          const tags = state.translations[lang].benefits
-          if (tags.includes(tag) || tags.length >= 6) return state
-          return {
-            translations: {
-              ...state.translations,
-              [lang]: {
-                ...state.translations[lang],
-                healthBenefits: [...tags, tag]
-              }
-            }
-          }
-        }),
-
-      removeTag: (lang: Lang, tag: string) =>
-        set(state => ({
-          translations: {
-            ...state.translations,
-            [lang]: {
-              ...state.translations[lang],
-              healthBenefits: state.translations[lang].benefits.filter(
-                t => t !== tag
-              )
-            }
-          }
-        })),
-
-      addIngredient: (lang: Lang, ing: Ingredient) =>
-        set(state => ({
-          translations: {
-            ...state.translations,
-            [lang]: {
-              ...state.translations[lang],
-              ingredients: [...state.translations[lang].ingredientData, ing]
-            }
-          }
-        })),
-
-      removeIngredient: (lang: Lang, name: string) =>
-        set(state => ({
-          translations: {
-            ...state.translations,
-            [lang]: {
-              ...state.translations[lang],
-              ingredients: state.translations[lang].ingredientData.filter(
-                i => i.ingredientName !== name
-              )
-            }
-          }
-        })),
-
-      setErrors: (errors: ValidationErrors) => set({ errors }),
-
-      resetErrors: () => set({ errors: {} }),
-
-      resetRecipe: () =>
-        set(() => ({
-          translations: {
-            en: { ...emptyRecipe },
-            fr: { ...emptyRecipe }
           }
         }))
+      },
+
+      resetUpdatedStore: () => {
+        set({
+          translationsData: {
+            en: {},
+            fr: {}
+          }
+        })
+      }
     }),
     {
-      name: "recipe-storage",
-      storage: createJSONStorage(() => sessionStorage)
+      name: "update-recipe-storage",
+      storage: createJSONStorage(() => sessionStorage),
+      partialize: state => {
+        const { translationsData } = state
+        return {
+          translationsData: isLangDataEmpty(translationsData)
+            ? {}
+            : translationsData
+        }
+      }
     }
   )
 )

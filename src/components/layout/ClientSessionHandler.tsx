@@ -45,6 +45,7 @@ const ClientSessionHandler = (): null => {
       if (!pathname.includes("/recipe-management/")) {
         resetRecipe()
         sessionStorage.removeItem("recipe-storage")
+        sessionStorage.removeItem("update-recipe-storage")
       }
     }
 
