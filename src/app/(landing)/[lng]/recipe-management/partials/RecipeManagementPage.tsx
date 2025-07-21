@@ -22,7 +22,12 @@ import { useEffect, useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import AddRecipePopup from "./AddRecipePopUp"
-import { createNewRecipe, getAllRecipes, updateRecipe } from "@/app/api/recipe"
+import {
+  createNewRecipe,
+  deleteRecipeById,
+  getAllRecipes,
+  updateRecipe
+} from "@/app/api/recipe"
 import { Label } from "@/components/ui/label"
 import dayjs from "dayjs"
 import { NewRecipeTypes } from "@/types/recipeTypes"
@@ -34,6 +39,16 @@ import { useRecipeStore } from "@/stores/useRecipeStore"
 import { toast } from "sonner"
 import EditRecipePopUp from "./EditRecipePopUp"
 import { useUpdateRecipeStore } from "@/stores/useUpdateRecipeStore"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -94,6 +109,16 @@ export default function RecipeManagementPage({
   const { resetRecipe } = useRecipeStore()
   const [previousRecipeImg, setPreviousRecipeImg] = useState<string>("")
   const [previousAuthorImg, setPreviousAuthorImg] = useState<string>("")
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
+
+  const handleOpenDeleteConfirm = (id: number): void => {
+    setViewRecipeId(id)
+    setConfirmDeleteOpen(true)
+  }
+  const handlecloseDeleteConfirm = (): void => {
+    setConfirmDeleteOpen(false)
+    setViewRecipeId(0)
+  }
 
   // handle get users
   const getRecipes = async (): Promise<void> => {
@@ -238,7 +263,7 @@ export default function RecipeManagementPage({
           className={
             row.status
               ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700"
-              : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700"
+              : "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
           }
         >
           {row.status ? "Active" : "Inactive"}
@@ -262,11 +287,19 @@ export default function RecipeManagementPage({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
             <DropdownMenuItem
+              onClick={() => handleUpdateStatusRecipe(row.id, row.status)}
+            >
+              {row.status ? "Inactive" : "Active"}
+            </DropdownMenuItem>
+            <DropdownMenuItem
               onClick={() =>
                 handleOpenViewRecipePopUp(row.id, row.authorImage, row.imageUrl)
               }
             >
               View
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleOpenDeleteConfirm(row.id)}>
+              Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -704,6 +737,51 @@ export default function RecipeManagementPage({
     }
   }
 
+  const handleUpdateStatusRecipe = async (
+    recipeId: number,
+    status: boolean
+  ) => {
+    setIsLoading(true)
+
+    const requestBody: Partial<NewRecipeTypes> = {
+      isActive: status ? false : true
+    }
+
+    try {
+      const res = await updateRecipe(token, recipeId, requestBody)
+
+      if (res.status === 200 || res.status === 201) {
+        toast.success("Recipe updated successfully")
+        setViewRecipe(false)
+        getRecipes()
+
+        handleCloseViewRecipePopUp()
+      } else {
+        toast.error("Failed to update recipe!")
+      }
+    } catch (error) {
+      console.log("Error updating recipe", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // handle delete daily tip
+  const handleDeleteDailyTip = async (): Promise<void> => {
+    try {
+      const response = await deleteRecipeById(token, viewRecipeId)
+      if (response.status === 200 || response.status === 201) {
+        toast.success(response.data.message)
+        getRecipes()
+      } else {
+        console.log("failed to delete recipe : ", response)
+        toast.error("Failed to delete recipe!")
+      }
+    } catch (error) {
+      console.log("failed to delete recipe : ", error)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2 justify-between">
@@ -808,6 +886,29 @@ export default function RecipeManagementPage({
         editRecipe={handleUpdateRecipe}
         isLoading={false}
       />
+
+      {/* delete confirmation popup  */}
+      <AlertDialog
+        open={confirmDeleteOpen}
+        onOpenChange={handlecloseDeleteConfirm}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this recipe?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handlecloseDeleteConfirm}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteDailyTip}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
