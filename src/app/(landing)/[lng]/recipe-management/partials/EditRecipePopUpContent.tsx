@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { DialogFooter, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -125,6 +125,7 @@ export default function EditRecipePopUpContent({
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [availData, setAvailData] = useState<Ingredient[]>([])
   const [benefits, setBenefits] = useState<string[]>([])
+  const isEditorUserEdit = useRef(true)
 
   const { setUpdatedField, resetUpdatedStore } = useUpdateRecipeStore()
 
@@ -300,13 +301,36 @@ export default function EditRecipePopUpContent({
     fieldName: "recipe"
   ): { onChange: (val: string) => void } => {
     const onChange = (val: string): void => {
-      form.setValue(fieldName, val)
+      if (!isEditorUserEdit.current) {
+        // Skip setting values during programmatic change
+        isEditorUserEdit.current = true
+        return
+      }
 
+      form.setValue(fieldName, val)
       setTranslationField(activeLang, fieldName, val)
       setUpdatedField(activeLang, fieldName, val)
     }
+
     return { onChange }
   }
+
+  useEffect(() => {
+    const handleProgrammaticChange = () => {
+      isEditorUserEdit.current = false
+    }
+
+    window.addEventListener(
+      "editor-programmatic-change",
+      handleProgrammaticChange
+    )
+    return () => {
+      window.removeEventListener(
+        "editor-programmatic-change",
+        handleProgrammaticChange
+      )
+    }
+  }, [])
 
   // Define functions to handle page changes
   const handlePageChange = (newPage: number): void => {

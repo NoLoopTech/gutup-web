@@ -13,6 +13,7 @@ import {
 } from "@/types/recipeTypes"
 import EditRecipePopUpContent from "./EditRecipePopUpContent"
 import { getRecipeById } from "@/app/api/recipe"
+import { useUpdateRecipeStore } from "@/stores/useUpdateRecipeStore"
 
 interface Props {
   open: boolean
@@ -42,6 +43,7 @@ export default function EditRecipePopUp({
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
   )
+  const { setUpdatedField } = useUpdateRecipeStore()
 
   // handle get recipe data by recipe id
   const getRecipeDataById = async () => {
@@ -91,6 +93,9 @@ export default function EditRecipePopUp({
 
         setTranslationField("en", "recipe", data.describe.description)
         setTranslationField("fr", "recipe", data.describe.descriptionFR)
+
+        setUpdatedField("en", "recipe", data.describe.description)
+        setUpdatedField("fr", "recipe", data.describe.descriptionFR)
 
         setTranslationField("en", "authorimage", data.author.authorImage)
         setTranslationField("fr", "authorimage", data.author.authorImage)
