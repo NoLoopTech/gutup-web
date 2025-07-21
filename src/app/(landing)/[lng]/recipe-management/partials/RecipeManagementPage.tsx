@@ -275,9 +275,11 @@ export default function RecipeManagementPage({
         selectedCategory === "" || recipe.category === selectedCategory
       const benefitMatch =
         selectedBenefit === "" ||
-        recipe.benifits.some(benefit =>
-          benefit.toLowerCase().includes(selectedBenefit.toLowerCase())
-        )
+        (Array.isArray(recipe.benifits) &&
+          recipe.benifits.some(benefit =>
+            benefit.toLowerCase().includes(selectedBenefit.toLowerCase())
+          ))
+
       return nameMatch && categoryMatch && scoreMatch && benefitMatch
     })
   }, [
@@ -734,7 +736,7 @@ export default function RecipeManagementPage({
 
           {/* select Health Benefits */}
           <Select value={selectedBenefit} onValueChange={handleBenefitChange}>
-            <SelectTrigger className="w-36">
+            <SelectTrigger className="w-32">
               <SelectValue placeholder="Health Benefits" />
             </SelectTrigger>
             <SelectContent className="max-h-40">
