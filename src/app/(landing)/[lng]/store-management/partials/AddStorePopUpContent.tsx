@@ -637,9 +637,14 @@ export default function AddStorePopUpContent({
     const name = selected?.name ?? ingredientInput.trim()
     if (!name) return
 
+    // Check if typed name matches an existing food item (case-insensitive)
+    const matchingFood = selected || foods.find(f => 
+      f.name?.toLowerCase() === name.toLowerCase()
+    )
+
     const entry: AvailableItem = {
-      ingOrCatId: selected ? Number(selected.id) : 0,
-      name,
+      ingOrCatId: matchingFood ? Number(matchingFood.id) : 0,
+      name: matchingFood ? matchingFood.name ?? name : name,
       type: "Ingredient",
       tags: ["InSystem"],
       display: true,
@@ -691,9 +696,21 @@ export default function AddStorePopUpContent({
       : categoryInput.trim()
     if (!name) return
 
+    // Check if typed name matches an existing category tag (case-insensitive)
+    const matchingCategory = selectedCategory || categoryTags.find(tag => {
+      const tagDisplayName = activeLang === "en" 
+        ? tag.tagName ?? "" 
+        : tag.tagNameFr ?? ""
+      return tagDisplayName.toLowerCase() === name.toLowerCase()
+    })
+
     const entry: AvailableItem = {
-      ingOrCatId: selectedCategory ? Number(selectedCategory.id) : 0,
-      name,
+      ingOrCatId: matchingCategory ? Number(matchingCategory.id) : 0,
+      name: matchingCategory 
+        ? (activeLang === "en" 
+            ? matchingCategory.tagName ?? name 
+            : matchingCategory.tagNameFr ?? name)
+        : name,
       type: "Category",
       tags: ["InSystem"],
       display: true,
