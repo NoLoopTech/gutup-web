@@ -6,8 +6,8 @@ import { X } from "lucide-react"
 import React, { useEffect, useState, type KeyboardEvent } from "react"
 
 interface Props {
-  title: string
-  placeholder: string
+  title: string | undefined
+  placeholder: string | undefined
   benefits?: string[]
   name: string
   disable?: boolean
@@ -105,7 +105,7 @@ export default function LableInput({
         updateItems(updatedItems)
       }
     }
-    
+
     setValueState("") // Reset input field
   }
 
@@ -206,4 +206,3 @@ export default function LableInput({
     </div>
   )
 }
-

@@ -96,7 +96,7 @@ export default function AddFoodPopUpContent({
   onClose,
   getFoods
 }: {
-  translations: translationsTypes
+  translations: Partial<translationsTypes>
   onClose: () => void
   getFoods: () => void
 }): JSX.Element {
@@ -530,7 +530,6 @@ export default function AddFoodPopUpContent({
           }))
         )
       }
-      
     }
 
     void fetchCategoryAndBenefit()
