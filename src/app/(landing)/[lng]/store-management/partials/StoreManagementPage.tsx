@@ -472,6 +472,13 @@ export default function StoreManagementPage({
           <DropdownMenuContent align="end" className="w-32">
             <DropdownMenuItem
               onClick={() => {
+                void handleToggleShopStatus(row)
+              }}
+            >
+              {row.shopStatus ? "Inactive" : "Active"}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
                 handleEditStore(row)
               }}
             >
@@ -485,13 +492,6 @@ export default function StoreManagementPage({
               }}
             >
               Delete
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                void handleToggleShopStatus(row)
-              }}
-            >
-              {row.shopStatus ? "Inactive" : "Active"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

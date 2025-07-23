@@ -562,9 +562,23 @@ export default function AddStorePopUpContent({
     },
     {
       header: translations.displayStatus,
-      accessor: (row: AvailableItem) => (
-        <Switch checked={row.display} className="scale-75" />
-      )
+      accessor: (row: AvailableItem) => {
+        const index = availData.findIndex(
+          item =>
+            item.ingOrCatId === row.ingOrCatId &&
+            item.type === row.type &&
+            item.name === row.name
+        )
+        return (
+          <Switch
+            checked={row.display}
+            className="scale-75"
+            onCheckedChange={checked => {
+              handleToggleDisplay(index, checked)
+            }}
+          />
+        )
+      }
     },
     {
       header: "", // No header for delete column
@@ -594,6 +608,35 @@ export default function AddStorePopUpContent({
     }
   ]
 
+  // Add this function before availColumns
+  const handleToggleDisplay = (index: number, checked: boolean): void => {
+    const updated = availData.map((item, i) =>
+      i === index ? { ...item, display: checked } : item
+    )
+    setAvailData(updated)
+    form.setValue("availData", updated, { shouldValidate: true })
+    setTranslationField("storeData", activeLang, "availData", updated)
+
+    // Update opposite language data
+    const oppLang = activeLang === "en" ? "fr" : "en"
+    const oppLangData = (storeData[oppLang]?.availData as AvailableItem[]) || []
+    let oppUpdated: AvailableItem[]
+    const itemToUpdate = availData[index]
+    if (itemToUpdate.ingOrCatId === 0) {
+      oppUpdated = oppLangData.map((item, i) =>
+        i === index ? { ...item, display: checked } : item
+      )
+    } else {
+      oppUpdated = oppLangData.map(item =>
+        item.ingOrCatId === itemToUpdate.ingOrCatId &&
+        item.type === itemToUpdate.type
+          ? { ...item, display: checked }
+          : item
+      )
+    }
+    setTranslationField("storeData", oppLang, "availData", oppUpdated)
+  }
+
   // Delete handler for availData
   const handleDeleteAvailItem = (index: number): void => {
     if (index < 0 || index >= availData.length) {
@@ -601,10 +644,8 @@ export default function AddStorePopUpContent({
       return
     }
 
-    // Get the item to be deleted
     const itemToDelete = availData[index]
 
-    // Update current language data
     const updated = availData.filter((_, i) => i !== index)
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
