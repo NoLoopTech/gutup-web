@@ -111,6 +111,43 @@ export default function AddFoodPopUpContent({
     Array<{ tagName: string; tagNameFr: string }>
   >([])
 
+  // Cleanup function to clear all data
+  const cleanupData = (): void => {
+    setTranslationField("foodData", "en", "name", "")
+    setTranslationField("foodData", "fr", "name", "")
+    setTranslationField("foodData", "en", "category", "")
+    setTranslationField("foodData", "fr", "category", "")
+    setTranslationField("foodData", "en", "season", "")
+    setTranslationField("foodData", "fr", "season", "")
+    setTranslationField("foodData", "en", "country", "")
+    setTranslationField("foodData", "fr", "country", "")
+    setTranslationField("foodData", "en", "benefits", [])
+    setTranslationField("foodData", "fr", "benefits", [])
+    setTranslationField("foodData", "en", "image", "")
+    setTranslationField("foodData", "fr", "image", "")
+    setTranslationField("foodData", "en", "storeImage", "")
+    setTranslationField("foodData", "fr", "storeImage", "")
+    setTranslationField("foodData", "en", "selection", "")
+    setTranslationField("foodData", "fr", "selection", "")
+    setTranslationField("foodData", "en", "preparation", "")
+    setTranslationField("foodData", "fr", "preparation", "")
+    setTranslationField("foodData", "en", "conservation", "")
+    setTranslationField("foodData", "fr", "conservation", "")
+    setTranslationField("foodData", "en", "fiber", "")
+    setTranslationField("foodData", "fr", "fiber", "")
+    setTranslationField("foodData", "en", "proteins", "")
+    setTranslationField("foodData", "fr", "proteins", "")
+    setTranslationField("foodData", "en", "vitamins", "")
+    setTranslationField("foodData", "fr", "vitamins", "")
+    setTranslationField("foodData", "en", "minerals", "")
+    setTranslationField("foodData", "fr", "minerals", "")
+    setTranslationField("foodData", "en", "fat", "")
+    setTranslationField("foodData", "fr", "fat", "")
+    setTranslationField("foodData", "en", "sugar", "")
+    setTranslationField("foodData", "fr", "sugar", "")
+    setImagePreviewUrls([])
+  }
+
   // Define FoodSchema before using it in useForm
   const FoodSchema = z.object({
     name: z
@@ -129,8 +166,8 @@ export default function AddFoodPopUpContent({
     image: z.string().nonempty(translations.required),
     selection: z.string().refine(
       val => {
-        const plainText = val.replace(/<(.|\n)*?>/g, "").trim() // remove all tags
-        const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val) // check for <img> tags
+        const plainText = val.replace(/<(.|\n)*?>/g, "").trim()
+        const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val)
         return plainText !== "" || hasImage
       },
       {
@@ -222,7 +259,6 @@ export default function AddFoodPopUpContent({
     setTranslationField("foodData", "en", "benefits", enBenefits)
     setTranslationField("foodData", "fr", "benefits", frBenefits)
     form.setValue("benefits", activeLang === "en" ? enBenefits : frBenefits)
-    // Trigger validation
     void form.trigger("benefits")
   }
 
@@ -288,7 +324,6 @@ export default function AddFoodPopUpContent({
     setTranslationField("foodData", activeLang, fieldName, value)
 
     if (fieldName === "category") {
-      // Find the selected option
       const selected = categoryOptionsApi.find(
         opt => (activeLang === "en" ? opt.valueEn : opt.valueFr) === value
       )
@@ -299,7 +334,6 @@ export default function AddFoodPopUpContent({
     }
 
     if (fieldName === "season") {
-      // Sync season between languages
       if (activeLang === "en") {
         const found = seasonSyncMap.find(m => m.en === value)
         if (found) {
@@ -376,7 +410,6 @@ export default function AddFoodPopUpContent({
   function handleBenefitsChange(vals: string[]): void {
     form.setValue("benefits", vals)
     setTranslationField("foodData", activeLang, "benefits", vals)
-    // Trigger validation
     void form.trigger("benefits")
   }
 
@@ -403,7 +436,6 @@ export default function AddFoodPopUpContent({
     const recreatePreview = async (): Promise<void> => {
       if (currentStoreData?.storeImage) {
         try {
-          // Use the Firebase URL directly for preview
           setImagePreviewUrls([currentStoreData.storeImage])
         } catch (error) {
           console.error("Error setting preview:", error)
@@ -533,6 +565,7 @@ export default function AddFoodPopUpContent({
         toast.success(translations.formSubmittedSuccessfully)
         getFoods()
         sessionStorage.removeItem("food-store")
+        cleanupData()
         onClose()
       } else {
         toast.error("Failed to add food")
@@ -612,26 +645,26 @@ export default function AddFoodPopUpContent({
     form: ReturnType<typeof useForm<z.infer<typeof FoodSchema>>>
   ): void => {
     form.reset()
+    sessionStorage.removeItem("food-store")
+    cleanupData()
   }
 
   const handleAddNewBenefit = async (
     benefit: string
   ): Promise<{ tagName: string; tagNameFr: string }> => {
-    // Check for duplicates before adding
     if (isDuplicateBenefit(benefit)) {
       toast.error("Already in the list")
       throw new Error("Duplicate benefit")
     }
-    
+
     // Translate to French
     const tagNameFr = await translateText(benefit)
-    
-    // Also check if the translated version is a duplicate
+
     if (isDuplicateBenefit(tagNameFr, "fr")) {
       toast.error("Already in the list")
       throw new Error("Duplicate benefit")
     }
-    
+
     return { tagName: benefit, tagNameFr }
   }
 
@@ -1008,13 +1041,11 @@ export default function AddFoodPopUpContent({
                           "benefits",
                           activeLang === "en" ? enBenefits : frBenefits
                         )
-                        // Trigger validation
                         void form.trigger("benefits")
                       }}
                       onChange={(newArr: string[]) => {
                         handleBenefitsChange(newArr)
                         field.onChange(newArr)
-                        // Trigger validation
                         void form.trigger("benefits")
                       }}
                       onBlur={() => {
@@ -1161,7 +1192,8 @@ export default function AddFoodPopUpContent({
               variant="outline"
               onClick={() => {
                 handleCancel(form)
-                sessionStorage.removeItem("food-store") // Remove session key on cancel
+                sessionStorage.removeItem("food-store")
+                cleanupData()
                 onClose()
               }}
             >

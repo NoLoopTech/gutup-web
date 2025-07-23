@@ -112,7 +112,9 @@ export default function ViewFoodFrench({
   token
 }: ViewFoodFrenchProps): JSX.Element {
   const { translateText } = useTranslation()
-  const [pendingNewBenefitsFr, setPendingNewBenefitsFr] = useState<Array<{tagName: string; tagNameFr: string}>>([])
+  const [pendingNewBenefitsFr, setPendingNewBenefitsFr] = useState<
+    Array<{ tagName: string; tagNameFr: string }>
+  >([])
 
   const [formData, setFormData] = useState({
     name: "",
@@ -156,6 +158,15 @@ export default function ViewFoodFrench({
     switch (field) {
       case "name":
         updateEditedData("nameFR", value)
+        if (value?.trim()) {
+          translateText(value)
+            .then(translated => {
+              updateEditedData("name", translated)
+            })
+            .catch(() => {
+              updateEditedData("name", value)
+            })
+        }
         break
       case "fiber":
       case "proteins":
@@ -165,9 +176,27 @@ export default function ViewFoodFrench({
         break
       case "vitamins":
         updateNestedData("attributes", "vitaminsFR", value)
+        if (value?.trim()) {
+          translateText(value)
+            .then(translated => {
+              updateNestedData("attributes", "vitamins", translated)
+            })
+            .catch(() => {
+              updateNestedData("attributes", "vitamins", value)
+            })
+        }
         break
       case "minerals":
         updateNestedData("attributes", "mineralsFR", value)
+        if (value?.trim()) {
+          translateText(value)
+            .then(translated => {
+              updateNestedData("attributes", "minerals", translated)
+            })
+            .catch(() => {
+              updateNestedData("attributes", "minerals", value)
+            })
+        }
         break
     }
   }
@@ -188,10 +217,9 @@ export default function ViewFoodFrench({
     try {
       const tagName = await translateText(benefit)
       const newBenefit = { tagName, tagNameFr: benefit }
-      
-      // Store pending benefit instead of adding to database
+
       setPendingNewBenefitsFr(prev => [...prev, newBenefit])
-      
+
       return newBenefit
     } catch (error) {
       console.error("Error translating new benefit:", error)
@@ -204,13 +232,16 @@ export default function ViewFoodFrench({
   // Store pending benefits in session storage
   React.useEffect(() => {
     if (pendingNewBenefitsFr.length > 0) {
-      const existing = JSON.parse(sessionStorage.getItem('pendingNewBenefits') || '[]')
+      const existing = JSON.parse(
+        sessionStorage.getItem("pendingNewBenefits") ?? "[]"
+      )
       const combined = [...existing, ...pendingNewBenefitsFr]
       // Remove duplicates
-      const unique = combined.filter((benefit, index, self) => 
-        index === self.findIndex(b => b.tagName === benefit.tagName)
+      const unique = combined.filter(
+        (benefit, index, self) =>
+          index === self.findIndex(b => b.tagName === benefit.tagName)
       )
-      sessionStorage.setItem('pendingNewBenefits', JSON.stringify(unique))
+      sessionStorage.setItem("pendingNewBenefits", JSON.stringify(unique))
     }
   }, [pendingNewBenefitsFr])
 
@@ -403,8 +434,7 @@ export default function ViewFoodFrench({
             )
 
             updateEditedData("healthBenefits", updatedHealthBenefits)
-            // Also remove from pending benefits if it exists
-            setPendingNewBenefitsFr(prev => 
+            setPendingNewBenefitsFr(prev =>
               prev.filter(p => p.tagNameFr !== removed.tagNameFr)
             )
           }}
@@ -435,6 +465,16 @@ export default function ViewFoodFrench({
             initialContent={foodDetails?.describe?.selectionFR ?? ""}
             onChange={content => {
               updateNestedData("describe", "selectionFR", content)
+              // Translate and update English version
+              if (content?.trim()) {
+                translateText(content)
+                  .then(translated => {
+                    updateNestedData("describe", "selection", translated)
+                  })
+                  .catch(() => {
+                    updateNestedData("describe", "selection", content)
+                  })
+              }
             }}
           />
         </div>
@@ -445,6 +485,16 @@ export default function ViewFoodFrench({
             initialContent={foodDetails?.describe?.preparationFR ?? ""}
             onChange={content => {
               updateNestedData("describe", "preparationFR", content)
+              // Translate and update English version
+              if (content?.trim()) {
+                translateText(content)
+                  .then(translated => {
+                    updateNestedData("describe", "preparation", translated)
+                  })
+                  .catch(() => {
+                    updateNestedData("describe", "preparation", content)
+                  })
+              }
             }}
           />
         </div>
@@ -455,6 +505,16 @@ export default function ViewFoodFrench({
             initialContent={foodDetails?.describe?.conservationFR ?? ""}
             onChange={content => {
               updateNestedData("describe", "conservationFR", content)
+              // Translate and update English version
+              if (content?.trim()) {
+                translateText(content)
+                  .then(translated => {
+                    updateNestedData("describe", "conservation", translated)
+                  })
+                  .catch(() => {
+                    updateNestedData("describe", "conservation", content)
+                  })
+              }
             }}
           />
         </div>
@@ -476,5 +536,4 @@ export default function ViewFoodFrench({
       </div>
     </TabsContent>
   )
-
 }

@@ -135,7 +135,9 @@ export default function ViewFoodEnglish({
   token
 }: ViewFoodEnglishProps): JSX.Element {
   const { translateText } = useTranslation()
-  const [pendingNewBenefits, setPendingNewBenefits] = useState<Array<{tagName: string; tagNameFr: string}>>([])
+  const [pendingNewBenefits, setPendingNewBenefits] = useState<
+    Array<{ tagName: string; tagNameFr: string }>
+  >([])
 
   const handleAddNewBenefit = async (
     benefit: string
@@ -143,9 +145,9 @@ export default function ViewFoodEnglish({
     try {
       const tagNameFr = await translateText(benefit)
       const newBenefit = { tagName: benefit, tagNameFr }
-      
+
       setPendingNewBenefits(prev => [...prev, newBenefit])
-      
+
       return newBenefit
     } catch (error) {
       console.error("Error translating new benefit:", error)
@@ -157,9 +159,11 @@ export default function ViewFoodEnglish({
 
   // Expose function to parent component for saving pending benefits
   React.useEffect(() => {
-    // Store pending benefits in session storage so parent can access them
     if (pendingNewBenefits.length > 0) {
-      sessionStorage.setItem('pendingNewBenefits', JSON.stringify(pendingNewBenefits))
+      sessionStorage.setItem(
+        "pendingNewBenefits",
+        JSON.stringify(pendingNewBenefits)
+      )
     }
   }, [pendingNewBenefits])
 
@@ -171,16 +175,44 @@ export default function ViewFoodEnglish({
   const handleSelectionChange = (field: any) => (val: string) => {
     field.onChange(val)
     updateNestedData("describe", "selection", val)
+    if (val?.trim()) {
+      translateText(val)
+        .then(translated => {
+          updateNestedData("describe", "selectionFR", translated)
+        })
+        .catch(() => {
+          updateNestedData("describe", "selectionFR", val)
+        })
+    }
   }
 
   const handlePreparationChange = (field: any) => (val: string) => {
     field.onChange(val)
     updateNestedData("describe", "preparation", val)
+    if (val?.trim()) {
+      translateText(val)
+        .then(translated => {
+          updateNestedData("describe", "preparationFR", translated)
+        })
+        .catch(() => {
+          updateNestedData("describe", "preparationFR", val)
+        })
+    }
   }
 
   const handleConservationChange = (field: any) => (val: string) => {
     field.onChange(val)
     updateNestedData("describe", "conservation", val)
+    // Translate and update French version
+    if (val?.trim()) {
+      translateText(val)
+        .then(translated => {
+          updateNestedData("describe", "conservationFR", translated)
+        })
+        .catch(() => {
+          updateNestedData("describe", "conservationFR", val)
+        })
+    }
   }
   // Update the image upload handler
   const handleImageUpload = (field: any) => async (files: File[] | null) => {
@@ -225,10 +257,49 @@ export default function ViewFoodEnglish({
             )
             break
           case "vitamins":
+            updateNestedData("attributes", name, value[name] as string)
+            if (value[name] && (value[name] as string).trim()) {
+              translateText(value[name] as string)
+                .then(translated => {
+                  updateNestedData("attributes", "vitaminsFR", translated)
+                })
+                .catch(() => {
+                  updateNestedData(
+                    "attributes",
+                    "vitaminsFR",
+                    value[name] as string
+                  )
+                })
+            }
+            break
           case "minerals":
             updateNestedData("attributes", name, value[name] as string)
+            if (value[name] && (value[name] as string).trim()) {
+              translateText(value[name] as string)
+                .then(translated => {
+                  updateNestedData("attributes", "mineralsFR", translated)
+                })
+                .catch(() => {
+                  updateNestedData(
+                    "attributes",
+                    "mineralsFR",
+                    value[name] as string
+                  )
+                })
+            }
             break
           case "name":
+            updateEditedData(name, value[name])
+            if (value[name] && (value[name] as string).trim()) {
+              translateText(value[name] as string)
+                .then(translated => {
+                  updateEditedData("nameFR", translated)
+                })
+                .catch(() => {
+                  updateEditedData("nameFR", value[name] as string)
+                })
+            }
+            break
           case "category":
           case "country":
             updateEditedData(name, value[name])
@@ -257,7 +328,7 @@ export default function ViewFoodEnglish({
     return () => {
       subscription.unsubscribe()
     }
-  }, [form, updateEditedData, updateNestedData, foodDetails])
+  }, [form, updateEditedData, updateNestedData, foodDetails, translateText])
 
   return (
     <Form {...form}>
@@ -550,7 +621,7 @@ export default function ViewFoodEnglish({
 
                     updateEditedData("healthBenefits", updatedHealthBenefits)
                     // Also remove from pending benefits if it exists
-                    setPendingNewBenefits(prev => 
+                    setPendingNewBenefits(prev =>
                       prev.filter(p => p.tagName !== removed.tagName)
                     )
                   }}
