@@ -435,7 +435,7 @@ export default function EditRecipePopUpContent({
           size="icon"
           className="w-8 h-8 border border-gray-300 hover:bg-gray-100"
           onClick={() => {
-            handleDeleteAvailItem(row.foodId)
+            handleDeleteAvailItem(row.ingredientName)
           }}
           title={"Delete"}
         >
@@ -447,18 +447,21 @@ export default function EditRecipePopUpContent({
   ]
 
   // Delete handler for ingredientData
-  const handleDeleteAvailItem = (id: number): void => {
-    const updated = ingredientData.filter(item => item.foodId !== id)
-    setIngredientData(updated)
+  const handleDeleteAvailItem = (foodName: string): void => {
+    // Filter out the ingredient with the given foodName
+    const updated = availData.filter(item => item.ingredientName !== foodName)
+    setAvailData(updated)
     form.setValue("ingredientData", updated as any, { shouldValidate: true })
+
     setTranslationField("en", "ingredientData", updated as any)
     setTranslationField("fr", "ingredientData", updated as any)
 
     setUpdatedField("en", "ingredientData", updated as any)
     setUpdatedField("fr", "ingredientData", updated as any)
-  }
 
-  console.log(foods)
+    // Optionally, show a success message
+    toast.success("Ingredient deleted successfully!")
+  }
 
   const handleAddIngredient = async (): Promise<void> => {
     let updatedAvailData: Ingredient
@@ -540,6 +543,8 @@ export default function EditRecipePopUpContent({
     setAvailData([...availData, updatedAvailData])
 
     try {
+      setIsTranslating(true)
+
       const translatedName =
         activeLang === "en"
           ? await translateText(updatedAvailData.ingredientName)
@@ -562,6 +567,8 @@ export default function EditRecipePopUpContent({
     } catch (err) {
       console.error("Translation failed:", err)
       toast.error("Failed to translate food name.")
+    } finally {
+      setIsTranslating(false)
     }
 
     toast.success("Food item added successfully!")

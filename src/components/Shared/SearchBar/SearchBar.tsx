@@ -29,6 +29,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const query = value !== undefined ? value : internal
   const [isOpen, setIsOpen] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null) // Reference for input
 
   // Filter items based on the input query
   const filtered =
@@ -49,6 +50,27 @@ const SearchBar: React.FC<SearchBarProps> = ({
     onInputChange?.(item.name)
     onSelect?.(item)
     setIsOpen(false)
+  }
+
+  const handleKeyDown = (e: KeyboardEvent): void => {
+    // Disable the Enter key
+    if (e.key === "Enter") {
+      e.preventDefault() // Prevent default action when Enter is pressed
+    }
+  }
+
+  const handleFocus = (): void => {
+    // Attach keydown listener on focus to prevent Enter key
+    if (inputRef.current) {
+      inputRef.current.addEventListener("keydown", handleKeyDown)
+    }
+  }
+
+  const handleBlur = (): void => {
+    // Remove keydown listener when input is blurred
+    if (inputRef.current) {
+      inputRef.current.removeEventListener("keydown", handleKeyDown)
+    }
   }
 
   // Close dropdown when clicked outside
@@ -79,11 +101,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
           id="search"
           value={query}
           onChange={handleChange}
-          onFocus={() => {
-            if (onSelect && query.trim().length > 0) setIsOpen(true)
-          }}
+          onFocus={handleFocus} // Handle focus
+          onBlur={handleBlur} // Handle blur
           placeholder={placeholder}
           className="pl-10 w-full"
+          ref={inputRef}
         />
 
         {onSelect && isOpen && filtered.length > 0 && (

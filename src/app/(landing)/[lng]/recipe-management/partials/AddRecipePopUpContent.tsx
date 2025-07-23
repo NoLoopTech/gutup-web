@@ -410,7 +410,7 @@ export default function AddRecipePopUpContent({
           size="icon"
           className="w-8 h-8 border border-gray-300 hover:bg-gray-100"
           onClick={() => {
-            handleDeleteAvailItem(row.foodId)
+            handleDeleteAvailItem(row.ingredientName)
           }}
           title={"Delete"}
         >
@@ -422,9 +422,10 @@ export default function AddRecipePopUpContent({
   ]
 
   // Delete handler for ingredientData
-  const handleDeleteAvailItem = (id: number): void => {
-    const updated = ingredientData.filter(item => item.foodId !== id)
-    setIngredientData(updated)
+  const handleDeleteAvailItem = (foodName: string): void => {
+    // Filter out the ingredient with the given foodName
+    const updated = availData.filter(item => item.ingredientName !== foodName)
+    setAvailData(updated)
     form.setValue("ingredientData", updated as any, { shouldValidate: true })
     setTranslationField(activeLang, "ingredientData", updated as any)
     setTranslationField(
@@ -432,6 +433,9 @@ export default function AddRecipePopUpContent({
       "ingredientData",
       updated as any
     )
+
+    // Optionally, show a success message
+    toast.success("Ingredient deleted successfully!")
   }
 
   // Sync ingredientData with form value
@@ -445,12 +449,9 @@ export default function AddRecipePopUpContent({
     }
   }, [form, ingredientData])
 
-  console.log(foods)
-
   const handleAddIngredient = async (): Promise<void> => {
     let updatedAvailData: Ingredient
 
-    // Check if the item is already in the availData list by item name
     if (selected) {
       const isItemExists = availData.some(
         item => item.ingredientName === selected.name
@@ -528,6 +529,7 @@ export default function AddRecipePopUpContent({
     setAvailData([...availData, updatedAvailData])
 
     try {
+      setIsTranslating(true)
       const translatedName =
         activeLang === "en"
           ? await translateText(updatedAvailData.ingredientName)
@@ -547,6 +549,8 @@ export default function AddRecipePopUpContent({
     } catch (err) {
       console.error("Translation failed:", err)
       toast.error("Failed to translate food name.")
+    } finally {
+      setIsTranslating(false)
     }
 
     toast.success("Food item added successfully!")
@@ -1252,7 +1256,14 @@ export default function AddRecipePopUpContent({
                 {translations.cancel}
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {translations.save}
+                {isLoading ? (
+                  <div className="flex gap-2 items-center">
+                    <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                    {translations.save}
+                  </div>
+                ) : (
+                  translations.save
+                )}
               </Button>
             </div>
           </DialogFooter>

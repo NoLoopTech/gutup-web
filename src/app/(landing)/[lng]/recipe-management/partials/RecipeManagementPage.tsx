@@ -156,6 +156,14 @@ export default function RecipeManagementPage({
     void getRecipes()
   }, [])
 
+  useEffect(() => {
+    if (!viewRecipe) {
+      resetRecipe()
+      sessionStorage.removeItem("recipe-storage")
+      sessionStorage.removeItem("update-recipe-storage")
+    }
+  }, [viewRecipe])
+
   // handle open add Recipe popup
   const handleOpenAddRecipePopUp = (): void => {
     setOpenAddRecipePopUp(true)
