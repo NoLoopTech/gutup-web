@@ -45,6 +45,12 @@ interface Food {
   status: boolean
 }
 
+interface FoodResTypes {
+  id: number
+  name: string
+  status: string
+}
+
 interface Ingredient {
   foodId: number
   ingredientName: string
@@ -53,6 +59,7 @@ interface Ingredient {
   available: boolean
   display: boolean
 }
+
 interface Option {
   value: string
   label: string
@@ -182,7 +189,13 @@ export default function AddRecipePopUpContent({
     const fetchFoods = async (): Promise<void> => {
       const res = await getAllFoods(token)
       if (res && res.status === 200) {
-        setFoods(res.data.foods)
+        const resData = res.data.foods.map((food: FoodResTypes) => ({
+          id: food.id,
+          name: food.name,
+          status: food.status !== "Incomplete"
+        }))
+
+        setFoods(resData)
       } else {
         console.error("Failed to fetch foods:", res)
       }
@@ -320,16 +333,28 @@ export default function AddRecipePopUpContent({
   }
 
   // Update the ingredient's quantity
-  const handleQuantityChange = (foodId: number, value: string): void => {
+  const handleQuantityChange = (
+    ingredientName: string,
+    value: string
+  ): void => {
+    // Update the ingredient quantity in availData
     const updatedAvailData = availData.map(item => {
-      if (item.foodId === foodId) {
+      if (item.ingredientName.toLowerCase() === ingredientName.toLowerCase()) {
+        // If the ingredient matches, update the quantity
         return { ...item, quantity: value }
       }
       return item
     })
+
+    // Update the state with the new updatedAvailData
     setAvailData(updatedAvailData)
+
+    // Optionally, update translations/store or any other global state
     setTranslationField("en", "ingredientData", updatedAvailData)
     setTranslationField("fr", "ingredientData", updatedAvailData)
+
+    // Optionally, show a success message
+    toast.success("Ingredient quantity updated successfully!")
   }
 
   // table columns for available ingredients and categories
@@ -344,7 +369,9 @@ export default function AddRecipePopUpContent({
         <Input
           type="text"
           value={row.quantity}
-          onChange={e => handleQuantityChange(row.foodId, e.target.value)} // Handle change
+          onChange={e =>
+            handleQuantityChange(row.ingredientName, e.target.value)
+          } // Handle change
           placeholder="Enter quantity"
           className="w-[80%]"
         />
@@ -418,7 +445,9 @@ export default function AddRecipePopUpContent({
     }
   }, [form, ingredientData])
 
-  const handleAddIngredient = () => {
+  console.log(foods)
+
+  const handleAddIngredient = async (): Promise<void> => {
     let updatedAvailData: Ingredient
 
     // Check if the item is already in the availData list by item name
@@ -443,24 +472,53 @@ export default function AddRecipePopUpContent({
         mainIngredient: true
       }
     } else if (ingredientInput.trim()) {
-      const isCustomItemExists = availData.some(
-        item =>
-          item.ingredientName.toLowerCase() === ingredientInput.toLowerCase()
+      // Check if the entered ingredient exists in the foods list
+      const isItemExists = availData.some(
+        item => item.ingredientName === ingredientInput
       )
 
-      if (isCustomItemExists) {
-        toast.error("This custom food item is already in the list!")
+      if (isItemExists) {
+        // Show an error and return early if the item already exists in the table
+        toast.error("This food item is already in the list!")
+        setSelected(null)
         setIngredientInput("")
         return
       }
 
-      updatedAvailData = {
-        foodId: 0,
-        ingredientName: ingredientInput ?? "",
-        available: false,
-        display: true,
-        quantity: "", // Add default empty quantity
-        mainIngredient: true
+      // Check if the entered ingredient exists in the foods list
+      const matchedFood = foods.find(
+        food => food.name?.toLowerCase() === ingredientInput.toLowerCase()
+      )
+
+      if (matchedFood) {
+        updatedAvailData = {
+          foodId: matchedFood.id,
+          ingredientName: matchedFood.name,
+          available: matchedFood.status,
+          display: true,
+          quantity: "",
+          mainIngredient: true
+        }
+      } else {
+        const isCustomItemExists = availData.some(
+          item =>
+            item.ingredientName.toLowerCase() === ingredientInput.toLowerCase()
+        )
+
+        if (isCustomItemExists) {
+          toast.error("This custom food item is already in the list!")
+          setIngredientInput("")
+          return
+        }
+
+        updatedAvailData = {
+          foodId: 0,
+          ingredientName: ingredientInput ?? "",
+          available: false,
+          display: true,
+          quantity: "",
+          mainIngredient: true
+        }
       }
     } else {
       toast.error("Please select or enter a food item first!")
@@ -468,14 +526,28 @@ export default function AddRecipePopUpContent({
     }
 
     setAvailData([...availData, updatedAvailData])
-    setTranslationField("en", "ingredientData", [
-      ...availData,
-      updatedAvailData
-    ])
-    setTranslationField("fr", "ingredientData", [
-      ...availData,
-      updatedAvailData
-    ])
+
+    try {
+      const translatedName =
+        activeLang === "en"
+          ? await translateText(updatedAvailData.ingredientName)
+          : updatedAvailData.ingredientName
+
+      const enList = [...availData, updatedAvailData]
+      const frList = [
+        ...availData,
+        {
+          ...updatedAvailData,
+          ingredientName: translatedName
+        }
+      ]
+
+      setTranslationField("en", "ingredientData", enList)
+      setTranslationField("fr", "ingredientData", frList)
+    } catch (err) {
+      console.error("Translation failed:", err)
+      toast.error("Failed to translate food name.")
+    }
 
     toast.success("Food item added successfully!")
 
@@ -604,6 +676,21 @@ export default function AddRecipePopUpContent({
   useEffect(() => {
     form.reset(translationData[activeLang])
   }, [activeLang, form.reset, translationData])
+
+  useEffect(() => {
+    const rawIngredients = translationData[activeLang]?.ingredientData ?? []
+
+    const mappedIngredients = rawIngredients.map((item: any) => ({
+      foodId: item.foodId,
+      ingredientName: item.ingredientName,
+      quantity: item.quantity,
+      mainIngredient: item.mainIngredient,
+      available: item.available ?? false,
+      display: item.display ?? true
+    }))
+
+    setAvailData(mappedIngredients)
+  }, [activeLang, translationData[activeLang]])
 
   const onSubmit = (data: RecipeSchemaType): void => {
     const invalidIngredients = data.ingredientData.filter(item => {

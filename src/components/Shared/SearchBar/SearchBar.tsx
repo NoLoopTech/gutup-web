@@ -30,7 +30,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const [isOpen, setIsOpen] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
-  // only filter once there's at least one character
+  // Filter items based on the input query
   const filtered =
     onSelect && query.trim().length > 0
       ? dataList.filter(i => i.name.toLowerCase().includes(query.toLowerCase()))
@@ -51,7 +51,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     setIsOpen(false)
   }
 
-  // close on outside click
+  // Close dropdown when clicked outside
   useEffect(() => {
     if (!onSelect) return
     const onClick = (e: MouseEvent): void => {

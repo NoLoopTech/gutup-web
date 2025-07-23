@@ -54,6 +54,8 @@
   "summer": "Summer",
   "autumn": "Autumn",
   "winter": "Winter",
+  "maxBenefitsLimit": "You can only add a maximum of 6 benefits.",
+  "duplicateBenefit": "This benefit has already been added.",
 
   "required": "Required",
   "mustbeatleast2characters": "Must be at least 2 characters",

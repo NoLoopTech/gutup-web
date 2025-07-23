@@ -7,33 +7,30 @@ import { z } from "zod"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
-import SearchBar, {
-    SearchBarItem
-} from "@/components/Shared/SearchBar/SearchBar"
+import SearchBar from "@/components/Shared/SearchBar/SearchBar"
 import { CustomTable } from "@/components/Shared/Table/CustomTable"
 import { Button } from "@/components/ui/button"
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
 } from "@/components/ui/form"
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import {
-    deleteImageFromFirebase,
-    uploadImageToFirebase
+  deleteImageFromFirebase,
+  uploadImageToFirebase
 } from "@/lib/firebaseImageUtils"
-import { useFoodList } from "@/query/hooks/useFoodList"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { useDailyTipStore } from "@/stores/useDailyTipStore"
 import { type translationsTypes } from "@/types/dailyTipTypes"
@@ -43,7 +40,6 @@ import { Trash } from "lucide-react"
 import { getAllFoods } from "@/app/api/foods"
 import LocationDropdown from "@/components/Shared/dropdown/LocationDropdown"
 import { getLocationDetails } from "@/app/api/location"
-
 
 interface Food {
   id: number
@@ -163,6 +159,16 @@ export default function ShopPromotionTab({
       }
     } else if (ingredientInput.trim()) {
       // Check if the entered ingredient exists in the foods list
+      const isItemExists = availData.some(item => item.name === ingredientInput)
+
+      if (isItemExists) {
+        // Show an error and return early if the item already exists in the table
+        toast.error("This food item is already in the list!")
+        setSelected(null)
+        setIngredientInput("")
+        return
+      }
+
       const matchedFood = foods.find(
         food => food.name?.toLowerCase() === ingredientInput.toLowerCase()
       )
@@ -200,6 +206,7 @@ export default function ShopPromotionTab({
     setAvailData([...availData, updatedAvailData])
 
     try {
+      setIsTranslating(true)
       const translatedName =
         activeLang === "en"
           ? await translateText(updatedAvailData.name)
@@ -219,6 +226,8 @@ export default function ShopPromotionTab({
     } catch (err) {
       console.error("Translation failed:", err)
       toast.error("Failed to translate food name.")
+    } finally {
+      setIsTranslating(false)
     }
 
     // Optionally, show a success message
@@ -576,8 +585,8 @@ export default function ShopPromotionTab({
   return (
     <div className="relative">
       {isTranslating && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60">
-          <span className="w-10 h-10 border-t-4 border-blue-500 border-solid rounded-full animate-spin" />
+        <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
+          <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
         </div>
       )}
       <Form {...form}>
@@ -821,7 +830,7 @@ export default function ShopPromotionTab({
 
             {/* Available Products */}
             <div className="flex flex-col gap-4 pt-4">
-              <div className="flex flex-row items-center flex-1 gap-2 mb-2">
+              <div className="flex flex-row flex-1 gap-2 items-center mb-2">
                 <div className="flex-1">
                   <SearchBar
                     title="Select Food"
@@ -833,12 +842,13 @@ export default function ShopPromotionTab({
                     value={ingredientInput}
                     onInputChange={setIngredientInput}
                     onSelect={item => {
+                      console.log(item)
                       setSelected({ ...item, id: Number(item.id) } as Food)
                       setIngredientInput(item.name)
                     }}
                   />
                 </div>
-                <div className="flex items-end h-full mt-7">
+                <div className="flex items-end mt-7 h-full">
                   <Button type="button" onClick={handleAddIngredient}>
                     {translations.add}
                   </Button>
@@ -875,14 +885,14 @@ export default function ShopPromotionTab({
 
             <Separator />
 
-            <div className="flex items-center justify-between mt-4 mb-4">
+            <div className="flex justify-between items-center mt-4 mb-4">
               <h2 className="text-lg font-bold text-black">
                 {translations.uploadImages}
               </h2>
             </div>
 
             {/* Image Uploader */}
-            <div className="w-full pb-8">
+            <div className="pb-8 w-full">
               <FormField
                 control={form.control}
                 name="image"
@@ -903,7 +913,7 @@ export default function ShopPromotionTab({
           </div>
 
           {/* Buttons */}
-          <div className="fixed bottom-0 left-0 z-50 flex justify-between w-full px-8 py-2 bg-white border-t border-gray-200">
+          <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">
             <Button
               variant="outline"
               onClick={async () => {
@@ -915,8 +925,8 @@ export default function ShopPromotionTab({
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white rounded-full animate-spin border-t-transparent" />
+                <div className="flex gap-2 items-center">
+                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
                   {translations.save}
                 </div>
               ) : (

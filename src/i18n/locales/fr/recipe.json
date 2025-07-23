@@ -54,6 +54,8 @@
   "summer": "Été",
   "autumn": "Automne",
   "winter": "Hiver",
+  "maxBenefitsLimit": "Vous ne pouvez ajouter qu'un maximum de 6 avantages.",
+  "duplicateBenefit": "Cet avantage a déjà été ajouté.",
 
   "required": "Requis",
   "mustbeatleast2characters": "Doit contenir au moins 2 caractères",
