@@ -668,7 +668,7 @@ export default function AddStorePopUpContent({
     const name = selected?.name ?? ingredientInput.trim()
     if (!name) return
     const matchingFood =
-      selected || foods.find(f => f.name?.toLowerCase() === name.toLowerCase())
+      selected ?? foods.find(f => f.name?.toLowerCase() === name.toLowerCase())
 
     const isAlreadyAdded = availData.some(item => {
       if (item.type !== "Ingredient") {
@@ -743,7 +743,7 @@ export default function AddStorePopUpContent({
     if (!name) return
 
     const matchingCategory =
-      selectedCategory ||
+      selectedCategory ??
       categoryTags.find(tag => {
         const tagDisplayName =
           activeLang === "en" ? tag.tagName ?? "" : tag.tagNameFr ?? ""

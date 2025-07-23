@@ -1018,7 +1018,7 @@ export default function EditStorePopUpContent({
     if (!name) return
 
     const matchingFood =
-      selected || foods.find(f => f.name?.toLowerCase() === name.toLowerCase())
+      selected ?? foods.find(f => f.name?.toLowerCase() === name.toLowerCase())
 
     // Check if the item is already added to the table
     const isAlreadyAdded = availData.some(item => {
@@ -1097,7 +1097,7 @@ export default function EditStorePopUpContent({
     if (!name) return
 
     const matchingCategory =
-      selectedCategory ||
+      selectedCategory ??
       categoryTags.find(tag => {
         const tagDisplayName =
           activeLang === "en" ? tag.tagName ?? "" : tag.tagNameFr ?? ""

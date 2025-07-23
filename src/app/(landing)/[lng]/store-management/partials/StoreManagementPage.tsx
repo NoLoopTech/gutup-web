@@ -88,11 +88,7 @@ export default function StoreManagementPage({
   const [selectedStoreType, setSelectedStoreType] = useState<string>("")
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
-  const [viewStoreOpen, setViewStoreOpen] = useState<boolean>(false)
   const [editStoreOpen, setEditStoreOpen] = useState<boolean>(false)
-  const [, setSelectedStoreForView] = useState<StoreManagementDataType | null>(
-    null
-  )
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null)
   const [storeId, setStoreId] = useState<number>(0)
   const [translations, setTranslations] =
@@ -353,7 +349,7 @@ export default function StoreManagementPage({
     }
   }
 
-  const columns: Column<StoreManagementDataType>[] = [
+  const columns: Array<Column<StoreManagementDataType>> = [
     {
       accessor: "storeName",
       header: "Store Name"
