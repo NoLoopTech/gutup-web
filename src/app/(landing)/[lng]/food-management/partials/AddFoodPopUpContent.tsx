@@ -5,6 +5,12 @@ import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import LableInput from "@/components/Shared/LableInput/LableInput"
 import { Button } from "@/components/ui/button"
 import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem
+} from "@/components/ui/dropdown-menu"
+import {
   Form,
   FormControl,
   FormField,
@@ -110,6 +116,12 @@ export default function AddFoodPopUpContent({
   const [benefitTags, setBenefitTags] = useState<
     Array<{ tagName: string; tagNameFr: string }>
   >([])
+  // Multi-select months state
+  const [selectedMonths, setSelectedMonths] = useState<string[]>(
+    Array.isArray(foodData[activeLang]?.season)
+      ? foodData[activeLang].season
+      : []
+  )
 
   // Cleanup function to clear all data
   const cleanupData = (): void => {
@@ -155,7 +167,7 @@ export default function AddFoodPopUpContent({
       .nonempty(translations.required)
       .min(2, { message: translations.mustbeatleast2characters }),
     category: z.string().nonempty(translations.pleaseselectacategory),
-    season: z.string().nonempty(translations.pleaseselectaseason),
+    season: z.array(z.string()).min(1, translations.pleaseselectaseason),
     country: z.string().nonempty(translations.pleaseselectacountry),
     benefits: z
       .array(z.string())
@@ -211,9 +223,14 @@ export default function AddFoodPopUpContent({
       image: foodData[activeLang]?.storeImage || ""
     }
   })
-  // Update form when lang changes
+  // Update form and selectedMonths when lang changes
   React.useEffect(() => {
     form.reset(foodData[activeLang])
+    setSelectedMonths(
+      Array.isArray(foodData[activeLang]?.season)
+        ? foodData[activeLang].season
+        : []
+    )
   }, [activeLang, form.reset, foodData])
 
   // Helper function to check for duplicate benefits
@@ -240,7 +257,6 @@ export default function AddFoodPopUpContent({
     tagName: string
     tagNameFr: string
   }): void => {
-    // Check for duplicates before adding
     if (
       isDuplicateBenefit(benefit.tagName, "en") ||
       isDuplicateBenefit(benefit.tagNameFr, "fr")
@@ -522,15 +538,15 @@ export default function AddFoodPopUpContent({
         category: foodData.en.category,
         categoryFR: foodData.fr?.category ?? "",
         country: foodData.en.country,
-        seasons: foodData.en.season
-          ? [
-              {
-                foodId: 0,
-                season: foodData.en.season,
-                seasonFR: foodData.fr?.season ?? ""
-              }
-            ]
-          : [],
+        seasons:
+          Array.isArray(foodData.en.season) &&
+          Array.isArray(foodData.fr?.season)
+            ? foodData.en.season.map((enMonth: string, idx: number) => ({
+                foodId: idx,
+                season: enMonth,
+                seasonFR: foodData.fr.season[idx] ?? enMonth
+              }))
+            : [],
         attributes: {
           fiber: Number(foodData.en.fiber) || 0,
           proteins: Number(foodData.en.proteins) || 0,
@@ -749,23 +765,80 @@ export default function AddFoodPopUpContent({
                       {translations.month}
                     </FormLabel>
                     <FormControl>
-                      <Select
-                        value={field.value}
-                        onValueChange={value => {
-                          handleSelectChange("season", value)
-                        }}
-                      >
-                        <SelectTrigger className="w-full mt-1">
-                          <SelectValue placeholder={translations.selectMonth} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {seasonOptions[activeLang].map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={`overflow-x-auto overflow-y-hidden justify-between w-full mt-1 ${
+                              selectedMonths.length === 0
+                                ? "text-gray-500 font-normal hover:text-gray-500"
+                                : ""
+                            }`}
+                            style={{ scrollbarWidth: "none" }}
+                          >
+                            {selectedMonths.length > 0
+                              ? selectedMonths.join(", ")
+                              : translations.selectMonth ?? "Select Months"}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          className="w-full overflow-auto max-h-64"
+                          style={{ scrollbarWidth: "none" }}
+                        >
+                          <DropdownMenuItem
+                            disabled
+                            className="text-xs text-muted-foreground"
+                          >
+                            Filter by Months
+                          </DropdownMenuItem>
+                          {seasonOptions[activeLang].map(month => (
+                            <DropdownMenuItem
+                              key={month.value}
+                              onClick={() => {
+                                let updated
+                                if (selectedMonths.includes(month.value)) {
+                                  updated = selectedMonths.filter(
+                                    m => m !== month.value
+                                  )
+                                } else {
+                                  updated = [...selectedMonths, month.value]
+                                }
+                                setSelectedMonths(updated)
+                                // Update store for both languages
+                                setTranslationField(
+                                  "foodData",
+                                  "en",
+                                  "season",
+                                  updated
+                                )
+                                // Map to French
+                                const frMonths = updated.map(enMonth => {
+                                  const found = seasonSyncMap.find(
+                                    m => m.en === enMonth
+                                  )
+                                  return found ? found.fr : enMonth
+                                })
+                                setTranslationField(
+                                  "foodData",
+                                  "fr",
+                                  "season",
+                                  frMonths
+                                )
+                                // Update form field
+                                field.onChange(updated)
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedMonths.includes(month.value)}
+                                readOnly
+                                className="mr-2"
+                              />
+                              {month.label}
+                            </DropdownMenuItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
