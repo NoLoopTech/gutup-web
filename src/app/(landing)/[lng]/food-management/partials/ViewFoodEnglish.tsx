@@ -11,6 +11,13 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -117,6 +124,21 @@ const FoodSchema = z.object({
     }
   )
 })
+
+const seasonSyncMap = [
+  { en: "January", fr: "Janvier" },
+  { en: "February", fr: "Février" },
+  { en: "March", fr: "Mars" },
+  { en: "April", fr: "Avril" },
+  { en: "May", fr: "Mai" },
+  { en: "June", fr: "Juin" },
+  { en: "July", fr: "Juillet" },
+  { en: "August", fr: "Août" },
+  { en: "September", fr: "Septembre" },
+  { en: "October", fr: "Octobre" },
+  { en: "November", fr: "Novembre" },
+  { en: "December", fr: "Décembre" }
+]
 
 export default function ViewFoodEnglish({
   selectionRef,
@@ -397,28 +419,81 @@ export default function ViewFoodEnglish({
                       Months
                     </FormLabel>
                     <FormControl>
-                      <Select
-                        onValueChange={value => {
-                          field.onChange(value)
-                          handleSelectSync("season", value, "en")
-                        }}
-                        value={
-                          foodDetails?.seasons && foodDetails.seasons.length > 0
-                            ? foodDetails.seasons[0].season
-                            : field.value
-                        }
-                      >
-                        <SelectTrigger className="w-full mt-1">
-                          <SelectValue placeholder="Select Season" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {seasons.map((option: Option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={`overflow-x-auto overflow-y-hidden justify-between w-full mt-1 ${
+                              (foodDetails?.seasons?.length ?? 0) === 0
+                                ? "text-gray-500 font-normal hover:text-gray-500"
+                                : ""
+                            }`}
+                            style={{ scrollbarWidth: "none" }}
+                          >
+                            {(foodDetails?.seasons?.length ?? 0) > 0
+                              ? foodDetails?.seasons
+                                  ?.map(s => s.season)
+                                  .join(", ")
+                              : "Select Months"}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          className="w-full overflow-auto max-h-64"
+                          style={{ scrollbarWidth: "none" }}
+                        >
+                          <DropdownMenuItem
+                            disabled
+                            className="text-xs text-muted-foreground"
+                          >
+                            Filter by Months
+                          </DropdownMenuItem>
+                          {seasons.map(month => (
+                            <DropdownMenuItem
+                              key={month.value}
+                              onClick={() => {
+                                let updated: string[] =
+                                  foodDetails?.seasons?.map(s => s.season) ?? []
+                                if (updated.includes(month.value)) {
+                                  updated = updated.filter(
+                                    m => m !== month.value
+                                  )
+                                } else {
+                                  updated = [...updated, month.value]
+                                }
+                                // Use seasonSyncMap from top-level
+                                const frMonths = updated.map(enMonth => {
+                                  const found = seasonSyncMap.find(
+                                    m => m.en === enMonth
+                                  )
+                                  return found ? found.fr : enMonth
+                                })
+                                updateEditedData(
+                                  "seasons",
+                                  updated.map((enMonth, idx) => ({
+                                    season: enMonth,
+                                    seasonFR: frMonths[idx],
+                                    foodId:
+                                      foodDetails?.seasons?.[0]?.foodId ?? 0
+                                  }))
+                                )
+                                field.onChange(updated)
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={
+                                  foodDetails?.seasons
+                                    ?.map(s => s.season)
+                                    .includes(month.value) ?? false
+                                }
+                                readOnly
+                                className="mr-2"
+                              />
+                              {month.label}
+                            </DropdownMenuItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
