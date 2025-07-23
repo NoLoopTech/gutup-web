@@ -55,6 +55,8 @@ export interface translationsTypes {
   summer: string
   autumn: string
   winter: string
+  maxBenefitsLimit: string
+  duplicateBenefit: string
 
   required: string
   mustbeatleast2characters: string
@@ -125,6 +127,8 @@ export const defaultTranslations: translationsTypes = {
   summer: "",
   autumn: "",
   winter: "",
+  maxBenefitsLimit: "",
+  duplicateBenefit: "",
 
   required: "",
   mustbeatleast2characters: "",
