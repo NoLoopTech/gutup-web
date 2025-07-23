@@ -132,11 +132,17 @@ export default function ViewFoodFrench({
 
   useEffect(() => {
     if (foodDetails) {
+      // Find the French equivalent of the country
+      const countryFr =
+        countries.find(c => c.value === foodDetails.country)?.labelFr ??
+        foodDetails.country ??
+        ""
+      
       setFormData({
         name: foodDetails.nameFR || "",
         category: foodDetails.categoryFR || "",
         season: foodDetails.seasons?.[0]?.seasonFR || "",
-        country: foodDetails.country || "",
+        country: countryFr,
         fiber: foodDetails.attributes?.fiber?.toString() || "",
         proteins: foodDetails.attributes?.proteins?.toString() || "",
         vitamins: foodDetails.attributes?.vitaminsFR || "",
@@ -149,7 +155,7 @@ export default function ViewFoodFrench({
             .filter(Boolean) || []
       })
     }
-  }, [foodDetails])
+  }, [foodDetails, countries])
 
   const handleInputChange = (field: string, value: string): void => {
     setFormData(prev => ({ ...prev, [field]: value }))
