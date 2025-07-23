@@ -179,6 +179,53 @@ export default function AddFoodPopUpContent({
     form.reset(foodData[activeLang])
   }, [activeLang, form.reset, foodData])
 
+  // Helper function to check for duplicate benefits
+  const isDuplicateBenefit = (
+    benefit: string,
+    lang: "en" | "fr" = "en"
+  ): boolean => {
+    const currentEnBenefits = foodData.en.benefits || []
+    const currentFrBenefits = foodData.fr.benefits || []
+
+    if (lang === "en") {
+      return currentEnBenefits.some(
+        (b: string) => b.toLowerCase() === benefit.toLowerCase()
+      )
+    } else {
+      return currentFrBenefits.some(
+        (b: string) => b.toLowerCase() === benefit.toLowerCase()
+      )
+    }
+  }
+
+  // Handle selecting suggestion benefits
+  const handleSelectBenefit = (benefit: {
+    tagName: string
+    tagNameFr: string
+  }): void => {
+    // Check for duplicates before adding
+    if (
+      isDuplicateBenefit(benefit.tagName, "en") ||
+      isDuplicateBenefit(benefit.tagNameFr, "fr")
+    ) {
+      toast.error("Already in the list")
+      return
+    }
+
+    // Add both EN and FR at the same index
+    const currentEnBenefits = foodData.en.benefits || []
+    const currentFrBenefits = foodData.fr.benefits || []
+
+    const enBenefits = [...currentEnBenefits, benefit.tagName]
+    const frBenefits = [...currentFrBenefits, benefit.tagNameFr]
+
+    setTranslationField("foodData", "en", "benefits", enBenefits)
+    setTranslationField("foodData", "fr", "benefits", frBenefits)
+    form.setValue("benefits", activeLang === "en" ? enBenefits : frBenefits)
+    // Trigger validation
+    void form.trigger("benefits")
+  }
+
   // Input change handler for fields that need translation
   const handleInputChange = (
     fieldName:
@@ -570,8 +617,21 @@ export default function AddFoodPopUpContent({
   const handleAddNewBenefit = async (
     benefit: string
   ): Promise<{ tagName: string; tagNameFr: string }> => {
+    // Check for duplicates before adding
+    if (isDuplicateBenefit(benefit)) {
+      toast.error("Already in the list")
+      throw new Error("Duplicate benefit")
+    }
+    
     // Translate to French
     const tagNameFr = await translateText(benefit)
+    
+    // Also check if the translated version is a duplicate
+    if (isDuplicateBenefit(tagNameFr, "fr")) {
+      toast.error("Already in the list")
+      throw new Error("Duplicate benefit")
+    }
+    
     return { tagName: benefit, tagNameFr }
   }
 
@@ -913,33 +973,7 @@ export default function AddFoodPopUpContent({
                       activeLang={activeLang}
                       onAddNewBenefit={handleAddNewBenefit}
                       onSelectSuggestion={benefit => {
-                        // Add both EN and FR at the same index
-                        const enBenefits = [
-                          ...(foodData.en.benefits || []),
-                          benefit.tagName
-                        ]
-                        const frBenefits = [
-                          ...(foodData.fr.benefits || []),
-                          benefit.tagNameFr
-                        ]
-                        setTranslationField(
-                          "foodData",
-                          "en",
-                          "benefits",
-                          enBenefits
-                        )
-                        setTranslationField(
-                          "foodData",
-                          "fr",
-                          "benefits",
-                          frBenefits
-                        )
-                        form.setValue(
-                          "benefits",
-                          activeLang === "en" ? enBenefits : frBenefits
-                        )
-                        // Trigger validation
-                        void form.trigger("benefits")
+                        handleSelectBenefit(benefit)
                       }}
                       onRemoveBenefit={removed => {
                         // Remove both at the same index
