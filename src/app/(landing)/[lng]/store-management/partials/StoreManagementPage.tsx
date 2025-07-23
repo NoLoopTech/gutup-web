@@ -349,6 +349,41 @@ export default function StoreManagementPage({
     }
   }
 
+  const handleToggleShopStatus = async (
+    store: StoreManagementDataType
+  ): Promise<void> => {
+    try {
+      setIsLoading(true)
+      const newStatus = !store.shopStatus
+      if (typeof store.id === "number") {
+        const transformedData = transformStoreDataToApiRequest(
+          { ...store, shopStatus: newStatus },
+          activeLang,
+          allowMultiLang
+        )
+        const requestBody = {
+          ...transformedData,
+          allowMultiLang
+        }
+        const response = await updateStoreById(token, store.id, requestBody)
+        if (response?.data) {
+          toast.success(
+            `Store status changed to ${newStatus ? "Active" : "Inactive"}`
+          )
+          await getStores()
+        } else {
+          toast.error("Failed to change store status")
+        }
+      } else {
+        toast.error("Invalid store ID")
+      }
+    } catch (error) {
+      toast.error("System error. Please try again later.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const columns: Array<Column<StoreManagementDataType>> = [
     {
       accessor: "storeName",
@@ -450,6 +485,13 @@ export default function StoreManagementPage({
               }}
             >
               Delete
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                void handleToggleShopStatus(row)
+              }}
+            >
+              {row.shopStatus ? "Inactive" : "Active"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
