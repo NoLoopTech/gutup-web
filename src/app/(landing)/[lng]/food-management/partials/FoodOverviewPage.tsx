@@ -223,15 +223,16 @@ export default function FoodOverviewPage(): React.ReactElement {
   const filteredFoods = useMemo(() => {
     return foods.filter(food => {
       const nameMatch = food.name
-        .toLowerCase()
-        .includes(debouncedSearch.toLowerCase())
+        ? food.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+        : debouncedSearch === ""
       const categoryMatch = category ? food.category === category : true
 
       // FIX: Check seasons array for selected months
       const seasonMatch = selectedMonths.length
         ? Array.isArray(food.seasons)
-          ? food.seasons.some(seasonObj =>
-              selectedMonths.includes(seasonObj.season)
+          ? food.seasons.some(
+              seasonObj =>
+                seasonObj?.season && selectedMonths.includes(seasonObj.season)
             )
           : food.season
           ? selectedMonths.includes(food.season)
@@ -239,20 +240,48 @@ export default function FoodOverviewPage(): React.ReactElement {
         : true
 
       let nutritionalMatch = true
-      if (nutritional) {
+      if (nutritional && food.attributes) {
         // Check the selected nutritional value and apply filter logic
-        if (nutritional === "fiber" && food.attributes.fiber <= 0)
+        if (
+          nutritional === "fiber" &&
+          (food.attributes.fiber === null ||
+            food.attributes.fiber === undefined ||
+            food.attributes.fiber <= 0)
+        )
           nutritionalMatch = false
-        if (nutritional === "proteins" && food.attributes.proteins <= 0)
+        if (
+          nutritional === "proteins" &&
+          (food.attributes.proteins === null ||
+            food.attributes.proteins === undefined ||
+            food.attributes.proteins <= 0)
+        )
           nutritionalMatch = false
-        if (nutritional === "vitamins" && !food.attributes.vitamins)
+        if (
+          nutritional === "vitamins" &&
+          (!food.attributes.vitamins || food.attributes.vitamins.trim() === "")
+        )
           nutritionalMatch = false
-        if (nutritional === "minerals" && !food.attributes.minerals)
+        if (
+          nutritional === "minerals" &&
+          (!food.attributes.minerals || food.attributes.minerals.trim() === "")
+        )
           nutritionalMatch = false
-        if (nutritional === "fat" && food.attributes.fat <= 0)
+        if (
+          nutritional === "fat" &&
+          (food.attributes.fat === null ||
+            food.attributes.fat === undefined ||
+            food.attributes.fat <= 0)
+        )
           nutritionalMatch = false
-        if (nutritional === "sugar" && food.attributes.sugar <= 0)
+        if (
+          nutritional === "sugar" &&
+          (food.attributes.sugar === null ||
+            food.attributes.sugar === undefined ||
+            food.attributes.sugar <= 0)
+        )
           nutritionalMatch = false
+      } else if (nutritional && !food.attributes) {
+        nutritionalMatch = false
       }
 
       return nameMatch && categoryMatch && nutritionalMatch && seasonMatch
@@ -273,25 +302,37 @@ export default function FoodOverviewPage(): React.ReactElement {
     {
       accessor: "image",
       header: "Media",
-      cell: row => (
-        <Image
-          src={row.image}
-          alt={row.name}
-          width={40}
-          height={40}
-          className="rounded"
-        />
-      )
+      cell: row =>
+        row.image ? (
+          <Image
+            src={row.image}
+            alt={row.name || "Food image"}
+            width={40}
+            height={40}
+            className="rounded"
+            onError={e => {
+              const target = e.target as HTMLImageElement
+              // target.src = "/images/placeholder-food.png"
+            }}
+          />
+        ) : (
+          <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
+            No Image
+          </div>
+        )
     },
     {
       accessor: "name",
-      header: "Name"
+      header: "Name",
+      cell: row => <span>{row.name || "Unnamed Food"}</span>
     },
     {
       accessor: "category",
       header: "Category",
       className: "w-40",
-      cell: row => <Badge variant={"outline"}>{row.category}</Badge>
+      cell: row => (
+        <Badge variant={"outline"}>{row.category || "No Category"}</Badge>
+      )
     },
     {
       accessor: "healthBenefits",
@@ -337,7 +378,7 @@ export default function FoodOverviewPage(): React.ReactElement {
           {Array.isArray(row.seasons) && row.seasons.length > 0 ? (
             row.seasons.map((seasonObj, idx) => (
               <Badge key={idx} variant="outline">
-                {seasonObj.season || seasonObj.season}
+                {seasonObj?.season || "Unknown"}
               </Badge>
             ))
           ) : (
@@ -350,31 +391,47 @@ export default function FoodOverviewPage(): React.ReactElement {
       accessor: "recipesCount",
       header: "Recipes",
       cell: row => (
-        <Label className="text-gray-500">{row.recipesCount} Available</Label>
+        <Label className="text-gray-500">
+          {row.recipesCount !== null && row.recipesCount !== undefined
+            ? `${row.recipesCount} Available`
+            : "0 Available"}
+        </Label>
       )
     },
     {
       accessor: "createdAt",
       header: "Date Added",
-      cell: row => dayjs(row.createdAt).format("DD/MM/YYYY")
+      cell: row => {
+        if (!row.createdAt)
+          return <span className="text-gray-500">No date</span>
+        const date = dayjs(row.createdAt)
+        return date.isValid() ? (
+          date.format("DD/MM/YYYY")
+        ) : (
+          <span className="text-gray-500">Invalid date</span>
+        )
+      }
     },
     {
       accessor: "status",
       header: "Status",
       className: "w-28",
-      cell: row => (
-        <Badge
-          className={
-            row.status === "Active"
-              ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700"
-              : row.status === "Incomplete"
-              ? "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
-              : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700"
-          }
-        >
-          {row.status}
-        </Badge>
-      )
+      cell: row => {
+        const status = row.status || "Unknown"
+        return (
+          <Badge
+            className={
+              status === "Active"
+                ? "bg-[#B2FFAB] text-green-700 hover:bg-green-200 border border-green-700"
+                : status === "Incomplete"
+                ? "bg-yellow-200 text-yellow-800 hover:bg-yellow-100 border border-yellow-700"
+                : "bg-red-300 text-red-700 hover:bg-red-200 border border-red-700"
+            }
+          >
+            {status}
+          </Badge>
+        )
+      }
     },
     {
       id: "actions",

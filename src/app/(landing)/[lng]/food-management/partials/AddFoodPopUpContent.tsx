@@ -122,10 +122,11 @@ export default function AddFoodPopUpContent({
     country: z.string().nonempty(translations.pleaseselectacountry),
     benefits: z
       .array(z.string())
+      .min(1, { message: translations.pleaseenteratleastonebenefit })
       .refine(arr => arr.some(item => item.trim().length > 0), {
         message: translations.pleaseenteratleastonebenefit
       }),
-    image: z.string().optional(),
+    image: z.string().nonempty(translations.required),
     selection: z.string().refine(
       val => {
         const plainText = val.replace(/<(.|\n)*?>/g, "").trim() // remove all tags
@@ -328,6 +329,8 @@ export default function AddFoodPopUpContent({
   function handleBenefitsChange(vals: string[]): void {
     form.setValue("benefits", vals)
     setTranslationField("foodData", activeLang, "benefits", vals)
+    // Trigger validation
+    void form.trigger("benefits")
   }
 
   async function handleBenefitsBlur(): Promise<void> {
@@ -898,85 +901,96 @@ export default function AddFoodPopUpContent({
               control={form.control}
               name="benefits"
               render={({ field }) => (
-                <LableInput
-                  title={translations.healthBenefits}
-                  placeholder={translations.addUpTo6FoodBenefitsOrFewer}
-                  benefits={field.value || []}
-                  name="benefits"
-                  width="w-[32%]"
-                  suggestions={benefitTags}
-                  activeLang={activeLang}
-                  onAddNewBenefit={handleAddNewBenefit}
-                  onSelectSuggestion={benefit => {
-                    // Add both EN and FR at the same index
-                    const enBenefits = [
-                      ...(foodData.en.benefits || []),
-                      benefit.tagName
-                    ]
-                    const frBenefits = [
-                      ...(foodData.fr.benefits || []),
-                      benefit.tagNameFr
-                    ]
-                    setTranslationField(
-                      "foodData",
-                      "en",
-                      "benefits",
-                      enBenefits
-                    )
-                    setTranslationField(
-                      "foodData",
-                      "fr",
-                      "benefits",
-                      frBenefits
-                    )
-                    form.setValue(
-                      "benefits",
-                      activeLang === "en" ? enBenefits : frBenefits
-                    )
-                  }}
-                  onRemoveBenefit={removed => {
-                    // Remove both at the same index
-                    const idxEn = (foodData.en.benefits || []).indexOf(
-                      removed.tagName
-                    )
-                    const idxFr = (foodData.fr.benefits || []).indexOf(
-                      removed.tagNameFr
-                    )
-                    const enBenefits = [...(foodData.en.benefits || [])]
-                    const frBenefits = [...(foodData.fr.benefits || [])]
-                    if (idxEn > -1) {
-                      enBenefits.splice(idxEn, 1)
-                      frBenefits.splice(idxEn, 1)
-                    } else if (idxFr > -1) {
-                      enBenefits.splice(idxFr, 1)
-                      frBenefits.splice(idxFr, 1)
-                    }
-                    setTranslationField(
-                      "foodData",
-                      "en",
-                      "benefits",
-                      enBenefits
-                    )
-                    setTranslationField(
-                      "foodData",
-                      "fr",
-                      "benefits",
-                      frBenefits
-                    )
-                    form.setValue(
-                      "benefits",
-                      activeLang === "en" ? enBenefits : frBenefits
-                    )
-                  }}
-                  onChange={(newArr: string[]) => {
-                    handleBenefitsChange(newArr)
-                    field.onChange(newArr)
-                  }}
-                  onBlur={() => {
-                    void handleBenefitsBlur()
-                    field.onBlur()
-                  }}
-                />
+                <FormItem>
+                  <FormControl>
+                    <LableInput
+                      title={translations.healthBenefits}
+                      placeholder={translations.addUpTo6FoodBenefitsOrFewer}
+                      benefits={field.value || []}
+                      name="benefits"
+                      width="w-[32%]"
+                      suggestions={benefitTags}
+                      activeLang={activeLang}
+                      onAddNewBenefit={handleAddNewBenefit}
+                      onSelectSuggestion={benefit => {
+                        // Add both EN and FR at the same index
+                        const enBenefits = [
+                          ...(foodData.en.benefits || []),
+                          benefit.tagName
+                        ]
+                        const frBenefits = [
+                          ...(foodData.fr.benefits || []),
+                          benefit.tagNameFr
+                        ]
+                        setTranslationField(
+                          "foodData",
+                          "en",
+                          "benefits",
+                          enBenefits
+                        )
+                        setTranslationField(
+                          "foodData",
+                          "fr",
+                          "benefits",
+                          frBenefits
+                        )
+                        form.setValue(
+                          "benefits",
+                          activeLang === "en" ? enBenefits : frBenefits
+                        )
+                        // Trigger validation
+                        void form.trigger("benefits")
+                      }}
+                      onRemoveBenefit={removed => {
+                        // Remove both at the same index
+                        const idxEn = (foodData.en.benefits || []).indexOf(
+                          removed.tagName
+                        )
+                        const idxFr = (foodData.fr.benefits || []).indexOf(
+                          removed.tagNameFr
+                        )
+                        const enBenefits = [...(foodData.en.benefits || [])]
+                        const frBenefits = [...(foodData.fr.benefits || [])]
+                        if (idxEn > -1) {
+                          enBenefits.splice(idxEn, 1)
+                          frBenefits.splice(idxEn, 1)
+                        } else if (idxFr > -1) {
+                          enBenefits.splice(idxFr, 1)
+                          frBenefits.splice(idxFr, 1)
+                        }
+                        setTranslationField(
+                          "foodData",
+                          "en",
+                          "benefits",
+                          enBenefits
+                        )
+                        setTranslationField(
+                          "foodData",
+                          "fr",
+                          "benefits",
+                          frBenefits
+                        )
+                        form.setValue(
+                          "benefits",
+                          activeLang === "en" ? enBenefits : frBenefits
+                        )
+                        // Trigger validation
+                        void form.trigger("benefits")
+                      }}
+                      onChange={(newArr: string[]) => {
+                        handleBenefitsChange(newArr)
+                        field.onChange(newArr)
+                        // Trigger validation
+                        void form.trigger("benefits")
+                      }}
+                      onBlur={() => {
+                        void handleBenefitsBlur()
+                        field.onBlur()
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
             />
           </div>
