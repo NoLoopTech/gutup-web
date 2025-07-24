@@ -224,3 +224,9 @@ export interface AddStoreRequestBody {
   storeImage: string
   ingAndCatData: IngAndCatDataType[]
 }
+
+// Add interface for Shop Status Data Type
+export interface shopStatusDataType {
+  id?: number
+  shopStatus: boolean
+}

@@ -1,5 +1,8 @@
 import axiosInstance from "@/query/axios.instance"
-import type { AddStoreRequestBody } from "@/types/storeTypes"
+import type {
+  AddStoreRequestBody,
+  shopStatusDataType
+} from "@/types/storeTypes"
 
 // get store categories
 export const getStoreCategories = async (): Promise<any> => {
@@ -88,6 +91,26 @@ export const updateStoreById = async (
     const response = await axiosInstance.patch(
       `/store/${storeId}`,
       requestBody,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    )
+    return response
+  } catch (error) {
+    return error
+  }
+}
+
+// update store status by id
+export const updateStoreStatusById = async (
+  token: string,
+  storeId: number,
+  shopStatusData: shopStatusDataType
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.patch(
+      `/store/${storeId}`,
+      { shopStatus: shopStatusData.shopStatus },
       {
         headers: { Authorization: `Bearer ${token}` }
       }

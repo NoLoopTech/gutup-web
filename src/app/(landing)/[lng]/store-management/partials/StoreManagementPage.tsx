@@ -23,7 +23,8 @@ import {
   AddNewStore,
   getAllStores,
   deleteStoreById,
-  updateStoreById
+  updateStoreById,
+  updateStoreStatusById
 } from "@/app/api/store"
 import { Badge } from "@/components/ui/badge"
 import AddStorePopUp from "./AddStorePopUp"
@@ -33,7 +34,8 @@ import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import {
   type translationsTypes,
   defaultTranslations,
-  type StoreManagementDataType
+  type StoreManagementDataType,
+  type shopStatusDataType
 } from "@/types/storeTypes"
 import { toast } from "sonner"
 import { loadLanguage } from "@/../../src/i18n/locales"
@@ -312,8 +314,6 @@ export default function StoreManagementPage({
 
     try {
       setIsLoading(true)
-
-      // Get current store and build update request
       const transformedData = transformStoreDataToApiRequest(
         storeData,
         activeLang,
@@ -350,22 +350,27 @@ export default function StoreManagementPage({
   }
 
   const handleToggleShopStatus = async (
-    store: StoreManagementDataType
+    store: shopStatusDataType
   ): Promise<void> => {
     try {
       setIsLoading(true)
-      const newStatus = !store.shopStatus
       if (typeof store.id === "number") {
-        const transformedData = transformStoreDataToApiRequest(
-          { ...store, shopStatus: newStatus },
-          activeLang,
-          allowMultiLang
-        )
-        const requestBody = {
-          ...transformedData,
-          allowMultiLang
+        const newStatus = !store.shopStatus
+        const fullStore = stores.find(s => s.id === store.id)
+        if (!fullStore) {
+          toast.error("Store not found")
+          setIsLoading(false)
+          return
         }
-        const response = await updateStoreById(token, store.id, requestBody)
+        const requestBody = {
+          ...fullStore,
+          shopStatus: newStatus
+        }
+        const response = await updateStoreStatusById(
+          token,
+          store.id,
+          requestBody
+        )
         if (response?.data) {
           toast.success(
             `Store status changed to ${newStatus ? "Active" : "Inactive"}`
@@ -472,7 +477,10 @@ export default function StoreManagementPage({
           <DropdownMenuContent align="end" className="w-32">
             <DropdownMenuItem
               onClick={() => {
-                void handleToggleShopStatus(row)
+                void handleToggleShopStatus({
+                  id: row.id,
+                  shopStatus: row.shopStatus
+                })
               }}
             >
               {row.shopStatus ? "Inactive" : "Active"}
