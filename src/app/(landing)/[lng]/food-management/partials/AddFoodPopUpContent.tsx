@@ -756,7 +756,7 @@ export default function AddFoodPopUpContent({
                 name="season"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="block mb-1 text-black">
+                    <FormLabel className="block text-black">
                       {translations.month}
                     </FormLabel>
                     <FormControl>

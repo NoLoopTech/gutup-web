@@ -254,9 +254,9 @@ export default function ViewFoodFrench({
   return (
     <TabsContent value="french">
       {/* French Tab Content */}
-      <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 mb-5 sm:grid-cols-2 md:grid-cols-3">
         <div>
-          <Label className="block mb-1 text-black">Nom</Label>
+          <Label className="block mb-2 text-black">Nom</Label>
           <Input
             placeholder="Entrez le nom de l'aliment"
             value={formData.name}
@@ -266,14 +266,14 @@ export default function ViewFoodFrench({
           />
         </div>
         <div>
-          <Label className="block mb-1 text-black">Catégorie</Label>
+          <Label className="block mb-2 text-black">Catégorie</Label>
           <Select
             value={formData.category}
             onValueChange={value => {
               handleSelectChange("category", value)
             }}
           >
-            <SelectTrigger className="w-full mt-1">
+            <SelectTrigger className="w-full mt-2">
               <SelectValue placeholder="Sélectionner une catégorie" />
             </SelectTrigger>
             <SelectContent>
@@ -289,14 +289,14 @@ export default function ViewFoodFrench({
           </Select>
         </div>
         <div>
-          <Label className="block mb-1 text-black">Mois</Label>
+          <Label className="block mb-2 text-black">Mois</Label>
           <Select
             value={formData.season}
             onValueChange={value => {
               handleSelectChange("season", value)
             }}
           >
-            <SelectTrigger className="w-full mt-1">
+            <SelectTrigger className="w-full mt-2">
               <SelectValue placeholder="Sélectionner un mois" />
             </SelectTrigger>
             <SelectContent>
@@ -312,14 +312,14 @@ export default function ViewFoodFrench({
           </Select>
         </div>
         <div>
-          <Label className="block mb-1 text-black">Pays</Label>
+          <Label className="block mb-2 text-black">Pays</Label>
           <Select
             value={formData.country}
             onValueChange={value => {
               handleSelectChange("country", value)
             }}
           >
-            <SelectTrigger className="w-full mt-1">
+            <SelectTrigger className="w-full mt-2">
               <SelectValue placeholder="Sélectionner un pays" />
             </SelectTrigger>
             <SelectContent>
@@ -343,7 +343,7 @@ export default function ViewFoodFrench({
       </h3>
       <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
         <div>
-          <Label className="block mb-1 text-black">Fibres</Label>
+          <Label className="block mb-2 text-black">Fibres</Label>
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.fiber}
@@ -353,7 +353,7 @@ export default function ViewFoodFrench({
           />
         </div>
         <div>
-          <Label className="block mb-1 text-black">Protéines</Label>
+          <Label className="block mb-2 text-black">Protéines</Label>
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.proteins}
@@ -363,7 +363,7 @@ export default function ViewFoodFrench({
           />
         </div>
         <div>
-          <Label className="block mb-1 text-black">Vitamines</Label>
+          <Label className="block mb-2 text-black">Vitamines</Label>
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.vitamins}
@@ -373,7 +373,7 @@ export default function ViewFoodFrench({
           />
         </div>
         <div>
-          <Label className="block mb-1 text-black">Minéraux</Label>
+          <Label className="block mb-2 text-black">Minéraux</Label>
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.minerals}
@@ -383,7 +383,7 @@ export default function ViewFoodFrench({
           />
         </div>
         <div>
-          <Label className="block mb-1 text-black">Graisses</Label>
+          <Label className="block mb-2 text-black">Graisses</Label>
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.fat}
