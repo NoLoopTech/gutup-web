@@ -39,13 +39,31 @@ interface Option {
 const concerns: Record<string, Option[]> = {
   en: [
     { value: "stress", label: "Stress" },
-    { value: "anxiety", label: "Anxiety" },
-    { value: "depression", label: "Depression" }
+    { value: "fatigue", label: "Fatigue" },
+    { value: "sleep", label: "Sleep" },
+    { value: "mood", label: "Mood" },
+    { value: "focus", label: "Focus" },
+    { value: "digestion", label: "Digestion" },
+    { value: "weight", label: "Weight" },
+    { value: "immunity", label: "Immunity" },
+    { value: "skin", label: "Skin" },
+    { value: "bones", label: "Bones" },
+    { value: "performance", label: "Performance" },
+    { value: "aging", label: "Aging" }
   ],
   fr: [
     { value: "stresser", label: "Stresser" },
-    { value: "anxiété", label: "Anxiété" },
-    { value: "dépression", label: "Dépression" }
+    { value: "fatigue", label: "Fatigue" },
+    { value: "sommeil", label: "Sommeil" },
+    { value: "humeur", label: "Humeur" },
+    { value: "concentration", label: "Concentration" },
+    { value: "digestion", label: "Digestion" },
+    { value: "poids", label: "Poids" },
+    { value: "immunité", label: "Immunité" },
+    { value: "peau", label: "Peau" },
+    { value: "os", label: "Os" },
+    { value: "performance", label: "Performance" },
+    { value: "vieillissement", label: "Vieillissement" }
   ]
 }
 

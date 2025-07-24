@@ -381,18 +381,20 @@ export default function DailyTipsPage({
         const basicData = updatedState.basicLayoutData
         const basicForm: EditDailyTipTypes["basicForm"] = {}
 
+        console.log("basicData", basicData)
+
         if ("subTitleOne" in basicData.en)
           basicForm.subTitleOne = basicData.en.subTitleOne as string
         if ("subTitleOne" in basicData.fr)
           basicForm.subTitleOneFR = basicData.fr.subTitleOne as string
-        if ("subDescOne" in basicData.en)
-          basicForm.subDescOne = basicData.en.subDescOne as string
-        if ("subDescOne" in basicData.fr)
-          basicForm.subDescOneFR = basicData.fr.subDescOne as string
-        if ("subTitleTwo" in basicData.en)
-          basicForm.subTitleTwo = basicData.en.subTitleTwo as string
-        if ("subTitleTwo" in basicData.fr)
-          basicForm.subTitleTwoFR = basicData.fr.subTitleTwo as string
+        if ("subDescriptionOne" in basicData.en)
+          basicForm.subDescOne = basicData.en.subDescriptionOne as string
+        if ("subDescriptionOne" in basicData.fr)
+          basicForm.subDescOneFR = basicData.fr.subDescriptionOne as string
+        if ("subDescriptionTwo" in basicData.en)
+          basicForm.subTitleTwo = basicData.en.subDescriptionTwo as string
+        if ("subDescriptionTwo" in basicData.fr)
+          basicForm.subTitleTwoFR = basicData.fr.subDescriptionTwo as string
         if ("subDescTwo" in basicData.en)
           basicForm.subDescTwo = basicData.en.subDescTwo as string
         if ("subDescTwo" in basicData.fr)

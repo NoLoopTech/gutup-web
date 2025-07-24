@@ -3,20 +3,20 @@
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { Button } from "@/components/ui/button"
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
@@ -38,18 +38,21 @@ interface Option {
 // Mood options per language
 const moodOptions: Record<string, Option[]> = {
   en: [
-    { value: "very happy", label: "Very Happy" },
-    { value: "happy", label: "Happy" },
-    { value: "angry", label: "Angry" },
-    { value: "sad", label: "Sad" }
+    { value: "VERY_HAPPY", label: "Very Happy" },
+    { value: "HAPPY", label: "Happy" },
+    { value: "NEUTRAL", label: "Neutral" },
+    { value: " SAD", label: "Sad" },
+    { value: " VERY_SAD", label: "Very Sad" }
   ],
   fr: [
-    { value: "very happy", label: "Très heureux" },
-    { value: "happy", label: "Heureuse" },
-    { value: "angry", label: "En colère" },
-    { value: "sad", label: "Triste" }
+    { value: "VERY_HAPPY", label: "Très heureux" },
+    { value: "HAPPY", label: "Heureuse" },
+    { value: "NEUTRAL", label: "Neutre" },
+    { value: "SAD", label: "Triste" },
+    { value: "VERY_SAD", label: "Très triste" }
   ]
 }
+
 export default function RecipeTab({
   translations,
   onClose,

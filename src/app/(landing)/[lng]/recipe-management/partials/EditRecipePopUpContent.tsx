@@ -39,6 +39,8 @@ import { getAllFoods } from "@/app/api/foods"
 import LableInput from "@/components/Shared/LableInput/LableInput"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { useUpdateRecipeStore } from "@/stores/useUpdateRecipeStore"
+import { useGetAllTags } from "@/query/hooks/useGetAllTags"
+import { TagTypes } from "./AddRecipePopUpContent"
 
 interface Food {
   id: number
@@ -59,20 +61,6 @@ interface Option {
   label: string
 }
 
-const categoryOptions: Record<string, Option[]> = {
-  en: [
-    { value: "fruits", label: "Fruits" },
-    { value: "vegetables", label: "Vegetables" },
-    { value: "dairy", label: "Dairy" },
-    { value: "grains", label: "Grains" }
-  ],
-  fr: [
-    { value: "fruits", label: "Fruits" },
-    { value: "vegetables", label: "Légumes" },
-    { value: "dairy", label: "Produits laitiers" },
-    { value: "grains", label: "Céréales" }
-  ]
-}
 const seasonOptions: Record<string, Option[]> = {
   en: [
     { value: "spring", label: "Spring" },
@@ -128,6 +116,32 @@ export default function EditRecipePopUpContent({
   const isEditorUserEdit = useRef(true)
 
   const { setUpdatedField } = useUpdateRecipeStore()
+
+  const [categoryOptions, setCategoryOptions] = useState<
+    Record<string, Option[]>
+  >({
+    en: [],
+    fr: []
+  })
+
+  const { tags } = useGetAllTags(token, "Type") as { tags: TagTypes[] }
+
+  useEffect(() => {
+    if (tags) {
+      const tagsOptions = {
+        en: tags.map((tag: TagTypes) => ({
+          value: tag.tagName,
+          label: tag.tagName
+        })),
+        fr: tags.map((tag: TagTypes) => ({
+          value: tag.tagNameFr,
+          label: tag.tagNameFr
+        }))
+      }
+
+      setCategoryOptions(tagsOptions)
+    }
+  }, [tags])
 
   useEffect(() => {
     // Initialize the benefits state with data from translationData store

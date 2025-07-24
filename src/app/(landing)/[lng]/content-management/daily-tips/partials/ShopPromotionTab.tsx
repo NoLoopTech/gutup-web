@@ -40,6 +40,8 @@ import { Trash } from "lucide-react"
 import { getAllFoods } from "@/app/api/foods"
 import LocationDropdown from "@/components/Shared/dropdown/LocationDropdown"
 import { getLocationDetails } from "@/app/api/location"
+import { useGetShopCategorys } from "@/query/hooks/useGetShopCategorys"
+import { StoreCatogeryTypes } from "../../moods/partials/FoodTab"
 
 interface Food {
   id: number
@@ -80,13 +82,31 @@ type FieldNames =
 const reason: Record<string, Option[]> = {
   en: [
     { value: "stress", label: "Stress" },
-    { value: "anxiety", label: "Anxiety" },
-    { value: "depression", label: "Depression" }
+    { value: "fatigue", label: "Fatigue" },
+    { value: "sleep", label: "Sleep" },
+    { value: "mood", label: "Mood" },
+    { value: "focus", label: "Focus" },
+    { value: "digestion", label: "Digestion" },
+    { value: "weight", label: "Weight" },
+    { value: "immunity", label: "Immunity" },
+    { value: "skin", label: "Skin" },
+    { value: "bones", label: "Bones" },
+    { value: "performance", label: "Performance" },
+    { value: "aging", label: "Aging" }
   ],
   fr: [
     { value: "stresser", label: "Stresser" },
-    { value: "anxiété", label: "Anxiété" },
-    { value: "dépression", label: "Dépression" }
+    { value: "fatigue", label: "Fatigue" },
+    { value: "sommeil", label: "Sommeil" },
+    { value: "humeur", label: "Humeur" },
+    { value: "concentration", label: "Concentration" },
+    { value: "digestion", label: "Digestion" },
+    { value: "poids", label: "Poids" },
+    { value: "immunité", label: "Immunité" },
+    { value: "peau", label: "Peau" },
+    { value: "os", label: "Os" },
+    { value: "performance", label: "Performance" },
+    { value: "vieillissement", label: "Vieillissement" }
   ]
 }
 
@@ -122,6 +142,31 @@ export default function ShopPromotionTab({
   const [availData, setAvailData] = useState<AvailableItem[]>([])
   const [selectedLocationName, setSelectedLocationName] =
     useState<OptionType | null>(null)
+  const [shopcategory, setShopcategory] = useState<Record<string, Option[]>>({
+    en: [],
+    fr: []
+  })
+
+  const { shopCategorys } = useGetShopCategorys() as {
+    shopCategorys: StoreCatogeryTypes[]
+  }
+
+  useEffect(() => {
+    if (shopCategorys) {
+      const tagsOptions = {
+        en: shopCategorys.map((tag: StoreCatogeryTypes) => ({
+          value: tag.TagName,
+          label: tag.TagName
+        })),
+        fr: shopCategorys.map((tag: StoreCatogeryTypes) => ({
+          value: tag.TagNameFr,
+          label: tag.TagNameFr
+        }))
+      }
+
+      setShopcategory(tagsOptions)
+    }
+  }, [shopCategorys])
 
   // fetch once on mount
   useEffect(() => {
@@ -424,6 +469,25 @@ export default function ShopPromotionTab({
     }
   }
 
+  const handleShopCategoryChange = (value: string) => {
+    form.setValue("shopCategory", value)
+    setTranslationField("shopPromotionData", activeLang, "shopCategory", value)
+
+    const current = shopcategory[activeLang]
+    const oppositeLang = activeLang === "en" ? "fr" : "en"
+    const opposite = shopcategory[oppositeLang]
+
+    const index = current.findIndex(opt => opt.value === value)
+    if (index !== -1) {
+      setTranslationField(
+        "shopPromotionData",
+        oppositeLang,
+        "shopCategory",
+        opposite[index].value
+      )
+    }
+  }
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: translationsData.shopPromotionData[activeLang]
@@ -650,7 +714,7 @@ export default function ShopPromotionTab({
               />
             </div>
 
-            <div className="flex gap-4">
+            <div className="grid grid-cols-2 gap-2">
               {/* Location */}
               <FormField
                 control={form.control}
@@ -670,24 +734,29 @@ export default function ShopPromotionTab({
                 )}
               />
 
-              {/* Category */}
+              {/* Shop Category */}
               <FormField
                 control={form.control}
                 name="shopCategory"
                 render={({ field }) => (
-                  <FormItem className="flex-1 mb-1">
+                  <FormItem>
                     <FormLabel>{translations.shopCategory}</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder={translations.enterShopCategory}
-                        {...field}
-                        onChange={e =>
-                          handleInputChange("shopCategory", e.target.value)
-                        }
-                        onBlur={() =>
-                          handleInputBlur("shopCategory", field.value)
-                        }
-                      />
+                      <Select
+                        value={field.value}
+                        onValueChange={handleShopCategoryChange}
+                      >
+                        <SelectTrigger className="mt-1 w-full">
+                          <SelectValue placeholder={"Select Category"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {shopcategory[activeLang].map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
