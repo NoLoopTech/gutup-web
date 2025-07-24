@@ -977,14 +977,17 @@ export default function AddStorePopUpContent({
   const onSubmit = async (
     data: z.infer<typeof AddStoreSchema>
   ): Promise<void> => {
-    if (onAddStore) {
-      await onAddStore()
-    } else {
-      toast(translations.formSubmittedSuccessfully, {})
+    try {
+      if (onAddStore) {
+        await onAddStore()
+      } else {
+        toast(translations.formSubmittedSuccessfully, {})
+      }
+    } catch (error) {
+      toast.error(
+        translations.formSubmissionFailed || "Form submission failed."
+      )
     }
-    // Clear session after successful submission
-    resetForm()
-    sessionStorage.removeItem("store-store")
   }
 
   return (
