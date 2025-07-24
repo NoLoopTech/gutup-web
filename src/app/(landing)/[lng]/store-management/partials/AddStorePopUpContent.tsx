@@ -546,19 +546,36 @@ export default function AddStorePopUpContent({
     },
     {
       header: translations.availabilityStatus,
-      accessor: (row: AvailableItem) => (
-        <Badge
-          className={
-            row.tags.includes("InSystem")
-              ? "bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors"
-              : "bg-gray-200 text-black text-xs px-2 py-1 rounded-md border border-gray-500 hover:bg-gray-100 transition-colors"
-          }
-        >
-          {translations[
-            row.status.toLowerCase() as keyof typeof translations
-          ] ?? row.status}
-        </Badge>
-      )
+      accessor: (row: AvailableItem) => {
+        const index = availData.findIndex(
+          item =>
+            item.ingOrCatId === row.ingOrCatId &&
+            item.type === row.type &&
+            item.name === row.name
+        )
+        return (
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={row.status === "Active"}
+              className="scale-75"
+              onCheckedChange={checked => {
+                handleToggleAvailability(index, checked)
+              }}
+            />
+            <Badge
+              className={
+                row.status === "Active"
+                  ? "bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors"
+                  : "bg-gray-200 text-black text-xs px-2 py-1 rounded-md border border-gray-500 hover:bg-gray-100 transition-colors"
+              }
+            >
+              {translations[
+                row.status.toLowerCase() as keyof typeof translations
+              ] ?? row.status}
+            </Badge>
+          </div>
+        )
+      }
     },
     {
       header: translations.displayStatus,
@@ -569,6 +586,35 @@ export default function AddStorePopUpContent({
             item.type === row.type &&
             item.name === row.name
         )
+        function handleToggleDisplay(index: number, checked: boolean): void {
+          const updated = availData.map((item, i) =>
+            i === index ? { ...item, display: checked } : item
+          )
+          setAvailData(updated)
+          form.setValue("availData", updated, { shouldValidate: true })
+          setTranslationField("storeData", activeLang, "availData", updated)
+
+          // Update opposite language data
+          const oppLang = activeLang === "en" ? "fr" : "en"
+          const oppLangData =
+            (storeData[oppLang]?.availData as AvailableItem[]) || []
+          let oppUpdated: AvailableItem[]
+          const itemToUpdate = availData[index]
+          if (itemToUpdate.ingOrCatId === 0) {
+            oppUpdated = oppLangData.map((item, i) =>
+              i === index ? { ...item, display: checked } : item
+            )
+          } else {
+            oppUpdated = oppLangData.map(item =>
+              item.ingOrCatId === itemToUpdate.ingOrCatId &&
+              item.type === itemToUpdate.type
+                ? { ...item, display: checked }
+                : item
+            )
+          }
+          setTranslationField("storeData", oppLang, "availData", oppUpdated)
+        }
+
         return (
           <Switch
             checked={row.display}
@@ -609,9 +655,16 @@ export default function AddStorePopUpContent({
   ]
 
   // Add this function before availColumns
-  const handleToggleDisplay = (index: number, checked: boolean): void => {
+  const handleToggleAvailability = (index: number, checked: boolean): void => {
     const updated = availData.map((item, i) =>
-      i === index ? { ...item, display: checked } : item
+      i === index
+        ? {
+            ...item,
+            status: checked
+              ? ("Active" as "Active")
+              : ("Inactive" as "Inactive")
+          }
+        : item
     )
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
@@ -624,13 +677,15 @@ export default function AddStorePopUpContent({
     const itemToUpdate = availData[index]
     if (itemToUpdate.ingOrCatId === 0) {
       oppUpdated = oppLangData.map((item, i) =>
-        i === index ? { ...item, display: checked } : item
+        i === index
+          ? { ...item, status: checked ? "Active" : "Inactive" }
+          : item
       )
     } else {
       oppUpdated = oppLangData.map(item =>
         item.ingOrCatId === itemToUpdate.ingOrCatId &&
         item.type === itemToUpdate.type
-          ? { ...item, display: checked }
+          ? { ...item, status: checked ? "Active" : "Inactive" }
           : item
       )
     }
