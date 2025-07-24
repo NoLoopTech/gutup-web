@@ -3,24 +3,25 @@
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { Button } from "@/components/ui/button"
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
+import { useGetShopCategorys } from "@/query/hooks/useGetShopCategorys"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { type translationsTypes } from "@/types/moodsTypes"
@@ -35,31 +36,27 @@ interface Option {
   label: string
 }
 
-const moodOptions: Record<string, Option[]> = {
-  en: [
-    { value: "very happy", label: "Very Happy" },
-    { value: "happy", label: "Happy" },
-    { value: "angry", label: "Angry" },
-    { value: "sad", label: "Sad" }
-  ],
-  fr: [
-    { value: "very happy", label: "Très heureux" },
-    { value: "happy", label: "Heureuse" },
-    { value: "angry", label: "En colère" },
-    { value: "sad", label: "Triste" }
-  ]
+export interface StoreCatogeryTypes {
+  id: number
+  Tag: string
+  TagName: string
+  TagNameFr: string
 }
 
-const shopcategory: Record<string, Option[]> = {
+const moodOptions: Record<string, Option[]> = {
   en: [
-    { value: "bakery", label: "Bakery" },
-    { value: "dairy", label: "Dairy" },
-    { value: "produce", label: "Produce" }
+    { value: "VERY_HAPPY", label: "Very Happy" },
+    { value: "HAPPY", label: "Happy" },
+    { value: "NEUTRAL", label: "Neutral" },
+    { value: " SAD", label: "Sad" },
+    { value: " VERY_SAD", label: "Very Sad" }
   ],
   fr: [
-    { value: "boulangerie", label: "Boulangerie" },
-    { value: "laitière", label: "Laitière" },
-    { value: "produire", label: "Produire" }
+    { value: "VERY_HAPPY", label: "Très heureux" },
+    { value: "HAPPY", label: "Heureuse" },
+    { value: "NEUTRAL", label: "Neutre" },
+    { value: "SAD", label: "Triste" },
+    { value: "VERY_SAD", label: "Très triste" }
   ]
 }
 
@@ -85,6 +82,31 @@ export default function FoodTab({
   const { translateText } = useTranslation()
   const [isTranslating, setIsTranslating] = useState(false)
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const [shopcategory, setShopcategory] = useState<Record<string, Option[]>>({
+    en: [],
+    fr: []
+  })
+
+  const { shopCategorys } = useGetShopCategorys() as {
+    shopCategorys: StoreCatogeryTypes[]
+  }
+
+  useEffect(() => {
+    if (shopCategorys) {
+      const tagsOptions = {
+        en: shopCategorys.map((tag: StoreCatogeryTypes) => ({
+          value: tag.TagName,
+          label: tag.TagName
+        })),
+        fr: shopCategorys.map((tag: StoreCatogeryTypes) => ({
+          value: tag.TagNameFr,
+          label: tag.TagNameFr
+        }))
+      }
+
+      setShopcategory(tagsOptions)
+    }
+  }, [shopCategorys])
 
   const FormSchema = z.object({
     mood: z.string().nonempty(translations.pleaseSelectAMood),

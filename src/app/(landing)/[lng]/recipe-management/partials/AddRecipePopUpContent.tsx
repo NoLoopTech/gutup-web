@@ -38,6 +38,7 @@ import { type translationsTypes } from "@/types/recipeTypes"
 import { getAllFoods } from "@/app/api/foods"
 import LableInput from "@/components/Shared/LableInput/LableInput"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
+import { useGetAllTags } from "@/query/hooks/useGetAllTags"
 
 interface Food {
   id: number
@@ -60,25 +61,21 @@ interface Ingredient {
   display: boolean
 }
 
+export interface TagTypes {
+  id: number
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
+  category: string
+  tagName: string
+  tagNameFr: string
+}
+
 interface Option {
   value: string
   label: string
 }
 
-const categoryOptions: Record<string, Option[]> = {
-  en: [
-    { value: "fruits", label: "Fruits" },
-    { value: "vegetables", label: "Vegetables" },
-    { value: "dairy", label: "Dairy" },
-    { value: "grains", label: "Grains" }
-  ],
-  fr: [
-    { value: "fruits", label: "Fruits" },
-    { value: "vegetables", label: "Légumes" },
-    { value: "dairy", label: "Produits laitiers" },
-    { value: "grains", label: "Céréales" }
-  ]
-}
 const seasonOptions: Record<string, Option[]> = {
   en: [
     { value: "spring", label: "Spring" },
@@ -130,6 +127,31 @@ export default function AddRecipePopUpContent({
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [availData, setAvailData] = useState<Ingredient[]>([])
+  const [categoryOptions, setCategoryOptions] = useState<
+    Record<string, Option[]>
+  >({
+    en: [],
+    fr: []
+  })
+
+  const { tags } = useGetAllTags(token, "Type") as { tags: TagTypes[] }
+
+  useEffect(() => {
+    if (tags) {
+      const tagsOptions = {
+        en: tags.map((tag: TagTypes) => ({
+          value: tag.tagName,
+          label: tag.tagName
+        })),
+        fr: tags.map((tag: TagTypes) => ({
+          value: tag.tagNameFr,
+          label: tag.tagNameFr
+        }))
+      }
+
+      setCategoryOptions(tagsOptions)
+    }
+  }, [tags])
 
   const RecipeSchema = z.object({
     name: z
@@ -490,6 +512,8 @@ export default function AddRecipePopUpContent({
       const matchedFood = foods.find(
         food => food.name?.toLowerCase() === ingredientInput.toLowerCase()
       )
+
+      console.log(matchedFood)
 
       if (matchedFood) {
         updatedAvailData = {

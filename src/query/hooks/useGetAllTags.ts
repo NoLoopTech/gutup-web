@@ -1,18 +1,6 @@
 import { useEffect, useState } from "react"
 import { getAllTags as fetchTagsAPI } from "@/app/api/tags"
 
-interface TypesOfFoodsDataType {
-  category: string
-  count: string
-  status: boolean
-}
-
-interface FoodsBenefitsDataType {
-  category: string
-  count: string
-  status: boolean
-}
-
 export function useGetAllTags<T>(token: string, category: string) {
   const [tags, setTags] = useState<T[]>([])
   const [loading, setLoading] = useState(true)
