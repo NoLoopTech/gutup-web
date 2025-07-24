@@ -31,7 +31,7 @@ import { TabsContent } from "@/components/ui/tabs"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import dynamic from "next/dynamic"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -160,6 +160,20 @@ export default function ViewFoodEnglish({
   const [pendingNewBenefits, setPendingNewBenefits] = useState<
     Array<{ tagName: string; tagNameFr: string }>
   >([])
+  const [localSeasons, setLocalSeasons] = useState(
+    foodDetails?.seasons ?? []
+  )
+
+  useEffect(() => {
+    setLocalSeasons(foodDetails?.seasons ?? [])
+  }, [foodDetails])
+
+  useEffect(() => {
+    // If popup is closed (foodDetails is null), clear local state
+    if (!foodDetails) {
+      setLocalSeasons([])
+    }
+  }, [foodDetails])
 
   const handleAddNewBenefit = async (
     benefit: string
@@ -429,7 +443,7 @@ export default function ViewFoodEnglish({
                 render={({ field }) => {
                   // Get selected months as a flat array of strings
                   const selectedMonths =
-                    foodDetails?.seasons?.map(s => s.season) ?? []
+                    localSeasons?.map(s => s.season) ?? []
                   return (
                     <FormItem>
                       <FormLabel className="block text-black">Months</FormLabel>
