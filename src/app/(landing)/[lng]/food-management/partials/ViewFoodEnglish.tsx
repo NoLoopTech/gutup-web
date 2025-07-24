@@ -590,7 +590,7 @@ export default function ViewFoodEnglish({
                       <RichTextEditor
                         ref={selectionRef}
                         initialContent={
-                          field.value || foodDetails?.describe.selection
+                          field.value || foodDetails?.describe?.selection
                         }
                         onChange={handleSelectionChange(field)}
                       />
@@ -614,7 +614,7 @@ export default function ViewFoodEnglish({
                       <RichTextEditor
                         ref={preparationRef}
                         initialContent={
-                          field.value || foodDetails?.describe.preparation
+                          field.value || foodDetails?.describe?.preparation
                         }
                         onChange={handlePreparationChange(field)}
                       />
@@ -638,7 +638,7 @@ export default function ViewFoodEnglish({
                       <RichTextEditor
                         ref={conservationRef}
                         initialContent={
-                          field.value || foodDetails?.describe.conservation
+                          field.value || foodDetails?.describe?.conservation
                         }
                         onChange={handleConservationChange(field)}
                       />
