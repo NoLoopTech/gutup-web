@@ -109,7 +109,7 @@ export default function AddFoodPopUpContent({
   const { translateText } = useTranslation()
   const { activeLang, foodData, setTranslationField, allowMultiLang } =
     useFoodStore() as any
-  const [isTranslating, setIsTranslating] = useState(false)
+  const [, setIsTranslating] = useState(false)
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
   const { data: session } = useSession()
   const [categoryOptionsApi, setCategoryOptionsApi] = useState<Option[]>([])
@@ -690,11 +690,6 @@ export default function AddFoodPopUpContent({
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
             <div>
-              {isTranslating && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60">
-                  <span className="w-10 h-10 border-t-4 border-blue-500 border-solid rounded-full animate-spin" />
-                </div>
-              )}
               <FormField
                 control={form.control}
                 name="name"
@@ -1058,11 +1053,6 @@ export default function AddFoodPopUpContent({
             </div>
           </div>
           <div className="w-[100%]">
-            {isTranslating && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/60">
-                <span className="w-10 h-10 border-t-4 border-blue-500 rounded-full animate-spin" />
-              </div>
-            )}
             <FormField
               control={form.control}
               name="benefits"
@@ -1147,11 +1137,6 @@ export default function AddFoodPopUpContent({
                   const { onChange } = makeRichHandlers("selection")
                   return (
                     <FormItem className="relative">
-                      {isTranslating && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-                          <span className="loader" />
-                        </div>
-                      )}
                       <FormLabel>{translations.selection}</FormLabel>
                       <FormControl>
                         <RichTextEditor
@@ -1179,11 +1164,6 @@ export default function AddFoodPopUpContent({
                   const { onChange } = makeRichHandlers("preparation")
                   return (
                     <FormItem className="relative">
-                      {isTranslating && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-                          <span className="loader" />
-                        </div>
-                      )}
                       <FormLabel>{translations.preparation}</FormLabel>
                       <FormControl>
                         <RichTextEditor
@@ -1211,11 +1191,6 @@ export default function AddFoodPopUpContent({
                   const { onChange } = makeRichHandlers("conservation")
                   return (
                     <FormItem className="relative">
-                      {isTranslating && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-                          <span className="loader" />
-                        </div>
-                      )}
                       <FormLabel>{translations.conservation}</FormLabel>
                       <FormControl>
                         <RichTextEditor
