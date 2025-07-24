@@ -141,6 +141,7 @@ export default function AddStorePopUpContent({
     storeLocation: z.string().min(1, translations.required),
     storeType: z.string().min(1, translations.pleaseselectaStoreType),
     subscriptionType: z.boolean().optional(),
+    deliverible: z.boolean().optional(),
     timeFrom: z.string().min(1, translations.required),
     timeTo: z.string().min(1, translations.required),
     phone: z
@@ -1195,6 +1196,41 @@ export default function AddStorePopUpContent({
                       {field.value
                         ? translations.premium
                         : translations.freemium}
+                    </Label>
+                  </div>
+                )}
+              />
+            </div>
+            <div>
+              <Label className="text-black mb-1 block">
+                {translations.deliverible}
+              </Label>
+              <FormField
+                control={form.control}
+                name="deliverible"
+                render={({ field }) => (
+                  <div className="flex items-center gap-4 mt-2">
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={value => {
+                        field.onChange(value)
+                        setTranslationField(
+                          "storeData",
+                          activeLang,
+                          "deliverible",
+                          value
+                        )
+                        setTranslationField(
+                          "storeData",
+                          activeLang === "en" ? "fr" : "en",
+                          "deliverible",
+                          value
+                        )
+                        form.setValue("deliverible", value)
+                      }}
+                    />
+                    <Label className="text-Primary-300">
+                      {field.value ? translations.yes : translations.no}
                     </Label>
                   </div>
                 )}

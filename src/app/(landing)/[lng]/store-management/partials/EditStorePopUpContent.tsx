@@ -216,7 +216,8 @@ export default function EditStorePopUpContent({
     availData: z
       .array(z.any())
       .min(1, translations.atleastoneingredientcategorymustbeadded),
-    storeImage: z.string().min(1, translations.required)
+    storeImage: z.string().min(1, translations.required),
+    deliverible: z.boolean().optional()
   })
 
   // Form hook
@@ -226,7 +227,11 @@ export default function EditStorePopUpContent({
       ...storeData[activeLang],
       category: storeData[activeLang]?.category || "",
       storeImage: storeData[activeLang]?.storeImage || "",
-      availData: storeData[activeLang]?.availData || []
+      availData: storeData[activeLang]?.availData || [],
+      deliverible:
+        typeof storeData[activeLang]?.deliverible === "boolean"
+          ? storeData[activeLang].deliverible
+          : false
     }
   })
 
@@ -242,6 +247,12 @@ export default function EditStorePopUpContent({
         if (response?.data) {
           const data = response.data
           setCurrentStoreData(data)
+
+          // Set all backend fields into zustand store for both languages
+          Object.entries(data).forEach(([key, value]) => {
+            setTranslationField("storeData", "en", key, value)
+            setTranslationField("storeData", "fr", key, value)
+          })
 
           // Transform ingredients and categories data
           const ingredientsData = data.ingredients || []
@@ -624,7 +635,11 @@ export default function EditStorePopUpContent({
       storeImage: currentStoreData?.storeImage || "",
       category: categoryId,
       storeType: storeTypeId,
-      availData: currentStoreData?.availData || []
+      availData: currentStoreData?.availData || [],
+      deliverible:
+        typeof currentStoreData?.deliverible === "boolean"
+          ? currentStoreData.deliverible
+          : false
     }
 
     if (isDataLoaded && Object.keys(formData).length > 0) {
@@ -1553,6 +1568,42 @@ export default function EditStorePopUpContent({
                       {field.value
                         ? translations.premium
                         : translations.freemium}
+                    </Label>
+                  </div>
+                )}
+              />
+            </div>
+            <div>
+              <Label className="text-black mb-1 block">
+                {translations.deliverible}
+              </Label>
+              <FormField
+                control={form.control}
+                name="deliverible"
+                render={({ field }) => (
+                  <div className="flex items-center gap-4 mt-2">
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={value => {
+                        field.onChange(value)
+                        setTranslationField(
+                          "storeData",
+                          activeLang,
+                          "deliverible",
+                          value
+                        )
+                        setTranslationField(
+                          "storeData",
+                          activeLang === "en" ? "fr" : "en",
+                          "deliverible",
+                          value
+                        )
+                        form.setValue("deliverible", value)
+                        setHasChanges?.(true)
+                      }}
+                    />
+                    <Label className="text-Primary-300">
+                      {field.value ? translations.yes : translations.no}
                     </Label>
                   </div>
                 )}
