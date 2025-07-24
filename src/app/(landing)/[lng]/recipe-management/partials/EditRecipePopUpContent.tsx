@@ -435,7 +435,7 @@ export default function EditRecipePopUpContent({
           size="icon"
           className="w-8 h-8 border border-gray-300 hover:bg-gray-100"
           onClick={() => {
-            handleDeleteAvailItem(row.foodId)
+            handleDeleteAvailItem(row.ingredientName)
           }}
           title={"Delete"}
         >
@@ -447,18 +447,23 @@ export default function EditRecipePopUpContent({
   ]
 
   // Delete handler for ingredientData
-  const handleDeleteAvailItem = (id: number): void => {
-    const updated = ingredientData.filter(item => item.foodId !== id)
-    setIngredientData(updated)
+  const handleDeleteAvailItem = (foodName: string): void => {
+    // Filter out the ingredient with the given foodName
+    const updated = availData.filter(item => item.ingredientName !== foodName)
+    setAvailData(updated)
     form.setValue("ingredientData", updated as any, { shouldValidate: true })
+
     setTranslationField("en", "ingredientData", updated as any)
     setTranslationField("fr", "ingredientData", updated as any)
 
     setUpdatedField("en", "ingredientData", updated as any)
     setUpdatedField("fr", "ingredientData", updated as any)
+
+    // Optionally, show a success message
+    toast.success("Ingredient deleted successfully!")
   }
 
-  const handleAddIngredient = () => {
+  const handleAddIngredient = async (): Promise<void> => {
     let updatedAvailData: Ingredient
 
     // Check if the item is already in the availData list by item name
@@ -483,24 +488,52 @@ export default function EditRecipePopUpContent({
         mainIngredient: true
       }
     } else if (ingredientInput.trim()) {
-      const isCustomItemExists = availData.some(
-        item =>
-          item.ingredientName.toLowerCase() === ingredientInput.toLowerCase()
+      // Check if the entered ingredient exists in the foods list
+      const isItemExists = availData.some(
+        item => item.ingredientName === ingredientInput
       )
 
-      if (isCustomItemExists) {
-        toast.error("This custom food item is already in the list!")
+      if (isItemExists) {
+        // Show an error and return early if the item already exists in the table
+        toast.error("This food item is already in the list!")
+        setSelected(null)
         setIngredientInput("")
         return
       }
+      // Check if the entered ingredient exists in the foods list
+      const matchedFood = foods.find(
+        food => food.name?.toLowerCase() === ingredientInput.toLowerCase()
+      )
 
-      updatedAvailData = {
-        foodId: 0,
-        ingredientName: ingredientInput ?? "",
-        available: false,
-        display: true,
-        quantity: "", // Add default empty quantity
-        mainIngredient: true
+      if (matchedFood) {
+        updatedAvailData = {
+          foodId: matchedFood.id,
+          ingredientName: matchedFood.name,
+          available: matchedFood.status,
+          display: true,
+          quantity: "",
+          mainIngredient: true
+        }
+      } else {
+        const isCustomItemExists = availData.some(
+          item =>
+            item.ingredientName.toLowerCase() === ingredientInput.toLowerCase()
+        )
+
+        if (isCustomItemExists) {
+          toast.error("This custom food item is already in the list!")
+          setIngredientInput("")
+          return
+        }
+
+        updatedAvailData = {
+          foodId: 0,
+          ingredientName: ingredientInput ?? "",
+          available: false,
+          display: true,
+          quantity: "",
+          mainIngredient: true
+        }
       }
     } else {
       toast.error("Please select or enter a food item first!")
@@ -508,17 +541,35 @@ export default function EditRecipePopUpContent({
     }
 
     setAvailData([...availData, updatedAvailData])
-    setTranslationField("en", "ingredientData", [
-      ...availData,
-      updatedAvailData
-    ])
-    setTranslationField("fr", "ingredientData", [
-      ...availData,
-      updatedAvailData
-    ])
 
-    setUpdatedField("en", "ingredientData", [...availData, updatedAvailData])
-    setUpdatedField("fr", "ingredientData", [...availData, updatedAvailData])
+    try {
+      setIsTranslating(true)
+
+      const translatedName =
+        activeLang === "en"
+          ? await translateText(updatedAvailData.ingredientName)
+          : updatedAvailData.ingredientName
+
+      const enList = [...availData, updatedAvailData]
+      const frList = [
+        ...availData,
+        {
+          ...updatedAvailData,
+          ingredientName: translatedName
+        }
+      ]
+
+      setTranslationField("en", "ingredientData", enList)
+      setTranslationField("fr", "ingredientData", frList)
+
+      setUpdatedField("en", "ingredientData", [...availData, enList])
+      setUpdatedField("fr", "ingredientData", [...availData, frList])
+    } catch (err) {
+      console.error("Translation failed:", err)
+      toast.error("Failed to translate food name.")
+    } finally {
+      setIsTranslating(false)
+    }
 
     toast.success("Food item added successfully!")
 
@@ -668,13 +719,18 @@ export default function EditRecipePopUpContent({
       translationData.en.recipeImage ? [translationData.en.recipeImage] : []
     )
 
-    setAvailData(
-      (translationData[activeLang].ingredientData || []).map(item => ({
-        available: true,
-        display: true,
-        ...item
-      }))
-    )
+    const rawIngredients = translationData[activeLang]?.ingredientData ?? []
+
+    const mappedIngredients = rawIngredients.map((item: any) => ({
+      foodId: item.foodId,
+      ingredientName: item.ingredientName,
+      quantity: item.quantity,
+      mainIngredient: item.mainIngredient,
+      available: item.available ?? false,
+      display: item.display ?? true
+    }))
+
+    setAvailData(mappedIngredients)
   }, [activeLang, form.reset, translationData])
 
   const onSubmit = (data: RecipeSchemaType): void => {

@@ -5,6 +5,12 @@ import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import LableInput from "@/components/Shared/LableInput/LableInput"
 import { Button } from "@/components/ui/button"
 import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem
+} from "@/components/ui/dropdown-menu"
+import {
   Form,
   FormControl,
   FormField,
@@ -110,6 +116,49 @@ export default function AddFoodPopUpContent({
   const [benefitTags, setBenefitTags] = useState<
     Array<{ tagName: string; tagNameFr: string }>
   >([])
+  // Multi-select months state
+  const [selectedMonths, setSelectedMonths] = useState<string[]>(
+    Array.isArray(foodData[activeLang]?.season)
+      ? foodData[activeLang].season
+      : []
+  )
+
+  // Cleanup function to clear all data
+  const cleanupData = (): void => {
+    setTranslationField("foodData", "en", "name", "")
+    setTranslationField("foodData", "fr", "name", "")
+    setTranslationField("foodData", "en", "category", "")
+    setTranslationField("foodData", "fr", "category", "")
+    setTranslationField("foodData", "en", "season", "")
+    setTranslationField("foodData", "fr", "season", "")
+    setTranslationField("foodData", "en", "country", "")
+    setTranslationField("foodData", "fr", "country", "")
+    setTranslationField("foodData", "en", "benefits", [])
+    setTranslationField("foodData", "fr", "benefits", [])
+    setTranslationField("foodData", "en", "image", "")
+    setTranslationField("foodData", "fr", "image", "")
+    setTranslationField("foodData", "en", "storeImage", "")
+    setTranslationField("foodData", "fr", "storeImage", "")
+    setTranslationField("foodData", "en", "selection", "")
+    setTranslationField("foodData", "fr", "selection", "")
+    setTranslationField("foodData", "en", "preparation", "")
+    setTranslationField("foodData", "fr", "preparation", "")
+    setTranslationField("foodData", "en", "conservation", "")
+    setTranslationField("foodData", "fr", "conservation", "")
+    setTranslationField("foodData", "en", "fiber", "")
+    setTranslationField("foodData", "fr", "fiber", "")
+    setTranslationField("foodData", "en", "proteins", "")
+    setTranslationField("foodData", "fr", "proteins", "")
+    setTranslationField("foodData", "en", "vitamins", "")
+    setTranslationField("foodData", "fr", "vitamins", "")
+    setTranslationField("foodData", "en", "minerals", "")
+    setTranslationField("foodData", "fr", "minerals", "")
+    setTranslationField("foodData", "en", "fat", "")
+    setTranslationField("foodData", "fr", "fat", "")
+    setTranslationField("foodData", "en", "sugar", "")
+    setTranslationField("foodData", "fr", "sugar", "")
+    setImagePreviewUrls([])
+  }
 
   // Define FoodSchema before using it in useForm
   const FoodSchema = z.object({
@@ -118,18 +167,19 @@ export default function AddFoodPopUpContent({
       .nonempty(translations.required)
       .min(2, { message: translations.mustbeatleast2characters }),
     category: z.string().nonempty(translations.pleaseselectacategory),
-    season: z.string().nonempty(translations.pleaseselectaseason),
+    season: z.array(z.string()).min(1, translations.pleaseselectaseason),
     country: z.string().nonempty(translations.pleaseselectacountry),
     benefits: z
       .array(z.string())
+      .min(1, { message: translations.pleaseenteratleastonebenefit })
       .refine(arr => arr.some(item => item.trim().length > 0), {
         message: translations.pleaseenteratleastonebenefit
       }),
-    image: z.string().optional(),
+    image: z.string().nonempty(translations.required),
     selection: z.string().refine(
       val => {
-        const plainText = val.replace(/<(.|\n)*?>/g, "").trim() // remove all tags
-        const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val) // check for <img> tags
+        const plainText = val.replace(/<(.|\n)*?>/g, "").trim()
+        const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val)
         return plainText !== "" || hasImage
       },
       {
@@ -173,10 +223,60 @@ export default function AddFoodPopUpContent({
       image: foodData[activeLang]?.storeImage || ""
     }
   })
-  // Update form when lang changes
+  // Update form and selectedMonths when lang changes
   React.useEffect(() => {
     form.reset(foodData[activeLang])
+    setSelectedMonths(
+      Array.isArray(foodData[activeLang]?.season)
+        ? foodData[activeLang].season
+        : []
+    )
   }, [activeLang, form.reset, foodData])
+
+  // Helper function to check for duplicate benefits
+  const isDuplicateBenefit = (
+    benefit: string,
+    lang: "en" | "fr" = "en"
+  ): boolean => {
+    const currentEnBenefits = foodData.en.benefits || []
+    const currentFrBenefits = foodData.fr.benefits || []
+
+    if (lang === "en") {
+      return currentEnBenefits.some(
+        (b: string) => b.toLowerCase() === benefit.toLowerCase()
+      )
+    } else {
+      return currentFrBenefits.some(
+        (b: string) => b.toLowerCase() === benefit.toLowerCase()
+      )
+    }
+  }
+
+  // Handle selecting suggestion benefits
+  const handleSelectBenefit = (benefit: {
+    tagName: string
+    tagNameFr: string
+  }): void => {
+    if (
+      isDuplicateBenefit(benefit.tagName, "en") ||
+      isDuplicateBenefit(benefit.tagNameFr, "fr")
+    ) {
+      toast.error("Already in the list")
+      return
+    }
+
+    // Add both EN and FR at the same index
+    const currentEnBenefits = foodData.en.benefits || []
+    const currentFrBenefits = foodData.fr.benefits || []
+
+    const enBenefits = [...currentEnBenefits, benefit.tagName]
+    const frBenefits = [...currentFrBenefits, benefit.tagNameFr]
+
+    setTranslationField("foodData", "en", "benefits", enBenefits)
+    setTranslationField("foodData", "fr", "benefits", frBenefits)
+    form.setValue("benefits", activeLang === "en" ? enBenefits : frBenefits)
+    void form.trigger("benefits")
+  }
 
   // Input change handler for fields that need translation
   const handleInputChange = (
@@ -240,7 +340,6 @@ export default function AddFoodPopUpContent({
     setTranslationField("foodData", activeLang, fieldName, value)
 
     if (fieldName === "category") {
-      // Find the selected option
       const selected = categoryOptionsApi.find(
         opt => (activeLang === "en" ? opt.valueEn : opt.valueFr) === value
       )
@@ -251,7 +350,6 @@ export default function AddFoodPopUpContent({
     }
 
     if (fieldName === "season") {
-      // Sync season between languages
       if (activeLang === "en") {
         const found = seasonSyncMap.find(m => m.en === value)
         if (found) {
@@ -328,6 +426,7 @@ export default function AddFoodPopUpContent({
   function handleBenefitsChange(vals: string[]): void {
     form.setValue("benefits", vals)
     setTranslationField("foodData", activeLang, "benefits", vals)
+    void form.trigger("benefits")
   }
 
   async function handleBenefitsBlur(): Promise<void> {
@@ -353,7 +452,6 @@ export default function AddFoodPopUpContent({
     const recreatePreview = async (): Promise<void> => {
       if (currentStoreData?.storeImage) {
         try {
-          // Use the Firebase URL directly for preview
           setImagePreviewUrls([currentStoreData.storeImage])
         } catch (error) {
           console.error("Error setting preview:", error)
@@ -440,15 +538,15 @@ export default function AddFoodPopUpContent({
         category: foodData.en.category,
         categoryFR: foodData.fr?.category ?? "",
         country: foodData.en.country,
-        seasons: foodData.en.season
-          ? [
-              {
-                foodId: 0,
-                season: foodData.en.season,
-                seasonFR: foodData.fr?.season ?? ""
-              }
-            ]
-          : [],
+        seasons:
+          Array.isArray(foodData.en.season) &&
+          Array.isArray(foodData.fr?.season)
+            ? foodData.en.season.map((enMonth: string, idx: number) => ({
+                foodId: idx,
+                season: enMonth,
+                seasonFR: foodData.fr.season[idx] ?? enMonth
+              }))
+            : [],
         attributes: {
           fiber: Number(foodData.en.fiber) || 0,
           proteins: Number(foodData.en.proteins) || 0,
@@ -483,6 +581,7 @@ export default function AddFoodPopUpContent({
         toast.success(translations.formSubmittedSuccessfully)
         getFoods()
         sessionStorage.removeItem("food-store")
+        cleanupData()
         onClose()
       } else {
         toast.error("Failed to add food")
@@ -562,13 +661,26 @@ export default function AddFoodPopUpContent({
     form: ReturnType<typeof useForm<z.infer<typeof FoodSchema>>>
   ): void => {
     form.reset()
+    sessionStorage.removeItem("food-store")
+    cleanupData()
   }
 
   const handleAddNewBenefit = async (
     benefit: string
   ): Promise<{ tagName: string; tagNameFr: string }> => {
+    if (isDuplicateBenefit(benefit)) {
+      toast.error("Already in the list")
+      throw new Error("Duplicate benefit")
+    }
+
     // Translate to French
     const tagNameFr = await translateText(benefit)
+
+    if (isDuplicateBenefit(tagNameFr, "fr")) {
+      toast.error("Already in the list")
+      throw new Error("Duplicate benefit")
+    }
+
     return { tagName: benefit, tagNameFr }
   }
 
@@ -653,23 +765,80 @@ export default function AddFoodPopUpContent({
                       {translations.month}
                     </FormLabel>
                     <FormControl>
-                      <Select
-                        value={field.value}
-                        onValueChange={value => {
-                          handleSelectChange("season", value)
-                        }}
-                      >
-                        <SelectTrigger className="w-full mt-1">
-                          <SelectValue placeholder={translations.selectMonth} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {seasonOptions[activeLang].map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={`overflow-x-auto overflow-y-hidden justify-between w-full mt-1 ${
+                              selectedMonths.length === 0
+                                ? "text-gray-500 font-normal hover:text-gray-500"
+                                : ""
+                            }`}
+                            style={{ scrollbarWidth: "none" }}
+                          >
+                            {selectedMonths.length > 0
+                              ? selectedMonths.join(", ")
+                              : translations.selectMonth ?? "Select Months"}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          className="w-full overflow-auto max-h-64"
+                          style={{ scrollbarWidth: "none" }}
+                        >
+                          <DropdownMenuItem
+                            disabled
+                            className="text-xs text-muted-foreground"
+                          >
+                            Filter by Months
+                          </DropdownMenuItem>
+                          {seasonOptions[activeLang].map(month => (
+                            <DropdownMenuItem
+                              key={month.value}
+                              onClick={() => {
+                                let updated
+                                if (selectedMonths.includes(month.value)) {
+                                  updated = selectedMonths.filter(
+                                    m => m !== month.value
+                                  )
+                                } else {
+                                  updated = [...selectedMonths, month.value]
+                                }
+                                setSelectedMonths(updated)
+                                // Update store for both languages
+                                setTranslationField(
+                                  "foodData",
+                                  "en",
+                                  "season",
+                                  updated
+                                )
+                                // Map to French
+                                const frMonths = updated.map(enMonth => {
+                                  const found = seasonSyncMap.find(
+                                    m => m.en === enMonth
+                                  )
+                                  return found ? found.fr : enMonth
+                                })
+                                setTranslationField(
+                                  "foodData",
+                                  "fr",
+                                  "season",
+                                  frMonths
+                                )
+                                // Update form field
+                                field.onChange(updated)
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedMonths.includes(month.value)}
+                                readOnly
+                                className="mr-2"
+                              />
+                              {month.label}
+                            </DropdownMenuItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -898,85 +1067,68 @@ export default function AddFoodPopUpContent({
               control={form.control}
               name="benefits"
               render={({ field }) => (
-                <LableInput
-                  title={translations.healthBenefits}
-                  placeholder={translations.addUpTo6FoodBenefitsOrFewer}
-                  benefits={field.value || []}
-                  name="benefits"
-                  width="w-[32%]"
-                  suggestions={benefitTags}
-                  activeLang={activeLang}
-                  onAddNewBenefit={handleAddNewBenefit}
-                  onSelectSuggestion={benefit => {
-                    // Add both EN and FR at the same index
-                    const enBenefits = [
-                      ...(foodData.en.benefits || []),
-                      benefit.tagName
-                    ]
-                    const frBenefits = [
-                      ...(foodData.fr.benefits || []),
-                      benefit.tagNameFr
-                    ]
-                    setTranslationField(
-                      "foodData",
-                      "en",
-                      "benefits",
-                      enBenefits
-                    )
-                    setTranslationField(
-                      "foodData",
-                      "fr",
-                      "benefits",
-                      frBenefits
-                    )
-                    form.setValue(
-                      "benefits",
-                      activeLang === "en" ? enBenefits : frBenefits
-                    )
-                  }}
-                  onRemoveBenefit={removed => {
-                    // Remove both at the same index
-                    const idxEn = (foodData.en.benefits || []).indexOf(
-                      removed.tagName
-                    )
-                    const idxFr = (foodData.fr.benefits || []).indexOf(
-                      removed.tagNameFr
-                    )
-                    const enBenefits = [...(foodData.en.benefits || [])]
-                    const frBenefits = [...(foodData.fr.benefits || [])]
-                    if (idxEn > -1) {
-                      enBenefits.splice(idxEn, 1)
-                      frBenefits.splice(idxEn, 1)
-                    } else if (idxFr > -1) {
-                      enBenefits.splice(idxFr, 1)
-                      frBenefits.splice(idxFr, 1)
-                    }
-                    setTranslationField(
-                      "foodData",
-                      "en",
-                      "benefits",
-                      enBenefits
-                    )
-                    setTranslationField(
-                      "foodData",
-                      "fr",
-                      "benefits",
-                      frBenefits
-                    )
-                    form.setValue(
-                      "benefits",
-                      activeLang === "en" ? enBenefits : frBenefits
-                    )
-                  }}
-                  onChange={(newArr: string[]) => {
-                    handleBenefitsChange(newArr)
-                    field.onChange(newArr)
-                  }}
-                  onBlur={() => {
-                    void handleBenefitsBlur()
-                    field.onBlur()
-                  }}
-                />
+                <FormItem>
+                  <FormControl>
+                    <LableInput
+                      title={translations.healthBenefits}
+                      placeholder={translations.addUpTo6FoodBenefitsOrFewer}
+                      benefits={field.value || []}
+                      name="benefits"
+                      width="w-[32%]"
+                      suggestions={benefitTags}
+                      activeLang={activeLang}
+                      onAddNewBenefit={handleAddNewBenefit}
+                      onSelectSuggestion={benefit => {
+                        handleSelectBenefit(benefit)
+                      }}
+                      onRemoveBenefit={removed => {
+                        // Remove both at the same index
+                        const idxEn = (foodData.en.benefits || []).indexOf(
+                          removed.tagName
+                        )
+                        const idxFr = (foodData.fr.benefits || []).indexOf(
+                          removed.tagNameFr
+                        )
+                        const enBenefits = [...(foodData.en.benefits || [])]
+                        const frBenefits = [...(foodData.fr.benefits || [])]
+                        if (idxEn > -1) {
+                          enBenefits.splice(idxEn, 1)
+                          frBenefits.splice(idxEn, 1)
+                        } else if (idxFr > -1) {
+                          enBenefits.splice(idxFr, 1)
+                          frBenefits.splice(idxFr, 1)
+                        }
+                        setTranslationField(
+                          "foodData",
+                          "en",
+                          "benefits",
+                          enBenefits
+                        )
+                        setTranslationField(
+                          "foodData",
+                          "fr",
+                          "benefits",
+                          frBenefits
+                        )
+                        form.setValue(
+                          "benefits",
+                          activeLang === "en" ? enBenefits : frBenefits
+                        )
+                        void form.trigger("benefits")
+                      }}
+                      onChange={(newArr: string[]) => {
+                        handleBenefitsChange(newArr)
+                        field.onChange(newArr)
+                        void form.trigger("benefits")
+                      }}
+                      onBlur={() => {
+                        void handleBenefitsBlur()
+                        field.onBlur()
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
             />
           </div>
@@ -1113,7 +1265,8 @@ export default function AddFoodPopUpContent({
               variant="outline"
               onClick={() => {
                 handleCancel(form)
-                sessionStorage.removeItem("food-store") // Remove session key on cancel
+                sessionStorage.removeItem("food-store")
+                cleanupData()
                 onClose()
               }}
             >

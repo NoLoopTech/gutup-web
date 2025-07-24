@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { X } from "lucide-react"
 import React, { useEffect, useState, type KeyboardEvent } from "react"
-import { useFormContext } from "react-hook-form"
+import { toast } from "sonner"
 
 interface Props {
   title: string | undefined
@@ -22,6 +22,7 @@ interface Props {
   onAddNewBenefit?: (
     benefit: string
   ) => Promise<{ tagName: string; tagNameFr: string }>
+  maxBenefitsCount?: number
 }
 
 export default function LableInput({
@@ -36,6 +37,7 @@ export default function LableInput({
   onSelectSuggestion,
   onRemoveBenefit,
   onAddNewBenefit,
+  maxBenefitsCount = 6,
   ...props
 }: Props): React.ReactElement {
   const [value, setValueState] = useState("")
@@ -73,10 +75,25 @@ export default function LableInput({
       )
     }
 
+    // Check if max benefits count has been reached
+    if (items.length >= maxBenefitsCount) {
+      toast.error(`You can only add a maximum of ${maxBenefitsCount} benefits.`)
+      return
+    }
+
+    // Check for duplicate before adding
+    if (items.includes(newItem)) {
+      toast.error("This benefit is already added!")
+      return
+    }
+
     // If we have a matched suggestion and onSelectSuggestion handler, use it
     if (matchedSuggestion && onSelectSuggestion) {
       onSelectSuggestion(matchedSuggestion)
       setValueState("") // Clear input
+      toast.success(
+        `Benefit '${matchedSuggestion.tagName}' added successfully!`
+      )
       return
     }
 
@@ -86,7 +103,10 @@ export default function LableInput({
         matchedSuggestion = await onAddNewBenefit(newItem)
         if (matchedSuggestion && onSelectSuggestion) {
           onSelectSuggestion(matchedSuggestion)
-          setValueState("") // Clear input
+          setValueState("")
+          toast.success(
+            `Benefit '${matchedSuggestion.tagName}' added successfully!`
+          )
           return
         }
       } catch (error) {
@@ -101,9 +121,10 @@ export default function LableInput({
           ? matchedSuggestion.tagName
           : matchedSuggestion.tagNameFr
 
-      if (!items.includes(newItem) && items.length < 6) {
+      if (!items.includes(newItem) && items.length < maxBenefitsCount) {
         const updatedItems = [...items, newItem]
         updateItems(updatedItems)
+        toast.success(`Benefit '${newItem}' added successfully!`)
       }
     }
 
@@ -121,10 +142,12 @@ export default function LableInput({
     // If we have onRemoveBenefit handler, use it
     if (onRemoveBenefit) {
       onRemoveBenefit(suggestion)
+      toast.success(`Benefit '${benefit}' removed successfully!`)
     } else {
       // Fallback to basic removal
       const updatedItems = items.filter(b => b !== benefit)
       updateItems(updatedItems)
+      toast.success(`Benefit '${benefit}' removed successfully!`)
     }
   }
 

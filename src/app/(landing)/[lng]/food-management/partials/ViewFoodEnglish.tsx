@@ -11,6 +11,13 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -118,6 +125,21 @@ const FoodSchema = z.object({
   )
 })
 
+const seasonSyncMap = [
+  { en: "January", fr: "Janvier" },
+  { en: "February", fr: "Février" },
+  { en: "March", fr: "Mars" },
+  { en: "April", fr: "Avril" },
+  { en: "May", fr: "Mai" },
+  { en: "June", fr: "Juin" },
+  { en: "July", fr: "Juillet" },
+  { en: "August", fr: "Août" },
+  { en: "September", fr: "Septembre" },
+  { en: "October", fr: "Octobre" },
+  { en: "November", fr: "Novembre" },
+  { en: "December", fr: "Décembre" }
+]
+
 export default function ViewFoodEnglish({
   selectionRef,
   preparationRef,
@@ -135,7 +157,9 @@ export default function ViewFoodEnglish({
   token
 }: ViewFoodEnglishProps): JSX.Element {
   const { translateText } = useTranslation()
-  const [pendingNewBenefits, setPendingNewBenefits] = useState<Array<{tagName: string; tagNameFr: string}>>([])
+  const [pendingNewBenefits, setPendingNewBenefits] = useState<
+    Array<{ tagName: string; tagNameFr: string }>
+  >([])
 
   const handleAddNewBenefit = async (
     benefit: string
@@ -143,9 +167,9 @@ export default function ViewFoodEnglish({
     try {
       const tagNameFr = await translateText(benefit)
       const newBenefit = { tagName: benefit, tagNameFr }
-      
+
       setPendingNewBenefits(prev => [...prev, newBenefit])
-      
+
       return newBenefit
     } catch (error) {
       console.error("Error translating new benefit:", error)
@@ -157,9 +181,11 @@ export default function ViewFoodEnglish({
 
   // Expose function to parent component for saving pending benefits
   React.useEffect(() => {
-    // Store pending benefits in session storage so parent can access them
     if (pendingNewBenefits.length > 0) {
-      sessionStorage.setItem('pendingNewBenefits', JSON.stringify(pendingNewBenefits))
+      sessionStorage.setItem(
+        "pendingNewBenefits",
+        JSON.stringify(pendingNewBenefits)
+      )
     }
   }, [pendingNewBenefits])
 
@@ -171,16 +197,44 @@ export default function ViewFoodEnglish({
   const handleSelectionChange = (field: any) => (val: string) => {
     field.onChange(val)
     updateNestedData("describe", "selection", val)
+    if (val?.trim()) {
+      translateText(val)
+        .then(translated => {
+          updateNestedData("describe", "selectionFR", translated)
+        })
+        .catch(() => {
+          updateNestedData("describe", "selectionFR", val)
+        })
+    }
   }
 
   const handlePreparationChange = (field: any) => (val: string) => {
     field.onChange(val)
     updateNestedData("describe", "preparation", val)
+    if (val?.trim()) {
+      translateText(val)
+        .then(translated => {
+          updateNestedData("describe", "preparationFR", translated)
+        })
+        .catch(() => {
+          updateNestedData("describe", "preparationFR", val)
+        })
+    }
   }
 
   const handleConservationChange = (field: any) => (val: string) => {
     field.onChange(val)
     updateNestedData("describe", "conservation", val)
+    // Translate and update French version
+    if (val?.trim()) {
+      translateText(val)
+        .then(translated => {
+          updateNestedData("describe", "conservationFR", translated)
+        })
+        .catch(() => {
+          updateNestedData("describe", "conservationFR", val)
+        })
+    }
   }
   // Update the image upload handler
   const handleImageUpload = (field: any) => async (files: File[] | null) => {
@@ -225,10 +279,49 @@ export default function ViewFoodEnglish({
             )
             break
           case "vitamins":
+            updateNestedData("attributes", name, value[name] as string)
+            if (value[name] && (value[name] as string).trim()) {
+              translateText(value[name] as string)
+                .then(translated => {
+                  updateNestedData("attributes", "vitaminsFR", translated)
+                })
+                .catch(() => {
+                  updateNestedData(
+                    "attributes",
+                    "vitaminsFR",
+                    value[name] as string
+                  )
+                })
+            }
+            break
           case "minerals":
             updateNestedData("attributes", name, value[name] as string)
+            if (value[name] && (value[name] as string).trim()) {
+              translateText(value[name] as string)
+                .then(translated => {
+                  updateNestedData("attributes", "mineralsFR", translated)
+                })
+                .catch(() => {
+                  updateNestedData(
+                    "attributes",
+                    "mineralsFR",
+                    value[name] as string
+                  )
+                })
+            }
             break
           case "name":
+            updateEditedData(name, value[name])
+            if (value[name] && (value[name] as string).trim()) {
+              translateText(value[name] as string)
+                .then(translated => {
+                  updateEditedData("nameFR", translated)
+                })
+                .catch(() => {
+                  updateEditedData("nameFR", value[name] as string)
+                })
+            }
+            break
           case "category":
           case "country":
             updateEditedData(name, value[name])
@@ -257,7 +350,7 @@ export default function ViewFoodEnglish({
     return () => {
       subscription.unsubscribe()
     }
-  }, [form, updateEditedData, updateNestedData, foodDetails])
+  }, [form, updateEditedData, updateNestedData, foodDetails, translateText])
 
   return (
     <Form {...form}>
@@ -326,28 +419,81 @@ export default function ViewFoodEnglish({
                       Months
                     </FormLabel>
                     <FormControl>
-                      <Select
-                        onValueChange={value => {
-                          field.onChange(value)
-                          handleSelectSync("season", value, "en")
-                        }}
-                        value={
-                          foodDetails?.seasons && foodDetails.seasons.length > 0
-                            ? foodDetails.seasons[0].season
-                            : field.value
-                        }
-                      >
-                        <SelectTrigger className="w-full mt-1">
-                          <SelectValue placeholder="Select Season" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {seasons.map((option: Option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={`overflow-x-auto overflow-y-hidden justify-between w-full mt-1 ${
+                              (foodDetails?.seasons?.length ?? 0) === 0
+                                ? "text-gray-500 font-normal hover:text-gray-500"
+                                : ""
+                            }`}
+                            style={{ scrollbarWidth: "none" }}
+                          >
+                            {(foodDetails?.seasons?.length ?? 0) > 0
+                              ? foodDetails?.seasons
+                                  ?.map(s => s.season)
+                                  .join(", ")
+                              : "Select Months"}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          className="w-full overflow-auto max-h-64"
+                          style={{ scrollbarWidth: "none" }}
+                        >
+                          <DropdownMenuItem
+                            disabled
+                            className="text-xs text-muted-foreground"
+                          >
+                            Filter by Months
+                          </DropdownMenuItem>
+                          {seasons.map(month => (
+                            <DropdownMenuItem
+                              key={month.value}
+                              onClick={() => {
+                                let updated: string[] =
+                                  foodDetails?.seasons?.map(s => s.season) ?? []
+                                if (updated.includes(month.value)) {
+                                  updated = updated.filter(
+                                    m => m !== month.value
+                                  )
+                                } else {
+                                  updated = [...updated, month.value]
+                                }
+                                // Use seasonSyncMap from top-level
+                                const frMonths = updated.map(enMonth => {
+                                  const found = seasonSyncMap.find(
+                                    m => m.en === enMonth
+                                  )
+                                  return found ? found.fr : enMonth
+                                })
+                                updateEditedData(
+                                  "seasons",
+                                  updated.map((enMonth, idx) => ({
+                                    season: enMonth,
+                                    seasonFR: frMonths[idx],
+                                    foodId:
+                                      foodDetails?.seasons?.[0]?.foodId ?? 0
+                                  }))
+                                )
+                                field.onChange(updated)
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={
+                                  foodDetails?.seasons
+                                    ?.map(s => s.season)
+                                    .includes(month.value) ?? false
+                                }
+                                readOnly
+                                className="mr-2"
+                              />
+                              {month.label}
+                            </DropdownMenuItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -550,7 +696,7 @@ export default function ViewFoodEnglish({
 
                     updateEditedData("healthBenefits", updatedHealthBenefits)
                     // Also remove from pending benefits if it exists
-                    setPendingNewBenefits(prev => 
+                    setPendingNewBenefits(prev =>
                       prev.filter(p => p.tagName !== removed.tagName)
                     )
                   }}

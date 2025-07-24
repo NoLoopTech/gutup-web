@@ -149,7 +149,7 @@ export default function EditShopPromotionTab({
     void fetchFoods()
   }, [token])
 
-  const handleAddIngredient = () => {
+  const handleAddIngredient = async (): Promise<void> => {
     let updatedAvailData: AvailableItem
 
     // Step 1: Check if the item is already in the availData list by item name
@@ -173,55 +173,80 @@ export default function EditShopPromotionTab({
         display: selected.display ?? false
       }
     } else if (ingredientInput.trim()) {
-      // Step 2: Check if the custom food item entered by the user already exists
-      const isCustomItemExists = availData.some(
-        item => item.name.toLowerCase() === ingredientInput.toLowerCase()
-      )
+      // Check if the entered ingredient exists in the foods list
+      const isItemExists = availData.some(item => item.name === ingredientInput)
 
-      if (isCustomItemExists) {
-        // If a custom item already exists in the table, show an error and return
-        toast.error("This custom food item is already in the list!")
+      if (isItemExists) {
+        // Show an error and return early if the item already exists in the table
+        toast.error("This food item is already in the list!")
+        setSelected(null)
         setIngredientInput("")
         return
       }
 
-      // Step 3: Add the custom item with "Inactive" status if it doesn't exist
-      updatedAvailData = {
-        id: 0,
-        name: ingredientInput,
-        status: false,
-        display: true
+      const matchedFood = foods.find(
+        food => food.name?.toLowerCase() === ingredientInput.toLowerCase()
+      )
+
+      if (matchedFood) {
+        updatedAvailData = {
+          id: matchedFood.id,
+          name: matchedFood.name ?? "",
+          status: matchedFood.status ?? false,
+          display: true
+        }
+      } else {
+        const isCustomItemExists = availData.some(
+          item => item.name.toLowerCase() === ingredientInput.toLowerCase()
+        )
+
+        if (isCustomItemExists) {
+          toast.error("This custom food item is already in the list!")
+          setIngredientInput("")
+          return
+        }
+
+        updatedAvailData = {
+          id: 0, // Custom item doesn't have an ID in foods list
+          name: ingredientInput,
+          status: false,
+          display: true
+        }
       }
     } else {
       toast.error("Please select or enter a food item first!")
       return
     }
 
-    // Step 4: Add the new item (either selected or custom) to the availData state
     setAvailData([...availData, updatedAvailData])
 
-    // Save the updated availData into the daily tips store
-    setTranslationField("shopPromotionData", activeLang, "shopPromoteFoods", [
-      ...availData,
-      updatedAvailData
-    ])
-    setTranslationField(
-      "shopPromotionData",
-      activeLang === "en" ? "fr" : "en",
-      "shopPromoteFoods",
-      [...availData, updatedAvailData]
-    )
+    try {
+      setIsTranslating(true)
+      const translatedName =
+        activeLang === "en"
+          ? await translateText(updatedAvailData.name)
+          : updatedAvailData.name
 
-    setUpdatedField("shopPromotionData", activeLang, "shopPromoteFoods", [
-      ...availData,
-      updatedAvailData
-    ])
-    setUpdatedField(
-      "shopPromotionData",
-      activeLang === "en" ? "fr" : "en",
-      "shopPromoteFoods",
-      [...availData, updatedAvailData]
-    )
+      const enList = [...availData, updatedAvailData]
+      const frList = [
+        ...availData,
+        {
+          ...updatedAvailData,
+          name: translatedName
+        }
+      ]
+
+      setTranslationField("shopPromotionData", "en", "shopPromoteFoods", enList)
+      setTranslationField("shopPromotionData", "fr", "shopPromoteFoods", frList)
+
+      setUpdatedField("shopPromotionData", "en", "shopPromoteFoods", enList)
+      setUpdatedField("shopPromotionData", "fr", "shopPromoteFoods", frList)
+    } catch (err) {
+      console.error("Translation failed:", err)
+      toast.error("Failed to translate food name.")
+    } finally {
+      setIsTranslating(false)
+    }
 
     // Optionally, show a success message
     toast.success("Food item added successfully!")

@@ -15,7 +15,7 @@ interface FoodFields {
   image: string | null
   imageName: string | null
   category: string
-  season: string
+  season: string[]
   country: string
   selection: string
   preparation: string
@@ -57,7 +57,7 @@ const emptyFields: FoodFields = {
   image: null,
   imageName: null,
   category: "",
-  season: "",
+  season: [],
   country: "",
   selection: "",
   preparation: "",
