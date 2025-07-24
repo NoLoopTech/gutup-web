@@ -1363,11 +1363,6 @@ export default function EditStorePopUpContent({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="pb-6">
-          {isTranslating && (
-            <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
-              <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
-            </div>
-          )}
           {/* Store info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
             <div>
@@ -1864,11 +1859,6 @@ export default function EditStorePopUpContent({
                   const { onChange } = makeRichHandlers("about")
                   return (
                     <FormItem className="relative">
-                      {isTranslating && (
-                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-                          <span className="loader" />
-                        </div>
-                      )}
                       <FormLabel>{translations.aboutUs}</FormLabel>
                       <FormControl>
                         <RichTextEditor
