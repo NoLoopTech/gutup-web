@@ -141,8 +141,6 @@ export default function EditRecipePopUpContent({
     }
   }, [tags])
 
-  console.log("translationData", translationData)
-
   useEffect(() => {
     // Initialize the benefits state with data from translationData store
     if (translationData[activeLang]?.benefits) {
