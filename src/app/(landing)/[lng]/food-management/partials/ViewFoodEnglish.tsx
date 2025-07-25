@@ -94,8 +94,8 @@ const FoodSchema = z.object({
   }),
   selection: z.string().refine(
     val => {
-      const plainText = val.replace(/<(.|\n)*?>/g, "").trim() // remove all tags
-      const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val) // check for <img> tags
+      const plainText = val.replace(/<(.|\n)*?>/g, "").trim()
+      const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val)
       return plainText !== "" || hasImage
     },
     {
@@ -160,16 +160,13 @@ export default function ViewFoodEnglish({
   const [pendingNewBenefits, setPendingNewBenefits] = useState<
     Array<{ tagName: string; tagNameFr: string }>
   >([])
-  const [localSeasons, setLocalSeasons] = useState(
-    foodDetails?.seasons ?? []
-  )
+  const [localSeasons, setLocalSeasons] = useState(foodDetails?.seasons ?? [])
 
   useEffect(() => {
     setLocalSeasons(foodDetails?.seasons ?? [])
   }, [foodDetails])
 
   useEffect(() => {
-    // If popup is closed (foodDetails is null), clear local state
     if (!foodDetails) {
       setLocalSeasons([])
     }
@@ -442,8 +439,7 @@ export default function ViewFoodEnglish({
                 name="season"
                 render={({ field }) => {
                   // Get selected months as a flat array of strings
-                  const selectedMonths =
-                    localSeasons?.map(s => s.season) ?? []
+                  const selectedMonths = localSeasons?.map(s => s.season) ?? []
                   return (
                     <FormItem>
                       <FormLabel className="block text-black">Months</FormLabel>
@@ -499,7 +495,6 @@ export default function ViewFoodEnglish({
                                     }
                                   })
                                   updateEditedData("seasons", newSeasons)
-                                  // Pass only the array of values to the form field (for validation, etc.)
                                   field.onChange(updated)
                                 }}
                               >
@@ -716,7 +711,6 @@ export default function ViewFoodEnglish({
                     )
 
                     updateEditedData("healthBenefits", updatedHealthBenefits)
-                    // Also remove from pending benefits if it exists
                     setPendingNewBenefits(prev =>
                       prev.filter(p => p.tagName !== removed.tagName)
                     )

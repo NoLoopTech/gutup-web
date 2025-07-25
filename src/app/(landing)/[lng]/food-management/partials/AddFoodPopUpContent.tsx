@@ -34,7 +34,7 @@ import { type CreateFoodDto, type translationsTypes } from "@/types/foodTypes"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useSession } from "next-auth/react"
 import dynamic from "next/dynamic"
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -100,11 +100,13 @@ const countriesOptions: Record<string, Option[]> = {
 export default function AddFoodPopUpContent({
   translations,
   onClose,
-  getFoods
+  getFoods,
+  onRegisterCleanup
 }: {
   translations: Partial<translationsTypes>
   onClose: () => void
   getFoods: () => void
+  onRegisterCleanup?: (fn: () => void) => void
 }): JSX.Element {
   const { translateText } = useTranslation()
   const { activeLang, foodData, setTranslationField, allowMultiLang } =
@@ -116,14 +118,13 @@ export default function AddFoodPopUpContent({
   const [benefitTags, setBenefitTags] = useState<
     Array<{ tagName: string; tagNameFr: string }>
   >([])
-  // Multi-select months state
   const [selectedMonths, setSelectedMonths] = useState<string[]>(
     Array.isArray(foodData[activeLang]?.season)
       ? foodData[activeLang].season
       : []
   )
 
-  // Cleanup function to clear all data
+  // Cleanup function to clear all data and reset form
   const cleanupData = (): void => {
     setTranslationField("foodData", "en", "name", "")
     setTranslationField("foodData", "fr", "name", "")
@@ -158,7 +159,15 @@ export default function AddFoodPopUpContent({
     setTranslationField("foodData", "en", "sugar", "")
     setTranslationField("foodData", "fr", "sugar", "")
     setImagePreviewUrls([])
+    form.reset()
+    sessionStorage.removeItem("food-store")
   }
+
+  useEffect(() => {
+    if (onRegisterCleanup) {
+      onRegisterCleanup(cleanupData)
+    }
+  }, [onRegisterCleanup])
 
   // Define FoodSchema before using it in useForm
   const FoodSchema = z.object({
@@ -366,7 +375,6 @@ export default function AddFoodPopUpContent({
     }
 
     if (fieldName === "country") {
-      // Sync country between languages
       if (activeLang === "en") {
         const found = countriesOptions.fr.find(
           opt => opt.value === value.toLowerCase()
@@ -494,7 +502,7 @@ export default function AddFoodPopUpContent({
             shouldDirty: true
           })
 
-          // Store in session storage for both languages with base64 for preview and Firebase URL for form
+          // Store in session storage for both languages
           setTranslationField("foodData", "en", "image", base64String)
           setTranslationField("foodData", "fr", "image", base64String)
           setTranslationField("foodData", "en", "storeImage", imageUrl)
@@ -799,7 +807,6 @@ export default function AddFoodPopUpContent({
                                   updated = [...selectedMonths, month.value]
                                 }
                                 setSelectedMonths(updated)
-                                // Update store for both languages
                                 setTranslationField(
                                   "foodData",
                                   "en",
@@ -1072,7 +1079,6 @@ export default function AddFoodPopUpContent({
                         handleSelectBenefit(benefit)
                       }}
                       onRemoveBenefit={removed => {
-                        // Remove both at the same index
                         const idxEn = (foodData.en.benefits || []).indexOf(
                           removed.tagName
                         )

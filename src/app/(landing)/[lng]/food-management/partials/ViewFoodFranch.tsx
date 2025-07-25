@@ -158,7 +158,7 @@ export default function ViewFoodFrench({
   const [, setLocalSeasons] = useState(foodDetails?.seasons ?? [])
 
   useEffect(() => {
-    // Reset local state when foodDetails changes (i.e., popup reopens)
+    // Reset local state when foodDetails changes
     setLocalSeasons(foodDetails?.seasons ?? [])
   }, [foodDetails])
 
