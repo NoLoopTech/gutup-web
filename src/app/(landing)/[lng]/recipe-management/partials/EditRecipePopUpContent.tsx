@@ -114,6 +114,12 @@ export default function EditRecipePopUpContent({
   const isEditorUserEdit = useRef(true)
 
   const { setUpdatedField } = useUpdateRecipeStore()
+  // Inside your component...
+  const [isFirstRender, setIsFirstRender] = useState(true)
+
+  useEffect(() => {
+    setIsFirstRender(false)
+  }, [])
 
   const [categoryOptions, setCategoryOptions] = useState<
     Record<string, Option[]>
@@ -617,6 +623,9 @@ export default function EditRecipePopUpContent({
   }
 
   const handleShopCategoryChange = (value: string) => {
+    // Skip if it's the first render
+    if (isFirstRender) return
+
     form.setValue("category", value)
     setTranslationField(activeLang, "category", value)
     setUpdatedField(activeLang, "category", value)
