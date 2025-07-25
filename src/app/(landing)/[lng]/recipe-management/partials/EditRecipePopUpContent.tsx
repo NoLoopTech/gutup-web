@@ -623,7 +623,6 @@ export default function EditRecipePopUpContent({
   }
 
   const handleShopCategoryChange = (value: string) => {
-    // Skip if it's the first render
     if (isFirstRender) return
 
     form.setValue("category", value)
