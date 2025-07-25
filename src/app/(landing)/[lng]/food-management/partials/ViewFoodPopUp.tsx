@@ -164,8 +164,9 @@ export default function ViewFoodPopUp({
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
 
   useEffect(() => {
-    if (token && foodId !== null && foodId > 0) {
+    if (open && token && foodId !== null && foodId > 0) {
       const getfoodsDetailsByFoodId = async (): Promise<void> => {
+        setIsLoading(true)
         const response = await getFoodsById(token, foodId)
         if (response.status === 200) {
           setFoodDetails(response.data)
@@ -174,13 +175,19 @@ export default function ViewFoodPopUp({
           saveToSessionStorage(dataWithId)
           setEditedData(dataWithId)
           setAllowMultiLang(response.data.allowMultiLang ?? false)
+          setImagePreviewUrls(response.data.images?.map((img: any) => img.image) ?? [])
         } else {
+          setFoodDetails(null)
+          setEditedData(null)
+          setImagePreviewUrls([])
+          setAllowMultiLang(false)
           console.error("Failed to get food details")
         }
+        setIsLoading(false)
       }
       void getfoodsDetailsByFoodId()
     }
-  }, [token, foodId])
+  }, [open, token, foodId])
 
   useEffect(() => {
     if (token) {
@@ -541,6 +548,10 @@ export default function ViewFoodPopUp({
   const handleClose = (): void => {
     clearSessionStorage()
     sessionStorage.removeItem("pendingNewBenefits") // Clear pending benefits on close
+    setEditedData(null)
+    setImagePreviewUrls([])
+    setFoodDetails(null)
+    setIsLoading(true)
     onClose()
   }
 
