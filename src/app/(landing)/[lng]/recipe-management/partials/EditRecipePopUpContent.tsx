@@ -98,8 +98,7 @@ export default function EditRecipePopUpContent({
   const {
     activeLang,
     setTranslationField,
-    translations: translationData,
-    resetRecipe
+    translations: translationData
   } = useRecipeStore()
   const { translateText } = useTranslation()
   const [isTranslating, setIsTranslating] = useState(false)
@@ -142,6 +141,8 @@ export default function EditRecipePopUpContent({
       setCategoryOptions(tagsOptions)
     }
   }, [tags])
+
+  console.log("translationData", translationData)
 
   useEffect(() => {
     // Initialize the benefits state with data from translationData store

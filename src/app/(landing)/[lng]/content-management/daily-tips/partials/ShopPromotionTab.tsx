@@ -431,6 +431,12 @@ export default function ShopPromotionTab({
 
   const handleInputChange = (fieldName: FieldNames, value: string) => {
     form.setValue(fieldName, value)
+    form.trigger(fieldName).then(isValid => {
+      if (isValid) {
+        form.clearErrors(fieldName)
+      }
+    })
+
     setTranslationField("shopPromotionData", activeLang, fieldName, value)
     if (fieldName !== "subDescription" || "shopCategory") {
       setTranslationField("shopPromotionData", "fr", fieldName, value)

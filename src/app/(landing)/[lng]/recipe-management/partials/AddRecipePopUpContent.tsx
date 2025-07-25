@@ -513,8 +513,6 @@ export default function AddRecipePopUpContent({
         food => food.name?.toLowerCase() === ingredientInput.toLowerCase()
       )
 
-      console.log(matchedFood)
-
       if (matchedFood) {
         updatedAvailData = {
           foodId: matchedFood.id,
@@ -731,7 +729,20 @@ export default function AddRecipePopUpContent({
       return
     }
 
+    // Check if the benefits array is empty
+    if (!data.benefits || data.benefits.length === 0) {
+      toast.error("Please add at least one benefit!")
+      return
+    }
+
     addRecipe()
+  }
+
+  const onError = (errors: any) => {
+    // Check if benefits is empty or invalid
+    if (errors.benefits) {
+      toast.error(errors.benefits.message)
+    }
   }
 
   return (
@@ -742,7 +753,7 @@ export default function AddRecipePopUpContent({
         </div>
       )}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit, onError)}>
           <div className="grid grid-cols-1 gap-4 pb-6 sm:grid-cols-2 md:grid-cols-3">
             <div>
               <FormField

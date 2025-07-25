@@ -362,10 +362,10 @@ export default function DailyTipsPage({
       }
 
       if (activeTab === "shopPromote") {
-        if ("concern" in updatedState.shopPromotionData.en)
+        if ("reason" in updatedState.shopPromotionData.en)
           requestBody.concern = updatedState.shopPromotionData.en
             .reason as string
-        if ("concern" in updatedState.shopPromotionData.fr)
+        if ("reason" in updatedState.shopPromotionData.fr)
           requestBody.concernFR = updatedState.shopPromotionData.fr
             .reason as string
         if ("title" in updatedState.shopPromotionData.en)

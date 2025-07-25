@@ -390,6 +390,7 @@ export default function EditShopPromotionTab({
   const handleShopCategoryChange = (value: string) => {
     form.setValue("shopCategory", value)
     setTranslationField("shopPromotionData", activeLang, "shopCategory", value)
+    setUpdatedField("shopPromotionData", activeLang, "shopCategory", value)
 
     const current = shopcategory[activeLang]
     const oppositeLang = activeLang === "en" ? "fr" : "en"
@@ -398,6 +399,12 @@ export default function EditShopPromotionTab({
     const index = current.findIndex(opt => opt.value === value)
     if (index !== -1) {
       setTranslationField(
+        "shopPromotionData",
+        oppositeLang,
+        "shopCategory",
+        opposite[index].value
+      )
+      setUpdatedField(
         "shopPromotionData",
         oppositeLang,
         "shopCategory",
@@ -500,6 +507,13 @@ export default function EditShopPromotionTab({
 
   const handleInputChange = (fieldName: FieldNames, value: string) => {
     form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
+
+    form.trigger(fieldName).then(isValid => {
+      if (isValid) {
+        form.clearErrors(fieldName)
+      }
+    })
+
     setTranslationField("shopPromotionData", activeLang, fieldName, value)
     setUpdatedField("shopPromotionData", activeLang, fieldName, value)
     if (fieldName !== "subDescription" || "shopCategory") {

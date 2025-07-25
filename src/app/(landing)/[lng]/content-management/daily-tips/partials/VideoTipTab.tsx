@@ -154,6 +154,12 @@ export default function VideoTipTab({
     value: string
   ) => {
     form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
+    form.trigger(fieldName).then(isValid => {
+      if (isValid) {
+        form.clearErrors(fieldName)
+      }
+    })
+
     setTranslationField("videoTipData", activeLang, fieldName, value)
   }
 

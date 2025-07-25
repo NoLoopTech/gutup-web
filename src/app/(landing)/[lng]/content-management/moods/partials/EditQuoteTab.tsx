@@ -37,18 +37,18 @@ interface Option {
 // Mood options per language
 const moodOptions: Record<string, Option[]> = {
   en: [
-    { value: "VERY_HAPPY", label: "Very Happy" },
-    { value: "HAPPY", label: "Happy" },
-    { value: "NEUTRAL", label: "Neutral" },
-    { value: " SAD", label: "Sad" },
-    { value: " VERY_SAD", label: "Very Sad" }
+    { value: "very happy", label: "Very Happy" },
+    { value: "happy", label: "Happy" },
+    { value: "neutral", label: "Neutral" },
+    { value: "sad", label: "Sad" },
+    { value: "very sad", label: "Very Sad" }
   ],
   fr: [
-    { value: "VERY_HAPPY", label: "Très heureux" },
-    { value: "HAPPY", label: "Heureuse" },
-    { value: "NEUTRAL", label: "Neutre" },
-    { value: "SAD", label: "Triste" },
-    { value: "VERY_SAD", label: "Très triste" }
+    { value: "very happy", label: "Très heureux" },
+    { value: "happy", label: "Heureuse" },
+    { value: "neutral", label: "Neutre" },
+    { value: "sad", label: "Triste" },
+    { value: "very sad", label: "Très triste" }
   ]
 }
 
@@ -119,6 +119,13 @@ export default function EditQuoteTab({
 
   const handleInputChange = (fieldName: "author" | "quote", value: string) => {
     form.setValue(fieldName, value, { shouldValidate: true, shouldDirty: true })
+
+    form.trigger(fieldName).then(isValid => {
+      if (isValid) {
+        form.clearErrors(fieldName)
+      }
+    })
+
     setTranslationField("quoteData", activeLang, fieldName, value)
     setUpdatedField("quoteData", activeLang, fieldName, value)
   }

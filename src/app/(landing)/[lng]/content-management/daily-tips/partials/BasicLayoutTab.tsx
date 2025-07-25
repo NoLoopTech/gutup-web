@@ -143,6 +143,13 @@ export default function BasicLayoutTab({
 
   const handleInputChange = (fieldName: FieldNames, value: string) => {
     form.setValue(fieldName, value)
+
+    form.trigger(fieldName).then(isValid => {
+      if (isValid) {
+        form.clearErrors(fieldName)
+      }
+    })
+
     setTranslationField("basicLayoutData", activeLang, fieldName, value)
   }
 
