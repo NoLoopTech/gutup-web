@@ -21,6 +21,7 @@ interface StoreField {
   availData: any[] // Changed from string[] to any[] to match AvailableItem[]
   storeImage: string | null // Store as base64 string or Firebase URL
   storeImageName: string | null // Store the original file name
+  deliverible: boolean // Add deliverible field
 }
 
 interface LangData<T> {
@@ -63,7 +64,8 @@ const emptyFields: StoreField = {
   about: "",
   availData: [],
   storeImage: null,
-  storeImageName: null
+  storeImageName: null,
+  deliverible: false
 }
 
 export const useStoreStore = create<StoreStoreState>()(

@@ -23,7 +23,8 @@ import {
   AddNewStore,
   getAllStores,
   deleteStoreById,
-  updateStoreById
+  updateStoreById,
+  updateStoreStatusById
 } from "@/app/api/store"
 import { Badge } from "@/components/ui/badge"
 import AddStorePopUp from "./AddStorePopUp"
@@ -33,7 +34,8 @@ import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import {
   type translationsTypes,
   defaultTranslations,
-  type StoreManagementDataType
+  type StoreManagementDataType,
+  type shopStatusDataType
 } from "@/types/storeTypes"
 import { toast } from "sonner"
 import { loadLanguage } from "@/../../src/i18n/locales"
@@ -88,11 +90,7 @@ export default function StoreManagementPage({
   const [selectedStoreType, setSelectedStoreType] = useState<string>("")
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
-  const [viewStoreOpen, setViewStoreOpen] = useState<boolean>(false)
   const [editStoreOpen, setEditStoreOpen] = useState<boolean>(false)
-  const [, setSelectedStoreForView] = useState<StoreManagementDataType | null>(
-    null
-  )
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null)
   const [storeId, setStoreId] = useState<number>(0)
   const [translations, setTranslations] =
@@ -316,8 +314,6 @@ export default function StoreManagementPage({
 
     try {
       setIsLoading(true)
-
-      // Get current store and build update request
       const transformedData = transformStoreDataToApiRequest(
         storeData,
         activeLang,
@@ -353,7 +349,47 @@ export default function StoreManagementPage({
     }
   }
 
-  const columns: Column<StoreManagementDataType>[] = [
+  const handleToggleShopStatus = async (
+    store: shopStatusDataType
+  ): Promise<void> => {
+    try {
+      setIsLoading(true)
+      if (typeof store.id === "number") {
+        const newStatus = !store.shopStatus
+        const fullStore = stores.find(s => s.id === store.id)
+        if (!fullStore) {
+          toast.error("Store not found")
+          setIsLoading(false)
+          return
+        }
+        const requestBody = {
+          ...fullStore,
+          shopStatus: newStatus
+        }
+        const response = await updateStoreStatusById(
+          token,
+          store.id,
+          requestBody
+        )
+        if (response?.data) {
+          toast.success(
+            `Store status changed to ${newStatus ? "Active" : "Inactive"}`
+          )
+          await getStores()
+        } else {
+          toast.error("Failed to change store status")
+        }
+      } else {
+        toast.error("Invalid store ID")
+      }
+    } catch (error) {
+      toast.error("System error. Please try again later.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const columns: Array<Column<StoreManagementDataType>> = [
     {
       accessor: "storeName",
       header: "Store Name"
@@ -439,6 +475,16 @@ export default function StoreManagementPage({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
+            <DropdownMenuItem
+              onClick={() => {
+                void handleToggleShopStatus({
+                  id: row.id,
+                  shopStatus: row.shopStatus
+                })
+              }}
+            >
+              {row.shopStatus ? "Inactive" : "Active"}
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 handleEditStore(row)

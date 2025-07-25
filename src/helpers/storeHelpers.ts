@@ -44,8 +44,7 @@ export function transformStoreDataToApiRequest(
             : enItem.type?.toLowerCase() === "category"
             ? "catégorie"
             : enItem.type?.toLowerCase() || "catégorie",
-        availability:
-          enItem.status === "Active" || enItem.availability === true || true,
+        availability: enItem.status === "Active",
         display: enItem.display !== false
       }
 

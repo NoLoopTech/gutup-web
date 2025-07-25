@@ -59,6 +59,9 @@ export interface translationsTypes {
   physical: string
   online: string
   ingredient: string
+  deliverible: string
+  yes: string
+  no: string
 
   required: string
   mustbeatleast2characters: string
@@ -135,6 +138,9 @@ export const defaultTranslations: translationsTypes = {
   physical: "",
   online: "",
   ingredient: "",
+  deliverible: "",
+  yes: "",
+  no: "",
 
   required: "",
   mustbeatleast2characters: "",
@@ -187,6 +193,7 @@ export interface StoreManagementDataType {
   categories?: IngAndCatDataType[]
   subscriptionType: string
   ingAndCatData?: IngAndCatDataType[]
+  deliverible?: boolean
 }
 
 // Define the API request body interface according to swagger
@@ -216,4 +223,10 @@ export interface AddStoreRequestBody {
   descriptionFR: string
   storeImage: string
   ingAndCatData: IngAndCatDataType[]
+}
+
+// Add interface for Shop Status Data Type
+export interface shopStatusDataType {
+  id?: number
+  shopStatus: boolean
 }

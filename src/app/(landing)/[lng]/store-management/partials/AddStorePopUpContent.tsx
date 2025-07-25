@@ -112,7 +112,7 @@ export default function AddStorePopUpContent({
   const { translateText } = useTranslation()
   const { activeLang, storeData, setTranslationField, resetForm } =
     useStoreStore() as any
-  const [isTranslating, setIsTranslating] = useState(false)
+  const [, setIsTranslating] = useState(false)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [, setIsPremium] = React.useState(false)
@@ -141,6 +141,7 @@ export default function AddStorePopUpContent({
     storeLocation: z.string().min(1, translations.required),
     storeType: z.string().min(1, translations.pleaseselectaStoreType),
     subscriptionType: z.boolean().optional(),
+    deliverible: z.boolean().optional(),
     timeFrom: z.string().min(1, translations.required),
     timeTo: z.string().min(1, translations.required),
     phone: z
@@ -546,25 +547,85 @@ export default function AddStorePopUpContent({
     },
     {
       header: translations.availabilityStatus,
-      accessor: (row: AvailableItem) => (
-        <Badge
-          className={
-            row.tags.includes("InSystem")
-              ? "bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors"
-              : "bg-gray-200 text-black text-xs px-2 py-1 rounded-md border border-gray-500 hover:bg-gray-100 transition-colors"
-          }
-        >
-          {translations[
-            row.status.toLowerCase() as keyof typeof translations
-          ] ?? row.status}
-        </Badge>
-      )
+      accessor: (row: AvailableItem) => {
+        const index = availData.findIndex(
+          item =>
+            item.ingOrCatId === row.ingOrCatId &&
+            item.type === row.type &&
+            item.name === row.name
+        )
+        return (
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={row.status === "Active"}
+              className="scale-75"
+              onCheckedChange={checked => {
+                handleToggleAvailability(index, checked)
+              }}
+            />
+            <Badge
+              className={
+                row.status === "Active"
+                  ? "bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors"
+                  : "bg-gray-200 text-black text-xs px-2 py-1 rounded-md border border-gray-500 hover:bg-gray-100 transition-colors"
+              }
+            >
+              {translations[
+                row.status.toLowerCase() as keyof typeof translations
+              ] ?? row.status}
+            </Badge>
+          </div>
+        )
+      }
     },
     {
       header: translations.displayStatus,
-      accessor: (row: AvailableItem) => (
-        <Switch checked={row.display} className="scale-75" />
-      )
+      accessor: (row: AvailableItem) => {
+        const index = availData.findIndex(
+          item =>
+            item.ingOrCatId === row.ingOrCatId &&
+            item.type === row.type &&
+            item.name === row.name
+        )
+        function handleToggleDisplay(index: number, checked: boolean): void {
+          const updated = availData.map((item, i) =>
+            i === index ? { ...item, display: checked } : item
+          )
+          setAvailData(updated)
+          form.setValue("availData", updated, { shouldValidate: true })
+          setTranslationField("storeData", activeLang, "availData", updated)
+
+          // Update opposite language data
+          const oppLang = activeLang === "en" ? "fr" : "en"
+          const oppLangData =
+            (storeData[oppLang]?.availData as AvailableItem[]) || []
+          let oppUpdated: AvailableItem[]
+          const itemToUpdate = availData[index]
+          if (itemToUpdate.ingOrCatId === 0) {
+            oppUpdated = oppLangData.map((item, i) =>
+              i === index ? { ...item, display: checked } : item
+            )
+          } else {
+            oppUpdated = oppLangData.map(item =>
+              item.ingOrCatId === itemToUpdate.ingOrCatId &&
+              item.type === itemToUpdate.type
+                ? { ...item, display: checked }
+                : item
+            )
+          }
+          setTranslationField("storeData", oppLang, "availData", oppUpdated)
+        }
+
+        return (
+          <Switch
+            checked={row.display}
+            className="scale-75"
+            onCheckedChange={checked => {
+              handleToggleDisplay(index, checked)
+            }}
+          />
+        )
+      }
     },
     {
       header: "", // No header for delete column
@@ -594,6 +655,44 @@ export default function AddStorePopUpContent({
     }
   ]
 
+  // Add this function before availColumns
+  const handleToggleAvailability = (index: number, checked: boolean): void => {
+    const updated = availData.map((item, i) =>
+      i === index
+        ? {
+            ...item,
+            status: checked
+              ? ("Active" as "Active")
+              : ("Inactive" as "Inactive")
+          }
+        : item
+    )
+    setAvailData(updated)
+    form.setValue("availData", updated, { shouldValidate: true })
+    setTranslationField("storeData", activeLang, "availData", updated)
+
+    // Update opposite language data
+    const oppLang = activeLang === "en" ? "fr" : "en"
+    const oppLangData = (storeData[oppLang]?.availData as AvailableItem[]) || []
+    let oppUpdated: AvailableItem[]
+    const itemToUpdate = availData[index]
+    if (itemToUpdate.ingOrCatId === 0) {
+      oppUpdated = oppLangData.map((item, i) =>
+        i === index
+          ? { ...item, status: checked ? "Active" : "Inactive" }
+          : item
+      )
+    } else {
+      oppUpdated = oppLangData.map(item =>
+        item.ingOrCatId === itemToUpdate.ingOrCatId &&
+        item.type === itemToUpdate.type
+          ? { ...item, status: checked ? "Active" : "Inactive" }
+          : item
+      )
+    }
+    setTranslationField("storeData", oppLang, "availData", oppUpdated)
+  }
+
   // Delete handler for availData
   const handleDeleteAvailItem = (index: number): void => {
     if (index < 0 || index >= availData.length) {
@@ -601,10 +700,8 @@ export default function AddStorePopUpContent({
       return
     }
 
-    // Get the item to be deleted
     const itemToDelete = availData[index]
 
-    // Update current language data
     const updated = availData.filter((_, i) => i !== index)
     setAvailData(updated)
     form.setValue("availData", updated, { shouldValidate: true })
@@ -668,7 +765,7 @@ export default function AddStorePopUpContent({
     const name = selected?.name ?? ingredientInput.trim()
     if (!name) return
     const matchingFood =
-      selected || foods.find(f => f.name?.toLowerCase() === name.toLowerCase())
+      selected ?? foods.find(f => f.name?.toLowerCase() === name.toLowerCase())
 
     const isAlreadyAdded = availData.some(item => {
       if (item.type !== "Ingredient") {
@@ -743,7 +840,7 @@ export default function AddStorePopUpContent({
     if (!name) return
 
     const matchingCategory =
-      selectedCategory ||
+      selectedCategory ??
       categoryTags.find(tag => {
         const tagDisplayName =
           activeLang === "en" ? tag.tagName ?? "" : tag.tagNameFr ?? ""
@@ -880,25 +977,23 @@ export default function AddStorePopUpContent({
   const onSubmit = async (
     data: z.infer<typeof AddStoreSchema>
   ): Promise<void> => {
-    if (onAddStore) {
-      await onAddStore()
-    } else {
-      toast(translations.formSubmittedSuccessfully, {})
+    try {
+      if (onAddStore) {
+        await onAddStore()
+      } else {
+        toast(translations.formSubmittedSuccessfully, {})
+      }
+    } catch (error) {
+      toast.error(
+        translations.formSubmissionFailed || "Form submission failed."
+      )
     }
-    // Clear session after successful submission
-    resetForm()
-    sessionStorage.removeItem("store-store")
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="pb-6">
-          {isTranslating && (
-            <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
-              <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
-            </div>
-          )}
           {/* Store info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
             <div>
@@ -1099,6 +1194,41 @@ export default function AddStorePopUpContent({
                       {field.value
                         ? translations.premium
                         : translations.freemium}
+                    </Label>
+                  </div>
+                )}
+              />
+            </div>
+            <div>
+              <Label className="text-black mb-1 block">
+                {translations.deliverible}
+              </Label>
+              <FormField
+                control={form.control}
+                name="deliverible"
+                render={({ field }) => (
+                  <div className="flex items-center gap-4 mt-2">
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={value => {
+                        field.onChange(value)
+                        setTranslationField(
+                          "storeData",
+                          activeLang,
+                          "deliverible",
+                          value
+                        )
+                        setTranslationField(
+                          "storeData",
+                          activeLang === "en" ? "fr" : "en",
+                          "deliverible",
+                          value
+                        )
+                        form.setValue("deliverible", value)
+                      }}
+                    />
+                    <Label className="text-Primary-300">
+                      {field.value ? translations.yes : translations.no}
                     </Label>
                   </div>
                 )}
@@ -1357,11 +1487,7 @@ export default function AddStorePopUpContent({
                   const { onChange } = makeRichHandlers("about")
                   return (
                     <FormItem className="relative">
-                      {isTranslating && (
-                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-                          <span className="loader" />
-                        </div>
-                      )}
+                      {/* Removed isTranslating overlay animation here */}
                       <FormLabel>{translations.aboutUs}</FormLabel>
                       <FormControl>
                         <RichTextEditor

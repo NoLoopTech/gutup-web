@@ -216,7 +216,8 @@ export default function EditStorePopUpContent({
     availData: z
       .array(z.any())
       .min(1, translations.atleastoneingredientcategorymustbeadded),
-    storeImage: z.string().min(1, translations.required)
+    storeImage: z.string().min(1, translations.required),
+    deliverible: z.boolean().optional()
   })
 
   // Form hook
@@ -226,7 +227,11 @@ export default function EditStorePopUpContent({
       ...storeData[activeLang],
       category: storeData[activeLang]?.category || "",
       storeImage: storeData[activeLang]?.storeImage || "",
-      availData: storeData[activeLang]?.availData || []
+      availData: storeData[activeLang]?.availData || [],
+      deliverible:
+        typeof storeData[activeLang]?.deliverible === "boolean"
+          ? storeData[activeLang].deliverible
+          : false
     }
   })
 
@@ -242,6 +247,12 @@ export default function EditStorePopUpContent({
         if (response?.data) {
           const data = response.data
           setCurrentStoreData(data)
+
+          // Set all backend fields into zustand store for both languages
+          Object.entries(data).forEach(([key, value]) => {
+            setTranslationField("storeData", "en", key, value)
+            setTranslationField("storeData", "fr", key, value)
+          })
 
           // Transform ingredients and categories data
           const ingredientsData = data.ingredients || []
@@ -624,7 +635,11 @@ export default function EditStorePopUpContent({
       storeImage: currentStoreData?.storeImage || "",
       category: categoryId,
       storeType: storeTypeId,
-      availData: currentStoreData?.availData || []
+      availData: currentStoreData?.availData || [],
+      deliverible:
+        typeof currentStoreData?.deliverible === "boolean"
+          ? currentStoreData.deliverible
+          : false
     }
 
     if (isDataLoaded && Object.keys(formData).length > 0) {
@@ -898,17 +913,36 @@ export default function EditStorePopUpContent({
     },
     {
       header: translations.availabilityStatus,
-      accessor: (row: AvailableItem) => (
-        <Badge
-          className={
-            row.tags.includes("InSystem")
-              ? "bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors"
-              : "bg-gray-200 text-black text-xs px-2 py-1 rounded-md border border-gray-500 hover:bg-gray-100 transition-colors"
-          }
-        >
-          {getTranslatedStatus(row.status, activeLang)}
-        </Badge>
-      )
+      accessor: (row: AvailableItem) => {
+        const index = availData.findIndex(
+          item =>
+            item.ingOrCatId === row.ingOrCatId &&
+            item.name === row.name &&
+            item.type === row.type
+        )
+        return (
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={row.status === "Active"}
+              className="scale-75"
+              onCheckedChange={checked => {
+                handleToggleAvailability(index, checked)
+              }}
+            />
+            <Badge
+              className={
+                row.status === "Active"
+                  ? "bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors"
+                  : "bg-gray-200 text-black text-xs px-2 py-1 rounded-md border border-gray-500 hover:bg-gray-100 transition-colors"
+              }
+            >
+              {translations[
+                row.status.toLowerCase() as keyof typeof translations
+              ] ?? row.status}
+            </Badge>
+          </div>
+        )
+      }
     },
     {
       header: translations.displayStatus,
@@ -918,11 +952,16 @@ export default function EditStorePopUpContent({
           className="scale-75"
           onCheckedChange={checked => {
             const updated = availData.map(item =>
-              item.ingOrCatId === row.ingOrCatId
+              item.ingOrCatId === row.ingOrCatId && item.type === row.type
                 ? { ...item, display: checked }
                 : item
             )
-            setAvailData(updated)
+            setAvailData(
+              updated.map(item => ({
+                ...item,
+                status: item.status === "Active" ? "Active" : "Inactive"
+              })) as AvailableItem[]
+            )
             form.setValue("availData", updated, { shouldValidate: true })
             setTranslationField("storeData", activeLang, "availData", updated)
 
@@ -931,7 +970,7 @@ export default function EditStorePopUpContent({
             const oppCurrentData =
               (storeData[oppLang]?.availData as AvailableItem[]) || []
             const oppUpdated = oppCurrentData.map(item =>
-              item.ingOrCatId === row.ingOrCatId
+              item.ingOrCatId === row.ingOrCatId && item.type === row.type
                 ? { ...item, display: checked }
                 : item
             )
@@ -1018,7 +1057,7 @@ export default function EditStorePopUpContent({
     if (!name) return
 
     const matchingFood =
-      selected || foods.find(f => f.name?.toLowerCase() === name.toLowerCase())
+      selected ?? foods.find(f => f.name?.toLowerCase() === name.toLowerCase())
 
     // Check if the item is already added to the table
     const isAlreadyAdded = availData.some(item => {
@@ -1051,7 +1090,12 @@ export default function EditStorePopUpContent({
 
     // Update current lang
     const updated = [...(form.getValues("availData") || []), entry]
-    setAvailData(updated)
+    setAvailData(
+      updated.map(item => ({
+        ...item,
+        status: item.status === "Active" ? "Active" : "Inactive"
+      }))
+    )
     form.setValue("availData", updated, { shouldValidate: true })
     setTranslationField("storeData", activeLang, "availData", updated)
 
@@ -1097,7 +1141,7 @@ export default function EditStorePopUpContent({
     if (!name) return
 
     const matchingCategory =
-      selectedCategory ||
+      selectedCategory ??
       categoryTags.find(tag => {
         const tagDisplayName =
           activeLang === "en" ? tag.tagName ?? "" : tag.tagNameFr ?? ""
@@ -1139,7 +1183,12 @@ export default function EditStorePopUpContent({
 
     // Update current lang
     const updated = [...(form.getValues("availData") || []), entry]
-    setAvailData(updated)
+    setAvailData(
+      updated.map(item => ({
+        ...item,
+        status: item.status === "Active" ? "Active" : "Inactive"
+      }))
+    )
     form.setValue("availData", updated, { shouldValidate: true })
     setTranslationField("storeData", activeLang, "availData", updated)
 
@@ -1266,6 +1315,42 @@ export default function EditStorePopUpContent({
     }
   }
 
+  // Add this function before availColumns
+  const handleToggleAvailability = (index: number, checked: boolean): void => {
+    const updated = availData.map((item, i) =>
+      i === index
+        ? {
+            ...item,
+            status: checked ? "Active" : ("Inactive" as "Active" | "Inactive")
+          }
+        : item
+    )
+    setAvailData(updated)
+    form.setValue("availData", updated, { shouldValidate: true })
+    setTranslationField("storeData", activeLang, "availData", updated)
+
+    // Update opposite language data
+    const oppLang = activeLang === "en" ? "fr" : "en"
+    const oppLangData = (storeData[oppLang]?.availData as AvailableItem[]) || []
+    let oppUpdated: AvailableItem[]
+    const itemToUpdate = availData[index]
+    if (itemToUpdate.ingOrCatId === 0) {
+      oppUpdated = oppLangData.map((item, i) =>
+        i === index
+          ? { ...item, status: checked ? "Active" : "Inactive" }
+          : item
+      )
+    } else {
+      oppUpdated = oppLangData.map(item =>
+        item.ingOrCatId === itemToUpdate.ingOrCatId &&
+        item.type === itemToUpdate.type
+          ? { ...item, status: checked ? "Active" : "Inactive" }
+          : item
+      )
+    }
+    setTranslationField("storeData", oppLang, "availData", oppUpdated)
+  }
+
   if (isTranslating && !isDataLoaded) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -1278,11 +1363,6 @@ export default function EditStorePopUpContent({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="pb-6">
-          {isTranslating && (
-            <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
-              <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
-            </div>
-          )}
           {/* Store info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
             <div>
@@ -1483,6 +1563,42 @@ export default function EditStorePopUpContent({
                       {field.value
                         ? translations.premium
                         : translations.freemium}
+                    </Label>
+                  </div>
+                )}
+              />
+            </div>
+            <div>
+              <Label className="text-black mb-1 block">
+                {translations.deliverible}
+              </Label>
+              <FormField
+                control={form.control}
+                name="deliverible"
+                render={({ field }) => (
+                  <div className="flex items-center gap-4 mt-2">
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={value => {
+                        field.onChange(value)
+                        setTranslationField(
+                          "storeData",
+                          activeLang,
+                          "deliverible",
+                          value
+                        )
+                        setTranslationField(
+                          "storeData",
+                          activeLang === "en" ? "fr" : "en",
+                          "deliverible",
+                          value
+                        )
+                        form.setValue("deliverible", value)
+                        setHasChanges?.(true)
+                      }}
+                    />
+                    <Label className="text-Primary-300">
+                      {field.value ? translations.yes : translations.no}
                     </Label>
                   </div>
                 )}
@@ -1743,11 +1859,6 @@ export default function EditStorePopUpContent({
                   const { onChange } = makeRichHandlers("about")
                   return (
                     <FormItem className="relative">
-                      {isTranslating && (
-                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-                          <span className="loader" />
-                        </div>
-                      )}
                       <FormLabel>{translations.aboutUs}</FormLabel>
                       <FormControl>
                         <RichTextEditor

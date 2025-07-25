@@ -57,6 +57,9 @@
   "physical": "Physique",
   "online": "En ligne",
   "ingredient": "Ingrédient",
+  "deliverible": "Livrable",
+  "yes": "Oui",
+  "no": "Non",
 
   "required": "Requis",
   "mustbeatleast2characters": "Doit contenir au moins 2 caractères",
