@@ -54,7 +54,6 @@ interface Ingredient {
   quantity: string
   mainIngredient: boolean
   available: boolean
-  display: boolean
 }
 interface Option {
   value: string
@@ -364,7 +363,7 @@ export default function EditRecipePopUpContent({
     // Create a new updatedAvailData array by mapping over the existing availData
     const updatedAvailData = availData.map(item => {
       if (item.ingredientName === name) {
-        return { ...item, display: !item.display }
+        return { ...item, mainIngredient: !item.mainIngredient }
       }
       return item
     })
@@ -384,9 +383,12 @@ export default function EditRecipePopUpContent({
   }
 
   // Update the ingredient's quantity
-  const handleQuantityChange = (foodId: number, value: string): void => {
+  const handleQuantityChange = (
+    ingredientName: string,
+    value: string
+  ): void => {
     const updatedAvailData = availData.map(item => {
-      if (item.foodId === foodId) {
+      if (item.ingredientName.toLowerCase() === ingredientName.toLowerCase()) {
         return { ...item, quantity: value }
       }
       return item
@@ -411,14 +413,26 @@ export default function EditRecipePopUpContent({
         <Input
           type="text"
           value={row.quantity}
-          onChange={e => handleQuantityChange(row.foodId, e.target.value)} // Handle change
+          onChange={e =>
+            handleQuantityChange(row.ingredientName, e.target.value)
+          } // Handle change
           placeholder="Enter quantity"
           className="w-[80%]"
         />
       )
     },
     {
-      header: "Status",
+      header: "Main Ingredient",
+      accessor: (row: Ingredient) => (
+        <Switch
+          checked={row.mainIngredient}
+          onCheckedChange={() => handleToggleDisplayStatus(row.ingredientName)}
+          className="scale-75"
+        />
+      )
+    },
+    {
+      header: "Available In Ingredient",
       accessor: (row: Ingredient) => (
         <Badge
           className={
@@ -429,16 +443,6 @@ export default function EditRecipePopUpContent({
         >
           {row.available ? "Active" : "Inactive"}
         </Badge>
-      )
-    },
-    {
-      header: "Display Status",
-      accessor: (row: Ingredient) => (
-        <Switch
-          checked={row.display}
-          onCheckedChange={() => handleToggleDisplayStatus(row.ingredientName)}
-          className="scale-75"
-        />
       )
     },
     {
@@ -497,8 +501,7 @@ export default function EditRecipePopUpContent({
       updatedAvailData = {
         foodId: selected.id,
         ingredientName: selected.name ?? "",
-        available: true,
-        display: true,
+        available: false,
         quantity: "",
         mainIngredient: true
       }
@@ -525,7 +528,6 @@ export default function EditRecipePopUpContent({
           foodId: matchedFood.id,
           ingredientName: matchedFood.name,
           available: matchedFood.status,
-          display: true,
           quantity: "",
           mainIngredient: true
         }
@@ -545,7 +547,6 @@ export default function EditRecipePopUpContent({
           foodId: 0,
           ingredientName: ingredientInput ?? "",
           available: false,
-          display: true,
           quantity: "",
           mainIngredient: true
         }

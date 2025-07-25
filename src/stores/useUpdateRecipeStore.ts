@@ -10,7 +10,7 @@ export interface Ingredient {
   ingredientName: string
   quantity: string
   mainIngredient: boolean
-  availableInIngredient: boolean
+  available: boolean
 }
 
 export interface RecipeFields {

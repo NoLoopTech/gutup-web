@@ -58,7 +58,6 @@ interface Ingredient {
   quantity: string
   mainIngredient: boolean
   available: boolean
-  display: boolean
 }
 
 export interface TagTypes {
@@ -338,7 +337,7 @@ export default function AddRecipePopUpContent({
     // Create a new updatedAvailData array by mapping over the existing availData
     const updatedAvailData = availData.map(item => {
       if (item.ingredientName === name) {
-        return { ...item, display: !item.display }
+        return { ...item, mainIngredient: !item.mainIngredient }
       }
       return item
     })
@@ -351,7 +350,7 @@ export default function AddRecipePopUpContent({
     setTranslationField("fr", "ingredientData", updatedAvailData)
 
     // Optionally show a success message
-    toast.success("Display status updated successfully!")
+    toast.success("Main Ingredient updated successfully!")
   }
 
   // Update the ingredient's quantity
@@ -400,7 +399,17 @@ export default function AddRecipePopUpContent({
       )
     },
     {
-      header: "Status",
+      header: "Main Ingredient",
+      accessor: (row: Ingredient) => (
+        <Switch
+          checked={row.mainIngredient}
+          onCheckedChange={() => handleToggleDisplayStatus(row.ingredientName)}
+          className="scale-75"
+        />
+      )
+    },
+    {
+      header: "Available In Ingredient",
       accessor: (row: Ingredient) => (
         <Badge
           className={
@@ -411,16 +420,6 @@ export default function AddRecipePopUpContent({
         >
           {row.available ? "Active" : "Inactive"}
         </Badge>
-      )
-    },
-    {
-      header: "Display Status",
-      accessor: (row: Ingredient) => (
-        <Switch
-          checked={row.display}
-          onCheckedChange={() => handleToggleDisplayStatus(row.ingredientName)}
-          className="scale-75"
-        />
       )
     },
     {
@@ -489,8 +488,7 @@ export default function AddRecipePopUpContent({
       updatedAvailData = {
         foodId: selected.id,
         ingredientName: selected.name ?? "",
-        available: true,
-        display: true,
+        available: false,
         quantity: "",
         mainIngredient: true
       }
@@ -517,8 +515,7 @@ export default function AddRecipePopUpContent({
         updatedAvailData = {
           foodId: matchedFood.id,
           ingredientName: matchedFood.name,
-          available: matchedFood.status,
-          display: true,
+          available: true,
           quantity: "",
           mainIngredient: true
         }
@@ -538,7 +535,6 @@ export default function AddRecipePopUpContent({
           foodId: 0,
           ingredientName: ingredientInput ?? "",
           available: false,
-          display: true,
           quantity: "",
           mainIngredient: true
         }
@@ -711,8 +707,7 @@ export default function AddRecipePopUpContent({
       ingredientName: item.ingredientName,
       quantity: item.quantity,
       mainIngredient: item.mainIngredient,
-      available: item.available ?? false,
-      display: item.display ?? true
+      available: item.available ?? false
     }))
 
     setAvailData(mappedIngredients)

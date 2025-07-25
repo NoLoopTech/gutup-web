@@ -132,7 +132,7 @@ export default function EditRecipePopUp({
               ingredientName: benifits.ingredientName,
               quantity: benifits.quantity,
               mainIngredient: benifits.mainIngredient,
-              availableInIngredient: benifits.available
+              available: benifits.available
             }
           }
         )
@@ -151,7 +151,6 @@ export default function EditRecipePopUp({
               ingredientName: benifits.ingredientNameFR,
               quantity: benifits.quantityFR,
               mainIngredient: benifits.mainIngredient,
-              availableInIngredient: benifits.available,
               available: benifits.available
             }
           }

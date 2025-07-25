@@ -507,11 +507,10 @@ export default function RecipeManagementPage({
           translations.fr.ingredientData[index].ingredientName || "",
         quantity: translations.en.ingredientData[index].quantity || "",
         quantityFR: translations.fr.ingredientData[index].quantity || "",
-        mainIngredient: true,
+        mainIngredient:
+          translations.fr.ingredientData[index].mainIngredient || false,
         foodId: translations.en.ingredientData[index].foodId,
-        available: Boolean(
-          translations.en.ingredientData[index].availableInIngredient
-        )
+        available: Boolean(translations.en.ingredientData[index].available)
       }))
     }
 
@@ -694,9 +693,11 @@ export default function RecipeManagementPage({
           quantity: ingredient.quantity || "",
           quantityFR:
             translationsData.fr.ingredientData?.[index]?.quantity || "",
-          mainIngredient: true,
+          mainIngredient:
+            translationsData.fr.ingredientData?.[index]?.mainIngredient ||
+            false,
           foodId: ingredient.foodId,
-          available: Boolean(ingredient.availableInIngredient)
+          available: ingredient.available
         })
       )
     }
