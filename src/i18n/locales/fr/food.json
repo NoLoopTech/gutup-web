@@ -48,5 +48,6 @@
   "pleaseselectaseason": "Veuillez sélectionner une saison",
   "pleaseselectacountry": "Veuillez sélectionner un pays",
   "pleaseenteratleastonebenefit": "Veuillez saisir au moins un bénéfice",
-  "formSubmittedSuccessfully": "Formulaire soumis avec succès !"
+  "formSubmittedSuccessfully": "Formulaire soumis avec succès !",
+  "pleaseenternumbersonly": "Veuillez saisir uniquement des chiffres"
 }
