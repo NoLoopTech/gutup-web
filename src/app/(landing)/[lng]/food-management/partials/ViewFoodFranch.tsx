@@ -17,6 +17,13 @@ import { TabsContent } from "@/components/ui/tabs"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import dynamic from "next/dynamic"
 import React, { useEffect, useState } from "react"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -119,7 +126,7 @@ export default function ViewFoodFrench({
   const [formData, setFormData] = useState({
     name: "",
     category: "",
-    season: "",
+    season: [] as string[],
     country: "",
     fiber: "",
     proteins: "",
@@ -130,6 +137,31 @@ export default function ViewFoodFrench({
     benefits: [] as string[]
   })
 
+  // Dropdown open state for months
+  const [isMonthsDropdownOpen, setIsMonthsDropdownOpen] = useState(false)
+
+  // Click-away handler for dropdown
+  React.useEffect(() => {
+    if (!isMonthsDropdownOpen) return
+    function handleClick(e: MouseEvent): void {
+      const dropdown = document.getElementById("months-dropdown-fr")
+      if (dropdown && !dropdown.contains(e.target as Node)) {
+        setIsMonthsDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => {
+      document.removeEventListener("mousedown", handleClick)
+    }
+  }, [isMonthsDropdownOpen])
+
+  const [, setLocalSeasons] = useState(foodDetails?.seasons ?? [])
+
+  useEffect(() => {
+    // Reset local state when foodDetails changes
+    setLocalSeasons(foodDetails?.seasons ?? [])
+  }, [foodDetails])
+
   useEffect(() => {
     if (foodDetails) {
       // Find the French equivalent of the country
@@ -137,11 +169,11 @@ export default function ViewFoodFrench({
         countries.find(c => c.value === foodDetails.country)?.labelFr ??
         foodDetails.country ??
         ""
-      
+      // For season, use array of seasonFR
       setFormData({
         name: foodDetails.nameFR || "",
         category: foodDetails.categoryFR || "",
-        season: foodDetails.seasons?.[0]?.seasonFR || "",
+        season: foodDetails.seasons?.map(s => s.seasonFR) || [],
         country: countryFr,
         fiber: foodDetails.attributes?.fiber?.toString() || "",
         proteins: foodDetails.attributes?.proteins?.toString() || "",
@@ -254,9 +286,9 @@ export default function ViewFoodFrench({
   return (
     <TabsContent value="french">
       {/* French Tab Content */}
-      <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 mb-5 sm:grid-cols-2 md:grid-cols-3">
         <div>
-          <Label className="block mb-1 text-black">Nom</Label>
+          <Label className="block mb-2 text-black">Nom</Label>
           <Input
             placeholder="Entrez le nom de l'aliment"
             value={formData.name}
@@ -266,14 +298,14 @@ export default function ViewFoodFrench({
           />
         </div>
         <div>
-          <Label className="block mb-1 text-black">Catégorie</Label>
+          <Label className="block mb-2 text-black">Catégorie</Label>
           <Select
             value={formData.category}
             onValueChange={value => {
               handleSelectChange("category", value)
             }}
           >
-            <SelectTrigger className="w-full mt-1">
+            <SelectTrigger className="w-full mt-2">
               <SelectValue placeholder="Sélectionner une catégorie" />
             </SelectTrigger>
             <SelectContent>
@@ -290,36 +322,91 @@ export default function ViewFoodFrench({
         </div>
         <div>
           <Label className="block mb-1 text-black">Mois</Label>
-          <Select
-            value={formData.season}
-            onValueChange={value => {
-              handleSelectChange("season", value)
-            }}
-          >
-            <SelectTrigger className="w-full mt-1">
-              <SelectValue placeholder="Sélectionner un mois" />
-            </SelectTrigger>
-            <SelectContent>
-              {seasons.map(option => (
-                <SelectItem
-                  key={option.value}
-                  value={option.labelFr ?? option.label}
-                >
-                  {option.labelFr ?? option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* DropdownMenu-based multi-select for months, French version */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className={`overflow-x-auto overflow-y-hidden justify-between w-full mt-1 ${
+                  (foodDetails?.seasons?.map(s => s.seasonFR) ?? []).length ===
+                  0
+                    ? "text-gray-500 font-normal hover:text-gray-500"
+                    : ""
+                }`}
+                style={{ scrollbarWidth: "none" }}
+              >
+                {(foodDetails?.seasons?.map(s => s.seasonFR) ?? []).length > 0
+                  ? foodDetails?.seasons?.map(s => s.seasonFR).join(", ")
+                  : "Sélectionner des mois"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="w-full overflow-auto max-h-64"
+              style={{ scrollbarWidth: "none" }}
+            >
+              <DropdownMenuItem
+                disabled
+                className="text-xs text-muted-foreground"
+              >
+                Filtrer par mois
+              </DropdownMenuItem>
+              {seasons.map(month => {
+                const selectedMonths =
+                  foodDetails?.seasons?.map(s => s.seasonFR) ?? []
+                return (
+                  <DropdownMenuItem
+                    key={month.value}
+                    onClick={() => {
+                      let updated = [...selectedMonths]
+                      if (updated.includes(month.labelFr ?? month.label)) {
+                        updated = updated.filter(
+                          m => m !== (month.labelFr ?? month.label)
+                        )
+                      } else {
+                        updated = [...updated, month.labelFr ?? month.label]
+                      }
+                      // Sync both French and English months in the data model
+                      const newSeasons = updated.map(frMonth => {
+                        const found = seasons.find(
+                          m => (m.labelFr ?? m.label) === frMonth
+                        )
+                        return {
+                          season: found?.label ?? frMonth,
+                          seasonFR: frMonth,
+                          foodId: foodDetails?.seasons?.[0]?.foodId ?? 0
+                        }
+                      })
+                      updateEditedData("seasons", newSeasons)
+                      setFormData(prev => ({
+                        ...prev,
+                        season: updated
+                      }))
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedMonths.includes(
+                        month.labelFr ?? month.label
+                      )}
+                      readOnly
+                      className="mr-2"
+                    />
+                    {month.labelFr ?? month.label}
+                  </DropdownMenuItem>
+                )
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div>
-          <Label className="block mb-1 text-black">Pays</Label>
+          <Label className="block mb-2 text-black">Pays</Label>
           <Select
             value={formData.country}
             onValueChange={value => {
               handleSelectChange("country", value)
             }}
           >
-            <SelectTrigger className="w-full mt-1">
+            <SelectTrigger className="w-full mt-2">
               <SelectValue placeholder="Sélectionner un pays" />
             </SelectTrigger>
             <SelectContent>
@@ -343,7 +430,7 @@ export default function ViewFoodFrench({
       </h3>
       <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-3">
         <div>
-          <Label className="block mb-1 text-black">Fibres</Label>
+          <Label className="block mb-2 text-black">Fibres</Label>
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.fiber}
@@ -353,7 +440,7 @@ export default function ViewFoodFrench({
           />
         </div>
         <div>
-          <Label className="block mb-1 text-black">Protéines</Label>
+          <Label className="block mb-2 text-black">Protéines</Label>
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.proteins}
@@ -363,7 +450,7 @@ export default function ViewFoodFrench({
           />
         </div>
         <div>
-          <Label className="block mb-1 text-black">Vitamines</Label>
+          <Label className="block mb-2 text-black">Vitamines</Label>
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.vitamins}
@@ -373,7 +460,7 @@ export default function ViewFoodFrench({
           />
         </div>
         <div>
-          <Label className="block mb-1 text-black">Minéraux</Label>
+          <Label className="block mb-2 text-black">Minéraux</Label>
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.minerals}
@@ -383,7 +470,7 @@ export default function ViewFoodFrench({
           />
         </div>
         <div>
-          <Label className="block mb-1 text-black">Graisses</Label>
+          <Label className="block mb-2 text-black">Graisses</Label>
           <Input
             placeholder="Détails du fournisseur si applicable"
             value={formData.fat}

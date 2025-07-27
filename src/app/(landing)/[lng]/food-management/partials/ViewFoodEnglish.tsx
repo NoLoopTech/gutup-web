@@ -31,7 +31,7 @@ import { TabsContent } from "@/components/ui/tabs"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import dynamic from "next/dynamic"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -94,8 +94,8 @@ const FoodSchema = z.object({
   }),
   selection: z.string().refine(
     val => {
-      const plainText = val.replace(/<(.|\n)*?>/g, "").trim() // remove all tags
-      const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val) // check for <img> tags
+      const plainText = val.replace(/<(.|\n)*?>/g, "").trim()
+      const hasImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(val)
       return plainText !== "" || hasImage
     },
     {
@@ -160,6 +160,17 @@ export default function ViewFoodEnglish({
   const [pendingNewBenefits, setPendingNewBenefits] = useState<
     Array<{ tagName: string; tagNameFr: string }>
   >([])
+  const [localSeasons, setLocalSeasons] = useState(foodDetails?.seasons ?? [])
+
+  useEffect(() => {
+    setLocalSeasons(foodDetails?.seasons ?? [])
+  }, [foodDetails])
+
+  useEffect(() => {
+    if (!foodDetails) {
+      setLocalSeasons([])
+    }
+  }, [foodDetails])
 
   const handleAddNewBenefit = async (
     benefit: string
@@ -327,13 +338,26 @@ export default function ViewFoodEnglish({
             updateEditedData(name, value[name])
             break
           case "season":
-            updateEditedData("seasons", [
-              {
-                season: value[name],
-                seasonFR: "",
-                foodId: foodDetails?.seasons?.[0]?.foodId ?? 0
-              }
-            ])
+            if (Array.isArray(value[name])) {
+              const newSeasons = (value[name] as string[]).map(enMonth => {
+                const found = seasonSyncMap.find(m => m.en === enMonth)
+                return {
+                  season: enMonth,
+                  seasonFR: found ? found.fr : enMonth,
+                  foodId: foodDetails?.seasons?.[0]?.foodId ?? 0
+                }
+              })
+              updateEditedData("seasons", newSeasons)
+            } else {
+              const found = seasonSyncMap.find(m => m.en === value[name])
+              updateEditedData("seasons", [
+                {
+                  season: value[name],
+                  seasonFR: found ? found.fr : value[name],
+                  foodId: foodDetails?.seasons?.[0]?.foodId ?? 0
+                }
+              ])
+            }
             break
           case "benefits":
             updateEditedData(
@@ -413,91 +437,83 @@ export default function ViewFoodEnglish({
               <FormField
                 control={form.control}
                 name="season"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="block mb-1 text-black">
-                      Months
-                    </FormLabel>
-                    <FormControl>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={`overflow-x-auto overflow-y-hidden justify-between w-full mt-1 ${
-                              (foodDetails?.seasons?.length ?? 0) === 0
-                                ? "text-gray-500 font-normal hover:text-gray-500"
-                                : ""
-                            }`}
+                render={({ field }) => {
+                  // Get selected months as a flat array of strings
+                  const selectedMonths = localSeasons?.map(s => s.season) ?? []
+                  return (
+                    <FormItem>
+                      <FormLabel className="block text-black">Months</FormLabel>
+                      <FormControl>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={`overflow-x-auto overflow-y-hidden justify-between w-full mt-1 ${
+                                selectedMonths.length === 0
+                                  ? "text-gray-500 font-normal hover:text-gray-500"
+                                  : ""
+                              }`}
+                              style={{ scrollbarWidth: "none" }}
+                            >
+                              {selectedMonths.length > 0
+                                ? selectedMonths.join(", ")
+                                : "Select Months"}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            className="w-full overflow-auto max-h-64"
                             style={{ scrollbarWidth: "none" }}
                           >
-                            {(foodDetails?.seasons?.length ?? 0) > 0
-                              ? foodDetails?.seasons
-                                  ?.map(s => s.season)
-                                  .join(", ")
-                              : "Select Months"}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          className="w-full overflow-auto max-h-64"
-                          style={{ scrollbarWidth: "none" }}
-                        >
-                          <DropdownMenuItem
-                            disabled
-                            className="text-xs text-muted-foreground"
-                          >
-                            Filter by Months
-                          </DropdownMenuItem>
-                          {seasons.map(month => (
                             <DropdownMenuItem
-                              key={month.value}
-                              onClick={() => {
-                                let updated: string[] =
-                                  foodDetails?.seasons?.map(s => s.season) ?? []
-                                if (updated.includes(month.value)) {
-                                  updated = updated.filter(
-                                    m => m !== month.value
-                                  )
-                                } else {
-                                  updated = [...updated, month.value]
-                                }
-                                // Use seasonSyncMap from top-level
-                                const frMonths = updated.map(enMonth => {
-                                  const found = seasonSyncMap.find(
-                                    m => m.en === enMonth
-                                  )
-                                  return found ? found.fr : enMonth
-                                })
-                                updateEditedData(
-                                  "seasons",
-                                  updated.map((enMonth, idx) => ({
-                                    season: enMonth,
-                                    seasonFR: frMonths[idx],
-                                    foodId:
-                                      foodDetails?.seasons?.[0]?.foodId ?? 0
-                                  }))
-                                )
-                                field.onChange(updated)
-                              }}
+                              disabled
+                              className="text-xs text-muted-foreground"
                             >
-                              <input
-                                type="checkbox"
-                                checked={
-                                  foodDetails?.seasons
-                                    ?.map(s => s.season)
-                                    .includes(month.value) ?? false
-                                }
-                                readOnly
-                                className="mr-2"
-                              />
-                              {month.label}
+                              Filter by Months
                             </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                            {seasons.map(month => (
+                              <DropdownMenuItem
+                                key={month.value}
+                                onClick={() => {
+                                  let updated = [...selectedMonths]
+                                  if (updated.includes(month.value)) {
+                                    updated = updated.filter(
+                                      m => m !== month.value
+                                    )
+                                  } else {
+                                    updated = [...updated, month.value]
+                                  }
+                                  // Use seasonSyncMap from top-level
+                                  const newSeasons = updated.map(enMonth => {
+                                    const found = seasonSyncMap.find(
+                                      m => m.en === enMonth
+                                    )
+                                    return {
+                                      season: enMonth,
+                                      seasonFR: found ? found.fr : enMonth,
+                                      foodId:
+                                        foodDetails?.seasons?.[0]?.foodId ?? 0
+                                    }
+                                  })
+                                  updateEditedData("seasons", newSeasons)
+                                  field.onChange(updated)
+                                }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedMonths.includes(month.value)}
+                                  readOnly
+                                  className="mr-2"
+                                />
+                                {month.label}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
             </div>
             <div>
@@ -695,7 +711,6 @@ export default function ViewFoodEnglish({
                     )
 
                     updateEditedData("healthBenefits", updatedHealthBenefits)
-                    // Also remove from pending benefits if it exists
                     setPendingNewBenefits(prev =>
                       prev.filter(p => p.tagName !== removed.tagName)
                     )

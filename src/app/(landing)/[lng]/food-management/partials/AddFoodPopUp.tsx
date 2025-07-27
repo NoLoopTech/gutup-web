@@ -7,13 +7,13 @@ import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useFoodStore } from "@/stores/useFoodStore"
 import { type translationsTypes } from "@/types/foodTypes"
-import { useEffect, useState } from "react"
+import React, { useRef, useEffect, useState } from "react"
 import AddFoodPopUpContent from "./AddFoodPopUpContent"
 
 interface Props {
   open: boolean
   onClose: () => void
-  getFoods: () => void // <-- add this prop
+  getFoods: () => void
 }
 
 export default function AddFoodPopUp({
@@ -23,6 +23,7 @@ export default function AddFoodPopUp({
 }: Props): JSX.Element {
   const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
     useFoodStore()
+  const cleanupRef = useRef<() => void>()
 
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
@@ -40,11 +41,12 @@ export default function AddFoodPopUp({
   // Language toggle handler
   const handleLanguageToggle = (val: boolean): void => {
     setAllowMultiLang(val)
-    if (!val) setActiveLang("en") // Default to English if multi-lang is disabled
+    if (!val) setActiveLang("en")
   }
 
-  // Wrap the onClose to clear session key
+  // Wrap the onClose to clear session key and cleanup data
   const handleClose = (): void => {
+    if (cleanupRef.current) cleanupRef.current()
     sessionStorage.removeItem("food-store")
     onClose()
   }
@@ -105,6 +107,7 @@ export default function AddFoodPopUp({
                 translations={translations}
                 onClose={handleClose}
                 getFoods={getFoods}
+                onRegisterCleanup={fn => (cleanupRef.current = fn)}
               />
             </TabsContent>
 
@@ -114,6 +117,7 @@ export default function AddFoodPopUp({
                   translations={translations}
                   onClose={handleClose}
                   getFoods={getFoods}
+                  onRegisterCleanup={fn => (cleanupRef.current = fn)}
                 />
               </TabsContent>
             )}

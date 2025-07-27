@@ -69,7 +69,7 @@ interface SessionStorageData {
     healthBenefit: string
     healthBenefitFR?: string
   }>
-  [key: string]: any // Add index signature to allow string indexing
+  [key: string]: any
 }
 
 interface ApiCategoryItem {
@@ -77,7 +77,6 @@ interface ApiCategoryItem {
   tagNameFr: string
 }
 
-// Updated session storage utilities with proper types
 const saveToSessionStorage = (data: SessionStorageData): void => {
   sessionStorage.setItem(EDIT_FOOD_STORAGE_KEY, JSON.stringify(data))
 }
@@ -101,7 +100,7 @@ interface Props {
 interface Option {
   value: string
   label: string
-  labelFr?: string // Add French label
+  labelFr?: string
   valueEn?: string
   valueFr?: string
   labelEn?: string
@@ -136,7 +135,7 @@ export interface FoodDetailsTypes {
   category: string
   categoryFR: string
   country: string
-  allowMultiLang: boolean // Add this line
+  allowMultiLang: boolean
   attributes: FoodAttributes
   describe: FoodDescribe
   images: FoodImage[]
@@ -164,8 +163,9 @@ export default function ViewFoodPopUp({
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
 
   useEffect(() => {
-    if (token && foodId !== null && foodId > 0) {
+    if (open && token && foodId !== null && foodId > 0) {
       const getfoodsDetailsByFoodId = async (): Promise<void> => {
+        setIsLoading(true)
         const response = await getFoodsById(token, foodId)
         if (response.status === 200) {
           setFoodDetails(response.data)
@@ -174,13 +174,21 @@ export default function ViewFoodPopUp({
           saveToSessionStorage(dataWithId)
           setEditedData(dataWithId)
           setAllowMultiLang(response.data.allowMultiLang ?? false)
+          setImagePreviewUrls(
+            response.data.images?.map((img: any) => img.image) ?? []
+          )
         } else {
+          setFoodDetails(null)
+          setEditedData(null)
+          setImagePreviewUrls([])
+          setAllowMultiLang(false)
           console.error("Failed to get food details")
         }
+        setIsLoading(false)
       }
       void getfoodsDetailsByFoodId()
     }
-  }, [token, foodId])
+  }, [open, token, foodId])
 
   useEffect(() => {
     if (token) {
@@ -208,7 +216,6 @@ export default function ViewFoodPopUp({
       const fetchData = async (): Promise<void> => {
         setIsLoading(true)
         try {
-          // Fetch both food details and benefit tags in parallel
           const [foodResponse, benefitsResponse] = await Promise.all([
             getFoodsById(token, foodId),
             getCatagoryFoodType(token, "Benefit")
@@ -251,7 +258,7 @@ export default function ViewFoodPopUp({
 
       if (response.status === 200 || response.status === 201) {
         toast.success("Food deleted successfully")
-        clearSessionStorage() // Clear session storage on successful delete
+        clearSessionStorage()
         onClose()
         setConfirmDeleteOpen(false)
         getFoods()
@@ -274,8 +281,6 @@ export default function ViewFoodPopUp({
   const selectionRef = useRef<RichTextEditorHandle>(null)
   const preparationRef = useRef<RichTextEditorHandle>(null)
   const conservationRef = useRef<RichTextEditorHandle>(null)
-
-  // Shared data arrays with proper French translations
 
   // Add translation mapping for seasons
   const seasonSyncMap = [
@@ -353,7 +358,6 @@ export default function ViewFoodPopUp({
         setIsLoading(false)
       }
     } else {
-      // Handle image removal
       updateEditedData("images", [])
       setImagePreviewUrls([])
     }
@@ -374,8 +378,6 @@ export default function ViewFoodPopUp({
 
     // Force re-render of both components when healthBenefits change
     if (field === "healthBenefits" && Array.isArray(value)) {
-      console.log("Updating healthBenefits in main component:", value)
-      // Update the foodDetails state to trigger re-render in both tabs
       setFoodDetails(prev => {
         if (!prev) return null
         const updated = {
@@ -390,11 +392,9 @@ export default function ViewFoodPopUp({
             })
           )
         }
-        console.log("Updated foodDetails:", updated.healthBenefits)
         return updated
       })
 
-      // Also update editedData to ensure consistency
       setEditedData(prev =>
         prev
           ? {
@@ -443,9 +443,7 @@ export default function ViewFoodPopUp({
         sessionStorage.getItem("pendingNewBenefits") ?? "[]"
       ) as Array<{ tagName: string; tagNameFr: string }>
 
-      // First, add new benefits to database if any exist
       if (pendingBenefits.length > 0) {
-        // Check existing benefits to avoid duplicates
         const benefitResponse = await getCatagoryFoodType(token, "Benefit")
         const existingTags = Array.isArray(benefitResponse?.data)
           ? benefitResponse.data.map((b: any) => b.tagName)
@@ -478,7 +476,7 @@ export default function ViewFoodPopUp({
         sessionStorage.removeItem("pendingNewBenefits")
       }
 
-      // Transform the session storage data to match CreateFoodDto format
+      // Transform the session storage data
       const updateData = {
         name: rawData.name ?? "",
         nameFR: rawData.nameFR ?? "",
@@ -540,7 +538,11 @@ export default function ViewFoodPopUp({
 
   const handleClose = (): void => {
     clearSessionStorage()
-    sessionStorage.removeItem("pendingNewBenefits") // Clear pending benefits on close
+    sessionStorage.removeItem("pendingNewBenefits")
+    setEditedData(null)
+    setImagePreviewUrls([])
+    setFoodDetails(null)
+    setIsLoading(true)
     onClose()
   }
 
@@ -551,7 +553,6 @@ export default function ViewFoodPopUp({
     lang: "en" | "fr"
   ): void => {
     if (fieldName === "category") {
-      // Find the selected option from API categories
       const selected = categoryOptionsApi.find(
         opt => (lang === "en" ? opt.valueEn : opt.valueFr) === value
       )
@@ -562,7 +563,6 @@ export default function ViewFoodPopUp({
     }
 
     if (fieldName === "season") {
-      // Sync season between languages
       if (lang === "en") {
         const found = seasonSyncMap.find(m => m.en === value)
         if (found) {
@@ -589,7 +589,6 @@ export default function ViewFoodPopUp({
     }
 
     if (fieldName === "country") {
-      // Sync country between languages
       const countryOption = countries.find(c =>
         lang === "en" ? c.value === value.toLowerCase() : c.labelFr === value
       )
