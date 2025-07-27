@@ -48,6 +48,7 @@ export interface translationsTypes {
   pleaseselectaseason: string
   pleaseselectacountry: string
   pleaseenteratleastonebenefit: string
+  pleaseenternumbersonly: string
   formSubmittedSuccessfully: string
 }
 export const defaultTranslations: translationsTypes = {
@@ -100,6 +101,7 @@ export const defaultTranslations: translationsTypes = {
   pleaseselectaseason: "",
   pleaseselectacountry: "",
   pleaseenteratleastonebenefit: "",
+  pleaseenternumbersonly: "",
   formSubmittedSuccessfully: ""
 }
 

@@ -50,5 +50,6 @@
   "pleaseenteratleastonebenefit": "Please enter at least one Benefit",
   "formSubmittedSuccessfully": "Form submitted successfully!",
   "benefitAddedSuccessfully": "Benefit added successfully!",
-  "failedToAddBenefit": "Failed to add benefit to database"
+  "failedToAddBenefit": "Failed to add benefit to database",
+  "pleaseenternumbersonly": "Please enter numbers only"
 }
