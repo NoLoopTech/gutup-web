@@ -28,7 +28,6 @@ import {
 import { toast } from "sonner"
 
 interface TypesOfFoodsDataType {
-  tagName: React.ReactNode
   tagId: number
   category: string
   count: string
@@ -117,7 +116,7 @@ export default function TypesOfFoodsPage({
       header: "Tag",
       className: "w-40 capitalize",
       cell: (row: TypesOfFoodsDataType) => (
-        <Badge variant={"outline"}>{row.tagName}</Badge>
+        <Badge variant={"outline"}>{row.category}</Badge>
       )
     },
     {

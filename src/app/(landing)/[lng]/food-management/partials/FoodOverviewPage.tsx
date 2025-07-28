@@ -76,12 +76,12 @@ interface FoodOverviewDataType {
   name: string
   category: string
   healthBenefits: string[]
-  season?: string // (optional, if you still use it elsewhere)
-  seasons: SeasonDto[] // <-- change from string[] to SeasonDto[]
+  season?: string
+  seasons: SeasonDto[]
   image: string
   status: string
   createdAt: string
-  recipesCount: number
+  recipeCount: number
   attributes: FoodAttributesTypes
 }
 
@@ -388,12 +388,12 @@ export default function FoodOverviewPage(): React.ReactElement {
       )
     },
     {
-      accessor: "recipesCount",
+      accessor: "recipeCount",
       header: "Recipes",
       cell: row => (
         <Label className="text-gray-500">
-          {row.recipesCount !== null && row.recipesCount !== undefined
-            ? `${row.recipesCount} Available`
+          {row.recipeCount !== null && row.recipeCount !== undefined
+            ? `${row.recipeCount} Available`
             : "0 Available"}
         </Label>
       )

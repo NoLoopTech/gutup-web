@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { getAllTags as fetchTagsAPI } from "@/app/api/tags"
+import { getAllTagsByCategory as fetchTagsAPI } from "@/app/api/tags"
 
 export function useGetAllTags<T>(token: string, category: string) {
   const [tags, setTags] = useState<T[]>([])

@@ -210,7 +210,11 @@ export default function ViewFoodFrench({
       case "proteins":
       case "fat":
       case "sugar":
-        updateNestedData("attributes", field, parseFloat(value) || 0)
+        if (value === "") {
+          updateNestedData("attributes", field, "")
+        } else {
+          updateNestedData("attributes", field, parseFloat(value) || 0)
+        }
         break
       case "vitamins":
         updateNestedData("attributes", "vitaminsFR", value)
@@ -432,7 +436,7 @@ export default function ViewFoodFrench({
         <div>
           <Label className="block mb-2 text-black">Fibres</Label>
           <Input
-            placeholder="Détails du fournisseur si applicable"
+            placeholder="Indiquez la quantité si applicable"
             value={formData.fiber}
             onChange={e => {
               handleInputChange("fiber", e.target.value)
@@ -442,7 +446,7 @@ export default function ViewFoodFrench({
         <div>
           <Label className="block mb-2 text-black">Protéines</Label>
           <Input
-            placeholder="Détails du fournisseur si applicable"
+            placeholder="Indiquez la quantité si applicable"
             value={formData.proteins}
             onChange={e => {
               handleInputChange("proteins", e.target.value)
@@ -472,7 +476,7 @@ export default function ViewFoodFrench({
         <div>
           <Label className="block mb-2 text-black">Graisses</Label>
           <Input
-            placeholder="Détails du fournisseur si applicable"
+            placeholder="Indiquez la quantité si applicable"
             value={formData.fat}
             onChange={e => {
               handleInputChange("fat", e.target.value)
@@ -482,7 +486,7 @@ export default function ViewFoodFrench({
         <div>
           <Label className="block mb-1 text-black">Sucres</Label>
           <Input
-            placeholder="Détails du fournisseur si applicable"
+            placeholder="Indiquez la quantité si applicable"
             value={formData.sugar}
             onChange={e => {
               handleInputChange("sugar", e.target.value)

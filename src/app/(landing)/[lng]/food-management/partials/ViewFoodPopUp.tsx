@@ -161,6 +161,8 @@ export default function ViewFoodPopUp({
   const [isLoading, setIsLoading] = useState(true)
   const [editedData, setEditedData] = useState<SessionStorageData | null>(null)
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
+  const [isDirty, setIsDirty] = useState(false)
+  const initialDataRef = useRef<SessionStorageData | null>(null)
 
   useEffect(() => {
     if (open && token && foodId !== null && foodId > 0) {
@@ -177,18 +179,35 @@ export default function ViewFoodPopUp({
           setImagePreviewUrls(
             response.data.images?.map((img: any) => img.image) ?? []
           )
+          initialDataRef.current = JSON.parse(JSON.stringify(dataWithId))
         } else {
           setFoodDetails(null)
           setEditedData(null)
           setImagePreviewUrls([])
           setAllowMultiLang(false)
+          initialDataRef.current = null
           console.error("Failed to get food details")
         }
         setIsLoading(false)
       }
       void getfoodsDetailsByFoodId()
+    } else {
+      initialDataRef.current = null
     }
   }, [open, token, foodId])
+
+  // Compare current editedData with initialDataRef to set isDirty
+  useEffect(() => {
+    const current = editedData ?? foodDetails
+    const initial = initialDataRef.current
+    if (!initial || !current) {
+      setIsDirty(false)
+      return
+    }
+    // Shallow compare for main fields (deep compare for production)
+    const isChanged = JSON.stringify(current) !== JSON.stringify(initial)
+    setIsDirty(isChanged)
+  }, [editedData, foodDetails])
 
   useEffect(() => {
     if (token) {
@@ -329,40 +348,6 @@ export default function ViewFoodPopUp({
     setConfirmDeleteOpen(false)
   }
 
-  // Add image upload handler
-  const handleImageChange = async (files: File[] | null): Promise<void> => {
-    const file = files?.[0] ?? null
-    if (file) {
-      if (foodId === null || foodId <= 0) {
-        toast.error("Invalid food ID")
-        return
-      }
-
-      try {
-        setIsLoading(true)
-
-        // Upload image to Firebase
-        const imageUrl = await uploadImageToFirebase(
-          file,
-          "edit-food",
-          `${foodId}_${file.name}`
-        )
-
-        // Update session storage with the new image URL
-        updateEditedData("images", [{ image: imageUrl }])
-        setImagePreviewUrls([imageUrl])
-      } catch (error) {
-        toast.error("Image upload failed. Please try again.")
-        console.error("Firebase upload error:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    } else {
-      updateEditedData("images", [])
-      setImagePreviewUrls([])
-    }
-  }
-
   // Function to update session storage when data changes
   const updateEditedData = (field: string, value: any): void => {
     if (foodId === null) return
@@ -428,6 +413,40 @@ export default function ViewFoodPopUp({
     }
     setEditedData(updatedData)
     saveToSessionStorage(updatedData)
+  }
+
+  // Add image upload handler
+  const handleImageChange = async (files: File[] | null): Promise<void> => {
+    const file = files?.[0] ?? null
+    if (file) {
+      if (foodId === null || foodId <= 0) {
+        toast.error("Invalid food ID")
+        return
+      }
+
+      try {
+        setIsLoading(true)
+
+        // Upload image to Firebase
+        const imageUrl = await uploadImageToFirebase(
+          file,
+          "edit-food",
+          `${foodId}_${file.name}`
+        )
+
+        // Update session storage with the new image URL
+        updateEditedData("images", [{ image: imageUrl }])
+        setImagePreviewUrls([imageUrl])
+      } catch (error) {
+        toast.error("Image upload failed. Please try again.")
+        console.error("Firebase upload error:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    } else {
+      updateEditedData("images", [])
+      setImagePreviewUrls([])
+    }
   }
 
   // API function to save changes
@@ -527,6 +546,7 @@ export default function ViewFoodPopUp({
         clearSessionStorage()
         getFoods()
         onClose()
+        setIsDirty(false)
       } else {
         toast.error("Failed to update food item")
       }
@@ -543,6 +563,7 @@ export default function ViewFoodPopUp({
     setImagePreviewUrls([])
     setFoodDetails(null)
     setIsLoading(true)
+    setIsDirty(false) // Reset dirty on close
     onClose()
   }
 
@@ -707,7 +728,9 @@ export default function ViewFoodPopUp({
             >
               Delete Food
             </Button>
-            <Button onClick={handleSaveChanges}>Save changes</Button>
+            <Button onClick={handleSaveChanges} disabled={!isDirty}>
+              Save changes
+            </Button>
           </div>
         </DialogFooter>
       </DialogContent>

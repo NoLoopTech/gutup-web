@@ -78,12 +78,32 @@ const FoodSchema = z.object({
   category: z.string().nonempty("Please select a category"),
   season: z.string().nonempty("Please select a season"),
   country: z.string().nonempty("Please select a country"),
-  fiber: z.string().optional(),
-  proteins: z.string().optional(),
+  fiber: z
+    .string()
+    .refine(val => !val || /^\d+(\.\d+)?$/.test(val), {
+      message: "Must be a number only or empty"
+    })
+    .optional(),
+  proteins: z
+    .string()
+    .refine(val => !val || /^\d+(\.\d+)?$/.test(val), {
+      message: "Must be a number only or empty"
+    })
+    .optional(),
   vitamins: z.string().optional(),
   minerals: z.string().optional(),
-  fat: z.string().optional(),
-  sugar: z.string().optional(),
+  fat: z
+    .string()
+    .refine(val => !val || /^\d+(\.\d+)?$/.test(val), {
+      message: "Must be a number only or empty"
+    })
+    .optional(),
+  sugar: z
+    .string()
+    .refine(val => !val || /^\d+(\.\d+)?$/.test(val), {
+      message: "Must be a number only or empty"
+    })
+    .optional(),
   benefits: z
     .array(z.string())
     .refine(arr => arr.some(item => item.trim().length > 0), {
@@ -273,6 +293,17 @@ export default function ViewFoodEnglish({
       conservation: foodDetails?.describe?.conservation ?? ""
     }
   })
+
+  // Reusable handler for numeric input fields
+  const handleNumericInput =
+    (field: any) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value
+      if (/^\d*(\.\d*)?$/.test(value)) {
+        field.onChange(value)
+      } else {
+        field.onChange("0")
+      }
+    }
 
   // Watch for form changes and update session storage
   React.useEffect(() => {
@@ -569,8 +600,9 @@ export default function ViewFoodEnglish({
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Provide details if applicable"
+                        placeholder="Provide Amount if applicable"
                         {...field}
+                        onChange={handleNumericInput(field)}
                       />
                     </FormControl>
                   </FormItem>
@@ -588,8 +620,9 @@ export default function ViewFoodEnglish({
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Provide details if applicable"
+                        placeholder="Provide Amount if applicable"
                         {...field}
+                        onChange={handleNumericInput(field)}
                       />
                     </FormControl>
                   </FormItem>
@@ -643,8 +676,9 @@ export default function ViewFoodEnglish({
                     <FormLabel className="block mb-1 text-black">Fat</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Provide details if applicable"
+                        placeholder="Provide Amount if applicable"
                         {...field}
+                        onChange={handleNumericInput(field)}
                       />
                     </FormControl>
                   </FormItem>
@@ -662,8 +696,9 @@ export default function ViewFoodEnglish({
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Provide details if applicable"
+                        placeholder="Provide Amount if applicable"
                         {...field}
+                        onChange={handleNumericInput(field)}
                       />
                     </FormControl>
                   </FormItem>
