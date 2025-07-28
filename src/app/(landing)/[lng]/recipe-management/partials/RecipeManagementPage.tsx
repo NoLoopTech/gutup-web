@@ -49,6 +49,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog"
+import { useGetAllTags } from "@/query/hooks/useGetAllTags"
+import { TagTypes } from "./AddRecipePopUpContent"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -110,6 +112,35 @@ export default function RecipeManagementPage({
   const [previousRecipeImg, setPreviousRecipeImg] = useState<string>("")
   const [previousAuthorImg, setPreviousAuthorImg] = useState<string>("")
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
+  const [categoryOptions, setCategoryOptions] = useState<dataListTypes[]>([])
+  const [benefitsOptions, setBenefitsOptions] = useState<dataListTypes[]>([])
+
+  const { tags } = useGetAllTags(token, "Type") as { tags: TagTypes[] }
+  const { tags: benefitsTags } = useGetAllTags(token, "Benefit") as {
+    tags: TagTypes[]
+  }
+
+  useEffect(() => {
+    if (tags?.length) {
+      const categories: dataListTypes[] = tags.map((tag: TagTypes) => ({
+        value: tag.category,
+        label: tag.category
+      }))
+      setCategoryOptions(categories)
+    }
+  }, [tags])
+
+  useEffect(() => {
+    if (benefitsTags?.length) {
+      const healthBenefits: dataListTypes[] = benefitsTags.map(
+        (tag: TagTypes) => ({
+          value: tag.category,
+          label: tag.category
+        })
+      )
+      setBenefitsOptions(healthBenefits)
+    }
+  }, [benefitsTags])
 
   const handleOpenDeleteConfirm = (id: number): void => {
     setViewRecipeId(id)
@@ -387,24 +418,11 @@ export default function RecipeManagementPage({
     setSelectedBenefit("")
   }
 
-  const categories: dataListTypes[] = [
-    { value: "vegetables", label: "vegetables" },
-    { value: "dairy", label: "dairy" },
-    { value: "Dinner", label: "Dinner" },
-    { value: "Italian", label: "Italian" }
-  ]
-
   // genarate score points
   const servings = Array.from({ length: 20 }, (_, i) => ({
     value: i + 1,
     label: (i + 1).toString()
   }))
-
-  const healthBenefits: dataListTypes[] = [
-    { value: "qqqqq", label: "qqqqq" },
-    { value: "aaaaa", label: "aaaaa" },
-    { value: "loading", label: "loading" }
-  ]
 
   const uploadMoodImageAndSetUrl = async (): Promise<{
     recipeImageUrl: string | null
@@ -809,8 +827,8 @@ export default function RecipeManagementPage({
             </SelectTrigger>
             <SelectContent className="max-h-40">
               <SelectGroup>
-                {categories.map(item => (
-                  <SelectItem key={item.value} value={item.value.toString()}>
+                {categoryOptions.map(item => (
+                  <SelectItem key={item.value} value={item.value}>
                     {item.label}
                   </SelectItem>
                 ))}
@@ -841,7 +859,7 @@ export default function RecipeManagementPage({
             </SelectTrigger>
             <SelectContent className="max-h-40">
               <SelectGroup>
-                {healthBenefits.map(item => (
+                {benefitsOptions.map(item => (
                   <SelectItem key={item.value} value={item.value.toString()}>
                     {item.label}
                   </SelectItem>

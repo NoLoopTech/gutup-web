@@ -133,12 +133,12 @@ export default function EditRecipePopUpContent({
     if (tags) {
       const tagsOptions = {
         en: tags.map((tag: TagTypes) => ({
-          value: tag.tagName,
-          label: tag.tagName
+          value: tag.category,
+          label: tag.category
         })),
         fr: tags.map((tag: TagTypes) => ({
-          value: tag.tagNameFr,
-          label: tag.tagNameFr
+          value: tag.category,
+          label: tag.category
         }))
       }
 
@@ -260,7 +260,6 @@ export default function EditRecipePopUpContent({
       } catch (error) {
         console.log("Error Translating", error)
       }
-      s
     }
   }
 

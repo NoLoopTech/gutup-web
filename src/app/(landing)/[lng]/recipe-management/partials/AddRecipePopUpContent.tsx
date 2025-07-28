@@ -62,12 +62,7 @@ interface Ingredient {
 
 export interface TagTypes {
   id: number
-  createdAt: string
-  updatedAt: string
-  deletedAt: string | null
   category: string
-  tagName: string
-  tagNameFr: string
 }
 
 interface Option {
@@ -139,12 +134,12 @@ export default function AddRecipePopUpContent({
     if (tags) {
       const tagsOptions = {
         en: tags.map((tag: TagTypes) => ({
-          value: tag.tagName,
-          label: tag.tagName
+          value: tag.category,
+          label: tag.category
         })),
         fr: tags.map((tag: TagTypes) => ({
-          value: tag.tagNameFr,
-          label: tag.tagNameFr
+          value: tag.category,
+          label: tag.category
         }))
       }
 
