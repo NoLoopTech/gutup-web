@@ -81,7 +81,7 @@ interface FoodOverviewDataType {
   image: string
   status: string
   createdAt: string
-  recipesCount: number
+  recipeCount: number // <-- changed from recipesCount
   attributes: FoodAttributesTypes
 }
 
@@ -388,12 +388,12 @@ export default function FoodOverviewPage(): React.ReactElement {
       )
     },
     {
-      accessor: "recipesCount",
+      accessor: "recipeCount", // changed from recipesCount
       header: "Recipes",
       cell: row => (
         <Label className="text-gray-500">
-          {row.recipesCount !== null && row.recipesCount !== undefined
-            ? `${row.recipesCount} Available`
+          {row.recipeCount !== null && row.recipeCount !== undefined
+            ? `${row.recipeCount} Available`
             : "0 Available"}
         </Label>
       )
