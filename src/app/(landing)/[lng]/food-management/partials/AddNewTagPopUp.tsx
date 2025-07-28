@@ -50,7 +50,7 @@ export default function AddNewTagPopUp({
   } = useTagStore()
 
   const { translateText } = useTranslation()
-  const [isTranslating, setIsTranslating] = useState(false)
+  const [, setIsTranslating] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
@@ -201,11 +201,6 @@ export default function AddNewTagPopUp({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-4">
-          {isTranslating && (
-            <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
-              <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
-            </div>
-          )}
           {/* Tag Name Field */}
           <FormField
             control={form.control}
