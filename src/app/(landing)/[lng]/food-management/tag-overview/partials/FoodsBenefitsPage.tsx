@@ -28,7 +28,6 @@ import {
 import { toast } from "sonner"
 
 interface FoodsBenefitsDataType {
-  tagName: React.ReactNode
   tagId: number
   category: string
   count: string
@@ -130,7 +129,7 @@ export default function FoodsBenefitsPage({
       header: "Tag",
       className: "w-40 capitalize",
       cell: (row: FoodsBenefitsDataType): React.ReactNode => (
-        <Badge variant={"outline"}>{row.tagName}</Badge>
+        <Badge variant={"outline"}>{row.category}</Badge>
       )
     },
     {
