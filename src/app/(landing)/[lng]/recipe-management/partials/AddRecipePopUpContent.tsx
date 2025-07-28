@@ -127,8 +127,26 @@ export default function AddRecipePopUpContent({
     en: [],
     fr: []
   })
+  const [benefitsOptions, setBenefitsOptions] = useState<
+    { tagName: string; tagNameFr: string }[]
+  >([])
 
   const { tags } = useGetAllTags(token, "Type") as { tags: TagTypes[] }
+  const { tags: benefitsTags } = useGetAllTags(token, "Benefit") as {
+    tags: TagTypes[]
+  }
+
+  useEffect(() => {
+    if (benefitsTags?.length) {
+      const suggestions = benefitsTags
+        .filter(tag => tag?.category && tag?.category)
+        .map(tag => ({
+          tagName: tag.category,
+          tagNameFr: tag.category
+        }))
+      setBenefitsOptions(suggestions)
+    }
+  }, [benefitsTags])
 
   useEffect(() => {
     if (tags) {
@@ -901,6 +919,7 @@ export default function AddRecipePopUpContent({
                     name="benefits"
                     width="w-[32%]"
                     activeLang={activeLang}
+                    suggestions={benefitsOptions}
                     onAddNewBenefit={handleAddNewBenefit}
                     onSelectSuggestion={benefit => {
                       const enBenefits = [
