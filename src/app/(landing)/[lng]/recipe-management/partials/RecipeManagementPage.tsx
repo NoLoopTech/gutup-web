@@ -798,7 +798,7 @@ export default function RecipeManagementPage({
           {/* search recipes by name */}
           <Input
             className="max-w-xs"
-            placeholder="Search by user name..."
+            placeholder="Search by recipe name..."
             value={searchText}
             onChange={handleSearchTextChange}
           />

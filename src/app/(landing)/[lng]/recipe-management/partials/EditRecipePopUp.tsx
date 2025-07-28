@@ -45,6 +45,30 @@ export default function EditRecipePopUp({
   )
   const { setUpdatedField } = useUpdateRecipeStore()
 
+  const MAX_RETRIES = 5
+  const RETRY_DELAY_MS = 100
+
+  const setCategoryWithRetry = async (
+    categoryEn: string,
+    categoryFr: string
+  ) => {
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      await setTranslationField("en", "category", categoryEn)
+      await setTranslationField("fr", "category", categoryFr)
+
+      const currentCategory =
+        useRecipeStore.getState().translations?.en?.category
+
+      if (currentCategory === categoryEn) {
+        return
+      }
+
+      await new Promise(res => setTimeout(res, RETRY_DELAY_MS))
+    }
+
+    console.error("❗ Failed to set category correctly after all retries.")
+  }
+
   // handle get recipe data by recipe id
   const getRecipeDataById = async () => {
     try {
@@ -84,9 +108,6 @@ export default function EditRecipePopUp({
 
         setTranslationField("en", "website", data.author.authorWebsite)
         setTranslationField("fr", "website", data.author.authorWebsite)
-
-        setTranslationField("en", "category", data.category)
-        setTranslationField("fr", "category", data.categoryFR)
 
         setTranslationField("en", "season", data.season)
         setTranslationField("fr", "season", data.seasonFR)
@@ -158,6 +179,8 @@ export default function EditRecipePopUp({
 
         setTranslationField("en", "ingredientData", ingradientsEN)
         setTranslationField("fr", "ingredientData", ingradientsFR)
+
+        await setCategoryWithRetry(data.category, data.categoryFR)
       }
     } catch (error) {
       console.log("error fetching recipe : ", error)

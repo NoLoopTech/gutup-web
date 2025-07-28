@@ -345,12 +345,8 @@ export default function AddRecipePopUpContent({
     // Update the state with the new updatedAvailData
     setAvailData(updatedAvailData)
 
-    // Optionally, update translations/store or any other global state
     setTranslationField("en", "ingredientData", updatedAvailData)
     setTranslationField("fr", "ingredientData", updatedAvailData)
-
-    // Optionally show a success message
-    toast.success("Main Ingredient updated successfully!")
   }
 
   // Update the ingredient's quantity
@@ -367,15 +363,10 @@ export default function AddRecipePopUpContent({
       return item
     })
 
-    // Update the state with the new updatedAvailData
     setAvailData(updatedAvailData)
 
-    // Optionally, update translations/store or any other global state
     setTranslationField("en", "ingredientData", updatedAvailData)
     setTranslationField("fr", "ingredientData", updatedAvailData)
-
-    // Optionally, show a success message
-    toast.success("Ingredient quantity updated successfully!")
   }
 
   // table columns for available ingredients and categories
@@ -385,14 +376,14 @@ export default function AddRecipePopUpContent({
       accessor: "ingredientName" as const
     },
     {
-      header: "Quantity", // New column for Quantity
+      header: "Quantity",
       accessor: (row: Ingredient) => (
         <Input
           type="text"
           value={row.quantity}
           onChange={e =>
             handleQuantityChange(row.ingredientName, e.target.value)
-          } // Handle change
+          }
           placeholder="Enter quantity"
           className="w-[80%]"
         />
@@ -724,20 +715,7 @@ export default function AddRecipePopUpContent({
       return
     }
 
-    // Check if the benefits array is empty
-    if (!data.benefits || data.benefits.length === 0) {
-      toast.error("Please add at least one benefit!")
-      return
-    }
-
     addRecipe()
-  }
-
-  const onError = (errors: any) => {
-    // Check if benefits is empty or invalid
-    if (errors.benefits) {
-      toast.error(errors.benefits.message)
-    }
   }
 
   return (
@@ -748,7 +726,7 @@ export default function AddRecipePopUpContent({
         </div>
       )}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit, onError)}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 gap-4 pb-6 sm:grid-cols-2 md:grid-cols-3">
             <div>
               <FormField
@@ -928,63 +906,70 @@ export default function AddRecipePopUpContent({
               control={form.control}
               name="benefits"
               render={({ field }) => (
-                <LableInput
-                  title={translations.healthBenefits}
-                  placeholder={translations.healthBenefits}
-                  benefits={field.value || []}
-                  name="benefits"
-                  width="w-[32%]"
-                  activeLang={activeLang}
-                  onAddNewBenefit={handleAddNewBenefit}
-                  onSelectSuggestion={benefit => {
-                    const enBenefits = [
-                      ...(translationData.en.benefits || []),
-                      benefit.tagName
-                    ]
-                    const frBenefits = [
-                      ...(translationData.fr.benefits || []),
-                      benefit.tagNameFr
-                    ]
-                    setTranslationField("en", "benefits", enBenefits)
-                    setTranslationField("fr", "benefits", frBenefits)
-                    form.setValue(
-                      "benefits",
-                      activeLang === "en" ? enBenefits : frBenefits
-                    )
-                  }}
-                  onRemoveBenefit={removed => {
-                    // Remove both at the same index
-                    const idxEn = (translationData.en.benefits || []).indexOf(
-                      removed.tagName
-                    )
-                    const idxFr = (translationData.fr.benefits || []).indexOf(
-                      removed.tagNameFr
-                    )
-                    const enBenefits = [...(translationData.en.benefits || [])]
-                    const frBenefits = [...(translationData.fr.benefits || [])]
-                    if (idxEn > -1) {
-                      enBenefits.splice(idxEn, 1)
-                      frBenefits.splice(idxEn, 1)
-                    } else if (idxFr > -1) {
-                      enBenefits.splice(idxFr, 1)
-                      frBenefits.splice(idxFr, 1)
-                    }
-                    setTranslationField("en", "benefits", enBenefits)
-                    setTranslationField("fr", "benefits", frBenefits)
-                    form.setValue(
-                      "benefits",
-                      activeLang === "en" ? enBenefits : frBenefits
-                    )
-                  }}
-                  onChange={(newArr: string[]) => {
-                    handleBenefitsChange(newArr)
-                    field.onChange(newArr)
-                  }}
-                  onBlur={() => {
-                    void handleBenefitsBlur()
-                    field.onBlur()
-                  }}
-                />
+                <FormItem>
+                  <LableInput
+                    title={translations.healthBenefits}
+                    placeholder={translations.healthBenefits}
+                    benefits={field.value || []}
+                    name="benefits"
+                    width="w-[32%]"
+                    activeLang={activeLang}
+                    onAddNewBenefit={handleAddNewBenefit}
+                    onSelectSuggestion={benefit => {
+                      const enBenefits = [
+                        ...(translationData.en.benefits || []),
+                        benefit.tagName
+                      ]
+                      const frBenefits = [
+                        ...(translationData.fr.benefits || []),
+                        benefit.tagNameFr
+                      ]
+                      setTranslationField("en", "benefits", enBenefits)
+                      setTranslationField("fr", "benefits", frBenefits)
+                      form.setValue(
+                        "benefits",
+                        activeLang === "en" ? enBenefits : frBenefits
+                      )
+                    }}
+                    onRemoveBenefit={removed => {
+                      // Remove both at the same index
+                      const idxEn = (translationData.en.benefits || []).indexOf(
+                        removed.tagName
+                      )
+                      const idxFr = (translationData.fr.benefits || []).indexOf(
+                        removed.tagNameFr
+                      )
+                      const enBenefits = [
+                        ...(translationData.en.benefits || [])
+                      ]
+                      const frBenefits = [
+                        ...(translationData.fr.benefits || [])
+                      ]
+                      if (idxEn > -1) {
+                        enBenefits.splice(idxEn, 1)
+                        frBenefits.splice(idxEn, 1)
+                      } else if (idxFr > -1) {
+                        enBenefits.splice(idxFr, 1)
+                        frBenefits.splice(idxFr, 1)
+                      }
+                      setTranslationField("en", "benefits", enBenefits)
+                      setTranslationField("fr", "benefits", frBenefits)
+                      form.setValue(
+                        "benefits",
+                        activeLang === "en" ? enBenefits : frBenefits
+                      )
+                    }}
+                    onChange={(newArr: string[]) => {
+                      handleBenefitsChange(newArr)
+                      field.onChange(newArr)
+                    }}
+                    onBlur={() => {
+                      void handleBenefitsBlur()
+                      field.onBlur()
+                    }}
+                  />
+                  <FormMessage />
+                </FormItem>
               )}
             />
           </div>

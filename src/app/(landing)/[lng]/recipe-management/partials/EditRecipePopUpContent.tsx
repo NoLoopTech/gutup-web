@@ -111,7 +111,6 @@ export default function EditRecipePopUpContent({
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [availData, setAvailData] = useState<Ingredient[]>([])
   const [benefits, setBenefits] = useState<string[]>([])
-  const isEditorUserEdit = useRef(true)
 
   const { setUpdatedField } = useUpdateRecipeStore()
   // Inside your component...
@@ -313,12 +312,6 @@ export default function EditRecipePopUpContent({
     fieldName: "recipe"
   ): { onChange: (val: string) => void } => {
     const onChange = (val: string): void => {
-      if (!isEditorUserEdit.current) {
-        // Skip setting values during programmatic change
-        isEditorUserEdit.current = true
-        return
-      }
-
       form.setValue(fieldName, val)
       setTranslationField(activeLang, fieldName, val)
       setUpdatedField(activeLang, fieldName, val)
@@ -326,23 +319,6 @@ export default function EditRecipePopUpContent({
 
     return { onChange }
   }
-
-  useEffect(() => {
-    const handleProgrammaticChange = () => {
-      isEditorUserEdit.current = false
-    }
-
-    window.addEventListener(
-      "editor-programmatic-change",
-      handleProgrammaticChange
-    )
-    return () => {
-      window.removeEventListener(
-        "editor-programmatic-change",
-        handleProgrammaticChange
-      )
-    }
-  }, [])
 
   // Define functions to handle page changes
   const handlePageChange = (newPage: number): void => {
@@ -381,9 +357,6 @@ export default function EditRecipePopUpContent({
 
     setUpdatedField("en", "ingredientData", updatedAvailData)
     setUpdatedField("fr", "ingredientData", updatedAvailData)
-
-    // Optionally show a success message
-    toast.success("Display status updated successfully!")
   }
 
   // Update the ingredient's quantity
@@ -412,14 +385,14 @@ export default function EditRecipePopUpContent({
       accessor: "ingredientName" as const
     },
     {
-      header: "Quantity", // New column for Quantity
+      header: "Quantity",
       accessor: (row: Ingredient) => (
         <Input
           type="text"
           value={row.quantity}
           onChange={e =>
             handleQuantityChange(row.ingredientName, e.target.value)
-          } // Handle change
+          }
           placeholder="Enter quantity"
           className="w-[80%]"
         />
@@ -485,6 +458,17 @@ export default function EditRecipePopUpContent({
     // Optionally, show a success message
     toast.success("Ingredient deleted successfully!")
   }
+
+  // Sync ingredientData with form value
+  useEffect(() => {
+    const formIngredientData = form.watch("ingredientData")
+    if (
+      Array.isArray(formIngredientData) &&
+      formIngredientData !== ingredientData
+    ) {
+      setIngredientData(formIngredientData as Ingredient[])
+    }
+  }, [form, ingredientData])
 
   const handleAddIngredient = async (): Promise<void> => {
     let updatedAvailData: Ingredient
@@ -956,69 +940,76 @@ export default function EditRecipePopUpContent({
               control={form.control}
               name="benefits"
               render={({ field }) => (
-                <LableInput
-                  title={translations.healthBenefits}
-                  placeholder={translations.healthBenefits}
-                  benefits={benefits || []}
-                  name="benefits"
-                  width="w-[32%]"
-                  activeLang={activeLang}
-                  onAddNewBenefit={handleAddNewBenefit}
-                  onSelectSuggestion={benefit => {
-                    const enBenefits = [
-                      ...(translationData.en.benefits || []),
-                      benefit.tagName
-                    ]
-                    const frBenefits = [
-                      ...(translationData.fr.benefits || []),
-                      benefit.tagNameFr
-                    ]
-                    setTranslationField("en", "benefits", enBenefits)
-                    setTranslationField("fr", "benefits", frBenefits)
+                <FormItem>
+                  <LableInput
+                    title={translations.healthBenefits}
+                    placeholder={translations.healthBenefits}
+                    benefits={benefits || []}
+                    name="benefits"
+                    width="w-[32%]"
+                    activeLang={activeLang}
+                    onAddNewBenefit={handleAddNewBenefit}
+                    onSelectSuggestion={benefit => {
+                      const enBenefits = [
+                        ...(translationData.en.benefits || []),
+                        benefit.tagName
+                      ]
+                      const frBenefits = [
+                        ...(translationData.fr.benefits || []),
+                        benefit.tagNameFr
+                      ]
+                      setTranslationField("en", "benefits", enBenefits)
+                      setTranslationField("fr", "benefits", frBenefits)
 
-                    setUpdatedField("en", "benefits", enBenefits)
-                    setUpdatedField("fr", "benefits", frBenefits)
-                    form.setValue(
-                      "benefits",
-                      activeLang === "en" ? enBenefits : frBenefits
-                    )
-                  }}
-                  onRemoveBenefit={removed => {
-                    // Remove both at the same index
-                    const idxEn = (translationData.en.benefits || []).indexOf(
-                      removed.tagName
-                    )
-                    const idxFr = (translationData.fr.benefits || []).indexOf(
-                      removed.tagNameFr
-                    )
-                    const enBenefits = [...(translationData.en.benefits || [])]
-                    const frBenefits = [...(translationData.fr.benefits || [])]
-                    if (idxEn > -1) {
-                      enBenefits.splice(idxEn, 1)
-                      frBenefits.splice(idxEn, 1)
-                    } else if (idxFr > -1) {
-                      enBenefits.splice(idxFr, 1)
-                      frBenefits.splice(idxFr, 1)
-                    }
-                    setTranslationField("en", "benefits", enBenefits)
-                    setTranslationField("fr", "benefits", frBenefits)
+                      setUpdatedField("en", "benefits", enBenefits)
+                      setUpdatedField("fr", "benefits", frBenefits)
+                      form.setValue(
+                        "benefits",
+                        activeLang === "en" ? enBenefits : frBenefits
+                      )
+                    }}
+                    onRemoveBenefit={removed => {
+                      // Remove both at the same index
+                      const idxEn = (translationData.en.benefits || []).indexOf(
+                        removed.tagName
+                      )
+                      const idxFr = (translationData.fr.benefits || []).indexOf(
+                        removed.tagNameFr
+                      )
+                      const enBenefits = [
+                        ...(translationData.en.benefits || [])
+                      ]
+                      const frBenefits = [
+                        ...(translationData.fr.benefits || [])
+                      ]
+                      if (idxEn > -1) {
+                        enBenefits.splice(idxEn, 1)
+                        frBenefits.splice(idxEn, 1)
+                      } else if (idxFr > -1) {
+                        enBenefits.splice(idxFr, 1)
+                        frBenefits.splice(idxFr, 1)
+                      }
+                      setTranslationField("en", "benefits", enBenefits)
+                      setTranslationField("fr", "benefits", frBenefits)
 
-                    setUpdatedField("en", "benefits", enBenefits)
-                    setUpdatedField("fr", "benefits", frBenefits)
-                    form.setValue(
-                      "benefits",
-                      activeLang === "en" ? enBenefits : frBenefits
-                    )
-                  }}
-                  onChange={(newArr: string[]) => {
-                    handleBenefitsChange(newArr)
-                    field.onChange(newArr)
-                  }}
-                  onBlur={() => {
-                    void handleBenefitsBlur()
-                    field.onBlur()
-                  }}
-                />
+                      setUpdatedField("en", "benefits", enBenefits)
+                      setUpdatedField("fr", "benefits", frBenefits)
+                      form.setValue(
+                        "benefits",
+                        activeLang === "en" ? enBenefits : frBenefits
+                      )
+                    }}
+                    onChange={(newArr: string[]) => {
+                      handleBenefitsChange(newArr)
+                      field.onChange(newArr)
+                    }}
+                    onBlur={() => {
+                      void handleBenefitsBlur()
+                      field.onBlur()
+                    }}
+                  />
+                  <FormMessage />
+                </FormItem>
               )}
             />
           </div>
