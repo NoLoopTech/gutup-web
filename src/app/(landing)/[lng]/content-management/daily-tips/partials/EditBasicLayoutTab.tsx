@@ -168,12 +168,11 @@ export default function EditBasicLayoutTab({
   const handleInputBlur = async (fieldName: FieldNames, value: string) => {
     if (activeLang === "en" && value.trim()) {
       try {
-        setIsTranslating(true)
         const translated = await translateText(value)
         setTranslationField("basicLayoutData", "fr", fieldName, translated)
         setUpdatedField("basicLayoutData", "fr", fieldName, translated)
-      } finally {
-        setIsTranslating(false)
+      } catch (error) {
+        console.log("Error Translating", error)
       }
     }
   }

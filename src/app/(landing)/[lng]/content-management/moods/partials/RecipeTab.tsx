@@ -139,11 +139,10 @@ export default function RecipeTab({
   ) => {
     if (activeLang === "en" && value.trim()) {
       try {
-        setIsTranslating(true)
         const translated = await translateText(value)
         setTranslationField("recipeData", "fr", fieldName, translated)
-      } finally {
-        setIsTranslating(false)
+      } catch (error) {
+        console.log("Error Translating", error)
       }
     }
   }

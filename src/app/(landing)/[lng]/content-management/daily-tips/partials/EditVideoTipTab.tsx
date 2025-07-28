@@ -85,7 +85,6 @@ export default function EditVideoTipTab({
     setTranslationField,
     resetTranslations
   } = useDailyTipStore()
-  const [isTranslating, setIsTranslating] = useState(false)
 
   const {
     translationsData: updatedTranslations,
@@ -166,7 +165,6 @@ export default function EditVideoTipTab({
   ) => {
     if (activeLang === "en" && value.trim()) {
       try {
-        setIsTranslating(true)
         if (fieldName !== "videoLink") {
           const translated = await translateText(value)
           setTranslationField("videoTipData", "fr", fieldName, translated)
@@ -175,8 +173,8 @@ export default function EditVideoTipTab({
           setTranslationField("videoTipData", "fr", "videoLink", value)
           setUpdatedField("videoTipData", "fr", "videoLink", value)
         }
-      } finally {
-        setIsTranslating(false)
+      } catch (error) {
+        console.log("Error Translating", error)
       }
     }
   }
@@ -214,12 +212,6 @@ export default function EditVideoTipTab({
 
   return (
     <div className="relative">
-      {isTranslating && (
-        <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
-          <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
-        </div>
-      )}
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-4 text-black">

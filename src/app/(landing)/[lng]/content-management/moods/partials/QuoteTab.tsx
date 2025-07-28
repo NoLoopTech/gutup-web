@@ -126,12 +126,11 @@ export default function QuoteTab({
         if (fieldName === "author") {
           setTranslationField("quoteData", "fr", fieldName, value)
         } else {
-          setIsTranslating(true)
           const translated = await translateText(value)
           setTranslationField("quoteData", "fr", fieldName, translated)
         }
-      } finally {
-        setIsTranslating(false)
+      } catch (error) {
+        console.log("Error ", error)
       }
     }
   }

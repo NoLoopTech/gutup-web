@@ -116,7 +116,7 @@ export default function AddRecipePopUpContent({
     resetRecipe
   } = useRecipeStore()
   const { translateText } = useTranslation()
-  const [isTranslating, setIsTranslating] = useState(false)
+  const [isLoadingTrigger, setIsLoadingTrigger] = useState(false)
   const [foods, setFoods] = useState<Food[]>([])
   const [ingredientData, setIngredientData] = useState<Ingredient[]>([])
   const [selected, setSelected] = useState<Food | null>(null)
@@ -262,11 +262,10 @@ export default function AddRecipePopUpContent({
   ): Promise<void> => {
     if (activeLang === "en" && value.trim()) {
       try {
-        setIsTranslating(true)
         const translated = await translateText(value)
         setTranslationField("fr", fieldName, translated)
-      } finally {
-        setIsTranslating(false)
+      } catch (error) {
+        console.log("Error Translating", error)
       }
     }
   }
@@ -276,10 +275,9 @@ export default function AddRecipePopUpContent({
   ): Promise<void> => {
     if (activeLang === "en" && value.trim()) {
       try {
-        setIsTranslating(true)
         setTranslationField("fr", fieldName, value)
-      } finally {
-        setIsTranslating(false)
+      } catch (error) {
+        console.log("Error Translating", error)
       }
     }
   }
@@ -288,22 +286,20 @@ export default function AddRecipePopUpContent({
     if (activeLang === "en") {
       const val = form.getValues(fieldName)
       if (typeof val === "string" && val.trim().length > 0) {
-        setIsTranslating(true)
         try {
           const translated = await translateText(val)
           setTranslationField("fr", fieldName, translated)
-        } finally {
-          setIsTranslating(false)
+        } catch (error) {
+          console.log("Error Translating", error)
         }
       } else if (Array.isArray(val) && val.length) {
-        setIsTranslating(true)
         try {
           const trArr = await Promise.all(
             val.map(async v => await translateText(v))
           )
           setTranslationField("fr", fieldName, trArr)
-        } finally {
-          setIsTranslating(false)
+        } catch (error) {
+          console.log("Error Translating", error)
         }
       }
     }
@@ -538,7 +534,6 @@ export default function AddRecipePopUpContent({
     setAvailData([...availData, updatedAvailData])
 
     try {
-      setIsTranslating(true)
       const translatedName =
         activeLang === "en"
           ? await translateText(updatedAvailData.ingredientName)
@@ -558,8 +553,6 @@ export default function AddRecipePopUpContent({
     } catch (err) {
       console.error("Translation failed:", err)
       toast.error("Failed to translate food name.")
-    } finally {
-      setIsTranslating(false)
     }
 
     toast.success("Food item added successfully!")
@@ -578,14 +571,13 @@ export default function AddRecipePopUpContent({
     if (activeLang === "en") {
       const vals = form.getValues("benefits")
       if (vals.length) {
-        setIsTranslating(true)
         try {
           const trArr = await Promise.all(
             vals.map(async v => await translateText(v))
           )
           setTranslationField("fr", "benefits", trArr as any)
-        } finally {
-          setIsTranslating(false)
+        } catch (error) {
+          console.log("Error Translating", error)
         }
       }
     }
@@ -631,7 +623,7 @@ export default function AddRecipePopUpContent({
     const file = files?.[0] ?? null
     if (file) {
       try {
-        setIsTranslating(true)
+        setIsLoadingTrigger(true)
         const imageUrl = await uploadImageToFirebase(
           file,
           "recipes/temp-recipe",
@@ -650,7 +642,7 @@ export default function AddRecipePopUpContent({
         toast.error("Image upload failed. Please try again.")
         console.error("Firebase upload error:", error)
       } finally {
-        setIsTranslating(false)
+        setIsLoadingTrigger(false)
       }
     }
   }
@@ -660,7 +652,7 @@ export default function AddRecipePopUpContent({
     const file = files?.[0] ?? null
     if (file) {
       try {
-        setIsTranslating(true)
+        setIsLoadingTrigger(true)
         const imageUrl = await uploadImageToFirebase(
           file,
           "recipes/temp-recipe",
@@ -680,7 +672,7 @@ export default function AddRecipePopUpContent({
         toast.error("Image upload failed. Please try again.")
         console.error("Firebase upload error:", error)
       } finally {
-        setIsTranslating(false)
+        setIsLoadingTrigger(false)
         console.log("No file selected for food image")
       }
     }
@@ -720,7 +712,7 @@ export default function AddRecipePopUpContent({
 
   return (
     <div className="relative">
-      {isTranslating && (
+      {isLoadingTrigger && (
         <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/30">
           <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
         </div>

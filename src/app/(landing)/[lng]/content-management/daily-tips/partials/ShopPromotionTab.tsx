@@ -251,7 +251,6 @@ export default function ShopPromotionTab({
     setAvailData([...availData, updatedAvailData])
 
     try {
-      setIsTranslating(true)
       const translatedName =
         activeLang === "en"
           ? await translateText(updatedAvailData.name)
@@ -271,8 +270,6 @@ export default function ShopPromotionTab({
     } catch (err) {
       console.error("Translation failed:", err)
       toast.error("Failed to translate food name.")
-    } finally {
-      setIsTranslating(false)
     }
 
     // Optionally, show a success message
@@ -446,11 +443,10 @@ export default function ShopPromotionTab({
   const handleInputBlur = async (fieldName: FieldNames, value: string) => {
     if (activeLang === "en" && value.trim()) {
       try {
-        setIsTranslating(true)
         const translated = await translateText(value)
         setTranslationField("shopPromotionData", "fr", fieldName, translated)
-      } finally {
-        setIsTranslating(false)
+      } catch (error) {
+        console.log("Error Translating", error)
       }
     }
   }

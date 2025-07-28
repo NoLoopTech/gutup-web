@@ -224,12 +224,11 @@ export default function EditFoodTab({
   ) => {
     if (activeLang === "en" && value.trim()) {
       try {
-        setIsTranslating(true)
         const translated = await translateText(value)
         setTranslationField("foodData", "fr", fieldName, translated)
         setUpdatedField("foodData", "fr", fieldName, translated)
-      } finally {
-        setIsTranslating(false)
+      } catch (error) {
+        console.log("Error Translating", error)
       }
     }
   }
