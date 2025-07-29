@@ -478,9 +478,7 @@ export default function ViewFoodPopUp({
               })
 
               if (response.status === 200 || response.status === 201) {
-                console.log(
-                  `Benefit "${benefit.tagName}" added to database successfully`
-                )
+                // Optionally handle success, or leave empty
               }
             } catch (error) {
               console.error(
@@ -537,8 +535,6 @@ export default function ViewFoodPopUp({
           })) ?? [],
         allowMultiLang: rawData.allowMultiLang ?? false
       }
-
-      console.log("Saving food with ID:", savedFoodId, "Data:", updateData)
 
       const response = await putFoodById(token, savedFoodId, updateData)
       if (response.status === 200 || response.status === 201) {

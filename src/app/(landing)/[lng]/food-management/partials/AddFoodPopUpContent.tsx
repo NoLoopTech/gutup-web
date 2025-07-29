@@ -254,13 +254,27 @@ export default function AddFoodPopUpContent({
   })
   // Update form and selectedMonths when lang changes
   React.useEffect(() => {
-    form.reset(foodData[activeLang])
-    setSelectedMonths(
-      Array.isArray(foodData[activeLang]?.season)
-        ? foodData[activeLang].season
-        : []
+    const currentStoreData = foodData[activeLang] || {}
+    const validCategory = categoryOptionsApi.some(
+      opt => opt.value === currentStoreData.category
     )
-  }, [activeLang, form.reset, foodData])
+      ? currentStoreData.category
+      : undefined
+    const validCountry = countriesOptions[activeLang].some(
+      opt => opt.value === currentStoreData.country
+    )
+      ? currentStoreData.country
+      : undefined
+    form.reset({
+      ...currentStoreData,
+      category: validCategory,
+      country: validCountry,
+      image: currentStoreData?.storeImage || ""
+    })
+    setSelectedMonths(
+      Array.isArray(currentStoreData?.season) ? currentStoreData.season : []
+    )
+  }, [activeLang, form.reset, foodData, categoryOptionsApi])
 
   // Helper function to check for duplicate benefits
   const isDuplicateBenefit = (
@@ -765,11 +779,16 @@ export default function AddFoodPopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {categoryOptionsApi.map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
+                          {categoryOptionsApi
+                            .filter(option => option.value)
+                            .map(option => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -889,11 +908,16 @@ export default function AddFoodPopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {countriesOptions[activeLang].map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
+                          {countriesOptions[activeLang]
+                            .filter(option => option.value)
+                            .map(option => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </FormControl>

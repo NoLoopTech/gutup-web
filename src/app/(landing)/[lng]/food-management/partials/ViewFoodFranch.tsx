@@ -316,7 +316,11 @@ export default function ViewFoodFrench({
               {categories.map(option => (
                 <SelectItem
                   key={option.value}
-                  value={option.valueFr ?? option.labelFr ?? option.value}
+                  value={
+                    option.valueFr && option.valueFr.trim() !== ""
+                      ? option.valueFr
+                      : option.value || option.label
+                  }
                 >
                   {option.labelFr ?? option.label}
                 </SelectItem>
@@ -417,7 +421,11 @@ export default function ViewFoodFrench({
               {countries.map(option => (
                 <SelectItem
                   key={option.value}
-                  value={option.labelFr ?? option.label}
+                  value={
+                    option.labelFr && option.labelFr.trim() !== ""
+                      ? option.labelFr
+                      : option.value || option.label
+                  }
                 >
                   {option.labelFr ?? option.label}
                 </SelectItem>
@@ -507,7 +515,6 @@ export default function ViewFoodFrench({
           activeLang="fr"
           onAddNewBenefit={handleAddNewBenefit}
           onSelectSuggestion={benefit => {
-            console.log("French onSelectSuggestion:", benefit)
             const currentData = foodDetails?.healthBenefits ?? []
 
             const updatedHealthBenefits = [
@@ -521,7 +528,6 @@ export default function ViewFoodFrench({
             updateEditedData("healthBenefits", updatedHealthBenefits)
           }}
           onRemoveBenefit={removed => {
-            console.log("French onRemoveBenefit:", removed)
             const currentData = foodDetails?.healthBenefits ?? []
 
             const updatedHealthBenefits = currentData.filter(
@@ -536,7 +542,6 @@ export default function ViewFoodFrench({
             )
           }}
           onChange={(newBenefits: string[]) => {
-            console.log("French onChange:", newBenefits)
             const currentData = foodDetails?.healthBenefits ?? []
             const healthBenefits = newBenefits.map((benefit, index) => ({
               healthBenefit: currentData[index]?.healthBenefit || "",
