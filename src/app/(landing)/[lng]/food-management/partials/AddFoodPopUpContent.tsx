@@ -111,7 +111,8 @@ export default function AddFoodPopUpContent({
   const { translateText } = useTranslation()
   const { activeLang, foodData, setTranslationField, allowMultiLang } =
     useFoodStore() as any
-  const [, setIsTranslating] = useState(false)
+  const [isTranslating, setIsTranslating] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
   const { data: session } = useSession()
   const [categoryOptionsApi, setCategoryOptionsApi] = useState<Option[]>([])
@@ -515,27 +516,24 @@ export default function AddFoodPopUpContent({
   const handleImageSelect = async (files: File[] | null): Promise<void> => {
     const file = files?.[0] ?? null
     if (file) {
+      setIsLoading(true)
       try {
         setIsTranslating(true)
-
         // Upload image to Firebase
         const imageUrl = await uploadImageToFirebase(
           file,
           "add-food",
           file.name
         )
-
         // Convert file to base64 for session storage
         const reader = new FileReader()
         reader.onload = () => {
           const base64String = reader.result as string
-
           // Update form with the Firebase URL
           form.setValue("image", imageUrl, {
             shouldValidate: true,
             shouldDirty: true
           })
-
           // Store in session storage for both languages
           setTranslationField("foodData", "en", "image", base64String)
           setTranslationField("foodData", "fr", "image", base64String)
@@ -543,7 +541,6 @@ export default function AddFoodPopUpContent({
           setTranslationField("foodData", "fr", "storeImage", imageUrl)
           setTranslationField("foodData", "en", "imageName", file.name)
           setTranslationField("foodData", "fr", "imageName", file.name)
-
           setImagePreviewUrls([imageUrl])
         }
         reader.readAsDataURL(file)
@@ -552,6 +549,7 @@ export default function AddFoodPopUpContent({
         console.error("Firebase upload error:", error)
       } finally {
         setIsTranslating(false)
+        setIsLoading(false)
       }
     } else {
       // Handle file removal
@@ -570,6 +568,7 @@ export default function AddFoodPopUpContent({
   const onSubmit = async (
     formData: z.infer<typeof FoodSchema>
   ): Promise<void> => {
+    setIsLoading(true)
     try {
       const token = session?.apiToken
 
@@ -650,6 +649,8 @@ export default function AddFoodPopUpContent({
     } catch (error) {
       toast.error("Error adding food")
       console.error(error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -1297,7 +1298,21 @@ export default function AddFoodPopUpContent({
             >
               {translations.cancel}
             </Button>
-            <Button type="submit">{translations.save}</Button>
+            <Button type="submit" disabled={isLoading || isTranslating}>
+              {isLoading ? (
+                <div className="flex gap-2 items-center">
+                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                  Saving..
+                </div>
+              ) : isTranslating ? (
+                <div className="flex gap-2 items-center">
+                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                  Translating..
+                </div>
+              ) : (
+                translations.save
+              )}
+            </Button>
           </div>
         </form>
       </Form>

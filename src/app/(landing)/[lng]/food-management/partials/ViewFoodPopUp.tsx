@@ -637,7 +637,7 @@ export default function ViewFoodPopUp({
               msOverflowStyle: "none" // IE/Edge
             }}
           >
-            <DialogTitle>View Food Item</DialogTitle>
+            <DialogTitle>View / Edit Food Item</DialogTitle>
 
             <Tabs
               value={activeTab}
