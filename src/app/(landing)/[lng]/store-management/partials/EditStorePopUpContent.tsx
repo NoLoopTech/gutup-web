@@ -854,9 +854,7 @@ export default function EditStorePopUpContent({
       }
     } else if (fieldName === "storeType") {
       // Find the selected store type and store TagName/TagNameFr
-      const selectedType = storeTypes.find(
-        type => type.id.toString() === value
-      )
+      const selectedType = storeTypes.find(type => type.id.toString() === value)
       if (selectedType) {
         setTranslationField("storeData", "en", fieldName, selectedType.TagName)
         setTranslationField(
