@@ -112,7 +112,7 @@ export default function AddStorePopUpContent({
   const { translateText } = useTranslation()
   const { activeLang, storeData, setTranslationField, resetForm } =
     useStoreStore() as any
-  const [, setIsTranslating] = useState(false)
+  const [isTranslating, setIsTranslating] = useState(false)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [, setIsPremium] = React.useState(false)
@@ -1546,11 +1546,14 @@ export default function AddStorePopUpContent({
             >
               {translations.cancel}
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
+            {/* save button */}
+            {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
+            <Button type="submit" disabled={isLoading || isTranslating}>
+              {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
+              {isLoading || isTranslating ? (
                 <div className="flex gap-2 items-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
-                  {translations.save}
+                  {isTranslating ? "Translating.." : translations.save}
                 </div>
               ) : (
                 translations.save

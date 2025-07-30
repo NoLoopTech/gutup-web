@@ -946,39 +946,64 @@ export default function EditStorePopUpContent({
     },
     {
       header: translations.displayStatus,
-      accessor: (row: AvailableItem) => (
-        <Switch
-          checked={row.display}
-          className="scale-75"
-          onCheckedChange={checked => {
-            const updated = availData.map(item =>
-              item.ingOrCatId === row.ingOrCatId && item.type === row.type
-                ? { ...item, display: checked }
-                : item
-            )
-            setAvailData(
-              updated.map(item => ({
-                ...item,
-                status: item.status === "Active" ? "Active" : "Inactive"
-              })) as AvailableItem[]
-            )
-            form.setValue("availData", updated, { shouldValidate: true })
-            setTranslationField("storeData", activeLang, "availData", updated)
+      accessor: (row: AvailableItem) => {
+        // Find the index for this row
+        const index = availData.findIndex(
+          item =>
+            item.ingOrCatId === row.ingOrCatId &&
+            item.name === row.name &&
+            item.type === row.type
+        )
+        return (
+          <Switch
+            checked={row.display}
+            className="scale-75"
+            onCheckedChange={checked => {
+              let updated
+              if (row.ingOrCatId === 0) {
+                // Use index for manually added items
+                updated = availData.map((item, i) =>
+                  i === index ? { ...item, display: checked } : item
+                )
+              } else {
+                // Use id/type for others
+                updated = availData.map(item =>
+                  item.ingOrCatId === row.ingOrCatId && item.type === row.type
+                    ? { ...item, display: checked }
+                    : item
+                )
+              }
+              setAvailData(
+                updated.map(item => ({
+                  ...item,
+                  status: item.status === "Active" ? "Active" : "Inactive"
+                })) as AvailableItem[]
+              )
+              form.setValue("availData", updated, { shouldValidate: true })
+              setTranslationField("storeData", activeLang, "availData", updated)
 
-            // Also update opposite language
-            const oppLang = activeLang === "en" ? "fr" : "en"
-            const oppCurrentData =
-              (storeData[oppLang]?.availData as AvailableItem[]) || []
-            const oppUpdated = oppCurrentData.map(item =>
-              item.ingOrCatId === row.ingOrCatId && item.type === row.type
-                ? { ...item, display: checked }
-                : item
-            )
-            setTranslationField("storeData", oppLang, "availData", oppUpdated)
-            setHasChanges(true)
-          }}
-        />
-      )
+              // Also update opposite language
+              const oppLang = activeLang === "en" ? "fr" : "en"
+              const oppCurrentData =
+                (storeData[oppLang]?.availData as AvailableItem[]) || []
+              let oppUpdated
+              if (row.ingOrCatId === 0) {
+                oppUpdated = oppCurrentData.map((item, i) =>
+                  i === index ? { ...item, display: checked } : item
+                )
+              } else {
+                oppUpdated = oppCurrentData.map(item =>
+                  item.ingOrCatId === row.ingOrCatId && item.type === row.type
+                    ? { ...item, display: checked }
+                    : item
+                )
+              }
+              setTranslationField("storeData", oppLang, "availData", oppUpdated)
+              setHasChanges(true)
+            }}
+          />
+        )
+      }
     },
     {
       header: "",

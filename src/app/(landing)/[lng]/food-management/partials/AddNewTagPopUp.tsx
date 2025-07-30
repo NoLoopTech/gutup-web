@@ -50,7 +50,7 @@ export default function AddNewTagPopUp({
   } = useTagStore()
 
   const { translateText } = useTranslation()
-  const [, setIsTranslating] = useState(false)
+  const [isTranslating, setIsTranslating] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
@@ -123,6 +123,21 @@ export default function AddNewTagPopUp({
   }
 
   const onSubmit = async (data: z.infer<typeof TagSchema>): Promise<void> => {
+    // Ensure French translation exists before submitting
+    if (
+      activeLang === "en" &&
+      (!tagData.fr?.tagName || tagData.fr?.tagName === "")
+    ) {
+      try {
+        setIsTranslating(true)
+        const translated = await translateText(data.tagName)
+        setTranslationField("tagData", "fr", "tagName", translated)
+        setTranslationField("tagData", "fr", "category", category)
+        setTranslationField("tagData", "en", "category", category)
+      } finally {
+        setIsTranslating(false)
+      }
+    }
     try {
       setIsLoading(true)
       const response = await AddNewTag(token, {
@@ -232,11 +247,11 @@ export default function AddNewTagPopUp({
             <Button variant="outline" type="button" onClick={handleReset}>
               {translations.cancel}
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
+            <Button type="submit" disabled={isLoading || isTranslating}>
+              {isLoading || isTranslating ? (
                 <div className="flex gap-2 items-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
-                  {translations.save}
+                  {isTranslating ? "Translating.." : translations.save}
                 </div>
               ) : (
                 translations.save

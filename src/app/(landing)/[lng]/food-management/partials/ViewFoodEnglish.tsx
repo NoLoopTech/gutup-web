@@ -724,7 +724,6 @@ export default function ViewFoodEnglish({
                   activeLang="en"
                   onAddNewBenefit={handleAddNewBenefit}
                   onSelectSuggestion={benefit => {
-                    console.log("English onSelectSuggestion:", benefit)
                     const currentData = foodDetails?.healthBenefits ?? []
 
                     const updatedHealthBenefits = [
@@ -738,7 +737,6 @@ export default function ViewFoodEnglish({
                     updateEditedData("healthBenefits", updatedHealthBenefits)
                   }}
                   onRemoveBenefit={removed => {
-                    console.log("English onRemoveBenefit:", removed)
                     const currentData = foodDetails?.healthBenefits ?? []
 
                     const updatedHealthBenefits = currentData.filter(
@@ -751,7 +749,6 @@ export default function ViewFoodEnglish({
                     )
                   }}
                   onChange={(newBenefits: string[]) => {
-                    console.log("English onChange:", newBenefits)
                     const healthBenefits = newBenefits.map(
                       (benefit, index) => ({
                         healthBenefit: benefit,
