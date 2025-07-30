@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React from "react"
 import VideoTipTab from "./VideoTipTab"
 import BasicLayoutTab from "./BasicLayoutTab"
 import ShopPromotionTab from "./ShopPromotionTab"
@@ -45,8 +45,8 @@ export default function AddDailyTipPopUp({
   addDailyTip: () => void
   isLoading: boolean
 }): JSX.Element {
-  const { activeTab, setActiveTab } = useDailyTipStore()
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const { activeTab, setActiveTab, publishDate, setPublishDate } =
+    useDailyTipStore()
 
   return (
     <div>
@@ -77,9 +77,9 @@ export default function AddDailyTipPopUp({
         </div>
         <div className="flex-1 flex items-end mt-[-0.5rem]">
           <SimpleDatePicker
-            value={selectedDate}
-            onChange={setSelectedDate}
-            label="Publish Date"
+            value={publishDate}
+            onChange={setPublishDate}
+            label={translations.publishDate}
           />
         </div>
       </div>

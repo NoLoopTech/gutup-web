@@ -55,6 +55,7 @@
   "depression": "Depression",
   "anxiety": "Anxiety",
   "stress": "Stress",
+  "publishDate": "Publish Date",
 
   "required": "Required",
   "titleMustBeAtLeast2Characters": "Title must be at least 2 characters",

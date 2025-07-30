@@ -189,7 +189,8 @@ export default function DailyTipsPage({
       const {
         allowMultiLang: currentAllowMultiLang,
         activeTab: currentTab,
-        translationsData: currentTranslations
+        translationsData: currentTranslations,
+        publishDate: currentPublishDate
       } = useDailyTipStore.getState()
 
       const shopFoods =
@@ -246,6 +247,7 @@ export default function DailyTipsPage({
             ? "video"
             : "store",
         status: true,
+        publishDate: currentPublishDate,
         basicForm: {
           subTitleOne: currentTranslations.basicLayoutData.en.subTitleOne,
           subTitleOneFR: currentTranslations.basicLayoutData.fr.subTitleOne,
