@@ -164,6 +164,10 @@ export default function ViewFoodPopUp({
   const [isDirty, setIsDirty] = useState(false)
   const initialDataRef = useRef<SessionStorageData | null>(null)
 
+  // Track initial data for each tab
+  const initialEnglishDataRef = useRef<any>(null)
+  const initialFrenchDataRef = useRef<any>(null)
+
   useEffect(() => {
     if (open && token && foodId !== null && foodId > 0) {
       const getfoodsDetailsByFoodId = async (): Promise<void> => {
@@ -171,7 +175,6 @@ export default function ViewFoodPopUp({
         const response = await getFoodsById(token, foodId)
         if (response.status === 200) {
           setFoodDetails(response.data)
-          // Initialize session storage with API data including foodId
           const dataWithId: SessionStorageData = { ...response.data, foodId }
           saveToSessionStorage(dataWithId)
           setEditedData(dataWithId)
@@ -180,12 +183,46 @@ export default function ViewFoodPopUp({
             response.data.images?.map((img: any) => img.image) ?? []
           )
           initialDataRef.current = JSON.parse(JSON.stringify(dataWithId))
+          // Set initial data for each tab
+          initialEnglishDataRef.current = {
+            name: dataWithId.name,
+            category: dataWithId.category,
+            country: dataWithId.country,
+            seasons: dataWithId.seasons,
+            attributes: dataWithId.attributes,
+            describe: dataWithId.describe,
+            images: dataWithId.images,
+            healthBenefits: dataWithId.healthBenefits
+          }
+          initialFrenchDataRef.current = {
+            nameFR: dataWithId.nameFR,
+            categoryFR: dataWithId.categoryFR,
+            country: dataWithId.country, // country is same, but selection is by labelFr
+            seasons: dataWithId.seasons,
+            attributes: {
+              fiber: dataWithId.attributes?.fiber,
+              proteins: dataWithId.attributes?.proteins,
+              vitaminsFR: dataWithId.attributes?.vitaminsFR,
+              mineralsFR: dataWithId.attributes?.mineralsFR,
+              fat: dataWithId.attributes?.fat,
+              sugar: dataWithId.attributes?.sugar
+            },
+            describe: {
+              selectionFR: dataWithId.describe?.selectionFR,
+              preparationFR: dataWithId.describe?.preparationFR,
+              conservationFR: dataWithId.describe?.conservationFR
+            },
+            images: dataWithId.images,
+            healthBenefits: dataWithId.healthBenefits
+          }
         } else {
           setFoodDetails(null)
           setEditedData(null)
           setImagePreviewUrls([])
           setAllowMultiLang(false)
           initialDataRef.current = null
+          initialEnglishDataRef.current = null
+          initialFrenchDataRef.current = null
           console.error("Failed to get food details")
         }
         setIsLoading(false)
@@ -193,21 +230,61 @@ export default function ViewFoodPopUp({
       void getfoodsDetailsByFoodId()
     } else {
       initialDataRef.current = null
+      initialEnglishDataRef.current = null
+      initialFrenchDataRef.current = null
     }
   }, [open, token, foodId])
 
   // Compare current editedData with initialDataRef to set isDirty
   useEffect(() => {
     const current = editedData ?? foodDetails
-    const initial = initialDataRef.current
-    if (!initial || !current) {
+    if (!current) {
       setIsDirty(false)
       return
     }
-    // Shallow compare for main fields (deep compare for production)
-    const isChanged = JSON.stringify(current) !== JSON.stringify(initial)
+    let isChanged = false
+    if (activeTab === "english") {
+      const englishCurrent = {
+        name: current.name,
+        category: current.category,
+        country: current.country,
+        seasons: current.seasons,
+        attributes: current.attributes,
+        describe: current.describe,
+        images: current.images,
+        healthBenefits: current.healthBenefits
+      }
+      isChanged =
+        JSON.stringify(englishCurrent) !==
+        JSON.stringify(initialEnglishDataRef.current)
+    } else if (activeTab === "french") {
+      const frenchCurrent = {
+        nameFR: (current as any).nameFR ?? "",
+        categoryFR: (current as any).categoryFR ?? "",
+        country: current.country,
+        seasons: current.seasons,
+        attributes: {
+          fiber: current.attributes?.fiber,
+          proteins: current.attributes?.proteins,
+          vitaminsFR: (current.attributes as any)?.vitaminsFR ?? "",
+          mineralsFR: (current.attributes as any)?.mineralsFR ?? "",
+          fat: current.attributes?.fat,
+          sugar: current.attributes?.sugar
+        },
+        describe: {
+          selectionFR: (current.describe as any)?.selectionFR ?? "",
+          preparationFR: (current.describe as any)?.preparationFR ?? "",
+          conservationFR: (current.describe as any)?.conservationFR ?? ""
+        },
+        images: current.images,
+        healthBenefits: current.healthBenefits
+      }
+      isChanged =
+        JSON.stringify(frenchCurrent) !==
+        JSON.stringify(initialFrenchDataRef.current)
+    }
     setIsDirty(isChanged)
-  }, [editedData, foodDetails])
+  }, [editedData, foodDetails, activeTab])
 
   useEffect(() => {
     if (token) {
@@ -625,7 +702,7 @@ export default function ViewFoodPopUp({
       }}
     >
       <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
-        {isLoading ? (
+        {isLoading || (!foodDetails && !editedData) ? (
           <div className="flex items-center justify-center h-full">
             Loading...
           </div>
@@ -638,7 +715,6 @@ export default function ViewFoodPopUp({
             }}
           >
             <DialogTitle>View / Edit Food Item</DialogTitle>
-
             <Tabs
               value={activeTab}
               onValueChange={val => {
@@ -653,7 +729,6 @@ export default function ViewFoodPopUp({
                     <TabsTrigger value="french">French</TabsTrigger>
                   )}
                 </TabsList>
-
                 <div className="flex items-center gap-2">
                   <Switch
                     id="multi-lang"
@@ -669,9 +744,8 @@ export default function ViewFoodPopUp({
                   </Label>
                 </div>
               </div>
-
-              {/* Render each tab's content component */}
               <ViewFoodEnglish
+                key={editedData?.foodId ?? "empty-english"}
                 selectionRef={selectionRef}
                 preparationRef={preparationRef}
                 conservationRef={conservationRef}
@@ -689,9 +763,9 @@ export default function ViewFoodPopUp({
                 imagePreviewUrls={imagePreviewUrls}
                 token={token}
               />
-
               {allowMultiLang && (
                 <ViewFoodFranch
+                  key={editedData?.foodId ?? "empty-french"}
                   selectionRef={selectionRef}
                   preparationRef={preparationRef}
                   conservationRef={conservationRef}
