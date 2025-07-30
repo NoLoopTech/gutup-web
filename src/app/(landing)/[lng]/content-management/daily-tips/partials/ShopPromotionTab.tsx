@@ -657,9 +657,8 @@ export default function ShopPromotionTab({
       )}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="space-y-3 text-black">
-            {/* Shop Name */}
-            <div className="flex items-start lg:justify-end lg:-mt-[4.8rem]">
+          <div className="mt-4 space-y-3 text-black">
+            {/* Shop Name */}           
               <div className="w-[25.5rem]">
                 <FormField
                   control={form.control}
@@ -681,7 +680,6 @@ export default function ShopPromotionTab({
                   )}
                 />
               </div>
-            </div>
 
             {/* Reason */}
             <div className="w-full md:w-[25.5rem] mt-[-0.3rem]">
