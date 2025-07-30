@@ -21,6 +21,7 @@ interface BasicLayoutFields {
   concern?: string
   image?: string
   share?: boolean
+  publishDate?: string // Added for publish date support
 }
 
 interface ShopPromotionFields {
