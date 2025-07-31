@@ -1922,6 +1922,8 @@ export default function EditStorePopUpContent({
                       title={translations.selectImagesForYourStore}
                       onChange={handleImageSelect}
                       previewUrls={imagePreviewUrls}
+                      uploadText={translations.imagesContentText}
+                      uploadSubText={translations.imagesSubContentText}
                     />
                   </FormControl>
                   <FormMessage />

@@ -57,6 +57,8 @@
   "anxiety": "Anxiété",
   "stress": "Stress",
   "publishDate": "Date de publication",
+  "imagesSubContentText": "SVG, PNG, JPG ou GIF (MAX. 800x400px)",
+  "imagesContentText": "Cliquez pour télécharger ou faites glisser et déposez",
 
   "required": "Obligatoire",
   "titleMustBeAtLeast2Characters": "Le titre doit comporter au moins 2 caractères",

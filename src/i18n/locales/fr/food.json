@@ -41,6 +41,8 @@
   "france": "France",
   "germany": "Allemagne",
   "italy": "Italie",
+  "imagesSubContentText": "SVG, PNG, JPG ou GIF (MAX. 800x400px)",
+  "imagesContentText": "Cliquez pour télécharger ou faites glisser et déposez",
 
   "required": "Requis",
   "mustbeatleast2characters": "Doit contenir au moins 2 caractères",

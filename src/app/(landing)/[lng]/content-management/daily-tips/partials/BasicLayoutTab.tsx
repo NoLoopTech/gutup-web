@@ -484,6 +484,8 @@ export default function BasicLayoutTab({
                         title={translations.selectImagesForYourFoodItem}
                         previewUrls={previewUrls ? previewUrls : []}
                         onChange={handleImageSelect}
+                        uploadText={translations.imagesContentText}
+                        uploadSubText={translations.imagesSubContentText}
                       />
                     </FormControl>
                     <FormMessage />

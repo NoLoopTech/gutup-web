@@ -57,6 +57,8 @@ export interface translationsTypes {
   winter: string
   maxBenefitsLimit: string
   duplicateBenefit: string
+  imagesContentText: string
+  imagesSubContentText: string
 
   required: string
   mustbeatleast2characters: string
@@ -129,6 +131,8 @@ export const defaultTranslations: translationsTypes = {
   winter: "",
   maxBenefitsLimit: "",
   duplicateBenefit: "",
+  imagesContentText: "",
+  imagesSubContentText: "",
 
   required: "",
   mustbeatleast2characters: "",

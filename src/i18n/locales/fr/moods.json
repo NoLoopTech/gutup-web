@@ -30,6 +30,8 @@
   "dairy": "Produits laitiers",
   "produce": "Produits frais",
   "Mood": "Humeur",
+  "imagesSubContentText": "SVG, PNG, JPG ou GIF (MAX. 800x400px)",
+  "imagesContentText": "Cliquez pour télécharger ou faites glisser et déposez",
 
   "required": "Obligatoire",
   "pleaseSelectAMood": "Veuillez sélectionner une humeur",

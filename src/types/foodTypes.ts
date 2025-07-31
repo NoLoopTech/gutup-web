@@ -41,6 +41,8 @@ export interface translationsTypes {
   france: string
   germany: string
   italy: string
+  imagesContentText: string
+  imagesSubContentText: string
 
   required: string
   mustbeatleast2characters: string
@@ -94,6 +96,8 @@ export const defaultTranslations: translationsTypes = {
   france: "",
   germany: "",
   italy: "",
+  imagesContentText: "",
+  imagesSubContentText: "",
 
   required: "",
   mustbeatleast2characters: "",

@@ -30,6 +30,8 @@
   "dairy": "Dairy",
   "produce": "Produce",
   "Mood": "Mood",
+  "imagesSubContentText": "SVG, PNG, JPG or GIF (MAX. 800x400px",
+  "imagesContentText": "Click to upload or drag and drop",
 
   "required": "Required",
   "pleaseSelectAMood": "Please select a mood",
