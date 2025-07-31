@@ -93,7 +93,7 @@ export const useUpdateDailyTipStore = create<DailyTipStoreState>()(
           let newLangObj
           if (value === undefined) {
             // Remove the key if value is undefined
-            const { [field]: _, ...rest } = prevLangObj
+            const { [field]: _, ...rest } = prevLangObj as Record<string, any>
             newLangObj = rest
           } else if (field === "__replace__") {
             newLangObj = value

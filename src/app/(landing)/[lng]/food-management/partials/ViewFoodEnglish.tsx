@@ -370,14 +370,17 @@ export default function ViewFoodEnglish({
             break
           case "season":
             if (Array.isArray(value[name])) {
-              const newSeasons = (value[name] as string[]).map(enMonth => {
-                const found = seasonSyncMap.find(m => m.en === enMonth)
-                return {
-                  season: enMonth,
-                  seasonFR: found ? found.fr : enMonth,
-                  foodId: foodDetails?.seasons?.[0]?.foodId ?? 0
-                }
-              })
+              const arr = value[name] as unknown
+              const newSeasons = Array.isArray(arr)
+                ? (arr as string[]).map(enMonth => {
+                    const found = seasonSyncMap.find(m => m.en === enMonth)
+                    return {
+                      season: enMonth,
+                      seasonFR: found ? found.fr : enMonth,
+                      foodId: foodDetails?.seasons?.[0]?.foodId ?? 0
+                    }
+                  })
+                : []
               updateEditedData("seasons", newSeasons)
             } else {
               const found = seasonSyncMap.find(m => m.en === value[name])
