@@ -58,6 +58,17 @@ export function SimpleDatePicker({
           />
         </PopoverContent>
       </Popover>
+      {/* Add style override for calendar dropdowns */}
+      <style jsx global>{`
+        .rdp-dropdown,
+        .rdp-caption_dropdown,
+        .rdp-select,
+        select {
+          background-color: #f9fafb !important;
+          color: #111827 !important;
+          border: 1px solid #e5e7eb !important;
+        }
+      `}</style>
     </div>
   )
 }
