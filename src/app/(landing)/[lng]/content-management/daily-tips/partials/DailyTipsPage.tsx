@@ -402,21 +402,16 @@ export default function DailyTipsPage({
 
       if (activeTab === "shopPromote") {
         if ("reason" in updatedState.shopPromotionData.en)
-          requestBody.concern = updatedState.shopPromotionData.en
-            .reason as string
+          requestBody.concern = updatedState.shopPromotionData.en.reason as string
         if ("reason" in updatedState.shopPromotionData.fr)
-          requestBody.concernFR = updatedState.shopPromotionData.fr
-            .reason as string
-        if ("title" in updatedState.shopPromotionData.en)
-          requestBody.title = updatedState.shopPromotionData.en
-            .shopName as string
-        if ("title" in updatedState.shopPromotionData.fr)
-          requestBody.titleFR = updatedState.shopPromotionData.fr
-            .shopName as string
+          requestBody.concernFR = updatedState.shopPromotionData.fr.reason as string
+        if ("shopName" in updatedState.shopPromotionData.en)
+          requestBody.title = updatedState.shopPromotionData.en.shopName as string
+        if ("shopName" in updatedState.shopPromotionData.fr)
+          requestBody.titleFR = updatedState.shopPromotionData.fr.shopName as string
         // Add publishDate if present
         if ("publishDate" in updatedState.shopPromotionData.en) {
-          requestBody.publishDate = updatedState.shopPromotionData.en
-            .publishDate as string
+          requestBody.publishDate = updatedState.shopPromotionData.en.publishDate as string
         }
       }
 
