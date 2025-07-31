@@ -186,6 +186,11 @@ export default function EditDailyTipMainPopUp({
             "publishDate",
             data.publishDate
           )
+          // Clear publishDate from other sections
+          setUpdatedField("videoTipData", "en", "publishDate", undefined)
+          setUpdatedField("videoTipData", "fr", "publishDate", undefined)
+          setUpdatedField("shopPromotionData", "en", "publishDate", undefined)
+          setUpdatedField("shopPromotionData", "fr", "publishDate", undefined)
         } else if (data.type === "video") {
           setTranslationField("videoTipData", "en", "concern", data.concern)
           setTranslationField("videoTipData", "fr", "concern", data.concernFR)
@@ -246,6 +251,11 @@ export default function EditDailyTipMainPopUp({
           )
           setUpdatedField("videoTipData", "en", "publishDate", data.publishDate)
           setUpdatedField("videoTipData", "fr", "publishDate", data.publishDate)
+          // Clear publishDate from other sections
+          setUpdatedField("basicLayoutData", "en", "publishDate", undefined)
+          setUpdatedField("basicLayoutData", "fr", "publishDate", undefined)
+          setUpdatedField("shopPromotionData", "en", "publishDate", undefined)
+          setUpdatedField("shopPromotionData", "fr", "publishDate", undefined)
         } else {
           setTranslationField("shopPromotionData", "en", "reason", data.concern)
           setTranslationField(
@@ -456,6 +466,11 @@ export default function EditDailyTipMainPopUp({
             "publishDate",
             data.publishDate
           )
+          // Clear publishDate from other sections
+          setUpdatedField("basicLayoutData", "en", "publishDate", undefined)
+          setUpdatedField("basicLayoutData", "fr", "publishDate", undefined)
+          setUpdatedField("videoTipData", "en", "publishDate", undefined)
+          setUpdatedField("videoTipData", "fr", "publishDate", undefined)
         }
       }
     } catch (error) {

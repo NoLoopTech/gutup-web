@@ -69,6 +69,14 @@ export default function EditDailyTipPopUp({
   }
   const handlePublishDateChange = (date: Date | null): void => {
     const isoString = date ? date.toISOString() : ""
+    // Remove publishDate from all sections first
+    setUpdatedField("basicLayoutData", "en", "publishDate", undefined)
+    setUpdatedField("basicLayoutData", "fr", "publishDate", undefined)
+    setUpdatedField("shopPromotionData", "en", "publishDate", undefined)
+    setUpdatedField("shopPromotionData", "fr", "publishDate", undefined)
+    setUpdatedField("videoTipData", "en", "publishDate", undefined)
+    setUpdatedField("videoTipData", "fr", "publishDate", undefined)
+    // Set only for the active tab
     if (activeTab === "basicForm") {
       setUpdatedField("basicLayoutData", "en", "publishDate", isoString)
       setUpdatedField("basicLayoutData", "fr", "publishDate", isoString)
