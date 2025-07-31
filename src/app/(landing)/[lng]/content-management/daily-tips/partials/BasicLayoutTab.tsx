@@ -256,11 +256,6 @@ export default function BasicLayoutTab({
 
   return (
     <div className="relative">
-      {isTranslating && (
-        <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
-          <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
-        </div>
-      )}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-4 text-black">
@@ -503,8 +498,13 @@ export default function BasicLayoutTab({
             <Button variant="outline" onClick={handleReset}>
               {translations.cancel}
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
+            <Button type="submit" disabled={isLoading || isTranslating}>
+              {isTranslating ? (
+                <div className="flex gap-2 items-center">
+                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                  Translating...
+                </div>
+              ) : isLoading ? (
                 <div className="flex gap-2 items-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
                   {translations.save}
