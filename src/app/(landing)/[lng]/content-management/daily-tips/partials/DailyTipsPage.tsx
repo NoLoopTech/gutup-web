@@ -396,7 +396,7 @@ export default function DailyTipsPage({
           requestBody.titleFR = updatedState.videoTipData.fr.title as string
         // Add publishDate if present
         if ("publishDate" in updatedState.videoTipData.en) {
-          requestBody.publishDate = updatedState.videoTipData.en.publishDate
+          requestBody.publishDate = updatedState.videoTipData.en.publishDate as string
         }
       }
 
