@@ -55,6 +55,7 @@ export interface translationsTypes {
   depression: string
   anxiety: string
   stress: string
+  publishDate: string
 
   required: string
   titleMustBeAtLeast2Characters: string
@@ -135,6 +136,7 @@ export const defaultTranslations: translationsTypes = {
   depression: "",
   anxiety: "",
   stress: "",
+  publishDate: "",
 
   required: "",
   titleMustBeAtLeast2Characters: "",
@@ -200,6 +202,7 @@ export interface ShopPromote {
   website?: string
   image?: string
   shopPromoteFoods?: ShopPromoteFood[]
+  publishDate?: string
 }
 
 export interface VideoForm {
@@ -209,6 +212,7 @@ export interface VideoForm {
   subDesc?: string
   subDescFR?: string
   videoUrl?: string
+  publishDate?: string
 }
 
 export interface AddDailyTipTypes {
@@ -225,6 +229,7 @@ export interface AddDailyTipTypes {
   videoForm: VideoForm | null
 }
 
+// Add publishDate to EditDailyTipTypes for update compatibility
 export interface EditDailyTipTypes {
   id?: number
   allowMultiLang?: boolean
@@ -238,4 +243,38 @@ export interface EditDailyTipTypes {
   basicForm?: BasicForm | null
   shopPromote?: ShopPromote | null
   videoForm?: VideoForm | null
+  publishDate?: string
+}
+
+export interface ShopPromotionFields {
+  id?: number
+  reason?: string
+  reasonFR?: string
+  name?: string
+  location?: string
+  locationLat?: number
+  locationLng?: number
+  category?: string
+  categoryFR?: string
+  desc?: string
+  descFR?: string
+  phoneNumber?: string
+  email?: string
+  mapsPin?: string
+  facebook?: string
+  instagram?: string
+  website?: string
+  image?: string
+  shopPromoteFoods?: ShopPromoteFood[]
+  publishDate?: string
+}
+
+export interface VideoTipFields {
+  id?: number
+  subTitle?: string
+  subTitleFR?: string
+  subDesc?: string
+  subDescFR?: string
+  videoUrl?: string
+  publishDate?: string
 }

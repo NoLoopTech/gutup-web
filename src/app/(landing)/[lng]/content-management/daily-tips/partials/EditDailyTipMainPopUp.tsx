@@ -11,6 +11,7 @@ import {
   type translationsTypes
 } from "@/types/dailyTipTypes"
 import { useDailyTipStore } from "@/stores/useDailyTipStore"
+import { useUpdateDailyTipStore } from "@/stores/useUpdateDailyTipStore"
 import EditDailyTipPopUp from "./EditDailyTipPopUp"
 import { getDailyTipById } from "@/app/api/daily-tip"
 
@@ -41,6 +42,7 @@ export default function EditDailyTipMainPopUp({
     setActiveTab,
     setTranslationField
   } = useDailyTipStore()
+  const { setUpdatedField } = useUpdateDailyTipStore()
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
   )
@@ -58,7 +60,6 @@ export default function EditDailyTipMainPopUp({
   const handleDailyTipById = async () => {
     try {
       const res = await getDailyTipById(token, tipId)
-
       if (res.status === 200) {
         const data = res.data
 
@@ -160,6 +161,36 @@ export default function EditDailyTipMainPopUp({
             "image",
             data.basicForm.image
           )
+
+          setTranslationField(
+            "basicLayoutData",
+            "en",
+            "publishDate",
+            data.publishDate
+          )
+          setTranslationField(
+            "basicLayoutData",
+            "fr",
+            "publishDate",
+            data.publishDate
+          )
+          setUpdatedField(
+            "basicLayoutData",
+            "en",
+            "publishDate",
+            data.publishDate
+          )
+          setUpdatedField(
+            "basicLayoutData",
+            "fr",
+            "publishDate",
+            data.publishDate
+          )
+          // Clear publishDate from other sections
+          setUpdatedField("videoTipData", "en", "publishDate", undefined)
+          setUpdatedField("videoTipData", "fr", "publishDate", undefined)
+          setUpdatedField("shopPromotionData", "en", "publishDate", undefined)
+          setUpdatedField("shopPromotionData", "fr", "publishDate", undefined)
         } else if (data.type === "video") {
           setTranslationField("videoTipData", "en", "concern", data.concern)
           setTranslationField("videoTipData", "fr", "concern", data.concernFR)
@@ -205,6 +236,26 @@ export default function EditDailyTipMainPopUp({
             "videoLink",
             data.videoForm.videoUrl
           )
+
+          setTranslationField(
+            "videoTipData",
+            "en",
+            "publishDate",
+            data.publishDate
+          )
+          setTranslationField(
+            "videoTipData",
+            "fr",
+            "publishDate",
+            data.publishDate
+          )
+          setUpdatedField("videoTipData", "en", "publishDate", data.publishDate)
+          setUpdatedField("videoTipData", "fr", "publishDate", data.publishDate)
+          // Clear publishDate from other sections
+          setUpdatedField("basicLayoutData", "en", "publishDate", undefined)
+          setUpdatedField("basicLayoutData", "fr", "publishDate", undefined)
+          setUpdatedField("shopPromotionData", "en", "publishDate", undefined)
+          setUpdatedField("shopPromotionData", "fr", "publishDate", undefined)
         } else {
           setTranslationField("shopPromotionData", "en", "reason", data.concern)
           setTranslationField(
@@ -390,6 +441,36 @@ export default function EditDailyTipMainPopUp({
             "website",
             data.shopPromote.website
           )
+
+          setTranslationField(
+            "shopPromotionData",
+            "en",
+            "publishDate",
+            data.publishDate
+          )
+          setTranslationField(
+            "shopPromotionData",
+            "fr",
+            "publishDate",
+            data.publishDate
+          )
+          setUpdatedField(
+            "shopPromotionData",
+            "en",
+            "publishDate",
+            data.publishDate
+          )
+          setUpdatedField(
+            "shopPromotionData",
+            "fr",
+            "publishDate",
+            data.publishDate
+          )
+          // Clear publishDate from other sections
+          setUpdatedField("basicLayoutData", "en", "publishDate", undefined)
+          setUpdatedField("basicLayoutData", "fr", "publishDate", undefined)
+          setUpdatedField("videoTipData", "en", "publishDate", undefined)
+          setUpdatedField("videoTipData", "fr", "publishDate", undefined)
         }
       }
     } catch (error) {

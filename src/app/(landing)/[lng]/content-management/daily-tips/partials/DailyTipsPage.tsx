@@ -18,6 +18,7 @@ import {
   AddNewDailyTips,
   deleteDailyTipById,
   getAllDailyTips,
+  getDailyTipById,
   updateDailyTip
 } from "@/app/api/daily-tip"
 import { useDailyTipStore } from "@/stores/useDailyTipStore"
@@ -90,9 +91,37 @@ export default function DailyTipsPage({
     setIsOpenAddTip(false)
   }
 
-  const handleOpenEditDailyTip = (id: number): void => {
+  const handleOpenEditDailyTip = async (id: number): Promise<void> => {
     setSelectedTipId(id)
     setIsOpenEditDailyTip(true)
+
+    // Fetch the daily tip by ID and set publishDate in the update store
+    try {
+      const response = await getDailyTipById(token, id)
+      if (response.status === 200 && response.data) {
+        const publishDate = response.data.publishDate
+        if (publishDate) {
+          useUpdateDailyTipStore
+            .getState()
+            .setUpdatedField(
+              "basicLayoutData",
+              "en",
+              "publishDate",
+              publishDate
+            )
+          useUpdateDailyTipStore
+            .getState()
+            .setUpdatedField(
+              "basicLayoutData",
+              "fr",
+              "publishDate",
+              publishDate
+            )
+        }
+      }
+    } catch (err) {
+      // handle error if needed
+    }
   }
   const handleCloseEditDailyTip = async (): Promise<void> => {
     setIsOpenEditDailyTip(false)
@@ -189,7 +218,8 @@ export default function DailyTipsPage({
       const {
         allowMultiLang: currentAllowMultiLang,
         activeTab: currentTab,
-        translationsData: currentTranslations
+        translationsData: currentTranslations,
+        publishDate: currentPublishDate
       } = useDailyTipStore.getState()
 
       const shopFoods =
@@ -246,6 +276,7 @@ export default function DailyTipsPage({
             ? "video"
             : "store",
         status: true,
+        publishDate: currentPublishDate,
         basicForm: {
           subTitleOne: currentTranslations.basicLayoutData.en.subTitleOne,
           subTitleOneFR: currentTranslations.basicLayoutData.fr.subTitleOne,
@@ -348,6 +379,10 @@ export default function DailyTipsPage({
           requestBody.title = updatedState.basicLayoutData.en.title as string
         if ("title" in updatedState.basicLayoutData.fr)
           requestBody.titleFR = updatedState.basicLayoutData.fr.title as string
+        // Add publishDate if present
+        if ("publishDate" in updatedState.basicLayoutData.en) {
+          requestBody.publishDate = updatedState.basicLayoutData.en.publishDate
+        }
       }
 
       if (activeTab === "videoForm") {
@@ -359,21 +394,25 @@ export default function DailyTipsPage({
           requestBody.title = updatedState.videoTipData.en.title as string
         if ("title" in updatedState.videoTipData.fr)
           requestBody.titleFR = updatedState.videoTipData.fr.title as string
+        // Add publishDate if present
+        if ("publishDate" in updatedState.videoTipData.en) {
+          requestBody.publishDate = updatedState.videoTipData.en.publishDate as string
+        }
       }
 
       if (activeTab === "shopPromote") {
         if ("reason" in updatedState.shopPromotionData.en)
-          requestBody.concern = updatedState.shopPromotionData.en
-            .reason as string
+          requestBody.concern = updatedState.shopPromotionData.en.reason as string
         if ("reason" in updatedState.shopPromotionData.fr)
-          requestBody.concernFR = updatedState.shopPromotionData.fr
-            .reason as string
-        if ("title" in updatedState.shopPromotionData.en)
-          requestBody.title = updatedState.shopPromotionData.en
-            .shopName as string
-        if ("title" in updatedState.shopPromotionData.fr)
-          requestBody.titleFR = updatedState.shopPromotionData.fr
-            .shopName as string
+          requestBody.concernFR = updatedState.shopPromotionData.fr.reason as string
+        if ("shopName" in updatedState.shopPromotionData.en)
+          requestBody.title = updatedState.shopPromotionData.en.shopName as string
+        if ("shopName" in updatedState.shopPromotionData.fr)
+          requestBody.titleFR = updatedState.shopPromotionData.fr.shopName as string
+        // Add publishDate if present
+        if ("publishDate" in updatedState.shopPromotionData.en) {
+          requestBody.publishDate = updatedState.shopPromotionData.en.publishDate as string
+        }
       }
 
       // basicForm
@@ -390,17 +429,17 @@ export default function DailyTipsPage({
           basicForm.subDescOne = basicData.en.subDescriptionOne as string
         if ("subDescriptionOne" in basicData.fr)
           basicForm.subDescOneFR = basicData.fr.subDescriptionOne as string
-        
+
         if ("subTitleTwo" in basicData.en)
           basicForm.subTitleTwo = basicData.en.subTitleTwo as string
         if ("subTitleTwo" in basicData.fr)
           basicForm.subTitleTwoFR = basicData.fr.subTitleTwo as string
-        
+
         if ("subDescriptionTwo" in basicData.en)
           basicForm.subDescTwo = basicData.en.subDescriptionTwo as string
         if ("subDescriptionTwo" in basicData.fr)
           basicForm.subDescTwoFR = basicData.fr.subDescriptionTwo as string
-        
+
         if ("share" in basicData.en)
           basicForm.share = basicData.en.share as boolean
         if (uploadedImageUrl) basicForm.image = uploadedImageUrl

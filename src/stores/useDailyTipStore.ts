@@ -57,6 +57,7 @@ interface DailyTipStoreState {
   allowMultiLang: boolean
   activeLang: "en" | "fr"
   activeTab: "basicForm" | "shopPromote" | "videoForm"
+  publishDate: Date | null
   translationsData: {
     basicLayoutData: LangData<BasicLayoutFields>
     shopPromotionData: LangData<ShopPromotionFields>
@@ -65,6 +66,7 @@ interface DailyTipStoreState {
   setAllowMultiLang: (val: boolean) => void
   setActiveLang: (lang: "en" | "fr") => void
   setActiveTab: (tab: "basicForm" | "shopPromote" | "videoForm") => void
+  setPublishDate: (date: Date | null) => void
   setTranslationField: (
     section: keyof DailyTipStoreState["translationsData"],
     lang: "en" | "fr",
@@ -80,6 +82,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
       allowMultiLang: false,
       activeLang: "en",
       activeTab: "basicForm",
+      publishDate: null,
       translationsData: {
         basicLayoutData: {
           en: {
@@ -173,6 +176,8 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
 
       setActiveTab: tab => set({ activeTab: tab }),
 
+      setPublishDate: date => set({ publishDate: date }),
+
       setTranslationField: (section, lang, field, value) => {
         set(state => ({
           translationsData: {
@@ -190,6 +195,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
 
       resetTranslations: () => {
         set({
+          publishDate: null,
           translationsData: {
             basicLayoutData: {
               en: {

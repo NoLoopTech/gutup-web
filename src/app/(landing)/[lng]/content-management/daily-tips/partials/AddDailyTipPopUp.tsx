@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select"
 import { type translationsTypes } from "@/types/dailyTipTypes"
 import { useDailyTipStore } from "@/stores/useDailyTipStore"
+import { SimpleDatePicker } from "@/components/Shared/DateSelect/SimpleDatePicker"
 
 // Tab option
 interface TabOption {
@@ -44,33 +45,43 @@ export default function AddDailyTipPopUp({
   addDailyTip: () => void
   isLoading: boolean
 }): JSX.Element {
-  const { activeTab, setActiveTab } = useDailyTipStore()
+  const { activeTab, setActiveTab, publishDate, setPublishDate } =
+    useDailyTipStore()
 
   return (
     <div>
       {/* Tab Selector using Input */}
-      <div className="mb-4 w-[25.4rem] relative z-20">
-        <Label className="block mb-1 text-black">
-          {translations.layoutSelection}
-        </Label>
-        <Select
-          value={activeTab}
-          onValueChange={val => {
-            setActiveTab(val as LayoutOption)
-          }}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder={translations.selectLayoutType} />
-          </SelectTrigger>
-          <SelectContent>
-            {tabOptions.map(opt => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {translations[opt.value as keyof translationsTypes] ||
-                  opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="relative z-20 flex flex-row gap-4">
+        <div className="flex-1">
+          <Label className="block mb-1 text-black">
+            {translations.layoutSelection}
+          </Label>
+          <Select
+            value={activeTab}
+            onValueChange={val => {
+              setActiveTab(val as LayoutOption)
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={translations.selectLayoutType} />
+            </SelectTrigger>
+            <SelectContent>
+              {tabOptions.map(opt => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {translations[opt.value as keyof translationsTypes] ||
+                    opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex-1 flex items-end mt-[-0.5rem]">
+          <SimpleDatePicker
+            value={publishDate}
+            onChange={setPublishDate}
+            label={translations.publishDate}
+          />
+        </div>
       </div>
 
       {/* Tab Content */}

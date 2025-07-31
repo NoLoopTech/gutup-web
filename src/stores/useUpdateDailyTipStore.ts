@@ -21,6 +21,7 @@ interface BasicLayoutFields {
   concern?: string
   image?: string
   share?: boolean
+  publishDate?: string // Added for publish date support
 }
 
 interface ShopPromotionFields {
@@ -86,18 +87,32 @@ export const useUpdateDailyTipStore = create<DailyTipStoreState>()(
       },
 
       setUpdatedField: (section, lang, field, value) => {
-        set(state => ({
-          translationsData: {
-            ...state.translationsData,
-            [section]: {
-              ...state.translationsData[section],
-              [lang]: {
-                ...state.translationsData[section][lang],
-                [field]: value
+        set(state => {
+          const prevSection = state.translationsData[section]
+          const prevLangObj = prevSection[lang]
+          let newLangObj
+          if (value === undefined) {
+            // Remove the key if value is undefined
+            const { [field]: _, ...rest } = prevLangObj as Record<string, any>
+            newLangObj = rest
+          } else if (field === "__replace__") {
+            newLangObj = value
+          } else {
+            newLangObj = {
+              ...prevLangObj,
+              [field]: value
+            }
+          }
+          return {
+            translationsData: {
+              ...state.translationsData,
+              [section]: {
+                ...prevSection,
+                [lang]: newLangObj
               }
             }
           }
-        }))
+        })
       },
 
       resetUpdatedStore: () => {

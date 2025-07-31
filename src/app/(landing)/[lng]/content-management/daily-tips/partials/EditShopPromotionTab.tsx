@@ -735,16 +735,10 @@ export default function EditShopPromotionTab({
 
   return (
     <div className="relative">
-      {isTranslating && (
-        <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
-          <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
-        </div>
-      )}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-3 text-black">
             {/* Shop Name */}
-            <div className="flex items-start lg:justify-end lg:-mt-[4.8rem]">
               <div className="w-[25.5rem]">
                 <FormField
                   control={form.control}
@@ -765,7 +759,6 @@ export default function EditShopPromotionTab({
                     </FormItem>
                   )}
                 />
-              </div>
             </div>
 
             {/* Reason */}
