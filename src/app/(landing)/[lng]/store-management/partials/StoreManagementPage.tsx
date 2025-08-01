@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import { useState, useEffect, useMemo } from "react"
+import { useEffect, useRef, useState, useMemo } from "react"
 import {
   AddNewStore,
   getAllStores,
@@ -95,6 +95,7 @@ export default function StoreManagementPage({
   const [storeId, setStoreId] = useState<number>(0)
   const [translations, setTranslations] =
     useState<translationsTypes>(defaultTranslations)
+  const [activeRowId, setActiveRowId] = useState<number | null>(null)
 
   // Get store data from zustand store
   const {
@@ -462,50 +463,65 @@ export default function StoreManagementPage({
     {
       id: "actions",
       className: "w-12",
-      cell: (row: StoreManagementDataType) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="data-[state=open]:bg-muted text-muted-foreground flex size-6"
-              size="icon"
-            >
-              <MoreVertical className="w-5 h-5" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem
-              onClick={() => {
-                void handleToggleShopStatus({
-                  id: row.id,
-                  shopStatus: row.shopStatus
-                })
-              }}
-            >
-              {row.shopStatus ? "Inactive" : "Active"}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                handleEditStore(row)
-              }}
-            >
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                if (row.id) {
-                  handleDeleteStore(row.id)
-                }
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
+      cell: () => null // We'll render dropdown at row level
     }
   ]
+
+  // Dropdown renderer for row
+  const renderRowDropdown = (row: StoreManagementDataType) => (
+    <div className="row-action-popup">
+      <DropdownMenu
+        open={activeRowId === row.id}
+        onOpenChange={open => setActiveRowId(open ? row.id : null)}
+      >
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="data-[state=open]:bg-muted text-muted-foreground flex size-6"
+            size="icon"
+            tabIndex={-1}
+          >
+            <MoreVertical className="w-5 h-5" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-32">
+          <DropdownMenuItem
+            onClick={e => {
+              e.stopPropagation()
+              void handleToggleShopStatus({
+                id: row.id,
+                shopStatus: row.shopStatus
+              })
+              setActiveRowId(null)
+            }}
+          >
+            {row.shopStatus ? "Inactive" : "Active"}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={e => {
+              e.stopPropagation()
+              handleEditStore(row)
+              setActiveRowId(null)
+            }}
+          >
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={e => {
+              e.stopPropagation()
+              if (row.id) {
+                handleDeleteStore(row.id)
+              }
+              setActiveRowId(null)
+            }}
+          >
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
 
   // filter stores (for table)
   const filteredStores = useMemo(() => {
@@ -550,8 +566,30 @@ export default function StoreManagementPage({
     setSelectedStoreType("")
   }
 
+  // Outside click detection for dropdown
+  const tableContainerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (activeRowId === null) return
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as HTMLElement
+      // Only close if click is outside both the table container and any open popup/trigger
+      if (
+        tableContainerRef.current &&
+        !tableContainerRef.current.contains(target) &&
+        !target.closest('.row-action-trigger') &&
+        !target.closest('.row-action-popup')
+      ) {
+        setActiveRowId(null)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [activeRowId])
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={tableContainerRef}>
       <div className="flex flex-wrap justify-between gap-2">
         <div className="flex flex-wrap w-[80%] gap-2">
           <Input
@@ -618,6 +656,9 @@ export default function StoreManagementPage({
         pageSizeOptions={pageSizeOptions}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
+        activeRowId={activeRowId}
+        setActiveRowId={setActiveRowId}
+        renderRowDropdown={renderRowDropdown}
       />
 
       {/* add store popup */}
