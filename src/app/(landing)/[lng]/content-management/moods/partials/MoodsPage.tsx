@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import AddMoodMainPopUp from "./AddMoodMainPopUp"
 import {
   addNewMood,
@@ -72,6 +72,8 @@ export default function MoodsPage({
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [previousImageUrl, setPreviousImageUrl] = useState<string | null>(null)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
+  const [activeRowId, setActiveRowId] = useState<number | null>(null)
+  const tableContainerRef = useRef<HTMLDivElement>(null)
 
   const {
     activeLang,
@@ -370,6 +372,25 @@ export default function MoodsPage({
     setConfirmDeleteOpen(false)
   }
 
+  useEffect(() => {
+    if (activeRowId === null) return
+    function handleClickOutside(event: MouseEvent): void {
+      const target = event.target as HTMLElement
+      if (
+        tableContainerRef.current &&
+        !tableContainerRef.current.contains(target) &&
+        !target.closest(".row-action-trigger") &&
+        !target.closest(".row-action-popup")
+      ) {
+        setActiveRowId(null)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [activeRowId])
+
   const columns: Array<Column<MoodsDataType>> = [
     {
       accessor: "mood",
@@ -406,46 +427,62 @@ export default function MoodsPage({
           {row.status ? "Active" : "Inactive"}
         </Badge>
       )
-    },
-    {
-      id: "actions",
-      className: "w-12",
-      cell: (row: MoodsDataType) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="data-[state=open]:bg-muted text-muted-foreground flex size-6"
-              size="icon"
-            >
-              <MoreVertical className="w-5 h-5" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem
-              onClick={() => handleUpdateMoodStatus(row.id, row.status)}
-            >
-              {row.status ? "Inactive" : "Active"}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                handleOpenEditMood(row.id)
-                setPreviousImageUrl(row.image || "")
-              }}
-            >
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => handleOpenDeleteConfirmationPopup(row.id)}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
     }
   ]
+
+  // Render row dropdown function (like StoreManagementPage)
+  const renderRowDropdown = (row: MoodsDataType): React.ReactNode => (
+    <div className="row-action-popup">
+      <DropdownMenu
+        open={activeRowId === row.id}
+        onOpenChange={open => {
+          setActiveRowId(open ? row.id : null)
+        }}
+      >
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="row-action-trigger data-[state=open]:bg-muted text-muted-foreground flex size-6"
+            size="icon"
+            tabIndex={-1}
+          >
+            <MoreVertical className="w-5 h-5" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-32">
+          <DropdownMenuItem
+            onClick={e => {
+              e.stopPropagation()
+              void handleUpdateMoodStatus(row.id, row.status)
+              setActiveRowId(null)
+            }}
+          >
+            {row.status ? "Inactive" : "Active"}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={e => {
+              e.stopPropagation()
+              handleOpenEditMood(row.id)
+              setPreviousImageUrl(row.image || "")
+              setActiveRowId(null)
+            }}
+          >
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={e => {
+              e.stopPropagation()
+              handleOpenDeleteConfirmationPopup(row.id)
+              setActiveRowId(null)
+            }}
+          >
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
 
   const pageSizeOptions = [5, 10, 20]
 
@@ -464,7 +501,7 @@ export default function MoodsPage({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={tableContainerRef}>
       <div className="flex justify-end -mt-14 mb-5">
         <Button onClick={handleOpenAddMood}>Add New</Button>
       </div>
@@ -479,6 +516,9 @@ export default function MoodsPage({
         pageSizeOptions={pageSizeOptions}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
+        activeRowId={activeRowId}
+        setActiveRowId={setActiveRowId}
+        renderRowDropdown={renderRowDropdown}
       />
 
       <AddMoodMainPopUp
