@@ -738,12 +738,12 @@ export default function RecipeManagementPage({
         (ingredient, index) => ({
           ingredientName: ingredient.ingredientName,
           ingredientNameFR:
-            translations.fr.ingredientData?.[index]?.ingredientName || "",
+            translationsData.fr.ingredientData?.[index]?.ingredientName || "",
           quantity: ingredient.quantity || "",
           quantityFR:
-            translations.fr.ingredientData?.[index]?.quantity || "",
+            translationsData.fr.ingredientData?.[index]?.quantity || "",
           mainIngredient:
-            translations.fr.ingredientData?.[index]?.mainIngredient ||
+            translationsData.fr.ingredientData?.[index]?.mainIngredient ||
             false,
           foodId: ingredient.foodId,
           available: ingredient.available

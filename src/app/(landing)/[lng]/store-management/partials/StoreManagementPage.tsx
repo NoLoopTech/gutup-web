@@ -468,11 +468,13 @@ export default function StoreManagementPage({
   ]
 
   // Dropdown renderer for row
-  const renderRowDropdown = (row: StoreManagementDataType) => (
+  const renderRowDropdown = (row: StoreManagementDataType): React.ReactNode => (
     <div className="row-action-popup">
       <DropdownMenu
         open={activeRowId === row.id}
-        onOpenChange={open => setActiveRowId(open ? row.id : null)}
+        onOpenChange={open => {
+          setActiveRowId(open ? (row.id ?? null) : null)
+        }}
       >
         <DropdownMenuTrigger asChild>
           <Button
