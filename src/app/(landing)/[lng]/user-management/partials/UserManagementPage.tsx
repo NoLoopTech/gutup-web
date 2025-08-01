@@ -19,7 +19,7 @@ import {
   SelectValue
 } from "@/components/ui/select"
 import { MoreVertical } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import UserOverviewPopup from "./UserOverviewPopup"
 import { getAllUsers } from "@/app/api/user"
 import dayjs from "dayjs"
@@ -71,6 +71,8 @@ export default function UserManagementPage({
     endDate: null
   })
   const [userId, setUserId] = useState<number>(0)
+  const [activeRowId, setActiveRowId] = useState<number | null>(null)
+  const tableContainerRef = useRef<HTMLDivElement>(null)
 
   // handle view user overview
   const handleViewUserOverview = (userId: number): void => {
@@ -108,6 +110,25 @@ export default function UserManagementPage({
     void getUsers()
   }, [])
 
+  useEffect(() => {
+    if (activeRowId === null) return
+    function handleClickOutside(event: MouseEvent): void {
+      const target = event.target as HTMLElement
+      if (
+        tableContainerRef.current &&
+        !tableContainerRef.current.contains(target) &&
+        !target.closest(".row-action-trigger") &&
+        !target.closest(".row-action-popup")
+      ) {
+        setActiveRowId(null)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [activeRowId])
+
   const columns: Array<Column<UserManagementDataType>> = useMemo(
     () => [
       {
@@ -136,36 +157,48 @@ export default function UserManagementPage({
         accessor: "dailyScore" as const,
         header: "Daily Score Points",
         className: "w-40"
-      },
-      {
-        id: "actions",
-        header: "",
-        className: "w-12",
-        cell: (row: UserManagementDataType) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="data-[state=open]:bg-muted text-muted-foreground flex size-6"
-                size="icon"
-              >
-                <MoreVertical className="w-5 h-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-32">
-              <DropdownMenuItem
-                onClick={() => {
-                  handleViewUserOverview(row.id)
-                }}
-              >
-                View
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
       }
     ],
     []
+  )
+
+  // Render row dropdown function (like StoreManagementPage)
+  const renderRowDropdown = (row: UserManagementDataType): JSX.Element => (
+    <div className="row-action-popup">
+      <DropdownMenu
+        open={activeRowId === row.id}
+        onOpenChange={open => {
+          setActiveRowId(open ? row.id : null)
+        }}
+      >
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="row-action-trigger data-[state=open]:bg-muted text-muted-foreground flex size-6"
+            size="icon"
+            tabIndex={-1}
+            onClick={e => {
+              e.stopPropagation()
+              setActiveRowId(row.id)
+            }}
+          >
+            <MoreVertical className="w-5 h-5" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-32">
+          <DropdownMenuItem
+            onClick={e => {
+              e.stopPropagation()
+              handleViewUserOverview(row.id)
+              setActiveRowId(null)
+            }}
+          >
+            View
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   )
 
   const pageSizeOptions: number[] = [5, 10, 20]
@@ -263,7 +296,7 @@ export default function UserManagementPage({
   }))
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={tableContainerRef}>
       <div className="flex flex-wrap gap-2 ">
         {/* search by user name */}
         <Input
@@ -333,6 +366,9 @@ export default function UserManagementPage({
         pageSizeOptions={pageSizeOptions}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
+        activeRowId={activeRowId}
+        setActiveRowId={setActiveRowId}
+        renderRowDropdown={renderRowDropdown}
       />
 
       <UserOverviewPopup
