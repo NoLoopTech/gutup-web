@@ -377,6 +377,8 @@ export default function EditFoodTab({
                           : [translationsData.foodData.en.image]
                       }
                       onChange={handleImageSelect}
+                      uploadText={translations.imagesContentText}
+                      uploadSubText={translations.imagesSubContentText}
                     />
                   </FormControl>
                   <FormMessage />

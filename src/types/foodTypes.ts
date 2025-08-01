@@ -43,6 +43,9 @@ export interface translationsTypes {
   italy: string
   imagesContentText: string
   imagesSubContentText: string
+  viewEditFoodItem: string
+  deleteFood: string
+  saveChanges: string 
 
   required: string
   mustbeatleast2characters: string
@@ -98,6 +101,9 @@ export const defaultTranslations: translationsTypes = {
   italy: "",
   imagesContentText: "",
   imagesSubContentText: "",
+  viewEditFoodItem: "",
+  deleteFood: "",
+  saveChanges: "",
 
   required: "",
   mustbeatleast2characters: "",

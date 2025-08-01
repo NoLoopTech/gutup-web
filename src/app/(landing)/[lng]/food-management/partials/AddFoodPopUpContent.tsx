@@ -1277,6 +1277,8 @@ export default function AddFoodPopUpContent({
                       title={translations.selectImagesForYourFoodItem}
                       onChange={handleImageSelect}
                       previewUrls={imagePreviewUrls}
+                      uploadText={translations.imagesContentText}
+                      uploadSubText={translations.imagesSubContentText}
                     />
                   </FormControl>
                   <FormMessage />

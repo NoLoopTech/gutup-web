@@ -308,6 +308,8 @@ export default function EditRecipeTab({
                           : [translationsData.recipeData.en.image]
                       }
                       onChange={handleImageSelect}
+                      uploadText={translations.imagesContentText}
+                      uploadSubText={translations.imagesSubContentText}
                     />
                   </FormControl>
                   <FormMessage />

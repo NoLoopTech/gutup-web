@@ -43,6 +43,9 @@
   "italy": "Italie",
   "imagesSubContentText": "SVG, PNG, JPG ou GIF (MAX. 800x400px)",
   "imagesContentText": "Cliquez pour télécharger ou faites glisser et déposez",
+  "viewEditFoodItem": "Voir / Modifier l'aliment",
+  "deleteFood": "Supprimer l'aliment",
+  "saveChanges": "Enregistrer les modifications",
 
   "required": "Requis",
   "mustbeatleast2characters": "Doit contenir au moins 2 caractères",

@@ -634,6 +634,9 @@ export default function ViewFoodFrench({
               ? imagePreviewUrls
               : foodDetails?.images?.map(img => img.image) ?? []
           }
+          uploadText="Cliquez pour télécharger ou faites glisser et déposez"
+          uploadSubText="SVG, PNG, JPG ou GIF (MAX. 800x400px)"
+
         />
       </div>
     </TabsContent>
