@@ -12,7 +12,7 @@ import {
 import sampleImage from "@/../../public/images/sample-image.png"
 import { MoreVertical, ThumbsDown, ThumbsUp } from "lucide-react"
 import Image from "next/image"
-import { useEffect, useState } from "react"
+import { SetStateAction, useEffect, useRef, useState } from "react"
 import AddDailyTipMainPopUp from "./AddDailyTipMainPopUp"
 import {
   AddNewDailyTips,
@@ -78,6 +78,8 @@ export default function DailyTipsPage({
   const [selectedTipId, setSelectedTipId] = useState<number>(0)
   const [previousImageUrl, setPreviousImageUrl] = useState<string | null>(null)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
+  const [activeRowId, setActiveRowId] = useState<number | null>(null)
+  const tableContainerRef = useRef<HTMLDivElement>(null)
 
   const { activeLang, translationsData, activeTab, resetTranslations } =
     useDailyTipStore()
@@ -665,40 +667,54 @@ export default function DailyTipsPage({
       id: "actions",
       className: "w-12",
       cell: (row: DailyTipsDataType) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="data-[state=open]:bg-muted text-muted-foreground flex size-6"
-              size="icon"
-            >
-              <MoreVertical className="w-5 h-5" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem
-              onClick={() =>
-                handleUpdateDailyTipStatus(row.dailyTipsId, row.status)
-              }
-            >
-              {row.status ? "Inactive" : "Active"}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                handleOpenEditDailyTip(row.dailyTipsId)
-                setPreviousImageUrl(row.imageOrVideoUrl || "")
-              }}
-            >
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => handleOpenDeleteConfirmationPopup(row.dailyTipsId)}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="row-action-popup">
+          <DropdownMenu
+            open={activeRowId === row.dailyTipsId}
+            onOpenChange={open => { setActiveRowId(open ? row.dailyTipsId : null); }}
+          >
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="row-action-trigger data-[state=open]:bg-muted text-muted-foreground flex size-6"
+                size="icon"
+                tabIndex={-1}
+              >
+                <MoreVertical className="w-5 h-5" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-32">
+              <DropdownMenuItem
+                onClick={e => {
+                  e.stopPropagation()
+                  handleUpdateDailyTipStatus(row.dailyTipsId, row.status)
+                  setActiveRowId(null)
+                }}
+              >
+                {row.status ? "Inactive" : "Active"}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={e => {
+                  e.stopPropagation()
+                  handleOpenEditDailyTip(row.dailyTipsId)
+                  setPreviousImageUrl(row.imageOrVideoUrl || "")
+                  setActiveRowId(null)
+                }}
+              >
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={e => {
+                  e.stopPropagation()
+                  handleOpenDeleteConfirmationPopup(row.dailyTipsId)
+                  setActiveRowId(null)
+                }}
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       )
     }
   ]
@@ -722,8 +738,27 @@ export default function DailyTipsPage({
     setPage(1)
   }
 
+  useEffect(() => {
+    if (activeRowId === null) return
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as HTMLElement
+      if (
+        tableContainerRef.current &&
+        !tableContainerRef.current.contains(target) &&
+        !target.closest('.row-action-trigger') &&
+        !target.closest('.row-action-popup')
+      ) {
+        setActiveRowId(null)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [activeRowId])
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={tableContainerRef}>
       <div className="flex justify-end -mt-14 mb-5">
         <Button onClick={handleOpenAddTip}>Add New</Button>
       </div>
@@ -737,6 +772,8 @@ export default function DailyTipsPage({
         pageSizeOptions={pageSizeOptions}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
+        activeRowId={activeRowId}
+        setActiveRowId={setActiveRowId}
       />
 
       <AddDailyTipMainPopUp

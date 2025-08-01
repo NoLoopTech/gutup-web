@@ -69,13 +69,13 @@ export function CustomTable<T extends Record<string, any>>({
             </TableRow>
           ) : (
             data.map((row, rowIndex) => {
-              const rowId = row.id ?? rowIndex
+              // Use a stable unique key for each row
+              const rowId = row.dailyTipsId ?? row.id ?? rowIndex
               return (
                 <TableRow
                   key={rowId}
                   className={`group cursor-pointer hover:bg-muted relative transition-colors`}
                   onClick={e => {
-                    // Only trigger if not clicking the 3-dots or popup
                     if (
                       setActiveRowId &&
                       !(e.target as HTMLElement).closest(
