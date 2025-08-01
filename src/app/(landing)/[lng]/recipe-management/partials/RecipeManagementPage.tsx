@@ -102,7 +102,6 @@ export default function RecipeManagementPage({
   const [openAddRecipePopUp, setOpenAddRecipePopUp] = useState(false)
   const [searchText, setSearchText] = useState<string>("")
   const [selectedCategory, setSelectedCategory] = useState<string>("")
-  const [selectedPersons, setSelectedPersons] = useState<string>("")
   const [selectedBenefit, setSelectedBenefit] = useState<string>("")
   const [viewRecipe, setViewRecipe] = useState<boolean>(false)
   const [viewRecipeId, setViewRecipeId] = useState<number>(0)
@@ -354,8 +353,8 @@ export default function RecipeManagementPage({
       const nameMatch = recipe.recipeName
         .toLowerCase()
         .includes(searchText.toLowerCase())
-      const scoreMatch =
-        selectedPersons === "" || recipe.servings === Number(selectedPersons)
+      // const scoreMatch =
+      //   selectedPersons === "" || recipe.servings === Number(selectedPersons)
       const categoryMatch =
         selectedCategory === "" || recipe.category === selectedCategory
       const benefitMatch =
@@ -365,13 +364,14 @@ export default function RecipeManagementPage({
             benefit.toLowerCase().includes(selectedBenefit.toLowerCase())
           ))
 
-      return nameMatch && categoryMatch && scoreMatch && benefitMatch
+      // return nameMatch && categoryMatch && scoreMatch && benefitMatch
+      return nameMatch && categoryMatch && benefitMatch
     })
   }, [
     tableData,
     searchText,
     selectedCategory,
-    selectedPersons,
+    // selectedPersons,
     selectedBenefit
   ])
 
@@ -400,11 +400,6 @@ export default function RecipeManagementPage({
   }
 
   // handle Score change
-  const handleScoreChange = (value: string): void => {
-    setSelectedPersons(value)
-  }
-
-  // handle Score change
   const handleBenefitChange = (value: string): void => {
     setSelectedBenefit(value)
   }
@@ -413,7 +408,6 @@ export default function RecipeManagementPage({
   const handleClearSearchValues = (): void => {
     setSearchText("")
     setSelectedCategory("")
-    setSelectedPersons("")
     setSelectedBenefit("")
     setSelectedBenefit("")
   }
@@ -707,12 +701,12 @@ export default function RecipeManagementPage({
         (ingredient, index) => ({
           ingredientName: ingredient.ingredientName,
           ingredientNameFR:
-            translationsData.fr.ingredientData?.[index]?.ingredientName || "",
+            translations.fr.ingredientData?.[index]?.ingredientName || "",
           quantity: ingredient.quantity || "",
           quantityFR:
-            translationsData.fr.ingredientData?.[index]?.quantity || "",
+            translations.fr.ingredientData?.[index]?.quantity || "",
           mainIngredient:
-            translationsData.fr.ingredientData?.[index]?.mainIngredient ||
+            translations.fr.ingredientData?.[index]?.mainIngredient ||
             false,
           foodId: ingredient.foodId,
           available: ingredient.available
@@ -836,22 +830,6 @@ export default function RecipeManagementPage({
             </SelectContent>
           </Select>
 
-          {/* select Servings */}
-          <Select value={selectedPersons} onValueChange={handleScoreChange}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Servings" />
-            </SelectTrigger>
-            <SelectContent className="max-h-40">
-              <SelectGroup>
-                {servings.map(item => (
-                  <SelectItem key={item.value} value={item.value.toString()}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
           {/* select Health Benefits */}
           <Select value={selectedBenefit} onValueChange={handleBenefitChange}>
             <SelectTrigger className="w-32">
@@ -870,7 +848,6 @@ export default function RecipeManagementPage({
 
           {/* clear filters button */}
           {(Boolean(searchText) ||
-            Boolean(selectedPersons) ||
             Boolean(selectedCategory) ||
             Boolean(selectedBenefit)) && (
             <Button variant="outline" onClick={handleClearSearchValues}>
