@@ -38,7 +38,7 @@ import dayjs from "dayjs"
 import { MoreVertical } from "lucide-react"
 import { useSession } from "next-auth/react"
 import Image from "next/image"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 import AddFoodPopUp from "./AddFoodPopUp"
 import ViewFoodPopUp from "./ViewFoodPopUp"
@@ -119,6 +119,9 @@ export default function FoodOverviewPage(): React.ReactElement {
   const [categoryOptionsApi, setCategoryOptionsApi] = useState<dataListTypes[]>(
     []
   )
+
+  const [activeRowId, setActiveRowId] = useState<number | null>(null)
+  const tableContainerRef = useRef<HTMLDivElement>(null)
 
   // Function to fetch all foods from API
   const getFoods = async (): Promise<void> => {
@@ -432,43 +435,53 @@ export default function FoodOverviewPage(): React.ReactElement {
           </Badge>
         )
       }
-    },
-    {
-      id: "actions",
-      className: "w-12",
-      cell: row => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="data-[state=open]:bg-muted text-muted-foreground flex size-6"
-              size="icon"
-            >
-              <MoreVertical className="w-5 h-5" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem
-              onClick={() => {
-                handleViewFoodOverview(row.id)
-              }}
-            >
-              View
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-red-600"
-              onClick={() => {
-                handleAskDeleteFood(row.id)
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
     }
   ]
+
+  // Render row dropdown function (like StoreManagementPage)
+  const renderRowDropdown = (row: FoodOverviewDataType): React.ReactNode => (
+    <div className="row-action-popup">
+      <DropdownMenu
+        open={activeRowId === row.id}
+        onOpenChange={open => {
+          setActiveRowId(open ? row.id : null)
+        }}
+      >
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="row-action-trigger data-[state=open]:bg-muted text-muted-foreground flex size-6"
+            size="icon"
+            tabIndex={-1}
+          >
+            <MoreVertical className="w-5 h-5" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-32">
+          <DropdownMenuItem
+            onClick={e => {
+              e.stopPropagation()
+              handleViewFoodOverview(row.id)
+              setActiveRowId(null)
+            }}
+          >
+            View
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-red-600"
+            onClick={e => {
+              e.stopPropagation()
+              handleAskDeleteFood(row.id)
+              setActiveRowId(null)
+            }}
+          >
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
 
   // Show confirmation dialog instead of window.confirm
   const handleAskDeleteFood = (id: number): void => {
@@ -506,8 +519,27 @@ export default function FoodOverviewPage(): React.ReactElement {
     }
   }
 
+  useEffect(() => {
+    if (activeRowId === null) return
+    function handleClickOutside(event: MouseEvent): void {
+      const target = event.target as HTMLElement
+      if (
+        tableContainerRef.current &&
+        !tableContainerRef.current.contains(target) &&
+        !target.closest(".row-action-trigger") &&
+        !target.closest(".row-action-popup")
+      ) {
+        setActiveRowId(null)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [activeRowId])
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={tableContainerRef}>
       {/* Filters and Search */}
       <div className="flex flex-wrap justify-between gap-2">
         <div className="flex flex-wrap w-[80%] gap-2">
@@ -636,6 +668,9 @@ export default function FoodOverviewPage(): React.ReactElement {
           setPageSize(size)
           setPage(1)
         }}
+        activeRowId={activeRowId}
+        setActiveRowId={setActiveRowId}
+        renderRowDropdown={renderRowDropdown}
       />
 
       {/* Add Food Popup */}
