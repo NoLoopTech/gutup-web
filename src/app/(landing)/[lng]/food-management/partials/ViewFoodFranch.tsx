@@ -353,31 +353,61 @@ export default function ViewFoodFrench({
               style={{ scrollbarWidth: "none" }}
             >
               <DropdownMenuItem
+                onClick={() => {
+                  const allMonthValues = seasons.map(m => m.labelFr ?? m.label)
+                  const selectedMonths = formData.season
+                  const isAllSelected = allMonthValues.every(m =>
+                    selectedMonths.includes(m)
+                  )
+                  const updated = isAllSelected ? [] : allMonthValues
+                  // Sync both French and English months in the data model
+                  const newSeasons = updated.map(frMonth => {
+                    const found = seasons.find(
+                      m => (m.labelFr ?? m.label) === frMonth
+                    )
+                    return {
+                      season: found?.label ?? frMonth,
+                      seasonFR: frMonth,
+                      foodId: foodDetails?.seasons?.[0]?.foodId ?? 0
+                    }
+                  })
+                  updateEditedData("seasons", newSeasons)
+                  setFormData(prev => ({
+                    ...prev,
+                    season: updated
+                  }))
+                }}
+                className="text-xs text-muted-foreground cursor-pointer font-semibold"
+              >
+                Tous les mois
+                <input
+                  type="checkbox"
+                  checked={seasons.every(m => formData.season.includes(m.labelFr ?? m.label))}
+                  readOnly
+                  className="ml-2"
+                />
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 disabled
                 className="text-xs text-muted-foreground"
               >
                 Filtrer par mois
               </DropdownMenuItem>
               {seasons.map(month => {
-                const selectedMonths =
-                  foodDetails?.seasons?.map(s => s.seasonFR) ?? []
+                const selectedMonths = formData.season
                 return (
                   <DropdownMenuItem
                     key={month.value}
                     onClick={() => {
                       let updated = [...selectedMonths]
                       if (updated.includes(month.labelFr ?? month.label)) {
-                        updated = updated.filter(
-                          m => m !== (month.labelFr ?? month.label)
-                        )
+                        updated = updated.filter(m => m !== (month.labelFr ?? month.label))
                       } else {
                         updated = [...updated, month.labelFr ?? month.label]
                       }
                       // Sync both French and English months in the data model
                       const newSeasons = updated.map(frMonth => {
-                        const found = seasons.find(
-                          m => (m.labelFr ?? m.label) === frMonth
-                        )
+                        const found = seasons.find(m => (m.labelFr ?? m.label) === frMonth)
                         return {
                           season: found?.label ?? frMonth,
                           seasonFR: frMonth,
@@ -393,9 +423,7 @@ export default function ViewFoodFrench({
                   >
                     <input
                       type="checkbox"
-                      checked={selectedMonths.includes(
-                        month.labelFr ?? month.label
-                      )}
+                      checked={selectedMonths.includes(month.labelFr ?? month.label)}
                       readOnly
                       className="mr-2"
                     />
