@@ -1,4 +1,3 @@
-// components/CustomTable.tsx
 import {
   Table,
   TableHeader,
@@ -58,6 +57,7 @@ export function CustomTable<T extends Record<string, any>>({
                 {col.header}
               </TableHead>
             ))}
+            <TableHead />
           </TableRow>
         </TableHeader>
         <TableBody ref={tableRef}>
@@ -78,7 +78,9 @@ export function CustomTable<T extends Record<string, any>>({
                     // Only trigger if not clicking the 3-dots or popup
                     if (
                       setActiveRowId &&
-                      !(e.target as HTMLElement).closest('.row-action-trigger, .row-action-popup')
+                      !(e.target as HTMLElement).closest(
+                        ".row-action-trigger, .row-action-popup"
+                      )
                     ) {
                       setActiveRowId(activeRowId === rowId ? null : rowId)
                     }
@@ -102,7 +104,7 @@ export function CustomTable<T extends Record<string, any>>({
                   {/* Always show 3-dots icon as trigger */}
                   <td className="py-4 px-2 align-middle">
                     <div className="row-action-trigger inline-block">
-                      {renderRowDropdown && renderRowDropdown(row)}
+                      {renderRowDropdown?.(row)}
                     </div>
                   </td>
                 </TableRow>
