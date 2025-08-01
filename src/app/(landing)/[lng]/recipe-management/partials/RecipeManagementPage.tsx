@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import AddRecipePopup from "./AddRecipePopUp"
@@ -113,6 +113,8 @@ export default function RecipeManagementPage({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
   const [categoryOptions, setCategoryOptions] = useState<dataListTypes[]>([])
   const [benefitsOptions, setBenefitsOptions] = useState<dataListTypes[]>([])
+  const [activeRowId, setActiveRowId] = useState<number | null>(null)
+  const tableContainerRef = useRef<HTMLDivElement>(null)
 
   const { tags } = useGetAllTags(token, "Type") as { tags: TagTypes[] }
   const { tags: benefitsTags } = useGetAllTags(token, "Benefit") as {
@@ -227,6 +229,25 @@ export default function RecipeManagementPage({
     setSearchText(e.target.value)
   }
 
+  useEffect(() => {
+    if (activeRowId === null) return
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as HTMLElement
+      if (
+        tableContainerRef.current &&
+        !tableContainerRef.current.contains(target) &&
+        !target.closest('.row-action-trigger') &&
+        !target.closest('.row-action-popup')
+      ) {
+        setActiveRowId(null)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [activeRowId])
+
   const columns: Array<Column<TableDataTypes>> = [
     {
       accessor: "imageUrl",
@@ -307,43 +328,59 @@ export default function RecipeManagementPage({
           {row.status ? "Active" : "Inactive"}
         </Badge>
       )
-    },
-    {
-      id: "actions",
-      className: "w-12",
-      cell: (row: TableDataTypes) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="data-[state=open]:bg-muted text-muted-foreground flex size-6"
-              size="icon"
-            >
-              <MoreVertical className="w-5 h-5" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem
-              onClick={() => handleUpdateStatusRecipe(row.id, row.status)}
-            >
-              {row.status ? "Inactive" : "Active"}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() =>
-                handleOpenViewRecipePopUp(row.id, row.authorImage, row.imageUrl)
-              }
-            >
-              View
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleOpenDeleteConfirm(row.id)}>
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
     }
   ]
+
+  // Render row dropdown function (like StoreManagementPage)
+  const renderRowDropdown = (row: TableDataTypes): React.ReactNode => (
+    <div className="row-action-popup">
+      <DropdownMenu
+        open={activeRowId === row.id}
+        onOpenChange={open => { setActiveRowId(open ? row.id : null); }}
+      >
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="row-action-trigger data-[state=open]:bg-muted text-muted-foreground flex size-6"
+            size="icon"
+            tabIndex={-1}
+          >
+            <MoreVertical className="w-5 h-5" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-32">
+          <DropdownMenuItem
+            onClick={e => {
+              e.stopPropagation()
+              void handleUpdateStatusRecipe(row.id, row.status)
+              setActiveRowId(null)
+            }}
+          >
+            {row.status ? "Inactive" : "Active"}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={e => {
+              e.stopPropagation()
+              handleOpenViewRecipePopUp(row.id, row.authorImage, row.imageUrl)
+              setActiveRowId(null)
+            }}
+          >
+            View
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={e => {
+              e.stopPropagation()
+              handleOpenDeleteConfirm(row.id)
+              setActiveRowId(null)
+            }}
+          >
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
 
   const pageSizeOptions = [5, 10, 20]
 
@@ -804,7 +841,7 @@ export default function RecipeManagementPage({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={tableContainerRef}>
       <div className="flex flex-wrap gap-2 justify-between">
         <div className="flex flex-wrap w-[80%] gap-2">
           {/* search recipes by name */}
@@ -870,6 +907,9 @@ export default function RecipeManagementPage({
         pageSizeOptions={pageSizeOptions}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
+        activeRowId={activeRowId}
+        setActiveRowId={setActiveRowId}
+        renderRowDropdown={renderRowDropdown}
       />
 
       {/* add Recipe popup */}
