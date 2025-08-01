@@ -69,8 +69,8 @@ export function CustomTable<T extends Record<string, any>>({
             </TableRow>
           ) : (
             data.map((row, rowIndex) => {
-              // Use a stable unique key for each row
-              const rowId = row.dailyTipsId ?? row.id ?? rowIndex
+              // Use a stable unique key for each row (prefer tagId for FoodsBenefitsPage)
+              const rowId = row.tagId ?? row.dailyTipsId ?? row.id ?? rowIndex
               return (
                 <TableRow
                   key={rowId}
