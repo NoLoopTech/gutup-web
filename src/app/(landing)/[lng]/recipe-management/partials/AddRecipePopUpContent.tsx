@@ -39,6 +39,7 @@ import { getAllFoods } from "@/app/api/foods"
 import LableInput from "@/components/Shared/LableInput/LableInput"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { useGetAllTags } from "@/query/hooks/useGetAllTags"
+import { useGetAllRecipeCategorys } from "@/query/hooks/useGetAllRecipeCategorys"
 
 interface Food {
   id: number
@@ -63,6 +64,12 @@ interface Ingredient {
 export interface TagTypes {
   id: number
   category: string
+}
+
+export interface CategoryTypes {
+  id: number
+  categoryName: string
+  categoryNameFR: string
 }
 
 interface Option {
@@ -131,7 +138,9 @@ export default function AddRecipePopUpContent({
     { tagName: string; tagNameFr: string }[]
   >([])
 
-  const { tags } = useGetAllTags(token, "Type") as { tags: TagTypes[] }
+  const { recipeCategory } = useGetAllRecipeCategorys() as {
+    recipeCategory: CategoryTypes[]
+  }
   const { tags: benefitsTags } = useGetAllTags(token, "Benefit") as {
     tags: TagTypes[]
   }
@@ -149,21 +158,21 @@ export default function AddRecipePopUpContent({
   }, [benefitsTags])
 
   useEffect(() => {
-    if (tags) {
+    if (recipeCategory) {
       const tagsOptions = {
-        en: tags.map((tag: TagTypes) => ({
-          value: tag.category,
-          label: tag.category
+        en: recipeCategory.map((category: CategoryTypes) => ({
+          value: category.categoryName,
+          label: category.categoryName
         })),
-        fr: tags.map((tag: TagTypes) => ({
-          value: tag.category,
-          label: tag.category
+        fr: recipeCategory.map((category: CategoryTypes) => ({
+          value: category.categoryNameFR,
+          label: category.categoryNameFR
         }))
       }
 
       setCategoryOptions(tagsOptions)
     }
-  }, [tags])
+  }, [recipeCategory])
 
   const RecipeSchema = z.object({
     name: z

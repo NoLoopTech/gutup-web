@@ -73,3 +73,13 @@ export const deleteRecipeById = async (
     return error
   }
 }
+
+// get all types by category
+export const fetchRecipeCategoryAPI = async (): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(`/recipe-categories`)
+    return response
+  } catch (error) {
+    return error
+  }
+}

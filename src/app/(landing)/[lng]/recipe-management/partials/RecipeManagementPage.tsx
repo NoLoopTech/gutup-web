@@ -50,7 +50,8 @@ import {
   AlertDialogTitle
 } from "@/components/ui/alert-dialog"
 import { useGetAllTags } from "@/query/hooks/useGetAllTags"
-import { TagTypes } from "./AddRecipePopUpContent"
+import { CategoryTypes, TagTypes } from "./AddRecipePopUpContent"
+import { useGetAllRecipeCategorys } from "@/query/hooks/useGetAllRecipeCategorys"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -116,20 +117,24 @@ export default function RecipeManagementPage({
   const [activeRowId, setActiveRowId] = useState<number | null>(null)
   const tableContainerRef = useRef<HTMLDivElement>(null)
 
-  const { tags } = useGetAllTags(token, "Type") as { tags: TagTypes[] }
+  const { recipeCategory } = useGetAllRecipeCategorys() as {
+    recipeCategory: CategoryTypes[]
+  }
   const { tags: benefitsTags } = useGetAllTags(token, "Benefit") as {
     tags: TagTypes[]
   }
 
   useEffect(() => {
-    if (tags?.length) {
-      const categories: dataListTypes[] = tags.map((tag: TagTypes) => ({
-        value: tag.category,
-        label: tag.category
-      }))
+    if (recipeCategory?.length) {
+      const categories: dataListTypes[] = recipeCategory.map(
+        (category: CategoryTypes) => ({
+          value: category.categoryName,
+          label: category.categoryName
+        })
+      )
       setCategoryOptions(categories)
     }
-  }, [tags])
+  }, [recipeCategory])
 
   useEffect(() => {
     if (benefitsTags?.length) {
@@ -236,8 +241,8 @@ export default function RecipeManagementPage({
       if (
         tableContainerRef.current &&
         !tableContainerRef.current.contains(target) &&
-        !target.closest('.row-action-trigger') &&
-        !target.closest('.row-action-popup')
+        !target.closest(".row-action-trigger") &&
+        !target.closest(".row-action-popup")
       ) {
         setActiveRowId(null)
       }
@@ -336,7 +341,9 @@ export default function RecipeManagementPage({
     <div className="row-action-popup">
       <DropdownMenu
         open={activeRowId === row.id}
-        onOpenChange={open => { setActiveRowId(open ? row.id : null); }}
+        onOpenChange={open => {
+          setActiveRowId(open ? row.id : null)
+        }}
       >
         <DropdownMenuTrigger asChild>
           <Button

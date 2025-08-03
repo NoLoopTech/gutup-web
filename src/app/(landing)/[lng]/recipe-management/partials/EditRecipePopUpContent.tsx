@@ -40,7 +40,8 @@ import LableInput from "@/components/Shared/LableInput/LableInput"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { useUpdateRecipeStore } from "@/stores/useUpdateRecipeStore"
 import { useGetAllTags } from "@/query/hooks/useGetAllTags"
-import { TagTypes } from "./AddRecipePopUpContent"
+import { useGetAllRecipeCategorys } from "@/query/hooks/useGetAllRecipeCategorys"
+import { CategoryTypes, TagTypes } from "./AddRecipePopUpContent"
 
 interface Food {
   id: number
@@ -123,7 +124,9 @@ export default function EditRecipePopUpContent({
     fr: []
   })
 
-  const { tags } = useGetAllTags(token, "Type") as { tags: TagTypes[] }
+  const { recipeCategory } = useGetAllRecipeCategorys() as {
+    recipeCategory: CategoryTypes[]
+  }
   const { tags: benefitsTags } = useGetAllTags(token, "Benefit") as {
     tags: TagTypes[]
   }
@@ -145,21 +148,21 @@ export default function EditRecipePopUpContent({
   }, [benefitsTags])
 
   useEffect(() => {
-    if (tags) {
+    if (recipeCategory) {
       const tagsOptions = {
-        en: tags.map((tag: TagTypes) => ({
-          value: tag.category,
-          label: tag.category
+        en: recipeCategory.map((category: CategoryTypes) => ({
+          value: category.categoryName,
+          label: category.categoryName
         })),
-        fr: tags.map((tag: TagTypes) => ({
-          value: tag.category,
-          label: tag.category
+        fr: recipeCategory.map((category: CategoryTypes) => ({
+          value: category.categoryNameFR,
+          label: category.categoryNameFR
         }))
       }
 
       setCategoryOptions(tagsOptions)
     }
-  }, [tags])
+  }, [recipeCategory])
 
   useEffect(() => {
     // Initialize the benefits state with data from translationData store
