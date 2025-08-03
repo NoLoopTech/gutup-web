@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import AddNewTagPopUp from "../../partials/AddNewTagPopUp"
@@ -50,6 +50,8 @@ export default function FoodsBenefitsPage({
   )
   const { deleteTag, loading: deleteLoading } = useDeleteTag(token)
   const [tagId, setTagId] = useState<number>(0)
+  const [activeRowId, setActiveRowId] = useState<number | null>(null)
+  const tableContainerRef = useRef<HTMLDivElement>(null)
 
   // handle delete tag OverView
   const handleDeleteTag = (tagId: number): void => {
@@ -123,6 +125,25 @@ export default function FoodsBenefitsPage({
     }
   }, [tags])
 
+  useEffect(() => {
+    if (activeRowId === null) return
+    function handleClickOutside(event: MouseEvent): void {
+      const target = event.target as HTMLElement
+      if (
+        tableContainerRef.current &&
+        !tableContainerRef.current.contains(target) &&
+        !target.closest(".row-action-trigger") &&
+        !target.closest(".row-action-popup")
+      ) {
+        setActiveRowId(null)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [activeRowId])
+
   const columns: any[] = [
     {
       accessor: "category",
@@ -156,29 +177,7 @@ export default function FoodsBenefitsPage({
     {
       id: "actions",
       className: "w-12",
-      cell: (row: FoodsBenefitsDataType): React.ReactNode => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="data-[state=open]:bg-muted text-muted-foreground flex size-6"
-              size="icon"
-            >
-              <MoreVertical className="w-5 h-5" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem
-              onClick={() => {
-                handleDeleteTagClick(row)
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
+      cell: (row: FoodsBenefitsDataType): React.ReactNode => null // Remove icon from columns, handled by renderRowDropdown
     }
   ]
 
@@ -201,8 +200,43 @@ export default function FoodsBenefitsPage({
     setPage(1)
   }
 
+  // Render row dropdown for table actions
+  const renderRowDropdown = (row: FoodsBenefitsDataType): React.ReactNode => (
+    <div className="row-action-popup">
+      <DropdownMenu
+        open={activeRowId === row.tagId}
+        onOpenChange={open => {
+          setActiveRowId(open ? row.tagId : null)
+        }}
+      >
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="row-action-trigger data-[state=open]:bg-muted text-muted-foreground flex size-6"
+            size="icon"
+            tabIndex={-1}
+          >
+            <MoreVertical className="w-5 h-5" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-32">
+          <DropdownMenuItem
+            onClick={e => {
+              e.stopPropagation()
+              handleDeleteTagClick(row)
+              setActiveRowId(null)
+            }}
+          >
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={tableContainerRef}>
       {/* add new food button */}
       <div className="flex justify-end mb-5 -mt-14">
         <Button onClick={handleOpenAddNewTagPopUp}>Add New</Button>
@@ -218,6 +252,9 @@ export default function FoodsBenefitsPage({
         pageSizeOptions={pageSizeOptions}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
+        activeRowId={activeRowId}
+        setActiveRowId={setActiveRowId}
+        renderRowDropdown={renderRowDropdown}
       />
 
       {/* add food popup */}

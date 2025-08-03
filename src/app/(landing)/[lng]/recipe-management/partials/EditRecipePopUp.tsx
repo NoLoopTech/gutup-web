@@ -235,7 +235,6 @@ export default function EditRecipePopUp({
                   id="multi-lang"
                   checked={allowMultiLang}
                   onCheckedChange={handleLanguageToggle}
-                  disabled
                 />
                 <Label htmlFor="multi-lang" className="text-Primary-300">
                   {translations.allowMultiLang}

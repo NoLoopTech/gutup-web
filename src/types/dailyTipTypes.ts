@@ -56,6 +56,8 @@ export interface translationsTypes {
   anxiety: string
   stress: string
   publishDate: string
+  imagesContentText: string
+  imagesSubContentText: string
 
   required: string
   titleMustBeAtLeast2Characters: string
@@ -137,6 +139,8 @@ export const defaultTranslations: translationsTypes = {
   anxiety: "",
   stress: "",
   publishDate: "",
+  imagesContentText: "",
+  imagesSubContentText: "",
 
   required: "",
   titleMustBeAtLeast2Characters: "",

@@ -30,6 +30,8 @@ export interface translationsTypes {
   dairy: string
   produce: string
   selectImagesForYourFoodItem: string
+  imagesContentText: string
+  imagesSubContentText: string
 
   required: string
   pleaseSelectAMood: string
@@ -73,6 +75,8 @@ export const defaultTranslations: translationsTypes = {
   dairy: "",
   produce: "",
   Mood: "",
+  imagesContentText: "",
+  imagesSubContentText: "",
 
   required: "",
   pleaseSelectAMood: "",

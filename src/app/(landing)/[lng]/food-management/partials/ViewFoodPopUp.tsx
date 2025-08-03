@@ -33,6 +33,8 @@ import { Button } from "@/components/ui/button"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { toast } from "sonner"
 import ViewFoodFranch from "./ViewFoodFranch"
+import { type translationsTypes, defaultTranslations } from "@/types/foodTypes"
+import { loadLanguage } from "@/../../src/i18n/locales"
 
 // Add session storage utilities
 const EDIT_FOOD_STORAGE_KEY = "editfood-store"
@@ -152,6 +154,8 @@ export default function ViewFoodPopUp({
 }: Props): JSX.Element {
   const [allowMultiLang, setAllowMultiLang] = useState(false)
   const [activeTab, setActiveTab] = useState<"english" | "french">("english")
+  const [activeLang, setActiveLang] = useState<"en" | "fr">("en")
+  const [translations, setTranslations] = useState<Partial<translationsTypes>>({})
   const [foodDetails, setFoodDetails] = useState<FoodDetailsTypes | null>(null)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
   const [categoryOptionsApi, setCategoryOptionsApi] = useState<Option[]>([])
@@ -692,6 +696,14 @@ export default function ViewFoodPopUp({
     }
   }
 
+  useEffect(() => {
+    const loadTranslations = async (): Promise<void> => {
+      const langData = await loadLanguage(activeLang, "food")
+      setTranslations(langData)
+    }
+    void loadTranslations()
+  }, [activeLang])
+
   return (
     <Dialog
       open={open}
@@ -714,19 +726,22 @@ export default function ViewFoodPopUp({
               msOverflowStyle: "none" // IE/Edge
             }}
           >
-            <DialogTitle>View / Edit Food Item</DialogTitle>
+            <DialogTitle>
+              {translations.viewEditFoodItem ?? "View / Edit Food Item"}
+            </DialogTitle>
             <Tabs
               value={activeTab}
               onValueChange={val => {
                 setActiveTab(val as "english" | "french")
+                setActiveLang(val === "english" ? "en" : "fr")
               }}
               className="w-full"
             >
               <div className="flex flex-col items-start justify-between gap-4 mt-4 mb-6 sm:flex-row sm:items-center">
                 <TabsList>
-                  <TabsTrigger value="english">English</TabsTrigger>
+                  <TabsTrigger value="english">{translations.english ?? "English"}</TabsTrigger>
                   {allowMultiLang && (
-                    <TabsTrigger value="french">French</TabsTrigger>
+                    <TabsTrigger value="french">{translations.french ?? "French"}</TabsTrigger>
                   )}
                 </TabsList>
                 <div className="flex items-center gap-2">
@@ -735,12 +750,14 @@ export default function ViewFoodPopUp({
                     checked={allowMultiLang}
                     onCheckedChange={val => {
                       setAllowMultiLang(val)
-                      updateEditedData("allowMultiLang", val)
-                      if (!val) setActiveTab("english")
+                      if (!val) {
+                        setActiveTab("english")
+                        setActiveLang("en")
+                      }
                     }}
                   />
                   <Label htmlFor="multi-lang" className="text-Primary-300">
-                    Allow Multi Lang
+                    {translations.allowMultiLang ?? "Allow Multi Lang"}
                   </Label>
                 </div>
               </div>
@@ -796,10 +813,10 @@ export default function ViewFoodPopUp({
               variant="outline"
               onClick={handleOpenDeleteConfirmationPopup}
             >
-              Delete Food
+              {translations.deleteFood ?? "Delete Food"}
             </Button>
             <Button onClick={handleSaveChanges} disabled={!isDirty}>
-              Save changes
+              {translations.save ?? "Save"}
             </Button>
           </div>
         </DialogFooter>

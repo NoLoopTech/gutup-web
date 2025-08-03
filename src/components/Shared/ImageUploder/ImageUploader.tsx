@@ -9,13 +9,17 @@ interface ImageUploaderProps {
   onChange?: (files: File[] | null) => void
   previewUrls?: string[]
   disabled?: boolean // Add the disabled prop
+  uploadText?: string // Optional custom upload text
+  uploadSubText?: string // Optional custom subtext
 }
 
 export default function ImageUploader({
   title,
   onChange,
   previewUrls = [],
-  disabled = false // Default to false if not provided
+  disabled = false, // Default to false if not provided
+  uploadText = "Click to upload or drag and drop", // Default value
+  uploadSubText = "SVG, PNG, JPG or GIF (MAX. 800x400px)" // Default value
 }: ImageUploaderProps): JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null)
   const [imageList, setImageList] = useState<string[]>([])
@@ -111,12 +115,8 @@ export default function ImageUploader({
           }`}
         >
           <UploadCloud size={40} className="mb-2 text-Primary-500" />
-          <p className="mb-1 text-sm font-medium text-gray-700">
-            Click to upload or drag and drop
-          </p>
-          <p className="text-xs text-gray-400">
-            SVG, PNG, JPG or GIF (MAX. 800x400px)
-          </p>
+          <p className="mb-1 text-sm font-medium text-gray-700">{uploadText}</p>
+          <p className="text-xs text-gray-400">{uploadSubText}</p>
           <input
             type="file"
             accept=".jpg,.jpeg,.png,.gif,.svg"

@@ -56,6 +56,8 @@
   "winter": "Winter",
   "maxBenefitsLimit": "You can only add a maximum of 6 benefits.",
   "duplicateBenefit": "This benefit has already been added.",
+  "imagesSubContentText": "SVG, PNG, JPG or GIF (MAX. 800x400px",
+  "imagesContentText": "Click to upload or drag and drop",
 
   "required": "Required",
   "mustbeatleast2characters": "Must be at least 2 characters",

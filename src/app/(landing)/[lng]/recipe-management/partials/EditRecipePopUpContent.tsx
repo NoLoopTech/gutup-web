@@ -1275,6 +1275,8 @@ export default function EditRecipePopUpContent({
                         title={translations.uploadAuthorImage}
                         previewUrls={previewAuthorUrls}
                         onChange={handleImageSelectAuthor}
+                        uploadText={translations.imagesContentText}
+                        uploadSubText={translations.imagesSubContentText}
                       />
                     </FormControl>
                     <FormMessage />
@@ -1297,6 +1299,8 @@ export default function EditRecipePopUpContent({
                       title={translations.selectImagesForYourFoodItem}
                       previewUrls={previewFoodUrls}
                       onChange={handleImageSelect}
+                      uploadText={translations.imagesContentText}
+                      uploadSubText={translations.imagesSubContentText}
                     />
                   </FormControl>
                   <FormMessage />

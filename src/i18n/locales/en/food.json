@@ -41,6 +41,11 @@
   "france": "France",
   "germany": "Germany",
   "italy": "Italy",
+  "imagesSubContentText": "SVG, PNG, JPG or GIF (MAX. 800x400px",
+  "imagesContentText": "Click to upload or drag and drop",
+  "viewEditFoodItem": "View / Edit Food Item",
+  "deleteFood": "Delete Food",
+  "saveChanges": "Save Changes",
 
   "required": "Required",
   "mustbeatleast2characters": "Must be at least 2 characters",

@@ -49,27 +49,39 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({
       boxShadow: state.isFocused ? "none" : "none", // Remove default box-shadow
       outline: "none", // Remove the outline
       backgroundColor: "#fff",
+      fontFamily: "Inter, sans-serif",
+      fontSize: "0.875rem", // sm size
+      fontWeight: 400, 
       "&:hover": {
         borderColor: "##c4c4c4"
       }
     }),
     menu: (provided: any) => ({
       ...provided,
-      backgroundColor: "#fff"
+      backgroundColor: "#fff",
+      fontFamily: "Inter, sans-serif",
+      fontSize: "0.875rem", // sm size
+      fontWeight: 400 
     }),
     option: (provided: any, state: any) => ({
       ...provided,
       backgroundColor: state.isFocused ? "#fff" : "",
-      color: "#000" // Text color
+      color: "#000", // Text color
+      fontFamily: "Inter, sans-serif",
+      fontSize: "0.875rem", // sm size
+      fontWeight: 400 
     }),
     singleValue: (provided: any) => ({
       ...provided,
-      fontFamily: "PlayfairDisplay"
+      fontFamily: "Inter, sans-serif",
+      fontSize: "0.875rem", // sm size
+      fontWeight: 400 
     }),
     input: (provided: any) => ({
       ...provided,
       outline: "none",
-      boxShadow: "none"
+      boxShadow: "none",
+      fontFamily: "Inter, sans-serif"
     })
   }
 
@@ -80,7 +92,9 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({
         loadOptions={fetchLocations}
         defaultOptions
         value={
-          localSelectedOption === null ? (defaultLocation || null) : localSelectedOption
+          localSelectedOption === null
+            ? defaultLocation || null
+            : localSelectedOption
         }
         placeholder="Enter location"
         onChange={(option: OptionType | OptionType[] | null) => {
@@ -103,7 +117,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({
 
       {errorMessage && (
         <div
-          className={`flex ml-1 text-sm text-pink-700 font-Vollkorn sm:text-md 3xl:text-xl 4xl:text-2xl`}
+          className={`flex ml-1 text-sm text-pink-700 font-Inter sm:text-md 3xl:text-xl 4xl:text-2xl`}
         >
           {errorMessage}
         </div>

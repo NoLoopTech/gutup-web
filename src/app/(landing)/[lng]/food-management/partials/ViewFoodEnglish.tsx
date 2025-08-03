@@ -499,6 +499,33 @@ export default function ViewFoodEnglish({
                             style={{ scrollbarWidth: "none" }}
                           >
                             <DropdownMenuItem
+                              onClick={() => {
+                                const allMonthValues = seasons.map(m => m.value)
+                                const isAllSelected = allMonthValues.every(m => selectedMonths.includes(m))
+                                const updated = isAllSelected ? [] : allMonthValues
+                                const newSeasons = updated.map(enMonth => {
+                                  const found = seasonSyncMap.find(m => m.en === enMonth)
+                                  return {
+                                    season: enMonth,
+                                    seasonFR: found ? found.fr : enMonth,
+                                    foodId: foodDetails?.seasons?.[0]?.foodId ?? 0
+                                  }
+                                })
+                                updateEditedData("seasons", newSeasons)
+                                setLocalSeasons(newSeasons)
+                                field.onChange(updated)
+                              }}
+                              className="text-xs text-muted-foreground cursor-pointer font-semibold"
+                            >
+                              All Months
+                              <input
+                                type="checkbox"
+                                checked={seasons.every(m => selectedMonths.includes(m.value))}
+                                readOnly
+                                className="ml-2"
+                              />
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
                               disabled
                               className="text-xs text-muted-foreground"
                             >
@@ -510,25 +537,20 @@ export default function ViewFoodEnglish({
                                 onClick={() => {
                                   let updated = [...selectedMonths]
                                   if (updated.includes(month.value)) {
-                                    updated = updated.filter(
-                                      m => m !== month.value
-                                    )
+                                    updated = updated.filter(m => m !== month.value)
                                   } else {
                                     updated = [...updated, month.value]
                                   }
-                                  // Use seasonSyncMap from top-level
                                   const newSeasons = updated.map(enMonth => {
-                                    const found = seasonSyncMap.find(
-                                      m => m.en === enMonth
-                                    )
+                                    const found = seasonSyncMap.find(m => m.en === enMonth)
                                     return {
                                       season: enMonth,
                                       seasonFR: found ? found.fr : enMonth,
-                                      foodId:
-                                        foodDetails?.seasons?.[0]?.foodId ?? 0
+                                      foodId: foodDetails?.seasons?.[0]?.foodId ?? 0
                                     }
                                   })
                                   updateEditedData("seasons", newSeasons)
+                                  setLocalSeasons(newSeasons)
                                   field.onChange(updated)
                                 }}
                               >

@@ -62,6 +62,8 @@ export interface translationsTypes {
   deliverible: string
   yes: string
   no: string
+  imagesContentText: string
+  imagesSubContentText: string
 
   required: string
   mustbeatleast2characters: string
@@ -141,6 +143,8 @@ export const defaultTranslations: translationsTypes = {
   deliverible: "",
   yes: "",
   no: "",
+  imagesContentText: "",
+  imagesSubContentText: "",
 
   required: "",
   mustbeatleast2characters: "",

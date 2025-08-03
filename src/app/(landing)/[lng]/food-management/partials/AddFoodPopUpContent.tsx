@@ -829,6 +829,31 @@ export default function AddFoodPopUpContent({
                           style={{ scrollbarWidth: "none" }}
                         >
                           <DropdownMenuItem
+                            onClick={() => {
+                              const allMonthValues = seasonOptions[activeLang].map(m => m.value)
+                              const isAllSelected = allMonthValues.every(m => selectedMonths.includes(m))
+                              const updated = isAllSelected ? [] : allMonthValues
+                              setSelectedMonths(updated)
+                              setTranslationField("foodData", "en", "season", updated)
+                              // Map to French
+                              const frMonths = updated.map(enMonth => {
+                                const found = seasonSyncMap.find(m => m.en === enMonth)
+                                return found ? found.fr : enMonth
+                              })
+                              setTranslationField("foodData", "fr", "season", frMonths)
+                              field.onChange(updated)
+                            }}
+                            className="text-xs text-muted-foreground cursor-pointer font-semibold"
+                          >
+                            All Months
+                            <input
+                              type="checkbox"
+                              checked={seasonOptions[activeLang].every(m => selectedMonths.includes(m.value))}
+                              readOnly
+                              className="ml-2"
+                            />
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
                             disabled
                             className="text-xs text-muted-foreground"
                           >
@@ -840,9 +865,7 @@ export default function AddFoodPopUpContent({
                               onClick={() => {
                                 let updated
                                 if (selectedMonths.includes(month.value)) {
-                                  updated = selectedMonths.filter(
-                                    m => m !== month.value
-                                  )
+                                  updated = selectedMonths.filter(m => m !== month.value)
                                 } else {
                                   updated = [...selectedMonths, month.value]
                                 }
@@ -855,9 +878,7 @@ export default function AddFoodPopUpContent({
                                 )
                                 // Map to French
                                 const frMonths = updated.map(enMonth => {
-                                  const found = seasonSyncMap.find(
-                                    m => m.en === enMonth
-                                  )
+                                  const found = seasonSyncMap.find(m => m.en === enMonth)
                                   return found ? found.fr : enMonth
                                 })
                                 setTranslationField(
@@ -1277,6 +1298,8 @@ export default function AddFoodPopUpContent({
                       title={translations.selectImagesForYourFoodItem}
                       onChange={handleImageSelect}
                       previewUrls={imagePreviewUrls}
+                      uploadText={translations.imagesContentText}
+                      uploadSubText={translations.imagesSubContentText}
                     />
                   </FormControl>
                   <FormMessage />
