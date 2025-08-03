@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect } from "react"
 import { DialogFooter, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -561,28 +561,26 @@ export default function EditRecipePopUpContent({
     setAvailData([...availData, updatedAvailData])
 
     try {
-      const translatedName =
-        activeLang === "en"
-          ? await translateText(updatedAvailData.ingredientName)
-          : updatedAvailData.ingredientName
-
       const enList = [...availData, updatedAvailData]
-      const frList = [
-        ...availData,
-        {
-          ...updatedAvailData,
-          ingredientName: translatedName
-        }
-      ]
+
+      const frList = await Promise.all(
+        enList.map(async item => {
+          const translated = await translateText(item.ingredientName)
+          return {
+            ...item,
+            ingredientName: translated
+          }
+        })
+      )
 
       setTranslationField("en", "ingredientData", enList)
       setTranslationField("fr", "ingredientData", frList)
 
-      setUpdatedField("en", "ingredientData", [...availData, enList])
-      setUpdatedField("fr", "ingredientData", [...availData, frList])
+      setUpdatedField("en", "ingredientData", enList)
+      setUpdatedField("fr", "ingredientData", frList)
     } catch (err) {
       console.error("Translation failed:", err)
-      toast.error("Failed to translate food name.")
+      toast.error("Failed to translate ingredient name.")
     }
 
     toast.success("Food item added successfully!")

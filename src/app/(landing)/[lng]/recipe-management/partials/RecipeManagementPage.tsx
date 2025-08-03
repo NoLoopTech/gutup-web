@@ -30,7 +30,7 @@ import {
 } from "@/app/api/recipe"
 import { Label } from "@/components/ui/label"
 import dayjs from "dayjs"
-import { NewRecipeTypes } from "@/types/recipeTypes"
+import type { NewRecipeTypes } from "@/types/recipeTypes"
 import {
   deleteImageFromFirebase,
   uploadImageToFirebase
@@ -50,8 +50,9 @@ import {
   AlertDialogTitle
 } from "@/components/ui/alert-dialog"
 import { useGetAllTags } from "@/query/hooks/useGetAllTags"
-import { CategoryTypes, TagTypes } from "./AddRecipePopUpContent"
+import type { CategoryTypes, TagTypes } from "./AddRecipePopUpContent"
 import { useGetAllRecipeCategorys } from "@/query/hooks/useGetAllRecipeCategorys"
+import { useTranslation } from "@/query/hooks/useTranslation"
 
 interface Column<T> {
   accessor?: keyof T | ((row: T) => React.ReactNode)
@@ -68,11 +69,11 @@ interface RecipeDataType {
   createdAt: string
   isActive: boolean
   images: string[]
-  healthBenefits: { healthBenefit: string }[]
+  healthBenefits: Array<{ healthBenefit: string }>
   preparation: string
   rest: string
   persons: number
-  ingredients: { ingredientName: string }[]
+  ingredients: Array<{ ingredientName: string }>
 }
 
 interface TableDataTypes {
@@ -116,6 +117,7 @@ export default function RecipeManagementPage({
   const [benefitsOptions, setBenefitsOptions] = useState<dataListTypes[]>([])
   const [activeRowId, setActiveRowId] = useState<number | null>(null)
   const tableContainerRef = useRef<HTMLDivElement>(null)
+  const { translateText } = useTranslation()
 
   const { recipeCategory } = useGetAllRecipeCategorys() as {
     recipeCategory: CategoryTypes[]
@@ -456,12 +458,6 @@ export default function RecipeManagementPage({
     setSelectedBenefit("")
   }
 
-  // genarate score points
-  const servings = Array.from({ length: 20 }, (_, i) => ({
-    value: i + 1,
-    label: (i + 1).toString()
-  }))
-
   const uploadMoodImageAndSetUrl = async (): Promise<{
     recipeImageUrl: string | null
     authorImageUrl: string | null
@@ -511,13 +507,30 @@ export default function RecipeManagementPage({
   }
 
   // handle create new recipe
-  const handleCreateNewRecipe = async () => {
+  const handleCreateNewRecipe = async (): Promise<void> => {
     setIsLoading(true)
 
     const { translations, allowMultiLang } = useRecipeStore.getState()
     const { recipeImageUrl, authorImageUrl } = await uploadMoodImageAndSetUrl()
 
     await uploadMoodImageAndSetUrl()
+
+    const translatedIngredients = await Promise.all(
+      translations.en.ingredientData.map(async (ingredient, index) => {
+        const translatedName = await translateText(ingredient.ingredientName)
+
+        return {
+          ingredientName: ingredient.ingredientName,
+          ingredientNameFR: translatedName,
+          quantity: ingredient.quantity ?? "",
+          quantityFR: translations.fr.ingredientData?.[index]?.quantity ?? "",
+          mainIngredient:
+            translations.fr.ingredientData?.[index]?.mainIngredient ?? false,
+          foodId: ingredient.foodId,
+          available: Boolean(ingredient.available)
+        }
+      })
+    )
 
     const requestBody: NewRecipeTypes = {
       name: translations.en.name,
@@ -541,12 +554,12 @@ export default function RecipeManagementPage({
       },
       images: [
         {
-          imageUrl: recipeImageUrl || ""
+          imageUrl: recipeImageUrl ?? ""
         }
       ],
       healthBenefits: translations.en.benefits.map((benefit, index) => ({
         healthBenefit: benefit,
-        healthBenefitFR: translations.fr.benefits[index] || ""
+        healthBenefitFR: translations.fr.benefits[index] ?? ""
       })),
       author: {
         authorName: translations.en.authorName,
@@ -555,19 +568,9 @@ export default function RecipeManagementPage({
         authorPhone: translations.en.phone,
         authorEmail: translations.en.email,
         authorWebsite: translations.en.website,
-        authorImage: authorImageUrl || ""
+        authorImage: authorImageUrl ?? ""
       },
-      ingredients: translations.en.ingredientData.map((ingredient, index) => ({
-        ingredientName: ingredient.ingredientName,
-        ingredientNameFR:
-          translations.fr.ingredientData[index].ingredientName || "",
-        quantity: translations.en.ingredientData[index].quantity || "",
-        quantityFR: translations.fr.ingredientData[index].quantity || "",
-        mainIngredient:
-          translations.fr.ingredientData[index].mainIngredient || false,
-        foodId: translations.en.ingredientData[index].foodId,
-        available: Boolean(translations.en.ingredientData[index].available)
-      }))
+      ingredients: translatedIngredients
     }
 
     try {
@@ -576,7 +579,7 @@ export default function RecipeManagementPage({
       if (res.status === 200 || res.status === 201) {
         toast.success("Recipe added successfully")
         setOpenAddRecipePopUp(false)
-        getRecipes()
+        void getRecipes()
 
         // clear store and session
         resetRecipe()
@@ -597,7 +600,7 @@ export default function RecipeManagementPage({
   }
 
   // handle update recipe
-  const handleUpdateRecipe = async () => {
+  const handleUpdateRecipe = async (): Promise<void> => {
     setIsLoading(true)
 
     const { translationsData, resetUpdatedStore } =
@@ -639,14 +642,14 @@ export default function RecipeManagementPage({
     if (recipeImage) {
       recipeImageUrl = await uploadImage(recipeImage, "recipe-image")
     } else {
-      recipeImageUrl = translationsData.en.recipeImage || null
+      recipeImageUrl = translationsData.en.recipeImage ?? null
     }
 
     // Upload author image only if it's a new file or data URL
     if (authorImage) {
       authorImageUrl = await uploadImage(authorImage, "recipe-author-image")
     } else {
-      authorImageUrl = translationsData.en.authorimage || null
+      authorImageUrl = translationsData.en.authorimage ?? null
     }
 
     const requestBody: Partial<NewRecipeTypes> = {}
@@ -701,7 +704,7 @@ export default function RecipeManagementPage({
       requestBody.healthBenefits = translationsData.en.benefits.map(
         (benefit, index) => ({
           healthBenefit: benefit,
-          healthBenefitFR: translationsData.fr.benefits?.[index] || ""
+          healthBenefitFR: translationsData.fr.benefits?.[index] ?? ""
         })
       )
     }
@@ -737,26 +740,37 @@ export default function RecipeManagementPage({
     }
 
     // Ingredients
-    if (
-      Array.isArray(translationsData.en.ingredientData) &&
-      translationsData.en.ingredientData.length > 0
-    ) {
-      requestBody.ingredients = translationsData.en.ingredientData.map(
-        (ingredient, index) => ({
-          ingredientName: ingredient.ingredientName,
-          ingredientNameFR:
-            translationsData.fr.ingredientData?.[index]?.ingredientName || "",
-          quantity: ingredient.quantity || "",
-          quantityFR:
-            translationsData.fr.ingredientData?.[index]?.quantity || "",
-          mainIngredient:
-            translationsData.fr.ingredientData?.[index]?.mainIngredient ||
-            false,
-          foodId: ingredient.foodId,
-          available: ingredient.available
-        })
+    const translatedIngredients = await Promise.all(
+      (translationsData.en.ingredientData ?? []).map(
+        async (ingredient, index) => {
+          let translatedName = ""
+          try {
+            translatedName = await translateText(ingredient.ingredientName)
+          } catch (error) {
+            console.error(
+              "Translation error for ingredient:",
+              ingredient.ingredientName,
+              error
+            )
+          }
+
+          return {
+            ingredientName: ingredient.ingredientName,
+            ingredientNameFR: translatedName,
+            quantity: ingredient.quantity ?? "",
+            quantityFR:
+              translationsData.fr.ingredientData?.[index]?.quantity ?? "",
+            mainIngredient:
+              translationsData.fr.ingredientData?.[index]?.mainIngredient ??
+              false,
+            foodId: ingredient.foodId,
+            available: ingredient.available
+          }
+        }
       )
-    }
+    )
+
+    requestBody.ingredients = translatedIngredients
 
     try {
       const res = await updateRecipe(token, viewRecipeId, requestBody)
@@ -764,7 +778,7 @@ export default function RecipeManagementPage({
       if (res.status === 200 || res.status === 201) {
         toast.success("Recipe updated successfully")
         setViewRecipe(false)
-        getRecipes()
+        void getRecipes()
 
         if (recipeImageUrl && previousRecipeImg) {
           await deleteImageFromFirebase(previousRecipeImg)
@@ -805,11 +819,11 @@ export default function RecipeManagementPage({
   const handleUpdateStatusRecipe = async (
     recipeId: number,
     status: boolean
-  ) => {
+  ): Promise<void> => {
     setIsLoading(true)
 
     const requestBody: Partial<NewRecipeTypes> = {
-      isActive: status ? false : true
+      isActive: !status
     }
 
     try {
@@ -818,7 +832,7 @@ export default function RecipeManagementPage({
       if (res.status === 200 || res.status === 201) {
         toast.success("Recipe updated successfully")
         setViewRecipe(false)
-        getRecipes()
+        void getRecipes()
 
         handleCloseViewRecipePopUp()
       } else {
@@ -837,7 +851,7 @@ export default function RecipeManagementPage({
       const response = await deleteRecipeById(token, viewRecipeId)
       if (response.status === 200 || response.status === 201) {
         toast.success(response.data.message)
-        getRecipes()
+        void getRecipes()
       } else {
         console.log("failed to delete recipe : ", response)
         toast.error("Failed to delete recipe!")
