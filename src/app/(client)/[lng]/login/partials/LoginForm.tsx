@@ -80,7 +80,12 @@ export default function LoginForm(): React.ReactNode {
         <div className="flex flex-col items-center justify-center max-w-[450px] mx-auto px-5 space-y-3 md:space-y-4 py-5">
           <div className="space-y-2">
             {/* title  */}
-            <h1 className="font-semibold text-center ">Login to you Account</h1>
+            <h1
+              className="font-semibold text-center "
+              title="Login to your account"
+            >
+              Login to your Account
+            </h1>
 
             <div className="px-5 text-center">
               <Label className=" text-Primary-300">
