@@ -20,4 +20,4 @@ jobs:
       - name: Deploy Project Artifacts to Vercel
         run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} >deployment-url.txt
       - name: Set Dev Domain Alias
-        run: deploymentUrl=`cat deployment-url.txt` && vercel alias $deploymentUrl admin-dev.gutup.ch --token=${{ secrets.VERCEL_TOKEN }} --scope=nlt-projects
+        run: deploymentUrl=`cat deployment-url.txt` && vercel alias $deploymentUrl admin-dev.gutup.ch --token=${{ secrets.VERCEL_TOKEN }} --scope=gutup-projects
