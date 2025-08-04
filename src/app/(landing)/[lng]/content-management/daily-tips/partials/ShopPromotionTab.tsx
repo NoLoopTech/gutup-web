@@ -182,6 +182,12 @@ export default function ShopPromotionTab({
   }, [token])
 
   const handleAddIngredient = async (): Promise<void> => {
+    // Limit to max 3 items
+    if (availData.length >= 3) {
+      toast.error("Maximum 3 items only")
+      return
+    }
+
     let updatedAvailData: AvailableItem
 
     if (selected) {
