@@ -1078,6 +1078,14 @@ export default function EditStorePopUpContent({
 
   // handler for "Add Ingredient"
   const handleAddIngredient = async (): Promise<void> => {
+    // Limit to max 3 ingredients
+    const ingredientCount = availData.filter(item => item.type === "Ingredient")
+      .length
+    if (ingredientCount >= 3) {
+      toast.error("Maximum 3 ingredients only")
+      return
+    }
+
     const name = selected?.name ?? ingredientInput.trim()
     if (!name) return
 
@@ -1158,6 +1166,14 @@ export default function EditStorePopUpContent({
 
   // handler for "Add Category"
   const handleAddCategory = async (): Promise<void> => {
+    // Limit to max 3 categories
+    const categoryCount = availData.filter(item => item.type === "Category")
+      .length
+    if (categoryCount >= 3) {
+      toast.error("Maximum 3 categories only")
+      return
+    }
+
     const name = selectedCategory
       ? (activeLang === "en"
           ? selectedCategory.tagName
