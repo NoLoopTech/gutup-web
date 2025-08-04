@@ -57,12 +57,18 @@ interface dataListTypes {
 }
 
 interface FoodAttributesTypes {
-  fiber: number
-  proteins: number
+  fiber: string
+  fiberFR: string
+  proteins: string
+  proteinsFR: string
   vitamins: string
+  vitaminsFR: string
   minerals: string
-  fat: number
-  sugar: number
+  mineralsFR: string
+  fat: string
+  fatFR: string
+  sugar: string
+  sugarFR: string
 }
 
 interface SeasonDto {

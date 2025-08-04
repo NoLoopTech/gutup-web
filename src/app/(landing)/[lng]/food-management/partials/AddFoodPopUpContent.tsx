@@ -571,14 +571,18 @@ export default function AddFoodPopUpContent({
               }))
             : [],
         attributes: {
-          fiber: Number(foodData.en.fiber) || 0,
-          proteins: Number(foodData.en.proteins) || 0,
+          fiber: foodData.en.fiber || "",
+          fiberFR: foodData.fr?.fiber || "",
+          proteins: foodData.en.proteins || "",
+          proteinsFR: foodData.fr?.proteins || "",
           vitamins: foodData.en.vitamins || "",
           vitaminsFR: foodData.fr?.vitamins ?? "",
           minerals: foodData.en.minerals || "",
           mineralsFR: foodData.fr?.minerals ?? "",
-          fat: Number(foodData.en.fat) || 0,
-          sugar: Number(foodData.en.sugar) || 0
+          fat: foodData.en.fat || "",
+          fatFR: foodData.fr?.fat || "",
+          sugar: foodData.en.sugar || "",
+          sugarFR: foodData.fr?.sugar || ""
         },
         describe: {
           selection: foodData.en.selection,
