@@ -782,8 +782,9 @@ export default function AddFoodPopUpContent({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {categoryOptionsApi
+                          {[...categoryOptionsApi]
                             .filter(option => option.value)
+                            .sort((a, b) => a.label.localeCompare(b.label))
                             .map(option => (
                               <SelectItem
                                 key={option.value}

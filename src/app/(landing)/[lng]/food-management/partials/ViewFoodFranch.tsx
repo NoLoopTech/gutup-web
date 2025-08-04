@@ -313,18 +313,22 @@ export default function ViewFoodFrench({
               <SelectValue placeholder="Sélectionner une catégorie" />
             </SelectTrigger>
             <SelectContent>
-              {categories.map(option => (
-                <SelectItem
-                  key={option.value}
-                  value={
-                    option.valueFr && option.valueFr.trim() !== ""
-                      ? option.valueFr
-                      : option.value || option.label
-                  }
-                >
-                  {option.labelFr ?? option.label}
-                </SelectItem>
-              ))}
+              {[...categories]
+                .sort((a, b) =>
+                  (a.labelFr ?? a.label).localeCompare(b.labelFr ?? b.label)
+                )
+                .map(option => (
+                  <SelectItem
+                    key={option.value}
+                    value={
+                      option.valueFr && option.valueFr.trim() !== ""
+                        ? option.valueFr
+                        : option.value || option.label
+                    }
+                  >
+                    {option.labelFr ?? option.label}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>

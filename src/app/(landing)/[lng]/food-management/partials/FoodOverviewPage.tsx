@@ -610,11 +610,13 @@ export default function FoodOverviewPage(): React.ReactElement {
             <SelectContent className="max-h-40">
               <SelectGroup>
                 {categoryOptionsApi.length > 0 ? (
-                  categoryOptionsApi.map(item => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))
+                  [...categoryOptionsApi]
+                    .sort((a, b) => a.label.localeCompare(b.label))
+                    .map(item => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))
                 ) : (
                   <SelectItem value="no-categories" disabled>
                     No categories found
@@ -630,11 +632,13 @@ export default function FoodOverviewPage(): React.ReactElement {
             </SelectTrigger>
             <SelectContent className="max-h-40">
               <SelectGroup>
-                {nutritionals.map(item => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
+                {[...nutritionals]
+                  .sort((a, b) => a.label.localeCompare(b.label))
+                  .map(item => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
               </SelectGroup>
             </SelectContent>
           </Select>
