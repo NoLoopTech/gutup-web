@@ -218,32 +218,12 @@ export default function AddFoodPopUpContent({
         message: translations.required
       }
     ),
-    fiber: z
-      .string()
-      .refine(val => !val || /^\d+(\.\d+)?$/.test(val), {
-        message: translations.pleaseenternumbersonly
-      })
-      .optional(),
-    proteins: z
-      .string()
-      .refine(val => !val || /^\d+(\.\d+)?$/.test(val), {
-        message: translations.pleaseenternumbersonly
-      })
-      .optional(),
+    fiber: z.string().optional(),
+    proteins: z.string().optional(),
     vitamins: z.string().optional(),
     minerals: z.string().optional(),
-    fat: z
-      .string()
-      .refine(val => !val || /^\d+(\.\d+)?$/.test(val), {
-        message: translations.pleaseenternumbersonly
-      })
-      .optional(),
-    sugar: z
-      .string()
-      .refine(val => !val || /^\d+(\.\d+)?$/.test(val), {
-        message: translations.pleaseenternumbersonly
-      })
-      .optional()
+    fat: z.string().optional(),
+    sugar: z.string().optional()
   })
 
   // Form hook
