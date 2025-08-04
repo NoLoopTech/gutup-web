@@ -340,11 +340,13 @@ export default function FoodTab({
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {shopcategory[activeLang].map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
+                      {[...shopcategory[activeLang]]
+                        .sort((a, b) => a.label.localeCompare(b.label))
+                        .map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </FormControl>

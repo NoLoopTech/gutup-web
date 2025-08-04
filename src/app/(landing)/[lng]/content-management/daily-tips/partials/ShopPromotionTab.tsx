@@ -701,11 +701,13 @@ export default function ShopPromotionTab({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {reason[activeLang].map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
+                          {[...reason[activeLang]]
+                            .sort((a, b) => a.label.localeCompare(b.label))
+                            .map(option => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -751,11 +753,13 @@ export default function ShopPromotionTab({
                           <SelectValue placeholder={"Select Category"} />
                         </SelectTrigger>
                         <SelectContent>
-                          {shopcategory[activeLang].map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
+                          {[...shopcategory[activeLang]]
+                            .sort((a, b) => a.label.localeCompare(b.label))
+                            .map(option => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </FormControl>

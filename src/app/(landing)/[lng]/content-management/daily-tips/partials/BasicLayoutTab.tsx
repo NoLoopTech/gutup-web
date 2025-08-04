@@ -280,14 +280,16 @@ export default function BasicLayoutTab({
                             />
                           </SelectTrigger>
                           <SelectContent>
-                            {concerns[activeLang].map(option => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            ))}
+                            {[...concerns[activeLang]]
+                              .sort((a, b) => a.label.localeCompare(b.label))
+                              .map(option => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                       </FormControl>

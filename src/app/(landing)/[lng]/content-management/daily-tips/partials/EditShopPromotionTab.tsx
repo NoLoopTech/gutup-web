@@ -786,11 +786,13 @@ export default function EditShopPromotionTab({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {reason[activeLang].map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
+                          {[...reason[activeLang]]
+                            .sort((a, b) => a.label.localeCompare(b.label))
+                            .map(option => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -842,11 +844,13 @@ export default function EditShopPromotionTab({
                           <SelectValue placeholder={"Select Category"} />
                         </SelectTrigger>
                         <SelectContent>
-                          {shopcategory[activeLang].map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
+                          {[...shopcategory[activeLang]]
+                            .sort((a, b) => a.label.localeCompare(b.label))
+                            .map(option => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </FormControl>
