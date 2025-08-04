@@ -287,10 +287,12 @@ export default function AddStorePopUpContent({
     if (!Array.isArray(storeCategories) || storeCategories.length === 0) {
       return []
     }
-    return storeCategories.map(category => ({
-      value: category.id.toString(),
-      label: activeLang === "en" ? category.TagName : category.TagNameFr
-    }))
+    return storeCategories
+      .map(category => ({
+        value: category.id.toString(),
+        label: activeLang === "en" ? category.TagName : category.TagNameFr
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label))
   }
 
   // Convert store types to dropdown options

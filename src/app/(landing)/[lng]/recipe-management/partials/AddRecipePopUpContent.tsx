@@ -787,11 +787,13 @@ export default function AddRecipePopUpContent({
                         <SelectValue placeholder={"Select Category"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {categoryOptions[activeLang].map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
+                        {[...categoryOptions[activeLang]]
+                          .sort((a, b) => a.label.localeCompare(b.label))
+                          .map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </FormControl>
