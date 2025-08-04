@@ -417,7 +417,8 @@ export default function ViewFoodPopUp({
     { value: "switzerland", label: "Switzerland", labelFr: "Suisse" },
     { value: "france", label: "France", labelFr: "France" },
     { value: "germany", label: "Germany", labelFr: "Allemagne" },
-    { value: "italy", label: "Italy", labelFr: "Italie" }
+    { value: "italy", label: "Italy", labelFr: "Italie" },
+    { value: "other", label: "Other", labelFr: "Autre" }
   ]
 
   // handle open delete confirmation popup

@@ -87,13 +87,15 @@ const countriesOptions: Record<string, Option[]> = {
     { value: "switzerland", label: "Switzerland" },
     { value: "france", label: "France" },
     { value: "germany", label: "Germany" },
-    { value: "italy", label: "Italy" }
+    { value: "italy", label: "Italy" },
+    { value: "other", label: "Other" }
   ],
   fr: [
     { value: "switzerland", label: "Suisse" },
     { value: "france", label: "France" },
     { value: "germany", label: "Allemagne" },
-    { value: "italy", label: "Italie" }
+    { value: "italy", label: "Italie" },
+    { value: "other", label: "Autre" }
   ]
 }
 

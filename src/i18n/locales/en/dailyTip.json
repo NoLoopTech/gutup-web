@@ -70,7 +70,7 @@
   "pleaseSelectAConcern": "Please select a concern",
   "pleaseSelectAReasonToDisplay": "Please select a reason to display",
   "subDescriptionMustBeAtLeast10CharactersLong": "Sub Description must be at least 10 characters long",
-  "invalidMobileNumberFormat": "Invalid mobile number format. Use +94712345678 or 0712345678",
+  "invalidMobileNumberFormat": "Invalid mobile number format. Use +33712345678 or 0712345678",
   "invalidEmailAddress": "Invalid email address",
   "invalidFacebookURL": "Invalid Facebook URL",
   "invalidInstagramURL": "Invalid Instagram URL",
