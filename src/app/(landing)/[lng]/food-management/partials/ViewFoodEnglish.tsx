@@ -78,32 +78,12 @@ const FoodSchema = z.object({
   category: z.string().nonempty("Please select a category"),
   season: z.string().nonempty("Please select a season"),
   country: z.string().nonempty("Please select a country"),
-  fiber: z
-    .string()
-    .refine(val => !val || /^\d+(\.\d+)?$/.test(val), {
-      message: "Must be a number only or empty"
-    })
-    .optional(),
-  proteins: z
-    .string()
-    .refine(val => !val || /^\d+(\.\d+)?$/.test(val), {
-      message: "Must be a number only or empty"
-    })
-    .optional(),
+  fiber: z.string().optional(),
+  proteins: z.string().optional(),
   vitamins: z.string().optional(),
   minerals: z.string().optional(),
-  fat: z
-    .string()
-    .refine(val => !val || /^\d+(\.\d+)?$/.test(val), {
-      message: "Must be a number only or empty"
-    })
-    .optional(),
-  sugar: z
-    .string()
-    .refine(val => !val || /^\d+(\.\d+)?$/.test(val), {
-      message: "Must be a number only or empty"
-    })
-    .optional(),
+  fat: z.string().optional(),
+  sugar: z.string().optional(),
   benefits: z
     .array(z.string())
     .refine(arr => arr.some(item => item.trim().length > 0), {
@@ -280,12 +260,12 @@ export default function ViewFoodEnglish({
       category: foodDetails?.category ?? "",
       season: foodDetails?.seasons?.[0]?.season ?? "",
       country: foodDetails?.country ?? "",
-      fiber: foodDetails?.attributes?.fiber?.toString() ?? "",
-      proteins: foodDetails?.attributes?.proteins?.toString() ?? "",
+      fiber: foodDetails?.attributes?.fiber ?? "",
+      proteins: foodDetails?.attributes?.proteins ?? "",
       vitamins: foodDetails?.attributes?.vitamins ?? "",
       minerals: foodDetails?.attributes?.minerals ?? "",
-      fat: foodDetails?.attributes?.fat?.toString() ?? "",
-      sugar: foodDetails?.attributes?.sugar?.toString() ?? "",
+      fat: foodDetails?.attributes?.fat ?? "",
+      sugar: foodDetails?.attributes?.sugar ?? "",
       benefits: foodDetails?.healthBenefits?.map(b => b.healthBenefit) ?? [],
       image: null,
       selection: foodDetails?.describe?.selection ?? "",
@@ -294,31 +274,70 @@ export default function ViewFoodEnglish({
     }
   })
 
-  // Reusable handler for numeric input fields
-  const handleNumericInput =
-    (field: any) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value
-      if (/^\d*(\.\d*)?$/.test(value)) {
-        field.onChange(value)
-      } else {
-        field.onChange("0")
-      }
-    }
-
   // Watch for form changes and update session storage
   React.useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name && value[name as keyof typeof value] !== undefined) {
         switch (name) {
           case "fiber":
+            updateNestedData("attributes", name, value[name] as string)
+            if (value[name] && (value[name] as string).trim()) {
+              translateText(value[name] as string)
+                .then(translated => {
+                  updateNestedData("attributes", "fiberFR", translated)
+                })
+                .catch(() => {
+                  updateNestedData(
+                    "attributes",
+                    "fiberFR",
+                    value[name] as string
+                  )
+                })
+            }
+            break
           case "proteins":
+            updateNestedData("attributes", name, value[name] as string)
+            if (value[name] && (value[name] as string).trim()) {
+              translateText(value[name] as string)
+                .then(translated => {
+                  updateNestedData("attributes", "proteinsFR", translated)
+                })
+                .catch(() => {
+                  updateNestedData(
+                    "attributes",
+                    "proteinsFR",
+                    value[name] as string
+                  )
+                })
+            }
+            break
           case "fat":
+            updateNestedData("attributes", name, value[name] as string)
+            if (value[name] && (value[name] as string).trim()) {
+              translateText(value[name] as string)
+                .then(translated => {
+                  updateNestedData("attributes", "fatFR", translated)
+                })
+                .catch(() => {
+                  updateNestedData("attributes", "fatFR", value[name] as string)
+                })
+            }
+            break
           case "sugar":
-            updateNestedData(
-              "attributes",
-              name,
-              parseFloat(value[name] as string) || 0
-            )
+            updateNestedData("attributes", name, value[name] as string)
+            if (value[name] && (value[name] as string).trim()) {
+              translateText(value[name] as string)
+                .then(translated => {
+                  updateNestedData("attributes", "sugarFR", translated)
+                })
+                .catch(() => {
+                  updateNestedData(
+                    "attributes",
+                    "sugarFR",
+                    value[name] as string
+                  )
+                })
+            }
             break
           case "vitamins":
             updateNestedData("attributes", name, value[name] as string)
@@ -506,14 +525,21 @@ export default function ViewFoodEnglish({
                             <DropdownMenuItem
                               onClick={() => {
                                 const allMonthValues = seasons.map(m => m.value)
-                                const isAllSelected = allMonthValues.every(m => selectedMonths.includes(m))
-                                const updated = isAllSelected ? [] : allMonthValues
+                                const isAllSelected = allMonthValues.every(m =>
+                                  selectedMonths.includes(m)
+                                )
+                                const updated = isAllSelected
+                                  ? []
+                                  : allMonthValues
                                 const newSeasons = updated.map(enMonth => {
-                                  const found = seasonSyncMap.find(m => m.en === enMonth)
+                                  const found = seasonSyncMap.find(
+                                    m => m.en === enMonth
+                                  )
                                   return {
                                     season: enMonth,
                                     seasonFR: found ? found.fr : enMonth,
-                                    foodId: foodDetails?.seasons?.[0]?.foodId ?? 0
+                                    foodId:
+                                      foodDetails?.seasons?.[0]?.foodId ?? 0
                                   }
                                 })
                                 updateEditedData("seasons", newSeasons)
@@ -525,7 +551,9 @@ export default function ViewFoodEnglish({
                               All Months
                               <input
                                 type="checkbox"
-                                checked={seasons.every(m => selectedMonths.includes(m.value))}
+                                checked={seasons.every(m =>
+                                  selectedMonths.includes(m.value)
+                                )}
                                 readOnly
                                 className="ml-2"
                               />
@@ -542,16 +570,21 @@ export default function ViewFoodEnglish({
                                 onClick={() => {
                                   let updated = [...selectedMonths]
                                   if (updated.includes(month.value)) {
-                                    updated = updated.filter(m => m !== month.value)
+                                    updated = updated.filter(
+                                      m => m !== month.value
+                                    )
                                   } else {
                                     updated = [...updated, month.value]
                                   }
                                   const newSeasons = updated.map(enMonth => {
-                                    const found = seasonSyncMap.find(m => m.en === enMonth)
+                                    const found = seasonSyncMap.find(
+                                      m => m.en === enMonth
+                                    )
                                     return {
                                       season: enMonth,
                                       seasonFR: found ? found.fr : enMonth,
-                                      foodId: foodDetails?.seasons?.[0]?.foodId ?? 0
+                                      foodId:
+                                        foodDetails?.seasons?.[0]?.foodId ?? 0
                                     }
                                   })
                                   updateEditedData("seasons", newSeasons)
@@ -630,9 +663,8 @@ export default function ViewFoodEnglish({
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Provide Amount if applicable"
+                        placeholder="Provide details if applicable"
                         {...field}
-                        onChange={handleNumericInput(field)}
                       />
                     </FormControl>
                   </FormItem>
@@ -650,9 +682,8 @@ export default function ViewFoodEnglish({
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Provide Amount if applicable"
+                        placeholder="Provide details if applicable"
                         {...field}
-                        onChange={handleNumericInput(field)}
                       />
                     </FormControl>
                   </FormItem>
@@ -706,9 +737,8 @@ export default function ViewFoodEnglish({
                     <FormLabel className="block mb-1 text-black">Fat</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Provide Amount if applicable"
+                        placeholder="Provide details if applicable"
                         {...field}
-                        onChange={handleNumericInput(field)}
                       />
                     </FormControl>
                   </FormItem>
@@ -726,9 +756,8 @@ export default function ViewFoodEnglish({
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Provide Amount if applicable"
+                        placeholder="Provide details if applicable"
                         {...field}
-                        onChange={handleNumericInput(field)}
                       />
                     </FormControl>
                   </FormItem>

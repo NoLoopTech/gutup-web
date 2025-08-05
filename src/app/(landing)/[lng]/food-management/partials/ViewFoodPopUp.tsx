@@ -49,14 +49,18 @@ interface SessionStorageData {
   allowMultiLang?: boolean
   seasons?: Array<{ season: string; seasonFR?: string; foodId?: number }>
   attributes?: {
-    fiber?: number
-    proteins?: number
+    fiber?: string
+    fiberFR?: string
+    proteins?: string
+    proteinsFR?: string
     vitamins?: string
     vitaminsFR?: string
     minerals?: string
     mineralsFR?: string
-    fat?: number
-    sugar?: number
+    fat?: string
+    fatFR?: string
+    sugar?: string
+    sugarFR?: string
   }
   describe?: {
     selection?: string
@@ -109,12 +113,12 @@ interface Option {
 }
 
 interface FoodAttributes {
-  fiber: number
-  proteins: number
+  fiber: string
+  proteins: string
   vitamins: string
   minerals: string
-  fat: number
-  sugar: number
+  fat: string
+  sugar: string
 }
 
 interface FoodDescribe {
@@ -204,12 +208,12 @@ export default function ViewFoodPopUp({
             country: dataWithId.country, // country is same, but selection is by labelFr
             seasons: dataWithId.seasons,
             attributes: {
-              fiber: dataWithId.attributes?.fiber,
-              proteins: dataWithId.attributes?.proteins,
+              fiberFR: dataWithId.attributes?.fiberFR,
+              proteinsFR: dataWithId.attributes?.proteinsFR,
               vitaminsFR: dataWithId.attributes?.vitaminsFR,
               mineralsFR: dataWithId.attributes?.mineralsFR,
-              fat: dataWithId.attributes?.fat,
-              sugar: dataWithId.attributes?.sugar
+              fatFR: dataWithId.attributes?.fatFR,
+              sugarFR: dataWithId.attributes?.sugarFR
             },
             describe: {
               selectionFR: dataWithId.describe?.selectionFR,
@@ -268,12 +272,12 @@ export default function ViewFoodPopUp({
         country: current.country,
         seasons: current.seasons,
         attributes: {
-          fiber: current.attributes?.fiber,
-          proteins: current.attributes?.proteins,
+          fiberFR: (current.attributes as any)?.fiberFR ?? "",
+          proteinsFR: (current.attributes as any)?.proteinsFR ?? "",
           vitaminsFR: (current.attributes as any)?.vitaminsFR ?? "",
           mineralsFR: (current.attributes as any)?.mineralsFR ?? "",
-          fat: current.attributes?.fat,
-          sugar: current.attributes?.sugar
+          fatFR: (current.attributes as any)?.fatFR ?? "",
+          sugarFR: (current.attributes as any)?.sugarFR ?? ""
         },
         describe: {
           selectionFR: (current.describe as any)?.selectionFR ?? "",
@@ -589,14 +593,18 @@ export default function ViewFoodPopUp({
             seasonFR: season.seasonFR ?? ""
           })) ?? [],
         attributes: {
-          fiber: Number(rawData.attributes?.fiber) ?? 0,
-          proteins: Number(rawData.attributes?.proteins) ?? 0,
+          fiber: rawData.attributes?.fiber ?? "",
+          fiberFR: rawData.attributes?.fiberFR ?? "",
+          proteins: rawData.attributes?.proteins ?? "",
+          proteinsFR: rawData.attributes?.proteinsFR ?? "",
           vitamins: rawData.attributes?.vitamins ?? "",
           vitaminsFR: rawData.attributes?.vitaminsFR ?? "",
           minerals: rawData.attributes?.minerals ?? "",
           mineralsFR: rawData.attributes?.mineralsFR ?? "",
-          fat: Number(rawData.attributes?.fat) ?? 0,
-          sugar: Number(rawData.attributes?.sugar) ?? 0
+          fat: rawData.attributes?.fat ?? "",
+          fatFR: rawData.attributes?.fatFR ?? "",
+          sugar: rawData.attributes?.sugar ?? "",
+          sugarFR: rawData.attributes?.sugarFR ?? ""
         },
         describe: {
           selection: rawData.describe?.selection ?? "",
@@ -791,7 +799,7 @@ export default function ViewFoodPopUp({
                   seasons={seasons}
                   countries={countries}
                   foodDetails={
-                    (editedData ?? foodDetails) as NonNullable<
+                    (editedData ?? foodDetails) as unknown as NonNullable<
                       Parameters<typeof ViewFoodFranch>[0]
                     >["foodDetails"]
                   }

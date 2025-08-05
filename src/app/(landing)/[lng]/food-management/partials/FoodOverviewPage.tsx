@@ -253,42 +253,28 @@ export default function FoodOverviewPage(): React.ReactElement {
         // Check the selected nutritional value and apply filter logic
         if (
           nutritional === "fiber" &&
-          (food.attributes.fiber === null ||
-            food.attributes.fiber === undefined ||
-            food.attributes.fiber <= 0)
-        )
-          nutritionalMatch = false
+          (!food.attributes.fiber || food.attributes.fiber.trim() === "")
+        ) nutritionalMatch = false
         if (
           nutritional === "proteins" &&
-          (food.attributes.proteins === null ||
-            food.attributes.proteins === undefined ||
-            food.attributes.proteins <= 0)
-        )
-          nutritionalMatch = false
+          (!food.attributes.proteins || food.attributes.proteins.trim() === "")
+        ) nutritionalMatch = false
         if (
           nutritional === "vitamins" &&
           (!food.attributes.vitamins || food.attributes.vitamins.trim() === "")
-        )
-          nutritionalMatch = false
+        ) nutritionalMatch = false
         if (
           nutritional === "minerals" &&
           (!food.attributes.minerals || food.attributes.minerals.trim() === "")
-        )
-          nutritionalMatch = false
+        ) nutritionalMatch = false
         if (
           nutritional === "fat" &&
-          (food.attributes.fat === null ||
-            food.attributes.fat === undefined ||
-            food.attributes.fat <= 0)
-        )
-          nutritionalMatch = false
+          (!food.attributes.fat || food.attributes.fat.trim() === "")
+        ) nutritionalMatch = false
         if (
           nutritional === "sugar" &&
-          (food.attributes.sugar === null ||
-            food.attributes.sugar === undefined ||
-            food.attributes.sugar <= 0)
-        )
-          nutritionalMatch = false
+          (!food.attributes.sugar || food.attributes.sugar.trim() === "")
+        ) nutritionalMatch = false
       } else if (nutritional && !food.attributes) {
         nutritionalMatch = false
       }
