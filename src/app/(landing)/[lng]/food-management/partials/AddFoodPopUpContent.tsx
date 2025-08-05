@@ -774,7 +774,7 @@ export default function AddFoodPopUpContent({
                                 key={option.value}
                                 value={option.value}
                               >
-                                {option.label}
+                                {option.label.charAt(0).toUpperCase() + option.label.slice(1)}
                               </SelectItem>
                             ))}
                         </SelectContent>
