@@ -377,7 +377,6 @@ export default function ViewFoodFrench({
         </div>
         <div>
           <Label className="block mb-1 text-black">Mois</Label>
-          {/* DropdownMenu-based multi-select for months, French version */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -400,14 +399,14 @@ export default function ViewFoodFrench({
               style={{ scrollbarWidth: "none" }}
             >
               <DropdownMenuItem
-                onClick={() => {
+                onSelect={e => {
+                  e.preventDefault()
                   const allMonthValues = seasons.map(m => m.labelFr ?? m.label)
                   const selectedMonths = formData.season
                   const isAllSelected = allMonthValues.every(m =>
                     selectedMonths.includes(m)
                   )
                   const updated = isAllSelected ? [] : allMonthValues
-                  // Sync both French and English months in the data model
                   const newSeasons = updated.map(frMonth => {
                     const found = seasons.find(
                       m => (m.labelFr ?? m.label) === frMonth
@@ -447,7 +446,8 @@ export default function ViewFoodFrench({
                 return (
                   <DropdownMenuItem
                     key={month.value}
-                    onClick={() => {
+                    onSelect={e => {
+                      e.preventDefault()
                       let updated = [...selectedMonths]
                       if (updated.includes(month.labelFr ?? month.label)) {
                         updated = updated.filter(
@@ -456,7 +456,6 @@ export default function ViewFoodFrench({
                       } else {
                         updated = [...updated, month.labelFr ?? month.label]
                       }
-                      // Sync both French and English months in the data model
                       const newSeasons = updated.map(frMonth => {
                         const found = seasons.find(
                           m => (m.labelFr ?? m.label) === frMonth
@@ -473,6 +472,7 @@ export default function ViewFoodFrench({
                         season: updated
                       }))
                     }}
+                    className="cursor-pointer"
                   >
                     <input
                       type="checkbox"

@@ -496,7 +496,6 @@ export default function ViewFoodEnglish({
                 control={form.control}
                 name="season"
                 render={({ field }) => {
-                  // Get selected months as a flat array of strings
                   const selectedMonths = localSeasons?.map(s => s.season) ?? []
                   return (
                     <FormItem>
@@ -523,7 +522,8 @@ export default function ViewFoodEnglish({
                             style={{ scrollbarWidth: "none" }}
                           >
                             <DropdownMenuItem
-                              onClick={() => {
+                              onSelect={e => {
+                                e.preventDefault()
                                 const allMonthValues = seasons.map(m => m.value)
                                 const isAllSelected = allMonthValues.every(m =>
                                   selectedMonths.includes(m)
@@ -567,7 +567,8 @@ export default function ViewFoodEnglish({
                             {seasons.map(month => (
                               <DropdownMenuItem
                                 key={month.value}
-                                onClick={() => {
+                                onSelect={e => {
+                                  e.preventDefault()
                                   let updated = [...selectedMonths]
                                   if (updated.includes(month.value)) {
                                     updated = updated.filter(
@@ -591,6 +592,7 @@ export default function ViewFoodEnglish({
                                   setLocalSeasons(newSeasons)
                                   field.onChange(updated)
                                 }}
+                                className="cursor-pointer"
                               >
                                 <input
                                   type="checkbox"

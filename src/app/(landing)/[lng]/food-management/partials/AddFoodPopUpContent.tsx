@@ -816,18 +816,37 @@ export default function AddFoodPopUpContent({
                           style={{ scrollbarWidth: "none" }}
                         >
                           <DropdownMenuItem
-                            onClick={() => {
-                              const allMonthValues = seasonOptions[activeLang].map(m => m.value)
-                              const isAllSelected = allMonthValues.every(m => selectedMonths.includes(m))
-                              const updated = isAllSelected ? [] : allMonthValues
+                            onSelect={e => {
+                              e.preventDefault() // prevent menu from closing
+                              const allMonthValues = seasonOptions[
+                                activeLang
+                              ].map(m => m.value)
+                              const isAllSelected = allMonthValues.every(m =>
+                                selectedMonths.includes(m)
+                              )
+                              const updated = isAllSelected
+                                ? []
+                                : allMonthValues
                               setSelectedMonths(updated)
-                              setTranslationField("foodData", "en", "season", updated)
-                              // Map to French
+                              setTranslationField(
+                                "foodData",
+                                "en",
+                                "season",
+                                updated
+                              )
+
                               const frMonths = updated.map(enMonth => {
-                                const found = seasonSyncMap.find(m => m.en === enMonth)
+                                const found = seasonSyncMap.find(
+                                  m => m.en === enMonth
+                                )
                                 return found ? found.fr : enMonth
                               })
-                              setTranslationField("foodData", "fr", "season", frMonths)
+                              setTranslationField(
+                                "foodData",
+                                "fr",
+                                "season",
+                                frMonths
+                              )
                               field.onChange(updated)
                             }}
                             className="text-xs text-muted-foreground cursor-pointer font-semibold"
@@ -835,48 +854,77 @@ export default function AddFoodPopUpContent({
                             All Months
                             <input
                               type="checkbox"
-                              checked={seasonOptions[activeLang].every(m => selectedMonths.includes(m.value))}
+                              checked={seasonOptions[activeLang].every(m =>
+                                selectedMonths.includes(m.value)
+                              )}
                               readOnly
                               className="ml-2"
                             />
                           </DropdownMenuItem>
+
                           <DropdownMenuItem
                             disabled
                             className="text-xs text-muted-foreground"
                           >
                             Filter by Months
                           </DropdownMenuItem>
+
                           {seasonOptions[activeLang].map(month => (
                             <DropdownMenuItem
                               key={month.value}
-                              onClick={() => {
-                                let updated
+                              onSelect={e => {
+                                e.preventDefault()
+                                let updated: string[]
                                 if (selectedMonths.includes(month.value)) {
-                                  updated = selectedMonths.filter(m => m !== month.value)
+                                  updated = selectedMonths.filter(
+                                    m => m !== month.value
+                                  )
                                 } else {
                                   updated = [...selectedMonths, month.value]
                                 }
                                 setSelectedMonths(updated)
-                                setTranslationField(
-                                  "foodData",
-                                  "en",
-                                  "season",
-                                  updated
-                                )
-                                // Map to French
-                                const frMonths = updated.map(enMonth => {
-                                  const found = seasonSyncMap.find(m => m.en === enMonth)
-                                  return found ? found.fr : enMonth
-                                })
-                                setTranslationField(
-                                  "foodData",
-                                  "fr",
-                                  "season",
-                                  frMonths
-                                )
-                                // Update form field
+                                if (activeLang === "en") {
+                                  setTranslationField(
+                                    "foodData",
+                                    "en",
+                                    "season",
+                                    updated
+                                  )
+                                  const frMonths = updated.map(enMonth => {
+                                    const found = seasonSyncMap.find(
+                                      m => m.en === enMonth
+                                    )
+                                    return found ? found.fr : enMonth
+                                  })
+                                  setTranslationField(
+                                    "foodData",
+                                    "fr",
+                                    "season",
+                                    frMonths
+                                  )
+                                } else if (activeLang === "fr") {
+                                  setTranslationField(
+                                    "foodData",
+                                    "fr",
+                                    "season",
+                                    updated
+                                  )
+                                  const enMonths = updated.map(frMonth => {
+                                    const found = seasonSyncMap.find(
+                                      m => m.fr === frMonth
+                                    )
+                                    return found ? found.en : frMonth
+                                  })
+                                  setTranslationField(
+                                    "foodData",
+                                    "en",
+                                    "season",
+                                    enMonths
+                                  )
+                                }
                                 field.onChange(updated)
                               }}
+                              className="cursor-pointer"
                             >
                               <input
                                 type="checkbox"

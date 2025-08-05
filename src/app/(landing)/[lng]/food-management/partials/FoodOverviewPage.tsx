@@ -573,7 +573,8 @@ export default function FoodOverviewPage(): React.ReactElement {
               {months.map(month => (
                 <DropdownMenuItem
                   key={month.value}
-                  onClick={() => {
+                  onSelect={e => {
+                    e.preventDefault()
                     if (selectedMonths.includes(month.value)) {
                       setSelectedMonths(
                         selectedMonths.filter(m => m !== month.value)
@@ -582,6 +583,7 @@ export default function FoodOverviewPage(): React.ReactElement {
                       setSelectedMonths([...selectedMonths, month.value])
                     }
                   }}
+                  className="cursor-pointer"
                 >
                   <input
                     type="checkbox"
