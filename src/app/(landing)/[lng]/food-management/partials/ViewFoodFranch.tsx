@@ -60,14 +60,18 @@ interface ViewFoodFrenchProps {
       foodId: number
     }>
     attributes: {
-      fiber: number
-      proteins: number
+      fiber: string
+      fiberFR: string
+      proteins: string
+      proteinsFR: string
       vitamins: string
       vitaminsFR: string
       minerals: string
       mineralsFR: string
-      fat: number
-      sugar: number
+      fat: string
+      fatFR: string
+      sugar: string
+      sugarFR: string
     }
     describe: {
       selection: string
@@ -175,12 +179,12 @@ export default function ViewFoodFrench({
         category: foodDetails.categoryFR || "",
         season: foodDetails.seasons?.map(s => s.seasonFR) || [],
         country: countryFr,
-        fiber: foodDetails.attributes?.fiber?.toString() || "",
-        proteins: foodDetails.attributes?.proteins?.toString() || "",
+        fiber: foodDetails.attributes?.fiberFR || "",
+        proteins: foodDetails.attributes?.proteinsFR || "",
         vitamins: foodDetails.attributes?.vitaminsFR || "",
         minerals: foodDetails.attributes?.mineralsFR || "",
-        fat: foodDetails.attributes?.fat?.toString() || "",
-        sugar: foodDetails.attributes?.sugar?.toString() || "",
+        fat: foodDetails.attributes?.fatFR || "",
+        sugar: foodDetails.attributes?.sugarFR || "",
         benefits:
           foodDetails.healthBenefits
             ?.map(b => b.healthBenefitFR)
@@ -207,15 +211,54 @@ export default function ViewFoodFrench({
         }
         break
       case "fiber":
-      case "proteins":
-      case "fat":
-      case "sugar":
-        if (value === "") {
-          updateNestedData("attributes", field, "")
-        } else {
-          updateNestedData("attributes", field, parseFloat(value) || 0)
+        updateNestedData("attributes", "fiberFR", value)
+        if (value?.trim()) {
+          translateText(value)
+            .then(translated => {
+              updateNestedData("attributes", "fiber", translated)
+            })
+            .catch(() => {
+              updateNestedData("attributes", "fiber", value)
+            })
         }
         break
+      case "proteins":
+        updateNestedData("attributes", "proteinsFR", value)
+        if (value?.trim()) {
+          translateText(value)
+            .then(translated => {
+              updateNestedData("attributes", "proteins", translated)
+            })
+            .catch(() => {
+              updateNestedData("attributes", "proteins", value)
+            })
+        }
+        break
+      case "fat":
+        updateNestedData("attributes", "fatFR", value)
+        if (value?.trim()) {
+          translateText(value)
+            .then(translated => {
+              updateNestedData("attributes", "fat", translated)
+            })
+            .catch(() => {
+              updateNestedData("attributes", "fat", value)
+            })
+        }
+        break
+      case "sugar":
+        updateNestedData("attributes", "sugarFR", value)
+        if (value?.trim()) {
+          translateText(value)
+            .then(translated => {
+              updateNestedData("attributes", "sugar", translated)
+            })
+            .catch(() => {
+              updateNestedData("attributes", "sugar", value)
+            })
+        }
+        break
+
       case "vitamins":
         updateNestedData("attributes", "vitaminsFR", value)
         if (value?.trim()) {
@@ -313,24 +356,27 @@ export default function ViewFoodFrench({
               <SelectValue placeholder="Sélectionner une catégorie" />
             </SelectTrigger>
             <SelectContent>
-              {categories.map(option => (
-                <SelectItem
-                  key={option.value}
-                  value={
-                    option.valueFr && option.valueFr.trim() !== ""
-                      ? option.valueFr
-                      : option.value || option.label
-                  }
-                >
-                  {option.labelFr ?? option.label}
-                </SelectItem>
-              ))}
+              {[...categories]
+                .sort((a, b) =>
+                  (a.labelFr ?? a.label).localeCompare(b.labelFr ?? b.label)
+                )
+                .map(option => (
+                  <SelectItem
+                    key={option.value}
+                    value={
+                      option.valueFr && option.valueFr.trim() !== ""
+                        ? option.valueFr
+                        : option.value || option.label
+                    }
+                  >
+                    {option.labelFr ?? option.label}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
         <div>
           <Label className="block mb-1 text-black">Mois</Label>
-          {/* DropdownMenu-based multi-select for months, French version */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -353,14 +399,14 @@ export default function ViewFoodFrench({
               style={{ scrollbarWidth: "none" }}
             >
               <DropdownMenuItem
-                onClick={() => {
+                onSelect={e => {
+                  e.preventDefault()
                   const allMonthValues = seasons.map(m => m.labelFr ?? m.label)
                   const selectedMonths = formData.season
                   const isAllSelected = allMonthValues.every(m =>
                     selectedMonths.includes(m)
                   )
                   const updated = isAllSelected ? [] : allMonthValues
-                  // Sync both French and English months in the data model
                   const newSeasons = updated.map(frMonth => {
                     const found = seasons.find(
                       m => (m.labelFr ?? m.label) === frMonth
@@ -382,7 +428,9 @@ export default function ViewFoodFrench({
                 Tous les mois
                 <input
                   type="checkbox"
-                  checked={seasons.every(m => formData.season.includes(m.labelFr ?? m.label))}
+                  checked={seasons.every(m =>
+                    formData.season.includes(m.labelFr ?? m.label)
+                  )}
                   readOnly
                   className="ml-2"
                 />
@@ -398,16 +446,20 @@ export default function ViewFoodFrench({
                 return (
                   <DropdownMenuItem
                     key={month.value}
-                    onClick={() => {
+                    onSelect={e => {
+                      e.preventDefault()
                       let updated = [...selectedMonths]
                       if (updated.includes(month.labelFr ?? month.label)) {
-                        updated = updated.filter(m => m !== (month.labelFr ?? month.label))
+                        updated = updated.filter(
+                          m => m !== (month.labelFr ?? month.label)
+                        )
                       } else {
                         updated = [...updated, month.labelFr ?? month.label]
                       }
-                      // Sync both French and English months in the data model
                       const newSeasons = updated.map(frMonth => {
-                        const found = seasons.find(m => (m.labelFr ?? m.label) === frMonth)
+                        const found = seasons.find(
+                          m => (m.labelFr ?? m.label) === frMonth
+                        )
                         return {
                           season: found?.label ?? frMonth,
                           seasonFR: frMonth,
@@ -420,10 +472,13 @@ export default function ViewFoodFrench({
                         season: updated
                       }))
                     }}
+                    className="cursor-pointer"
                   >
                     <input
                       type="checkbox"
-                      checked={selectedMonths.includes(month.labelFr ?? month.label)}
+                      checked={selectedMonths.includes(
+                        month.labelFr ?? month.label
+                      )}
                       readOnly
                       className="mr-2"
                     />
@@ -472,7 +527,7 @@ export default function ViewFoodFrench({
         <div>
           <Label className="block mb-2 text-black">Fibres</Label>
           <Input
-            placeholder="Indiquez la quantité si applicable"
+            placeholder="Fournir des détails le cas échéant"
             value={formData.fiber}
             onChange={e => {
               handleInputChange("fiber", e.target.value)
@@ -482,7 +537,7 @@ export default function ViewFoodFrench({
         <div>
           <Label className="block mb-2 text-black">Protéines</Label>
           <Input
-            placeholder="Indiquez la quantité si applicable"
+            placeholder="Fournir des détails le cas échéant"
             value={formData.proteins}
             onChange={e => {
               handleInputChange("proteins", e.target.value)
@@ -664,7 +719,6 @@ export default function ViewFoodFrench({
           }
           uploadText="Cliquez pour télécharger ou faites glisser et déposez"
           uploadSubText="SVG, PNG, JPG ou GIF (MAX. 800x400px)"
-
         />
       </div>
     </TabsContent>

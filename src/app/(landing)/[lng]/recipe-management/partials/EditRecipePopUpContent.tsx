@@ -66,13 +66,15 @@ const seasonOptions: Record<string, Option[]> = {
     { value: "spring", label: "Spring" },
     { value: "summer", label: "Summer" },
     { value: "autmn", label: "Autmn" },
-    { value: "winter", label: "Winter" }
+    { value: "winter", label: "Winter" },
+    { value: "noSeason", label: "No Season" }
   ],
   fr: [
     { value: "spring", label: "Printemps" },
     { value: "summer", label: "Eté" },
     { value: "autmn", label: "Automne" },
-    { value: "winter", label: "Hiver" }
+    { value: "winter", label: "Hiver" },
+    { value: "noSeason", label: "Aucune saison" }
   ]
 }
 
@@ -813,11 +815,13 @@ export default function EditRecipePopUpContent({
                         <SelectValue placeholder={"Select Category"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {categoryOptions[activeLang].map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
+                        {[...categoryOptions[activeLang]]
+                          .sort((a, b) => a.label.localeCompare(b.label))
+                          .map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </FormControl>

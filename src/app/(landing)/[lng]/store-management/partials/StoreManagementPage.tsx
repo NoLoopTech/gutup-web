@@ -65,10 +65,10 @@ interface dataListTypes {
   label: string
 }
 const locations: dataListTypes[] = [
-  { value: "Lagos", label: "Lagos" },
   { value: "Abuja", label: "Abuja" },
+  { value: "Kaduna", label: "Kaduna" },
   { value: "Kano", label: "Kano" },
-  { value: "Kaduna", label: "Kaduna" }
+  { value: "Lagos", label: "Lagos" }
 ]
 
 const storeTypes: dataListTypes[] = [

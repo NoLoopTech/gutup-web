@@ -182,6 +182,12 @@ export default function ShopPromotionTab({
   }, [token])
 
   const handleAddIngredient = async (): Promise<void> => {
+    // Limit to max 3 items
+    if (availData.length >= 3) {
+      toast.error("Maximum 3 items only")
+      return
+    }
+
     let updatedAvailData: AvailableItem
 
     if (selected) {
@@ -695,11 +701,13 @@ export default function ShopPromotionTab({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {reason[activeLang].map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
+                          {[...reason[activeLang]]
+                            .sort((a, b) => a.label.localeCompare(b.label))
+                            .map(option => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -745,11 +753,13 @@ export default function ShopPromotionTab({
                           <SelectValue placeholder={"Select Category"} />
                         </SelectTrigger>
                         <SelectContent>
-                          {shopcategory[activeLang].map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
+                          {[...shopcategory[activeLang]]
+                            .sort((a, b) => a.label.localeCompare(b.label))
+                            .map(option => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </FormControl>

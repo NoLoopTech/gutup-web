@@ -121,6 +121,21 @@ export interface SeasonDto {
   seasonFR: string
 }
 
+export interface FoodAttributesTypes {
+  fiber: string
+  fiberFR: string
+  proteins: string
+  proteinsFR: string
+  vitamins: string
+  vitaminsFR: string
+  minerals: string
+  mineralsFR: string
+  fat: string
+  fatFR: string
+  sugar: string
+  sugarFR: string
+}
+
 export interface CreateFoodDto {
   name: string
   nameFR: string
@@ -129,14 +144,18 @@ export interface CreateFoodDto {
   country: string
   seasons?: SeasonDto[]
   attributes: {
-    fiber: number
-    proteins: number
+    fiber: string
+    fiberFR: string
+    proteins: string
+    proteinsFR: string
     vitamins: string
     vitaminsFR: string
     minerals: string
     mineralsFR: string
-    fat: number
-    sugar: number
+    fat: string
+    fatFR: string
+    sugar: string
+    sugarFR: string
   }
   allowMultiLang: boolean
   describe: {

@@ -879,11 +879,13 @@ export default function RecipeManagementPage({
             </SelectTrigger>
             <SelectContent className="max-h-40">
               <SelectGroup>
-                {categoryOptions.map(item => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
+                {[...categoryOptions]
+                  .sort((a, b) => a.label.localeCompare(b.label))
+                  .map(item => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -895,11 +897,13 @@ export default function RecipeManagementPage({
             </SelectTrigger>
             <SelectContent className="max-h-40">
               <SelectGroup>
-                {benefitsOptions.map(item => (
-                  <SelectItem key={item.value} value={item.value.toString()}>
-                    {item.label}
-                  </SelectItem>
-                ))}
+                {[...benefitsOptions]
+                  .sort((a, b) => a.label.localeCompare(b.label))
+                  .map(item => (
+                    <SelectItem key={item.value} value={item.value.toString()}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
               </SelectGroup>
             </SelectContent>
           </Select>
