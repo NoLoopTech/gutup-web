@@ -590,6 +590,16 @@ export default function AddStorePopUpContent({
             item.name === row.name
         )
         function handleToggleDisplay(index: number, checked: boolean): void {
+          const itemType = availData[index]?.type
+          const currentOnCount = availData.filter(
+            item => item.type === itemType && item.display
+          ).length
+          if (checked && currentOnCount >= 3) {
+            toast.error(
+              `Maximum display status items are 3 for ${itemType.toLowerCase()}s.`
+            )
+            return
+          }
           const updated = availData.map((item, i) =>
             i === index ? { ...item, display: checked } : item
           )
@@ -764,13 +774,6 @@ export default function AddStorePopUpContent({
 
   // handler for “Add Ingredient”
   const handleAddIngredient = async (): Promise<void> => {
-    // Limit to max 3 ingredients
-    const ingredientCount = availData.filter(item => item.type === "Ingredient").length;
-    if (ingredientCount >= 3) {
-      toast.error("Maximum 3 ingredients only");
-      return;
-    }
-
     const name = selected?.name ?? ingredientInput.trim()
     if (!name) return
     const matchingFood =
@@ -793,12 +796,16 @@ export default function AddStorePopUpContent({
       return
     }
 
+    // Enforce max 3 display ON for ingredients
+    const ingredientDisplayCount = availData.filter(
+      item => item.type === "Ingredient" && item.display
+    ).length
     const entry: AvailableItem = {
       ingOrCatId: matchingFood ? Number(matchingFood.id) : 0,
       name: matchingFood ? matchingFood.name ?? name : name,
       type: "Ingredient",
       tags: ["InSystem"],
-      display: true,
+      display: ingredientDisplayCount < 3, // Only ON if less than 3 are ON
       quantity: "",
       isMain: false,
       status: "Active"
@@ -841,13 +848,6 @@ export default function AddStorePopUpContent({
 
   // handler for “Add Category”
   const handleAddCategory = async (): Promise<void> => {
-    // Limit to max 3 categories
-    const categoryCount = availData.filter(item => item.type === "Category").length;
-    if (categoryCount >= 3) {
-      toast.error("Maximum 3 categories only");
-      return;
-    }
-
     const name = selectedCategory
       ? (activeLang === "en"
           ? selectedCategory.tagName
@@ -880,6 +880,10 @@ export default function AddStorePopUpContent({
       return
     }
 
+    // Enforce max 3 display ON for categories
+    const categoryDisplayCount = availData.filter(
+      item => item.type === "Category" && item.display
+    ).length
     const entry: AvailableItem = {
       ingOrCatId: matchingCategory ? Number(matchingCategory.id) : 0,
       name: matchingCategory
@@ -889,7 +893,7 @@ export default function AddStorePopUpContent({
         : name,
       type: "Category",
       tags: ["InSystem"],
-      display: true,
+      display: categoryDisplayCount < 3, // Only ON if less than 3 are ON
       quantity: "",
       isMain: false,
       status: "Active"

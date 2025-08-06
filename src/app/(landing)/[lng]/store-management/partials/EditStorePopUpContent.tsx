@@ -956,52 +956,63 @@ export default function EditStorePopUpContent({
             item.name === row.name &&
             item.type === row.type
         )
+        function handleToggleDisplay(index: number, checked: boolean): void {
+          const itemType = availData[index]?.type
+          const currentOnCount = availData.filter(
+            item => item.type === itemType && item.display
+          ).length
+          if (checked && currentOnCount >= 3) {
+            toast.error(
+              `Maximum display status items are 3 for ${itemType.toLowerCase()}s.`
+            )
+            return
+          }
+          let updated
+          if (row.ingOrCatId === 0) {
+            updated = availData.map((item, i) =>
+              i === index ? { ...item, display: checked } : item
+            )
+          } else {
+            updated = availData.map(item =>
+              item.ingOrCatId === row.ingOrCatId && item.type === row.type
+                ? { ...item, display: checked }
+                : item
+            )
+          }
+          setAvailData(
+            updated.map(item => ({
+              ...item,
+              status: item.status === "Active" ? "Active" : "Inactive"
+            })) as AvailableItem[]
+          )
+          form.setValue("availData", updated, { shouldValidate: true })
+          setTranslationField("storeData", activeLang, "availData", updated)
+
+          // Also update opposite language
+          const oppLang = activeLang === "en" ? "fr" : "en"
+          const oppCurrentData =
+            (storeData[oppLang]?.availData as AvailableItem[]) || []
+          let oppUpdated
+          if (row.ingOrCatId === 0) {
+            oppUpdated = oppCurrentData.map((item, i) =>
+              i === index ? { ...item, display: checked } : item
+            )
+          } else {
+            oppUpdated = oppCurrentData.map(item =>
+              item.ingOrCatId === row.ingOrCatId && item.type === row.type
+                ? { ...item, display: checked }
+                : item
+            )
+          }
+          setTranslationField("storeData", oppLang, "availData", oppUpdated)
+          setHasChanges(true)
+        }
         return (
           <Switch
             checked={row.display}
             className="scale-75"
             onCheckedChange={checked => {
-              let updated
-              if (row.ingOrCatId === 0) {
-                // Use index for manually added items
-                updated = availData.map((item, i) =>
-                  i === index ? { ...item, display: checked } : item
-                )
-              } else {
-                // Use id/type for others
-                updated = availData.map(item =>
-                  item.ingOrCatId === row.ingOrCatId && item.type === row.type
-                    ? { ...item, display: checked }
-                    : item
-                )
-              }
-              setAvailData(
-                updated.map(item => ({
-                  ...item,
-                  status: item.status === "Active" ? "Active" : "Inactive"
-                })) as AvailableItem[]
-              )
-              form.setValue("availData", updated, { shouldValidate: true })
-              setTranslationField("storeData", activeLang, "availData", updated)
-
-              // Also update opposite language
-              const oppLang = activeLang === "en" ? "fr" : "en"
-              const oppCurrentData =
-                (storeData[oppLang]?.availData as AvailableItem[]) || []
-              let oppUpdated
-              if (row.ingOrCatId === 0) {
-                oppUpdated = oppCurrentData.map((item, i) =>
-                  i === index ? { ...item, display: checked } : item
-                )
-              } else {
-                oppUpdated = oppCurrentData.map(item =>
-                  item.ingOrCatId === row.ingOrCatId && item.type === row.type
-                    ? { ...item, display: checked }
-                    : item
-                )
-              }
-              setTranslationField("storeData", oppLang, "availData", oppUpdated)
-              setHasChanges(true)
+              handleToggleDisplay(index, checked)
             }}
           />
         )
@@ -1080,14 +1091,6 @@ export default function EditStorePopUpContent({
 
   // handler for "Add Ingredient"
   const handleAddIngredient = async (): Promise<void> => {
-    // Limit to max 3 ingredients
-    const ingredientCount = availData.filter(item => item.type === "Ingredient")
-      .length
-    if (ingredientCount >= 3) {
-      toast.error("Maximum 3 ingredients only")
-      return
-    }
-
     const name = selected?.name ?? ingredientInput.trim()
     if (!name) return
 
@@ -1112,12 +1115,18 @@ export default function EditStorePopUpContent({
       return
     }
 
+    // Enforce max 3 display ON for ingredients
+    const ingredientDisplayCount = availData.filter(
+      item =>
+        (item.type === "Ingredient" || item.type === "Ingrédient") &&
+        item.display
+    ).length
     const entry: AvailableItem = {
       ingOrCatId: matchingFood ? Number(matchingFood.id) : 0,
       name: matchingFood ? matchingFood.name ?? name : name,
       type: activeLang === "en" ? "Ingredient" : "Ingrédient",
       tags: ["InSystem"],
-      display: true,
+      display: ingredientDisplayCount < 3, // Only ON if less than 3 are ON
       quantity: "",
       isMain: false,
       status: "Active"
@@ -1168,14 +1177,6 @@ export default function EditStorePopUpContent({
 
   // handler for "Add Category"
   const handleAddCategory = async (): Promise<void> => {
-    // Limit to max 3 categories
-    const categoryCount = availData.filter(item => item.type === "Category")
-      .length
-    if (categoryCount >= 3) {
-      toast.error("Maximum 3 categories only")
-      return
-    }
-
     const name = selectedCategory
       ? (activeLang === "en"
           ? selectedCategory.tagName
@@ -1209,6 +1210,11 @@ export default function EditStorePopUpContent({
       return
     }
 
+    // Enforce max 3 display ON for categories
+    const categoryDisplayCount = availData.filter(
+      item =>
+        (item.type === "Category" || item.type === "Catégorie") && item.display
+    ).length
     const entry: AvailableItem = {
       ingOrCatId: matchingCategory ? Number(matchingCategory.id) : 0,
       name: matchingCategory
@@ -1218,7 +1224,7 @@ export default function EditStorePopUpContent({
         : name,
       type: activeLang === "en" ? "Category" : "Catégorie",
       tags: ["InSystem"],
-      display: true,
+      display: categoryDisplayCount < 3, // Only ON if less than 3 are ON
       quantity: "",
       isMain: false,
       status: "Active"
