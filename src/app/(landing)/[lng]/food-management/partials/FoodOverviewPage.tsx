@@ -601,7 +601,7 @@ export default function FoodOverviewPage(): React.ReactElement {
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
-            <SelectContent className="max-h-40">
+            <SelectContent className="max-h-80">
               <SelectGroup>
                 {categoryOptionsApi.length > 0 ? (
                   [...categoryOptionsApi]
@@ -624,7 +624,7 @@ export default function FoodOverviewPage(): React.ReactElement {
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Nutritional" />
             </SelectTrigger>
-            <SelectContent className="max-h-40">
+            <SelectContent className="max-h-80">
               <SelectGroup>
                 {[...nutritionals]
                   .sort((a, b) => a.label.localeCompare(b.label))

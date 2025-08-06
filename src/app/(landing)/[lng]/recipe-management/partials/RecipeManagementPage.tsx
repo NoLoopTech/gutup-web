@@ -877,7 +877,7 @@ export default function RecipeManagementPage({
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
-            <SelectContent className="max-h-40">
+            <SelectContent className="max-h-80">
               <SelectGroup>
                 {[...categoryOptions]
                   .sort((a, b) => a.label.localeCompare(b.label))
@@ -892,10 +892,10 @@ export default function RecipeManagementPage({
 
           {/* select Health Benefits */}
           <Select value={selectedBenefit} onValueChange={handleBenefitChange}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-40">
               <SelectValue placeholder="Health Benefits" />
             </SelectTrigger>
-            <SelectContent className="max-h-40">
+            <SelectContent className="max-h-80">
               <SelectGroup>
                 {[...benefitsOptions]
                   .sort((a, b) => a.label.localeCompare(b.label))

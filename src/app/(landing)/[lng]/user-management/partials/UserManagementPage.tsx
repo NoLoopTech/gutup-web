@@ -310,7 +310,7 @@ export default function UserManagementPage({
           <SelectTrigger className="w-32">
             <SelectValue placeholder="Score Points" />
           </SelectTrigger>
-          <SelectContent className="max-h-40">
+          <SelectContent className="max-h-60">
             <SelectGroup>
               {scorePoints.map(item => (
                 <SelectItem key={item.value} value={item.value.toString()}>
