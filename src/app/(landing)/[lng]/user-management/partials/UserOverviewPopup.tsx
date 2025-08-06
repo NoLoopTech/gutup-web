@@ -268,15 +268,17 @@ export default function UserOverviewPopup({
             <div className="flex flex-wrap gap-2 text-center">
               {userFavorites?.favouriteFoods.map(f => (
                 <div key={f.id} className="flex flex-col items-center">
-                  <Image
-                    src={
-                      f.food.images?.[0] ? `${f.food.images[0]}` : Sample.src
-                    }
-                    alt={f.food.name}
-                    width={100}
-                    height={100}
-                    className="rounded-lg object-cover"
-                  />
+                  <div className="relative w-[100px] h-[100px]">
+                    <Image
+                      src={
+                        f.food.images?.[0] ? `${f.food.images[0]}` : Sample.src
+                      }
+                      alt={f.food.name}
+                      fill
+                      className="rounded-lg object-cover"
+                      style={{ objectFit: "cover" }}
+                    />
+                  </div>
                   <Label className="mt-2 text-sm">{f.food.name}</Label>
                 </div>
               ))}
@@ -303,17 +305,19 @@ export default function UserOverviewPopup({
             <div className="flex flex-wrap gap-2 text-center">
               {userFavorites?.favouriteRecipes.map(f => (
                 <div key={f.id} className="flex flex-col items-center">
-                  <Image
-                    src={
-                      f.recipe.images?.[0]
-                        ? `${f.recipe.images[0]}`
-                        : Sample.src
-                    }
-                    alt={f.recipe.name}
-                    width={100}
-                    height={100}
-                    className="rounded-lg object-cover"
-                  />
+                  <div className="relative w-[100px] h-[100px]">
+                    <Image
+                      src={
+                        f.recipe.images?.[0]
+                          ? `${f.recipe.images[0]}`
+                          : Sample.src
+                      }
+                      alt={f.recipe.name}
+                      fill
+                      className="rounded-lg object-cover"
+                      style={{ objectFit: "cover" }}
+                    />
+                  </div>
                   <Label className="mt-2 text-sm">{f.recipe.name}</Label>
                 </div>
               ))}
