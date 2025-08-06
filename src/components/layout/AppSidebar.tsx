@@ -47,6 +47,7 @@ import Link from "next/link"
 
 export function AppSidebar(): JSX.Element {
   const [isOpen, setIsOpen] = useState(false)
+  const [activeMenu, setActiveMenu] = useState<string>("") // Track active menu
   const { data: session } = useSession()
 
   const handleSignOut = async (): Promise<void> => {
@@ -84,20 +85,15 @@ export function AppSidebar(): JSX.Element {
           <SidebarGroupLabel>Workspace</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* not available for now */}
-              {/* Dashboard */}
-              {/* <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/" className="flex gap-2 items-center">
-                    <Inbox className="w-4 h-4" />
-                    <span>Dashboard</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem> */}
-
               {/* User Management */}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton
+                  asChild
+                  isActive={activeMenu === "user-management"}
+                  onClick={() => {
+                    setActiveMenu("user-management")
+                  }}
+                >
                   <Link
                     href="/user-management"
                     className="flex gap-2 items-center"
@@ -112,14 +108,21 @@ export function AppSidebar(): JSX.Element {
               <Collapsible open={isOpen} onOpenChange={setIsOpen}>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className="flex justify-between items-center w-full">
+                    <SidebarMenuButton
+                      className={`flex justify-between items-center w-full `}
+                      isActive={activeMenu === "food-management"}
+                      onClick={() => {
+                        setActiveMenu("food-management")
+                      }}
+                    >
                       <span className="flex gap-2 items-center">
                         <Ham className="w-4 h-4" />
                         <span>Food Management</span>
                       </span>
                       <ChevronDown
                         className={`h-4 w-4 transition-transform ${
-                          isOpen ? "rotate-180" : ""}`}
+                          isOpen ? "rotate-180" : ""
+                        }`}
                       />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
@@ -127,14 +130,26 @@ export function AppSidebar(): JSX.Element {
                   <CollapsibleContent className="pl-6">
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
-                        <SidebarMenuButton asChild>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={activeMenu === "food-overview"}
+                          onClick={() => {
+                            setActiveMenu("food-overview")
+                          }}
+                        >
                           <Link href="/food-management/food-overview">
                             Food Overview
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
-                        <SidebarMenuButton asChild>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={activeMenu === "tag-overview"}
+                          onClick={() => {
+                            setActiveMenu("tag-overview")
+                          }}
+                        >
                           <Link href="/food-management/tag-overview">
                             Tag Overview
                           </Link>
@@ -147,7 +162,13 @@ export function AppSidebar(): JSX.Element {
 
               {/* Recipe Management */}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton
+                  asChild
+                  isActive={activeMenu === "recipe-management"}
+                  onClick={() => {
+                    setActiveMenu("recipe-management")
+                  }}
+                >
                   <Link
                     href="/recipe-management"
                     className="flex gap-2 items-center"
@@ -160,7 +181,13 @@ export function AppSidebar(): JSX.Element {
 
               {/* Store Management */}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton
+                  asChild
+                  isActive={activeMenu === "store-management"}
+                  onClick={() => {
+                    setActiveMenu("store-management")
+                  }}
+                >
                   <Link
                     href="/store-management"
                     className="flex gap-2 items-center"
@@ -173,7 +200,13 @@ export function AppSidebar(): JSX.Element {
 
               {/* Content Management */}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton
+                  asChild
+                  isActive={activeMenu === "content-management"}
+                  onClick={() => {
+                    setActiveMenu("content-management")
+                  }}
+                >
                   <Link
                     href="/content-management"
                     className="flex gap-2 items-center"
