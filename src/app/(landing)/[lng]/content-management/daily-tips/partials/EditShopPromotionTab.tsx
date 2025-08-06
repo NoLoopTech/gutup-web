@@ -195,12 +195,6 @@ export default function EditShopPromotionTab({
   }, [token])
 
   const handleAddIngredient = async (): Promise<void> => {
-    // Limit to max 3 items
-    if (availData.length >= 3) {
-      toast.error("Maximum 3 items only")
-      return
-    }
-
     let updatedAvailData: AvailableItem
 
     // Step 1: Check if the item is already in the availData list by item name
@@ -216,12 +210,13 @@ export default function EditShopPromotionTab({
         return
       }
 
-      // Add the selected item with "Inactive" status if not already added
+      // Enforce max 3 display ON
+      const currentOnCount = availData.filter(item => item.display).length;
       updatedAvailData = {
         id: selected.id,
         name: selected.name ?? "",
         status: selected.status ?? false,
-        display: selected.display ?? false
+        display: currentOnCount < 3
       }
     } else if (ingredientInput.trim()) {
       // Check if the entered ingredient exists in the foods list
@@ -238,13 +233,13 @@ export default function EditShopPromotionTab({
       const matchedFood = foods.find(
         food => food.name?.toLowerCase() === ingredientInput.toLowerCase()
       )
-
+      const currentOnCount = availData.filter(item => item.display).length;
       if (matchedFood) {
         updatedAvailData = {
           id: matchedFood.id,
           name: matchedFood.name ?? "",
           status: matchedFood.status ?? false,
-          display: true
+          display: currentOnCount < 3
         }
       } else {
         const isCustomItemExists = availData.some(
@@ -261,7 +256,7 @@ export default function EditShopPromotionTab({
           id: 0, // Custom item doesn't have an ID in foods list
           name: ingredientInput,
           status: false,
-          display: true
+          display: currentOnCount < 3
         }
       }
     } else {
@@ -304,7 +299,14 @@ export default function EditShopPromotionTab({
     setIngredientInput("")
   }
 
-  const handleToggleDisplayStatus = (name: string) => {
+  const handleToggleDisplayStatus = (name: string): void => {
+    const currentOnCount = availData.filter(item => item.display).length;
+    const isTurningOn = !availData.find(item => item.name === name)?.display;
+    if (isTurningOn && currentOnCount >= 3) {
+      toast.error("Maximum display status items are 3.");
+      return;
+    }
+
     // Create a new updatedAvailData array by mapping over the existing availData
     const updatedAvailData = availData.map(item => {
       if (item.name === name) {

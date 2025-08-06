@@ -182,12 +182,6 @@ export default function ShopPromotionTab({
   }, [token])
 
   const handleAddIngredient = async (): Promise<void> => {
-    // Limit to max 3 items
-    if (availData.length >= 3) {
-      toast.error("Maximum 3 items only")
-      return
-    }
-
     let updatedAvailData: AvailableItem
 
     if (selected) {
@@ -202,11 +196,13 @@ export default function ShopPromotionTab({
         return
       }
 
+      // Enforce max 3 display ON
+      const currentOnCount = availData.filter(item => item.display).length
       updatedAvailData = {
         id: selected.id,
         name: selected.name ?? "",
         status: selected.status ?? false,
-        display: true
+        display: currentOnCount < 3
       }
     } else if (ingredientInput.trim()) {
       // Check if the entered ingredient exists in the foods list
@@ -223,13 +219,13 @@ export default function ShopPromotionTab({
       const matchedFood = foods.find(
         food => food.name?.toLowerCase() === ingredientInput.toLowerCase()
       )
-
+      const currentOnCount = availData.filter(item => item.display).length
       if (matchedFood) {
         updatedAvailData = {
           id: matchedFood.id,
           name: matchedFood.name ?? "",
           status: matchedFood.status ?? false,
-          display: true
+          display: currentOnCount < 3
         }
       } else {
         const isCustomItemExists = availData.some(
@@ -246,7 +242,7 @@ export default function ShopPromotionTab({
           id: 0, // Custom item doesn't have an ID in foods list
           name: ingredientInput,
           status: false,
-          display: true
+          display: currentOnCount < 3
         }
       }
     } else {
@@ -356,13 +352,43 @@ export default function ShopPromotionTab({
     },
     {
       header: "Display Status",
-      accessor: (row: AvailableItem) => (
-        <Switch
-          checked={row.display}
-          onCheckedChange={() => handleToggleDisplayStatus(row.name)}
-          className="scale-75"
-        />
-      )
+      accessor: (row: AvailableItem) => {
+        function handleToggleDisplayStatus(name: string): void {
+          const currentOnCount = availData.filter(item => item.display).length
+          const isTurningOn = !availData.find(item => item.name === name)?.display
+          if (isTurningOn && currentOnCount >= 3) {
+            toast.error("Maximum display status items are 3.")
+            return
+          }
+          const updatedAvailData = availData.map(item => {
+            if (item.name === name) {
+              return { ...item, display: !item.display }
+            }
+            return item
+          })
+          setAvailData(updatedAvailData)
+          setTranslationField(
+            "shopPromotionData",
+            activeLang,
+            "shopPromoteFoods",
+            updatedAvailData
+          )
+          setTranslationField(
+            "shopPromotionData",
+            activeLang === "en" ? "fr" : "en",
+            "shopPromoteFoods",
+            updatedAvailData
+          )
+          toast.success("Display status updated successfully!")
+        }
+        return (
+          <Switch
+            checked={row.display}
+            onCheckedChange={() => { handleToggleDisplayStatus(row.name); }}
+            className="scale-75"
+          />
+        )
+      }
     },
     {
       header: "", // No header for delete column
