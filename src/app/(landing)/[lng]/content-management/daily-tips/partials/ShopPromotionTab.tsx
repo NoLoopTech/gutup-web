@@ -775,7 +775,7 @@ export default function ShopPromotionTab({
                         value={field.value}
                         onValueChange={handleShopCategoryChange}
                       >
-                        <SelectTrigger className="mt-1 w-full">
+                        <SelectTrigger className=" w-full">
                           <SelectValue placeholder={"Select Category"} />
                         </SelectTrigger>
                         <SelectContent>

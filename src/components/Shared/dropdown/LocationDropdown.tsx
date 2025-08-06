@@ -43,45 +43,43 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({
   const customStyles = {
     control: (provided: any, state: any) => ({
       ...provided,
-      borderRadius: "8px", // Adjust border radius as desired
+      minHeight: "36px", 
+      height: "36px",
+      borderRadius: "6px",
       borderColor: state.isFocused ? "#969595" : "#e5e5e5",
-      borderWidth: "2px", // Adjust border width as desired
-      boxShadow: state.isFocused ? "none" : "none", // Remove default box-shadow
-      outline: "none", // Remove the outline
+      borderWidth: "1.3px",
+      boxShadow: state.isFocused
+        ? "0 1px 4px rgba(0,0,0,0.06)"
+        : "0 1px 2px rgba(0,0,0,0.04)",
+      outline: "none",
       backgroundColor: "#fff",
-      fontFamily: "Inter, sans-serif",
-      fontSize: "0.875rem", // sm size
-      fontWeight: 400, 
+      fontSize: "0.875rem",
+      color: "#000000",
       "&:hover": {
-        borderColor: "##c4c4c4"
+        borderColor: "#c4c4c4"
       }
     }),
     menu: (provided: any) => ({
       ...provided,
       backgroundColor: "#fff",
-      fontFamily: "Inter, sans-serif",
-      fontSize: "0.875rem", // sm size
-      fontWeight: 400 
+      fontSize: "0.875rem",
+      color: "#000000"
     }),
     option: (provided: any, state: any) => ({
       ...provided,
       backgroundColor: state.isFocused ? "#fff" : "",
-      color: "#000", // Text color
-      fontFamily: "Inter, sans-serif",
-      fontSize: "0.875rem", // sm size
-      fontWeight: 400 
+      fontSize: "0.875rem",
+      color: "#000000"
     }),
     singleValue: (provided: any) => ({
       ...provided,
-      fontFamily: "Inter, sans-serif",
-      fontSize: "0.875rem", // sm size
-      fontWeight: 400 
+      fontSize: "0.875rem",
+      color: "#000000"
     }),
     input: (provided: any) => ({
       ...provided,
       outline: "none",
-      boxShadow: "none",
-      fontFamily: "Inter, sans-serif"
+      boxShadow: "none"
     })
   }
 

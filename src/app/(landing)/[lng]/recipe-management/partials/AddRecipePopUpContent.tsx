@@ -744,7 +744,7 @@ export default function AddRecipePopUpContent({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 gap-4 pb-6 sm:grid-cols-2 md:grid-cols-3">
-            <div>
+            <div className="mt-1">
               <FormField
                 control={form.control}
                 name="name"
