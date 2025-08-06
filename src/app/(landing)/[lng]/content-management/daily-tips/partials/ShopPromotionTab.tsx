@@ -942,8 +942,13 @@ export default function ShopPromotionTab({
                     value={ingredientInput}
                     onInputChange={setIngredientInput}
                     onSelect={item => {
-                      console.log(item)
-                      setSelected({ ...item, id: Number(item.id) } as Food)
+                      // Find the full food object to get the correct status
+                      const foodObj = foods.find(f => f.id === Number(item.id));
+                      setSelected({
+                        ...item,
+                        id: Number(item.id),
+                        status: foodObj?.status ?? false
+                      } satisfies Food);
                       setIngredientInput(item.name)
                     }}
                   />
