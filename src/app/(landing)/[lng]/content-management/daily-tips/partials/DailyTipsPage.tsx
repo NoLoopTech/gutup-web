@@ -233,8 +233,12 @@ export default function DailyTipsPage({
         const translatedItem =
           currentTranslations.shopPromotionData.fr.shopPromoteFoods[index]
 
+        // Map manual Date id to 0 for backend only
+        const mappedId = typeof item.id === "number" && item.id > 1000000000000 ? 0 : item.id
+
         return {
           ...item,
+          id: mappedId,
           status: typeof item.status === "boolean" ? item.status : item.status === "true",
           nameFR: translatedItem ? translatedItem.name : item.name
         }
@@ -493,11 +497,14 @@ export default function DailyTipsPage({
           const enFoods = shopData.en.shopPromoteFoods ?? []
           const frFoods = shopData.fr.shopPromoteFoods ?? []
 
+          // Map manual Date id to 0 for backend only
           const updatedShopPromoteFoods = enFoods.map((item, index) => {
             const translatedItem = frFoods[index]
-
+            const mappedId = typeof item.id === "number" && item.id > 1000000000000 ? 0 : item.id
             return {
               ...item,
+              id: mappedId,
+              status: typeof item.status === "boolean" ? item.status : item.status === "true",
               nameFR: translatedItem ? translatedItem.name : item.name
             }
           })

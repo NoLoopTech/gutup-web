@@ -239,7 +239,7 @@ export default function ShopPromotionTab({
         }
 
         updatedAvailData = {
-          id: 0, // Custom item doesn't have an ID in foods list
+          id: Date.now(), // Use unique id for manual item
           name: ingredientInput,
           status: false,
           display: currentOnCount < 3

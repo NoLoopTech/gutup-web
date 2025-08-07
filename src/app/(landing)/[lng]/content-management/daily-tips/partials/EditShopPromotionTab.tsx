@@ -253,7 +253,7 @@ export default function EditShopPromotionTab({
         }
 
         updatedAvailData = {
-          id: 0, // Custom item doesn't have an ID in foods list
+          id: Date.now(), // Use unique id for manual item
           name: ingredientInput,
           status: false,
           display: currentOnCount < 3
@@ -265,6 +265,11 @@ export default function EditShopPromotionTab({
     }
 
     setAvailData([...availData, updatedAvailData])
+    const fixedFoods = [...availData, updatedAvailData].map(item => ({
+      ...item,
+      status: typeof item.status === "boolean" ? item.status : item.status === "true"
+    }))
+    form.setValue("shopPromoteFoods", fixedFoods, { shouldValidate: true })
 
     try {
       const translatedName =
@@ -317,6 +322,11 @@ export default function EditShopPromotionTab({
 
     // Update the state with the new updatedAvailData
     setAvailData(updatedAvailData)
+    const fixedFoodsToggle = updatedAvailData.map(item => ({
+      ...item,
+      status: typeof item.status === "boolean" ? item.status : item.status === "true"
+    }))
+    form.setValue("shopPromoteFoods", fixedFoodsToggle, { shouldValidate: true })
 
     // Optionally, update translations/store or any other global state
     setTranslationField(
@@ -364,6 +374,11 @@ export default function EditShopPromotionTab({
   const handleDeleteAvailItem = (name: string): void => {
     const updated = availData.filter(item => item.name !== name) // Filter out the item by name
     setAvailData(updated) // Update state with the filtered list
+    const fixedFoodsDelete = updated.map(item => ({
+      ...item,
+      status: typeof item.status === "boolean" ? item.status : item.status === "true"
+    }))
+    form.setValue("shopPromoteFoods", fixedFoodsDelete, { shouldValidate: true }) // Update store
     setTranslationField(
       "shopPromotionData",
       activeLang,
@@ -575,6 +590,15 @@ export default function EditShopPromotionTab({
   useEffect(() => {
     form.reset(translationsData.shopPromotionData[activeLang])
   }, [activeLang, form.reset, translationsData.shopPromotionData])
+
+  // Keep form.shopPromoteFoods in sync with availData
+  useEffect(() => {
+    const fixedFoods = availData.map(item => ({
+      ...item,
+      status: typeof item.status === "boolean" ? item.status : item.status === "true"
+    }))
+    form.setValue("shopPromoteFoods", fixedFoods, { shouldValidate: true })
+  }, [availData])
 
   // Define functions to handle page changes
   const handlePageChange = (newPage: number): void => {
