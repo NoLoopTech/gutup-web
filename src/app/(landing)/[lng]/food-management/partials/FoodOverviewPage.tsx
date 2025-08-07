@@ -182,6 +182,11 @@ export default function FoodOverviewPage(): React.ReactElement {
     setFoodId(foodId)
   }
 
+  // Add: handle row click to open view popup
+  const handleRowClick = (row: FoodOverviewDataType): void => {
+    handleViewFoodOverview(row.id)
+  }
+
   // Handler to update the selected category filter
   const handleCategoryChange = (value: string): void => {
     setCategory(value)
@@ -254,27 +259,33 @@ export default function FoodOverviewPage(): React.ReactElement {
         if (
           nutritional === "fiber" &&
           (!food.attributes.fiber || food.attributes.fiber.trim() === "")
-        ) nutritionalMatch = false
+        )
+          nutritionalMatch = false
         if (
           nutritional === "proteins" &&
           (!food.attributes.proteins || food.attributes.proteins.trim() === "")
-        ) nutritionalMatch = false
+        )
+          nutritionalMatch = false
         if (
           nutritional === "vitamins" &&
           (!food.attributes.vitamins || food.attributes.vitamins.trim() === "")
-        ) nutritionalMatch = false
+        )
+          nutritionalMatch = false
         if (
           nutritional === "minerals" &&
           (!food.attributes.minerals || food.attributes.minerals.trim() === "")
-        ) nutritionalMatch = false
+        )
+          nutritionalMatch = false
         if (
           nutritional === "fat" &&
           (!food.attributes.fat || food.attributes.fat.trim() === "")
-        ) nutritionalMatch = false
+        )
+          nutritionalMatch = false
         if (
           nutritional === "sugar" &&
           (!food.attributes.sugar || food.attributes.sugar.trim() === "")
-        ) nutritionalMatch = false
+        )
+          nutritionalMatch = false
       } else if (nutritional && !food.attributes) {
         nutritionalMatch = false
       }
@@ -433,12 +444,7 @@ export default function FoodOverviewPage(): React.ReactElement {
   // Render row dropdown function (like StoreManagementPage)
   const renderRowDropdown = (row: FoodOverviewDataType): React.ReactNode => (
     <div className="row-action-popup">
-      <DropdownMenu
-        open={activeRowId === row.id}
-        onOpenChange={open => {
-          setActiveRowId(open ? row.id : null)
-        }}
-      >
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
@@ -451,15 +457,7 @@ export default function FoodOverviewPage(): React.ReactElement {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-32">
-          <DropdownMenuItem
-            onClick={e => {
-              e.stopPropagation()
-              handleViewFoodOverview(row.id)
-              setActiveRowId(null)
-            }}
-          >
-            View
-          </DropdownMenuItem>
+          <DropdownMenuItem>View</DropdownMenuItem>
           <DropdownMenuItem
             className="text-red-600"
             onClick={e => {
@@ -669,6 +667,7 @@ export default function FoodOverviewPage(): React.ReactElement {
         activeRowId={activeRowId}
         setActiveRowId={setActiveRowId}
         renderRowDropdown={renderRowDropdown}
+        onRowClick={handleRowClick}
       />
 
       {/* Add Food Popup */}

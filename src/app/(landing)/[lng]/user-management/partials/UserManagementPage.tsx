@@ -165,37 +165,20 @@ export default function UserManagementPage({
   // Render row dropdown function (like StoreManagementPage)
   const renderRowDropdown = (row: UserManagementDataType): JSX.Element => (
     <div className="row-action-popup">
-      <DropdownMenu
-        open={activeRowId === row.id}
-        onOpenChange={open => {
-          setActiveRowId(open ? row.id : null)
-        }}
-      >
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             className="row-action-trigger data-[state=open]:bg-muted text-muted-foreground flex size-6"
             size="icon"
             tabIndex={-1}
-            onClick={e => {
-              e.stopPropagation()
-              setActiveRowId(row.id)
-            }}
           >
             <MoreVertical className="w-5 h-5" />
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-32">
-          <DropdownMenuItem
-            onClick={e => {
-              e.stopPropagation()
-              handleViewUserOverview(row.id)
-              setActiveRowId(null)
-            }}
-          >
-            View
-          </DropdownMenuItem>
+          <DropdownMenuItem>View</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
@@ -295,6 +278,11 @@ export default function UserManagementPage({
     label: (i + 1).toString()
   }))
 
+  // handle row click to open user overview popup
+  const handleRowClick = (row: UserManagementDataType): void => {
+    handleViewUserOverview(row.id)
+  }
+
   return (
     <div className="space-y-4" ref={tableContainerRef}>
       <div className="flex flex-wrap gap-2 ">
@@ -369,6 +357,7 @@ export default function UserManagementPage({
         activeRowId={activeRowId}
         setActiveRowId={setActiveRowId}
         renderRowDropdown={renderRowDropdown}
+        onRowClick={handleRowClick}
       />
 
       <UserOverviewPopup

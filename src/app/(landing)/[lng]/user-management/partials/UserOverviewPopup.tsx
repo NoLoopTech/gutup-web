@@ -333,14 +333,13 @@ export default function UserOverviewPopup({
         </div>
 
         <DialogFooter>
-          <div className="flex justify-between w-full gap-2">
+          <div className="flex justify-end w-full gap-2">
             <Button
               variant="outline"
               onClick={handleOpenDeleteConfirmationPopup}
             >
               Delete User
             </Button>
-            <Button>Reset Password</Button>
           </div>
         </DialogFooter>
       </DialogContent>

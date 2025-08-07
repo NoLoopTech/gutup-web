@@ -612,6 +612,11 @@ export default function DailyTipsPage({
     }
   }
 
+  // Add: handle row click to open edit popup
+  const handleRowClick = (row: DailyTipsDataType): void => {
+    handleOpenEditDailyTip(row.dailyTipsId)
+  }
+
   const columns: Array<Column<DailyTipsDataType>> = [
     {
       accessor: "imageOrVideoUrl",
@@ -678,8 +683,6 @@ export default function DailyTipsPage({
       cell: (row: DailyTipsDataType) => (
         <div className="row-action-popup">
           <DropdownMenu
-            open={activeRowId === row.dailyTipsId}
-            onOpenChange={open => { setActiveRowId(open ? row.dailyTipsId : null); }}
           >
             <DropdownMenuTrigger asChild>
               <Button
@@ -783,6 +786,7 @@ export default function DailyTipsPage({
         onPageSizeChange={handlePageSizeChange}
         activeRowId={activeRowId}
         setActiveRowId={setActiveRowId}
+        onRowClick={handleRowClick}
       />
 
       <AddDailyTipMainPopUp

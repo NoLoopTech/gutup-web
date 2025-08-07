@@ -467,19 +467,19 @@ export default function StoreManagementPage({
     }
   ]
 
+  // Add: handle row click to open edit popup
+  const handleRowClick = (row: StoreManagementDataType): void => {
+    handleEditStore(row)
+  }
+
   // Dropdown renderer for row
   const renderRowDropdown = (row: StoreManagementDataType): React.ReactNode => (
     <div className="row-action-popup">
-      <DropdownMenu
-        open={activeRowId === row.id}
-        onOpenChange={open => {
-          setActiveRowId(open ? (row.id ?? null) : null)
-        }}
-      >
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="data-[state=open]:bg-muted text-muted-foreground flex size-6"
+            className="row-action-trigger data-[state=open]:bg-muted text-muted-foreground flex size-6"
             size="icon"
             tabIndex={-1}
           >
@@ -578,8 +578,8 @@ export default function StoreManagementPage({
       if (
         tableContainerRef.current &&
         !tableContainerRef.current.contains(target) &&
-        !target.closest('.row-action-trigger') &&
-        !target.closest('.row-action-popup')
+        !target.closest(".row-action-trigger") &&
+        !target.closest(".row-action-popup")
       ) {
         setActiveRowId(null)
       }
@@ -661,6 +661,7 @@ export default function StoreManagementPage({
         activeRowId={activeRowId}
         setActiveRowId={setActiveRowId}
         renderRowDropdown={renderRowDropdown}
+        onRowClick={handleRowClick}
       />
 
       {/* add store popup */}

@@ -338,15 +338,15 @@ export default function RecipeManagementPage({
     }
   ]
 
+  // Add: handle row click to open view popup
+  const handleRowClick = (row: TableDataTypes): void => {
+    handleOpenViewRecipePopUp(row.id, row.authorImage, row.imageUrl)
+  }
+
   // Render row dropdown function (like StoreManagementPage)
   const renderRowDropdown = (row: TableDataTypes): React.ReactNode => (
     <div className="row-action-popup">
-      <DropdownMenu
-        open={activeRowId === row.id}
-        onOpenChange={open => {
-          setActiveRowId(open ? row.id : null)
-        }}
-      >
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
@@ -935,6 +935,7 @@ export default function RecipeManagementPage({
         activeRowId={activeRowId}
         setActiveRowId={setActiveRowId}
         renderRowDropdown={renderRowDropdown}
+        onRowClick={handleRowClick}
       />
 
       {/* add Recipe popup */}
