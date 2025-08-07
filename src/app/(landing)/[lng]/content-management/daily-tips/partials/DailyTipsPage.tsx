@@ -227,6 +227,7 @@ export default function DailyTipsPage({
       const shopFoods =
         currentTranslations.shopPromotionData.en.shopPromoteFoods ?? []
 
+      // Ensure status is boolean for all foods
       const updateShopPromoteFoods = shopFoods.map((item, index) => {
         // Access the corresponding French item by index
         const translatedItem =
@@ -234,6 +235,7 @@ export default function DailyTipsPage({
 
         return {
           ...item,
+          status: typeof item.status === "boolean" ? item.status : item.status === "true",
           nameFR: translatedItem ? translatedItem.name : item.name
         }
       })

@@ -532,6 +532,15 @@ export default function ShopPromotionTab({
     form.reset(translationsData.shopPromotionData[activeLang])
   }, [activeLang, form.reset, translationsData.shopPromotionData])
 
+  // Keep form.shopPromoteFoods in sync with availData
+  useEffect(() => {
+    const fixedFoods = availData.map(item => ({
+      ...item,
+      status: typeof item.status === "boolean" ? item.status : item.status === "true"
+    }))
+    form.setValue("shopPromoteFoods", fixedFoods, { shouldValidate: true })
+  }, [availData])
+
   // Define functions to handle page changes
   const handlePageChange = (newPage: number): void => {
     setPage(newPage)
@@ -674,6 +683,12 @@ export default function ShopPromotionTab({
     const foods =
       translationsData.shopPromotionData[activeLang]?.shopPromoteFoods ?? []
     setAvailData(foods)
+    // Also update form value for shopPromoteFoods with boolean status
+    const fixedFoods = foods.map(item => ({
+      ...item,
+      status: typeof item.status === "boolean" ? item.status : item.status === "true"
+    }))
+    form.setValue("shopPromoteFoods", fixedFoods, { shouldValidate: true })
   }, [activeLang, translationsData.shopPromotionData])
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
