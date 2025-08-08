@@ -771,6 +771,7 @@ export default function EditShopPromotionTab({
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-3 text-black">
             {/* Shop Name */}
+            <div className="flex flex-col gap-2 md:flex-row md:gap-4">
               <div className="w-[25.5rem]">
                 <FormField
                   control={form.control}
@@ -794,7 +795,7 @@ export default function EditShopPromotionTab({
             </div>
 
             {/* Reason */}
-            <div className="w-full md:w-[25.5rem] mt-[-0.3rem]">
+            <div className="w-full md:w-[25.5rem]">
               <FormField
                 control={form.control}
                 name="reason"
@@ -827,8 +828,9 @@ export default function EditShopPromotionTab({
                 )}
               />
             </div>
+            </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-4">
               {/* Location */}
               <FormField
                 control={form.control}

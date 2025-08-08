@@ -1525,11 +1525,10 @@ export default function EditStorePopUpContent({
               />
             </div>
 
-            <div className="flex flex-col gap-1">
-              <Label>{translations.time}</Label>
+            <div className="flex flex-col gap-1 mt-1">
               <div className="flex gap-7 items-center">
                 <div className="flex flex-col">
-                  <Label htmlFor="time-from" className="text-xs text-gray-400">
+                  <Label htmlFor="time-from" className="mb-[6px]">
                     {translations.from}
                   </Label>
 
@@ -1548,7 +1547,7 @@ export default function EditStorePopUpContent({
                                 "timeFrom"
                               )(e.target.value)
                             }}
-                            className="h-6 bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                            className=" bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                           />
                         </FormControl>
                         <FormMessage />
@@ -1557,7 +1556,7 @@ export default function EditStorePopUpContent({
                   />
                 </div>
                 <div className="flex flex-col">
-                  <Label htmlFor="time-to" className="text-xs text-gray-400">
+                  <Label htmlFor="time-to" className="mb-[6px]">
                     {translations.to}
                   </Label>
 
@@ -1573,7 +1572,7 @@ export default function EditStorePopUpContent({
                             onChange={e => {
                               handleTimeChange(field, "timeTo")(e.target.value)
                             }}
-                            className=" h-6 bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                            className=" bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                           />
                         </FormControl>
                         <FormMessage />
