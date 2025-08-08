@@ -265,9 +265,27 @@ export default function UserOverviewPopup({
                 {userFavorites?.favouriteFoods.length ?? 0} Items
               </h3>
             </div>
-            <div className="flex flex-wrap gap-2 text-center">
+            <div
+              className={`text-center gap-2 ${
+                (userFavorites?.favouriteFoods?.length ?? 0) > 7
+                  ? "flex overflow-x-auto flex-nowrap hide-scrollbar"
+                  : "flex flex-wrap"
+              }`}
+              style={
+                (userFavorites?.favouriteFoods?.length ?? 0) > 7
+                  ? {
+                      maxWidth: "100%",
+                      scrollbarWidth: "none",
+                      msOverflowStyle: "none"
+                    }
+                  : { maxWidth: "100%" }
+              }
+            >
               {userFavorites?.favouriteFoods.map(f => (
-                <div key={f.id} className="flex flex-col items-center">
+                <div
+                  key={f.id}
+                  className="flex flex-col items-center min-w-[110px]"
+                >
                   <div className="relative w-[100px] h-[100px]">
                     <Image
                       src={
@@ -302,9 +320,27 @@ export default function UserOverviewPopup({
                 {userFavorites?.favouriteRecipes.length ?? 0} Items
               </h3>
             </div>
-            <div className="flex flex-wrap gap-2 text-center">
+            <div
+              className={`text-center gap-2 ${
+                (userFavorites?.favouriteRecipes?.length ?? 0) > 7
+                  ? "flex overflow-x-auto flex-nowrap hide-scrollbar"
+                  : "flex flex-wrap"
+              }`}
+              style={
+                (userFavorites?.favouriteRecipes?.length ?? 0) > 7
+                  ? {
+                      maxWidth: "100%",
+                      scrollbarWidth: "none",
+                      msOverflowStyle: "none"
+                    }
+                  : { maxWidth: "100%" }
+              }
+            >
               {userFavorites?.favouriteRecipes.map(f => (
-                <div key={f.id} className="flex flex-col items-center">
+                <div
+                  key={f.id}
+                  className="flex flex-col items-center min-w-[110px]"
+                >
                   <div className="relative w-[100px] h-[100px]">
                     <Image
                       src={
@@ -366,6 +402,17 @@ export default function UserOverviewPopup({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Hide scrollbar for Chrome, Safari and Opera */}
+      <style jsx global>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none; /* IE and Edge */
+          scrollbar-width: none; /* Firefox */
+        }
+      `}</style>
     </Dialog>
   )
 }
