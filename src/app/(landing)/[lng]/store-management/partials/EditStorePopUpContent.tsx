@@ -144,7 +144,7 @@ export default function EditStorePopUpContent({
 }): JSX.Element {
   const { translateText } = useTranslation()
   const { storeData, setTranslationField, resetForm } = useStoreStore() as any
-  const [isTranslating, setIsTranslating] = useState(false)
+  const [, setIsTranslating] = useState(false)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [, setIsPremium] = React.useState(false)
@@ -1398,14 +1398,6 @@ export default function EditStorePopUpContent({
       )
     }
     setTranslationField("storeData", oppLang, "availData", oppUpdated)
-  }
-
-  if (isTranslating && !isDataLoaded) {
-    return (
-      <div className="flex justify-center items-center p-8">
-        <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
-      </div>
-    )
   }
 
   return (

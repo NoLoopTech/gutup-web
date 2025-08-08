@@ -113,7 +113,7 @@ export default function AddFoodPopUpContent({
   const { translateText } = useTranslation()
   const { activeLang, foodData, setTranslationField, allowMultiLang } =
     useFoodStore() as any
-  const [isTranslating, setIsTranslating] = useState(false)
+  const [, setIsTranslating] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
   const { data: session } = useSession()
@@ -1356,19 +1356,14 @@ export default function AddFoodPopUpContent({
             >
               {translations.cancel}
             </Button>
-            <Button type="submit" disabled={isLoading || isTranslating}>
+            <Button type="submit" disabled={isLoading}>
               {isLoading ? (
-                <div className="flex gap-2 items-center">
-                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
-                  Saving..
-                </div>
-              ) : isTranslating ? (
-                <div className="flex gap-2 items-center">
-                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
-                  Translating..
-                </div>
+              <div className="flex gap-2 items-center">
+                <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                {translations.save}
+              </div>
               ) : (
-                translations.save
+              translations.save
               )}
             </Button>
           </div>

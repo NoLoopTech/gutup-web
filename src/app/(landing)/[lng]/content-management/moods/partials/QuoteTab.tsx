@@ -169,11 +169,6 @@ export default function QuoteTab({
 
   return (
     <div className="relative">
-      {isTranslating && (
-        <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/60">
-          <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
-        </div>
-      )}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}

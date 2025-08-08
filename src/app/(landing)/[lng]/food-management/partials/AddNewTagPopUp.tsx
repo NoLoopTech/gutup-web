@@ -50,7 +50,7 @@ export default function AddNewTagPopUp({
   } = useTagStore()
 
   const { translateText } = useTranslation()
-  const [isTranslating, setIsTranslating] = useState(false)
+  const [, setIsTranslating] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
@@ -247,11 +247,11 @@ export default function AddNewTagPopUp({
             <Button variant="outline" type="button" onClick={handleReset}>
               {translations.cancel}
             </Button>
-            <Button type="submit" disabled={isLoading || isTranslating}>
-              {isLoading || isTranslating ? (
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
                 <div className="flex gap-2 items-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
-                  {isTranslating ? "Translating.." : translations.save}
+                  {translations.save}
                 </div>
               ) : (
                 translations.save
