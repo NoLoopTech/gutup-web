@@ -22,6 +22,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
@@ -564,34 +565,49 @@ export default function FoodOverviewPage(): React.ReactElement {
             >
               <DropdownMenuItem
                 disabled
-                className="text-xs text-muted-foreground"
+                className="cursor-pointer flex items-center gap-2 font-semibold text-xs text-muted-foreground"
               >
-                Filter by Months
+                <span>Filter by Months</span>
               </DropdownMenuItem>
-              {months.map(month => (
-                <DropdownMenuItem
-                  key={month.value}
-                  onSelect={e => {
-                    e.preventDefault()
-                    if (selectedMonths.includes(month.value)) {
-                      setSelectedMonths(
-                        selectedMonths.filter(m => m !== month.value)
-                      )
-                    } else {
-                      setSelectedMonths([...selectedMonths, month.value])
-                    }
-                  }}
-                  className="cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedMonths.includes(month.value)}
-                    readOnly
-                    className="mr-2"
-                  />
-                  {month.label}
-                </DropdownMenuItem>
-              ))}
+              <DropdownMenuSeparator />
+              {months.map(month => {
+                const isSelected = selectedMonths.includes(month.value)
+                return (
+                  <DropdownMenuItem
+                    key={month.value}
+                    onSelect={e => {
+                      e.preventDefault()
+                      if (isSelected) {
+                        setSelectedMonths(
+                          selectedMonths.filter(m => m !== month.value)
+                        )
+                      } else {
+                        setSelectedMonths([...selectedMonths, month.value])
+                      }
+                    }}
+                    className="cursor-pointer flex items-center gap-2"
+                  >
+                    <span className="flex items-center justify-center w-4 h-4">
+                      {isSelected && (
+                        <svg
+                          className="w-4 h-4 text-primary"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                    </span>
+                    <span>{month.label}</span>
+                  </DropdownMenuItem>
+                )
+              })}
             </DropdownMenuContent>
           </DropdownMenu>
 

@@ -46,6 +46,7 @@
   "viewEditFoodItem": "Voir / Modifier l'aliment",
   "deleteFood": "Supprimer l'aliment",
   "saveChanges": "Enregistrer les modifications",
+  "allMonths": "Tous les mois",
 
   "required": "Requis",
   "mustbeatleast2characters": "Doit contenir au moins 2 caractères",

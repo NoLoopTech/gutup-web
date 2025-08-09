@@ -45,7 +45,8 @@ export interface translationsTypes {
   imagesSubContentText: string
   viewEditFoodItem: string
   deleteFood: string
-  saveChanges: string 
+  saveChanges: string
+  allMonths: string
 
   required: string
   mustbeatleast2characters: string
@@ -104,6 +105,7 @@ export const defaultTranslations: translationsTypes = {
   viewEditFoodItem: "",
   deleteFood: "",
   saveChanges: "",
+  allMonths: "",
 
   required: "",
   mustbeatleast2characters: "",

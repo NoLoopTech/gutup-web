@@ -24,7 +24,7 @@ export function SimpleDatePicker({
   onChange,
   label = "Pick a date",
   minDate = new Date("1900-01-01"),
-  maxDate = new Date()
+  maxDate
 }: SimpleDatePickerProps): React.ReactElement {
   const [open, setOpen] = React.useState(false)
 

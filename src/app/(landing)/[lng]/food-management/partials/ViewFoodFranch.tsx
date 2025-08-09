@@ -21,7 +21,8 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem
+  DropdownMenuItem,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 
@@ -423,33 +424,42 @@ export default function ViewFoodFrench({
                     season: updated
                   }))
                 }}
-                className="text-xs text-muted-foreground cursor-pointer font-semibold"
+                className="cursor-pointer flex items-center gap-2 font-semibold text-xs text-muted-foreground"
               >
-                Tous les mois
-                <input
-                  type="checkbox"
-                  checked={seasons.every(m =>
+                <span className="flex items-center justify-center w-4 h-4">
+                  {seasons.every(m =>
                     formData.season.includes(m.labelFr ?? m.label)
+                  ) && (
+                    <svg
+                      className="w-4 h-4 text-primary"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
                   )}
-                  readOnly
-                  className="ml-2"
-                />
+                </span>
+                <span>Tous les mois</span>
               </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled
-                className="text-xs text-muted-foreground"
-              >
-                Filtrer par mois
-              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               {seasons.map(month => {
                 const selectedMonths = formData.season
+                const isSelected = selectedMonths.includes(
+                  month.labelFr ?? month.label
+                )
                 return (
                   <DropdownMenuItem
                     key={month.value}
                     onSelect={e => {
                       e.preventDefault()
                       let updated = [...selectedMonths]
-                      if (updated.includes(month.labelFr ?? month.label)) {
+                      if (isSelected) {
                         updated = updated.filter(
                           m => m !== (month.labelFr ?? month.label)
                         )
@@ -472,17 +482,26 @@ export default function ViewFoodFrench({
                         season: updated
                       }))
                     }}
-                    className="cursor-pointer"
+                    className="cursor-pointer flex items-center gap-2"
                   >
-                    <input
-                      type="checkbox"
-                      checked={selectedMonths.includes(
-                        month.labelFr ?? month.label
+                    <span className="flex items-center justify-center w-4 h-4">
+                      {isSelected && (
+                        <svg
+                          className="w-4 h-4 text-primary"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
                       )}
-                      readOnly
-                      className="mr-2"
-                    />
-                    {month.labelFr ?? month.label}
+                    </span>
+                    <span>{month.labelFr ?? month.label}</span>
                   </DropdownMenuItem>
                 )
               })}
