@@ -3,6 +3,14 @@
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { Button } from "@/components/ui/button"
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList
+} from "@/components/ui/command"
+import {
   Form,
   FormControl,
   FormField,
@@ -11,6 +19,11 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover"
 import {
   Select,
   SelectContent,
@@ -30,6 +43,8 @@ import React, { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
+import { Check, ChevronsUpDown } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface Option {
   value: string
@@ -86,6 +101,7 @@ export default function FoodTab({
     en: [],
     fr: []
   })
+  const [shopCategoryOpen, setShopCategoryOpen] = useState(false)
 
   const { shopCategorys } = useGetShopCategorys() as {
     shopCategorys: StoreCatogeryTypes[]
@@ -325,25 +341,68 @@ export default function FoodTab({
               <FormItem>
                 <FormLabel>{translations.shopcategory}</FormLabel>
                 <FormControl>
-                  <Select
-                    value={field.value}
-                    onValueChange={handleShopCategoryChange}
+                  <Popover
+                    open={shopCategoryOpen}
+                    onOpenChange={setShopCategoryOpen}
                   >
-                    <SelectTrigger className="mt-1 w-full">
-                      <SelectValue
-                        placeholder={translations.selectShopCategory}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[...shopcategory[activeLang]]
-                        .sort((a, b) => a.label.localeCompare(b.label))
-                        .map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={shopCategoryOpen}
+                        className="w-full justify-between"
+                      >
+                        <span
+                          className={cn(
+                            !field.value && "text-muted-foreground font-normal",
+                            "truncate text-left flex-1"
+                          )}
+                        >
+                          {field.value
+                            ? shopcategory[activeLang].find(
+                                option => option.value === field.value
+                              )?.label
+                            : translations.selectShopCategory}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full min-w-[var(--radix-popover-trigger-width)] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder={translations.selectShopCategory}
+                          className="h-9"
+                        />
+                        <CommandList>
+                          <CommandEmpty>No category found</CommandEmpty>
+                          <CommandGroup>
+                            {[...shopcategory[activeLang]]
+                              .sort((a, b) => a.label.localeCompare(b.label))
+                              .map(option => (
+                                <CommandItem
+                                  key={option.value}
+                                  value={option.value}
+                                  onSelect={currentValue => {
+                                    handleShopCategoryChange(currentValue)
+                                    setShopCategoryOpen(false)
+                                  }}
+                                >
+                                  {option.label}
+                                  <Check
+                                    className={cn(
+                                      "ml-auto",
+                                      field.value === option.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                </CommandItem>
+                              ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </FormControl>
                 <FormMessage />
               </FormItem>
