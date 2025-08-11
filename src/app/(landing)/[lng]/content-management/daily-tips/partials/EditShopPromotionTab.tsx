@@ -586,6 +586,13 @@ export default function EditShopPromotionTab({
     })
   }, [activeLang, translationsData.shopPromotionData])
 
+  // Helper to pair reasons similar to concerns structure
+  function buildReasonsObjects() {
+    const enReasons = translationsData.shopPromotionData.en.reason || []
+    const frReasons = translationsData.shopPromotionData.fr.reason || []
+    return enReasons.map((r, i) => ({ concern: r, concernFR: frReasons[i] || "" }))
+  }
+
   // Keep form.shopPromoteFoods in sync with availData
   useEffect(() => {
     const fixedFoods = availData.map(item => ({
@@ -757,6 +764,7 @@ export default function EditShopPromotionTab({
   }, [activeLang, translationsData.shopPromotionData])
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
+    buildReasonsObjects()
     editDailyTip()
   }
 

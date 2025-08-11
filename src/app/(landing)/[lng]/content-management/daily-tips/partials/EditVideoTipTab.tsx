@@ -208,7 +208,14 @@ export default function EditVideoTipTab({
     }
   }, [activeLang, form.watch("concern")])
 
+  function buildConcernsObjects() {
+    const en = translationsData.videoTipData.en.concern || []
+    const fr = translationsData.videoTipData.fr.concern || []
+    return en.map((c, i) => ({ concern: c, concernFR: fr[i] || "" }))
+  }
+
   function onSubmit(_: z.infer<typeof FormSchema>): void {
+    buildConcernsObjects()
     editDailyTip()
   }
 

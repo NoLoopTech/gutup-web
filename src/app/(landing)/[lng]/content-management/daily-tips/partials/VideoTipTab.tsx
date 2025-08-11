@@ -213,7 +213,14 @@ export default function VideoTipTab({
     if (triggerRef.current) setMenuWidth(triggerRef.current.offsetWidth)
   }, [activeLang, form.watch("concern")])
 
+  function buildConcernsObjects() {
+    const en = translationsData.videoTipData.en.concern || []
+    const fr = translationsData.videoTipData.fr.concern || []
+    return en.map((c, i) => ({ concern: c, concernFR: fr[i] || "" }))
+  }
+
   function onSubmit(data: z.infer<typeof FormSchema>): void {
+    buildConcernsObjects() // ensures pairing ready for parent payload builder
     addDailyTip()
   }
 

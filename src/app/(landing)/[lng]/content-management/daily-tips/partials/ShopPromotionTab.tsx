@@ -513,6 +513,13 @@ export default function ShopPromotionTab({
     })
   }, [activeLang, translationsData.shopPromotionData])
 
+  // Helper to pair reasons for payload (mirrors other tabs concerns helper)
+  function buildReasonsObjects() {
+    const enReasons = translationsData.shopPromotionData.en.reason || []
+    const frReasons = translationsData.shopPromotionData.fr.reason || []
+    return enReasons.map((r, i) => ({ concern: r, concernFR: frReasons[i] || "" }))
+  }
+
   // Keep form.shopPromoteFoods in sync with availData
   useEffect(() => {
     const fixedFoods = availData.map(item => ({
@@ -673,6 +680,7 @@ export default function ShopPromotionTab({
   }, [activeLang, translationsData.shopPromotionData])
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
+    buildReasonsObjects()
     addDailyTip()
   }
 
