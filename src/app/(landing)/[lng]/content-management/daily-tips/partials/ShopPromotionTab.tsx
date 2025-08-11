@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Input } from "@/components/ui/input"
@@ -18,15 +18,14 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Check } from "lucide-react"
+import { Trash } from "lucide-react"
+import { getAllFoods } from "@/app/api/foods"
+import LocationDropdown from "@/components/Shared/dropdown/LocationDropdown"
+import { getLocationDetails } from "@/app/api/location"
+import { useGetShopCategorys } from "@/query/hooks/useGetShopCategorys"
+import { StoreCatogeryTypes } from "../../moods/partials/FoodTab"
 import {
   deleteImageFromFirebase,
   uploadImageToFirebase
@@ -36,12 +35,9 @@ import { useDailyTipStore } from "@/stores/useDailyTipStore"
 import { type translationsTypes } from "@/types/dailyTipTypes"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
-import { Trash } from "lucide-react"
-import { getAllFoods } from "@/app/api/foods"
-import LocationDropdown from "@/components/Shared/dropdown/LocationDropdown"
-import { getLocationDetails } from "@/app/api/location"
-import { useGetShopCategorys } from "@/query/hooks/useGetShopCategorys"
-import { StoreCatogeryTypes } from "../../moods/partials/FoodTab"
+import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Food {
   id: number
@@ -146,6 +142,8 @@ export default function ShopPromotionTab({
     en: [],
     fr: []
   })
+  const triggerReasonRef = useRef<HTMLButtonElement | null>(null)
+  const [reasonMenuWidth, setReasonMenuWidth] = useState<number | undefined>(undefined)
 
   const { shopCategorys } = useGetShopCategorys() as {
     shopCategorys: StoreCatogeryTypes[]
@@ -413,7 +411,7 @@ export default function ShopPromotionTab({
   // Validate only inputs and select
   const FormSchema = z.object({
     shopName: z.string().min(1, { message: translations.required }),
-    reason: z.string().nonempty(translations.pleaseSelectAReasonToDisplay),
+    reason: z.array(z.string()).min(1, { message: translations.pleaseSelectAReasonToDisplay }),
     shopLocation: z.string().min(2, { message: translations.required }),
     shopCategory: z.string().min(2, { message: translations.required }),
     subDescription: z.string().nonempty(translations.required).min(10, {
@@ -459,15 +457,12 @@ export default function ShopPromotionTab({
   })
 
   const handleInputChange = (fieldName: FieldNames, value: string) => {
+    if (fieldName === "reason") return // reason handled by multi-select toggle
     form.setValue(fieldName, value)
-    form.trigger(fieldName).then(isValid => {
-      if (isValid) {
-        form.clearErrors(fieldName)
-      }
-    })
+    form.trigger(fieldName).then(isValid => { if (isValid) form.clearErrors(fieldName) })
 
     setTranslationField("shopPromotionData", activeLang, fieldName, value)
-    if (fieldName !== "subDescription" || "shopCategory") {
+    if (fieldName !== "subDescription" || fieldName === "shopCategory") {
       setTranslationField("shopPromotionData", "fr", fieldName, value)
     }
   }
@@ -480,26 +475,6 @@ export default function ShopPromotionTab({
       } catch (error) {
         console.log("Error Translating", error)
       }
-    }
-  }
-
-  // handle change reason function
-  const handleReasonsChange = (value: string) => {
-    form.setValue("reason", value)
-    setTranslationField("shopPromotionData", activeLang, "reason", value)
-
-    const current = reason[activeLang]
-    const oppositeLang = activeLang === "en" ? "fr" : "en"
-    const opposite = reason[oppositeLang]
-
-    const index = current.findIndex(opt => opt.value === value)
-    if (index !== -1) {
-      setTranslationField(
-        "shopPromotionData",
-        oppositeLang,
-        "reason",
-        opposite[index].value
-      )
     }
   }
 
@@ -524,13 +499,19 @@ export default function ShopPromotionTab({
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: translationsData.shopPromotionData[activeLang]
+    defaultValues: {
+      ...(translationsData.shopPromotionData[activeLang] as any),
+      reason: translationsData.shopPromotionData[activeLang].reason || []
+    }
   })
 
   // Update form when lang changes
   useEffect(() => {
-    form.reset(translationsData.shopPromotionData[activeLang])
-  }, [activeLang, form.reset, translationsData.shopPromotionData])
+    form.reset({
+      ...(translationsData.shopPromotionData[activeLang] as any),
+      reason: translationsData.shopPromotionData[activeLang].reason || []
+    })
+  }, [activeLang, translationsData.shopPromotionData])
 
   // Keep form.shopPromoteFoods in sync with availData
   useEffect(() => {
@@ -695,6 +676,23 @@ export default function ShopPromotionTab({
     addDailyTip()
   }
 
+  useEffect(() => { if (triggerReasonRef.current) setReasonMenuWidth(triggerReasonRef.current.offsetWidth) }, [activeLang, form.watch("reason")])
+
+  const handleReasonsToggle = (value: string) => {
+    const current = (form.getValues("reason") as string[]) || []
+    const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value]
+    form.setValue("reason", next, { shouldValidate: true })
+    setTranslationField("shopPromotionData", activeLang, "reason", next)
+    const oppositeLang = activeLang === "en" ? "fr" : "en"
+    const currentList = reason[activeLang]
+    const oppositeList = reason[oppositeLang]
+    const mapped = next.map(v => {
+      const idx = currentList.findIndex(r => r.value === v)
+      return idx > -1 ? oppositeList[idx].value : v
+    })
+    setTranslationField("shopPromotionData", oppositeLang, "reason", mapped)
+  }
+
   return (
     <div className="relative">
       <Form {...form}>
@@ -733,25 +731,40 @@ export default function ShopPromotionTab({
                   <FormItem>
                     <FormLabel>{translations.reasonToDisplay}</FormLabel>
                     <FormControl>
-                      <Select
-                        value={field.value}
-                        onValueChange={handleReasonsChange}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue
-                            placeholder={translations.selectReason}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[...reason[activeLang]]
-                            .sort((a, b) => a.label.localeCompare(b.label))
-                            .map(option => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button ref={triggerReasonRef} type="button" variant="outline" className="w-full justify-between truncate">
+                            {field.value && field.value.length > 0 ? (
+                              <span className="text-left flex-1">
+                                {(field.value as string[]).map(v => {
+                                  const opt = reason[activeLang].find(o => o.value === v)
+                                  return opt ? opt.label : v
+                                }).join(", ")}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground font-normal">{translations.selectReason}</span>
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent style={{ width: reasonMenuWidth }} className="max-h-80 overflow-y-auto">
+                          <DropdownMenuSeparator />
+                          {[...reason[activeLang]].sort((a, b) => a.label.localeCompare(b.label)).map(item => {
+                            const isSelected = (field.value as string[]).includes(item.value)
+                            return (
+                              <DropdownMenuItem
+                                key={item.value}
+                                onSelect={e => { e.preventDefault(); handleReasonsToggle(item.value) }}
+                                className="cursor-pointer flex items-center gap-2"
+                              >
+                                <span className="flex items-center justify-center w-4 h-4">
+                                  {isSelected && <Check className="w-4 h-4 text-primary" />}
+                                </span>
+                                <span>{item.label}</span>
+                              </DropdownMenuItem>
+                            )
+                          })}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

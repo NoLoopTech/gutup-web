@@ -16,13 +16,13 @@ interface BasicLayoutFields {
   subDescriptionOne: string
   subTitleTwo: string
   subDescriptionTwo: string
-  concern: string
+  concern: string[] // changed to array for multi-select
   image: string
   share: boolean
 }
 
 interface ShopPromotionFields {
-  reason: string
+  reason: string[]
   shopName: string
   shopLocation: string
   shopLocationLatLng: {
@@ -41,7 +41,7 @@ interface ShopPromotionFields {
 }
 
 interface VideoTipFields {
-  concern: string
+  concern: string[]
   title: string
   subTitle: string
   subDescription: string
@@ -91,7 +91,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             subDescriptionOne: "",
             subTitleTwo: "",
             subDescriptionTwo: "",
-            concern: "",
+            concern: [], // updated
             image: "",
             share: false
           },
@@ -101,14 +101,14 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             subDescriptionOne: "",
             subTitleTwo: "",
             subDescriptionTwo: "",
-            concern: "",
+            concern: [], // updated
             image: "",
             share: false
           }
         },
         shopPromotionData: {
           en: {
-            reason: "",
+            reason: [],
             shopName: "",
             shopLocation: "",
             shopLocationLatLng: {
@@ -127,7 +127,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             shopPromoteFoods: []
           },
           fr: {
-            reason: "",
+            reason: [],
             shopName: "",
             shopLocation: "",
             shopLocationLatLng: {
@@ -148,14 +148,14 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
         },
         videoTipData: {
           en: {
-            concern: "",
+            concern: [],
             title: "",
             subTitle: "",
             subDescription: "",
             videoLink: ""
           },
-          fr: {
-            concern: "",
+            fr: {
+            concern: [],
             title: "",
             subTitle: "",
             subDescription: "",
@@ -164,7 +164,6 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
         }
       },
 
-      // Optional setters if not already added
       setAllowMultiLang: val => {
         set(state => ({
           allowMultiLang: val,
@@ -204,7 +203,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 subDescriptionOne: "",
                 subTitleTwo: "",
                 subDescriptionTwo: "",
-                concern: "",
+                concern: [], // updated
                 image: "",
                 share: false
               },
@@ -214,14 +213,14 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 subDescriptionOne: "",
                 subTitleTwo: "",
                 subDescriptionTwo: "",
-                concern: "",
+                concern: [], // updated
                 image: "",
                 share: false
               }
             },
             shopPromotionData: {
               en: {
-                reason: "",
+                reason: [],
                 shopName: "",
                 shopLocation: "",
                 shopLocationLatLng: {
@@ -239,7 +238,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 shopPromoteFoods: []
               },
               fr: {
-                reason: "",
+                reason: [],
                 shopName: "",
                 shopLocation: "",
                 shopLocationLatLng: {
@@ -259,14 +258,14 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             },
             videoTipData: {
               en: {
-                concern: "",
+                concern: [],
                 title: "",
                 subTitle: "",
                 subDescription: "",
                 videoLink: ""
               },
               fr: {
-                concern: "",
+                concern: [],
                 title: "",
                 subTitle: "",
                 subDescription: "",

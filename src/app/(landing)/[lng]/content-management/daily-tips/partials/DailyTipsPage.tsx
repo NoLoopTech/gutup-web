@@ -244,20 +244,20 @@ export default function DailyTipsPage({
         }
       })
 
-      const requestBody = {
+      const requestBody: any = {
         allowMultiLang: currentAllowMultiLang,
         concern:
           currentTab === "basicForm"
             ? currentTranslations.basicLayoutData.en.concern
             : currentTab === "videoForm"
             ? currentTranslations.videoTipData.en.concern
-            : currentTranslations.shopPromotionData.en.reason,
+            : currentTranslations.shopPromotionData.en.reason, // now array
         concernFR:
           currentTab === "basicForm"
             ? currentTranslations.basicLayoutData.fr.concern
             : currentTab === "videoForm"
             ? currentTranslations.videoTipData.fr.concern
-            : currentTranslations.shopPromotionData.fr.reason,
+            : currentTranslations.shopPromotionData.fr.reason, // now array
 
         title:
           currentTab === "basicForm"
@@ -372,17 +372,15 @@ export default function DailyTipsPage({
         uploadedImageUrl = await uploadDailyTipImageAndSetUrl()
       }
 
-      const requestBody: EditDailyTipTypes = {}
+      const requestBody: any = {}
       const updatedState = useUpdateDailyTipStore.getState().translationsData
 
       // Root-level fields
       if (activeTab === "basicForm") {
         if ("concern" in updatedState.basicLayoutData.en)
-          requestBody.concern = updatedState.basicLayoutData.en
-            .concern as string
+          requestBody.concern = updatedState.basicLayoutData.en.concern as any
         if ("concern" in updatedState.basicLayoutData.fr)
-          requestBody.concernFR = updatedState.basicLayoutData.fr
-            .concern as string
+          requestBody.concernFR = updatedState.basicLayoutData.fr.concern as any
         if ("title" in updatedState.basicLayoutData.en)
           requestBody.title = updatedState.basicLayoutData.en.title as string
         if ("title" in updatedState.basicLayoutData.fr)
@@ -395,9 +393,9 @@ export default function DailyTipsPage({
 
       if (activeTab === "videoForm") {
         if ("concern" in updatedState.videoTipData.en)
-          requestBody.concern = updatedState.videoTipData.en.concern as string
+          requestBody.concern = updatedState.videoTipData.en.concern as any
         if ("concern" in updatedState.videoTipData.fr)
-          requestBody.concernFR = updatedState.videoTipData.fr.concern as string
+          requestBody.concernFR = updatedState.videoTipData.fr.concern as any
         if ("title" in updatedState.videoTipData.en)
           requestBody.title = updatedState.videoTipData.en.title as string
         if ("title" in updatedState.videoTipData.fr)
@@ -410,9 +408,9 @@ export default function DailyTipsPage({
 
       if (activeTab === "shopPromote") {
         if ("reason" in updatedState.shopPromotionData.en)
-          requestBody.concern = updatedState.shopPromotionData.en.reason as string
+          requestBody.concern = updatedState.shopPromotionData.en.reason as any
         if ("reason" in updatedState.shopPromotionData.fr)
-          requestBody.concernFR = updatedState.shopPromotionData.fr.reason as string
+          requestBody.concernFR = updatedState.shopPromotionData.fr.reason as any
         if ("shopName" in updatedState.shopPromotionData.en)
           requestBody.title = updatedState.shopPromotionData.en.shopName as string
         if ("shopName" in updatedState.shopPromotionData.fr)

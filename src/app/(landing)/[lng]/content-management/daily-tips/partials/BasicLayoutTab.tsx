@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Resolver, useForm } from "react-hook-form"
 import { z } from "zod"
@@ -9,13 +9,6 @@ import { Separator } from "@/components/ui/separator"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select"
 import {
   Form,
   FormControl,
@@ -30,6 +23,14 @@ import { useDailyTipStore } from "@/stores/useDailyTipStore"
 import { Checkbox } from "@/components/ui/checkbox"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { toast } from "sonner"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu"
+import { Check } from "lucide-react"
 
 interface Option {
   value: string
@@ -96,6 +97,8 @@ export default function BasicLayoutTab({
   } = useDailyTipStore()
   const [isTranslating, setIsTranslating] = useState(false)
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const triggerRef = useRef<HTMLButtonElement | null>(null)
+  const [menuWidth, setMenuWidth] = useState<number | undefined>(undefined)
 
   // Validation schema including inputs & textareas
   const FormSchema = z.object({
@@ -130,8 +133,8 @@ export default function BasicLayoutTab({
         message: translations.subDescriptionTwoMustNotExceed500Characters
       }),
     concern: z
-      .string({ required_error: translations.pleaseSelectAConcern })
-      .nonempty(translations.pleaseSelectAConcern),
+      .array(z.string())
+      .min(1, { message: translations.pleaseSelectAConcern }),
     image: z.string().nonempty(translations.required),
     share: z
       .boolean({ required_error: translations.required })
@@ -169,9 +172,10 @@ export default function BasicLayoutTab({
       z.infer<typeof FormSchema>,
       any
     >,
-    defaultValues: translationsData.basicLayoutData[activeLang] as z.infer<
-      typeof FormSchema
-    >
+    defaultValues: {
+      ...(translationsData.basicLayoutData[activeLang] as any),
+      concern: translationsData.basicLayoutData[activeLang].concern || []
+    }
   })
 
   // Update form when lang changes
@@ -179,24 +183,26 @@ export default function BasicLayoutTab({
     form.reset(translationsData.basicLayoutData[activeLang])
   }, [form.reset, translationsData.basicLayoutData])
 
-  // handle change concerns function
-  const handleConcernsChange = (value: string) => {
-    form.setValue("concern", value)
-    setTranslationField("basicLayoutData", activeLang, "concern", value)
-
-    const current = concerns[activeLang]
-    const oppositeLang = activeLang === "en" ? "fr" : "en"
-    const opposite = concerns[oppositeLang]
-
-    const index = current.findIndex(opt => opt.value === value)
-    if (index !== -1) {
-      setTranslationField(
-        "basicLayoutData",
-        oppositeLang,
-        "concern",
-        opposite[index].value
-      )
+  // handle change concerns function (multi-select)
+  const handleConcernsToggle = (value: string) => {
+    const current = (form.getValues("concern") as string[]) || []
+    let next: string[]
+    if (current.includes(value)) {
+      next = current.filter(v => v !== value)
+    } else {
+      next = [...current, value]
     }
+    form.setValue("concern", next, { shouldValidate: true })
+    setTranslationField("basicLayoutData", activeLang, "concern", next)
+    // mirror indices to other lang maintaining order
+    const oppositeLang = activeLang === "en" ? "fr" : "en"
+    const currentList = concerns[activeLang]
+    const oppositeList = concerns[oppositeLang]
+    const mapped = next.map(v => {
+      const idx = currentList.findIndex(c => c.value === v)
+      return idx > -1 ? oppositeList[idx].value : v
+    })
+    setTranslationField("basicLayoutData", oppositeLang, "concern", mapped)
   }
 
   const handleImageSelect = async (files: File[] | null) => {
@@ -254,6 +260,10 @@ export default function BasicLayoutTab({
     addDailyTip()
   }
 
+  useEffect(() => {
+    if (triggerRef.current) setMenuWidth(triggerRef.current.offsetWidth)
+  }, [activeLang, form.watch("concern")])
+
   return (
     <div className="relative">
       <Form {...form}>
@@ -270,28 +280,63 @@ export default function BasicLayoutTab({
                     <FormItem>
                       <FormLabel>{translations.concern}</FormLabel>
                       <FormControl>
-                        <Select
-                          value={field.value}
-                          onValueChange={handleConcernsChange}
-                        >
-                          <SelectTrigger className="mt-1 w-full">
-                            <SelectValue
-                              placeholder={translations.selectConcern}
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              ref={triggerRef}
+                              type="button"
+                              variant="outline"
+                              className="w-full justify-between truncate"
+                            >
+                              {field.value && field.value.length > 0 ? (
+                                <span className="text-left flex-1">
+                                  {field.value
+                                    .map(v => {
+                                      const opt = concerns[activeLang].find(
+                                        o => o.value === v
+                                      )
+                                      return opt ? opt.label : v
+                                    })
+                                    .join(", ")}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground font-normal">
+                                  {translations.selectConcern}
+                                </span>
+                              )}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            style={{ width: menuWidth }}
+                            className="max-h-80 overflow-y-auto"
+                          >
+                            <DropdownMenuSeparator />
                             {[...concerns[activeLang]]
                               .sort((a, b) => a.label.localeCompare(b.label))
-                              .map(option => (
-                                <SelectItem
-                                  key={option.value}
-                                  value={option.value}
-                                >
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
+                              .map(item => {
+                                const isSelected = (field.value ).includes(
+                                  item.value
+                                )
+                                return (
+                                  <DropdownMenuItem
+                                    key={item.value}
+                                    onSelect={e => {
+                                      e.preventDefault()
+                                      handleConcernsToggle(item.value)
+                                    }}
+                                    className="cursor-pointer flex items-center gap-2"
+                                  >
+                                    <span className="flex items-center justify-center w-4 h-4">
+                                      {isSelected && (
+                                        <Check className="w-4 h-4 text-primary" />
+                                      )}
+                                    </span>
+                                    <span>{item.label}</span>
+                                  </DropdownMenuItem>
+                                )
+                              })}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
