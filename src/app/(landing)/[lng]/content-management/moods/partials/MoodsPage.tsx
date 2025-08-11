@@ -527,6 +527,7 @@ export default function MoodsPage({
         addMood={handleAddMood}
         isLoading={isLoading}
         userName={userName}
+        token={token}
       />
 
       <EditMoodMainPopUp

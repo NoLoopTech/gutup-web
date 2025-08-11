@@ -29,13 +29,15 @@ export default function EditMoodPopUp({
   onClose,
   EditMood,
   isLoading,
-  userName
+  userName,
+  token
 }: {
   translations: translationsTypes
   onClose: () => void
   EditMood: () => void
   isLoading: boolean
   userName: string
+  token: string
 }): JSX.Element {
   const { activeTab, setActiveTab } = useMoodStore()
 
@@ -85,6 +87,7 @@ export default function EditMoodPopUp({
             EditFoodMood={EditMood}
             isLoading={isLoading}
             userName={userName}
+            token={token}
           />
         )}
         {activeTab === "Recipe" && (
@@ -94,6 +97,7 @@ export default function EditMoodPopUp({
             EditRecipeMood={EditMood}
             isLoading={isLoading}
             userName={userName}
+            token={token}
           />
         )}
       </div>

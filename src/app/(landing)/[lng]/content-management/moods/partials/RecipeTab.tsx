@@ -1,5 +1,6 @@
 "use client"
 
+import { getAllRecipes } from "@/app/api/recipe"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { Button } from "@/components/ui/button"
 import {
@@ -25,7 +26,7 @@ import { useTranslation } from "@/query/hooks/useTranslation"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { type translationsTypes } from "@/types/moodsTypes"
 import { zodResolver } from "@hookform/resolvers/zod"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -33,6 +34,11 @@ import { z } from "zod"
 interface Option {
   value: string
   label: string
+}
+
+interface ListOfRecipes {
+  en: string[]
+  fr: string[]
 }
 
 // Mood options per language
@@ -58,13 +64,15 @@ export default function RecipeTab({
   onClose,
   addRecipeMood,
   isLoading,
-  userName
+  userName,
+  token
 }: {
   translations: translationsTypes
   onClose: () => void
   addRecipeMood: () => void
   isLoading: boolean
   userName: string
+  token: string
 }): JSX.Element {
   const {
     activeLang,
@@ -75,6 +83,50 @@ export default function RecipeTab({
   const { translateText } = useTranslation()
   const [isTranslating, setIsTranslating] = useState(false)
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const [filteredRecipes, setFilteredRecipes] = useState<string[]>([])
+  const [listOfRecipes, setListOfRecipes] = useState<ListOfRecipes | undefined>(
+    undefined
+  )
+  const dropdownRef = useRef<HTMLUListElement>(null)
+
+  const handleClickOutside = (e: MouseEvent) => {
+    if (
+      dropdownRef.current &&
+      !dropdownRef.current.contains(e.target as Node)
+    ) {
+      setFilteredRecipes([])
+    }
+  }
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
+  // handle get recipes
+  const getRecipes = async (): Promise<void> => {
+    try {
+      const response = await getAllRecipes(token)
+      if (response.status === 200) {
+        const recipesByLanguage = {
+          en: response.data.map((recipe: any) => recipe.name),
+          fr: response.data.map((recipe: any) => recipe.nameFR)
+        }
+
+        setListOfRecipes(recipesByLanguage)
+      } else {
+        console.log(response)
+      }
+    } catch (error) {
+      console.error("Failed to fetch recipe:", error)
+    }
+  }
+
+  useEffect(() => {
+    void getRecipes()
+  }, [])
 
   const FormSchema = z.object({
     mood: z.string().nonempty(translations.pleaseSelectAMood),
@@ -131,6 +183,34 @@ export default function RecipeTab({
     })
 
     setTranslationField("recipeData", activeLang, fieldName, value)
+
+    if (fieldName === "recipe") {
+      // Filter the recipes as the user types
+      const filtered = listOfRecipes[activeLang]?.filter((recipe: string) =>
+        recipe.toLowerCase().includes(value.toLowerCase())
+      )
+      setFilteredRecipes(filtered || [])
+    }
+  }
+
+  const handleRecipeSelect = async (recipe: string) => {
+    // Set the recipe in the current language (activeLang)
+    form.setValue("recipe", recipe)
+    setTranslationField("recipeData", activeLang, "recipe", recipe)
+
+    // Translate the recipe to French (fr) if the active language is not French
+    if (activeLang !== "fr") {
+      try {
+        const translatedRecipe = await translateText(recipe)
+        setTranslationField("recipeData", "fr", "recipe", translatedRecipe)
+        form.setValue("recipe", translatedRecipe) // Set the translated value in the form
+      } catch (error) {
+        console.log("Error Translating Recipe:", error)
+      }
+    }
+
+    // Close the filtered recipes dropdown
+    setFilteredRecipes([])
   }
 
   const handleInputBlur = async (
@@ -246,6 +326,22 @@ export default function RecipeTab({
                     onChange={e => handleInputChange(e, "recipe")}
                     onBlur={() => handleInputBlur(field.value, "recipe")}
                   />
+                  {filteredRecipes.length > 0 && (
+                    <ul
+                      ref={dropdownRef}
+                      className="absolute mt-2 w-full text-sm bg-white rounded-md border border-gray-300 shadow-md"
+                    >
+                      {filteredRecipes.map((recipe, idx) => (
+                        <li
+                          key={idx}
+                          className="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleRecipeSelect(recipe)}
+                        >
+                          {recipe}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </FormControl>
                 <FormMessage />
               </FormItem>
