@@ -44,12 +44,6 @@ interface UserManagementDataType {
   dailyScore: number
 }
 
-// Define the type for the range object
-interface DateRange {
-  startDate: Date | null
-  endDate: Date | null
-}
-
 export default function UserManagementPage({
   token
 }: {
@@ -259,10 +253,7 @@ export default function UserManagementPage({
   }
 
   // handle dates change
-  const handleDateRangeChange = (range: DateRange): void => {
-    if (!range.startDate || !range.endDate) return
-    setSelectedDateRange(range)
-  }
+  // (removed unused handleDateRangeChange)
 
   // handle clear search values
   const handleClearSearchValues = (): void => {
@@ -327,8 +318,20 @@ export default function UserManagementPage({
         {/* select date range */}
         <div>
           <DateRangePicker
-            value={selectedDateRange}
-            onChange={handleDateRangeChange}
+            value={
+              selectedDateRange
+                ? {
+                    from: selectedDateRange.startDate ?? undefined,
+                    to: selectedDateRange.endDate ?? undefined
+                  }
+                : undefined
+            }
+            onChange={range => {
+              setSelectedDateRange({
+                startDate: range?.from ?? null,
+                endDate: range?.to ?? null
+              })
+            }}
           />
         </div>
 
