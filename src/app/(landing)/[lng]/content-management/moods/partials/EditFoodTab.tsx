@@ -30,7 +30,11 @@ import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 import { useUpdatedMoodTranslationStore } from "@/stores/useUpdatedMoodTranslationStore"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover"
 import {
   Command,
   CommandEmpty,
@@ -41,10 +45,18 @@ import {
 } from "@/components/ui/command"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useGetShopCategorys } from "@/query/hooks/useGetShopCategorys"
 
 interface Option {
   value: string
   label: string
+}
+
+interface StoreCatogeryTypes {
+  id: number
+  Tag: string
+  TagName: string
+  TagNameFr: string
 }
 
 const moodOptions: Record<string, Option[]> = {
@@ -61,19 +73,6 @@ const moodOptions: Record<string, Option[]> = {
     { value: "neutral", label: "Neutre" },
     { value: "sad", label: "Triste" },
     { value: "very sad", label: "Très triste" }
-  ]
-}
-
-const shopcategory: Record<string, Option[]> = {
-  en: [
-    { value: "bakery", label: "Bakery" },
-    { value: "dairy", label: "Dairy" },
-    { value: "produce", label: "Produce" }
-  ],
-  fr: [
-    { value: "boulangerie", label: "Boulangerie" },
-    { value: "laitière", label: "Laitière" },
-    { value: "produire", label: "Produire" }
   ]
 }
 
@@ -107,6 +106,39 @@ export default function EditFoodTab({
 
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [shopCategoryOpen, setShopCategoryOpen] = useState(false)
+  const [shopcategory, setShopcategory] = useState<Record<string, Option[]>>({
+    en: [],
+    fr: []
+  })
+
+  const { shopCategorys } = useGetShopCategorys() as {
+    shopCategorys: StoreCatogeryTypes[]
+  }
+
+  useEffect(() => {
+    if (shopCategorys) {
+      const tagsOptions = {
+        en: shopCategorys.map(tag => ({
+          value: tag.TagName,
+          label: tag.TagName
+        })),
+        fr: shopCategorys.map(tag => ({
+          value: tag.TagNameFr,
+          label: tag.TagNameFr
+        }))
+      }
+      setShopcategory(tagsOptions)
+
+      // Ensure existing value is valid; if not, clear to show placeholder
+      const currentVal = form.getValues("shopCategory")
+      const existsInCurrentLang = tagsOptions[activeLang].some(
+        o => o.value === currentVal
+      )
+      if (!existsInCurrentLang) {
+        form.setValue("shopCategory", "")
+      }
+    }
+  }, [shopCategorys, activeLang])
 
   const hasFoodUpdates =
     Object.keys(updatedTranslations.foodData.en).length > 0 ||
@@ -202,13 +234,13 @@ export default function EditFoodTab({
         "foodData",
         oppositeLang,
         "shopCategory",
-        opposite[index].value
+        opposite[index]?.value || value
       )
       setUpdatedField(
         "foodData",
         oppositeLang,
         "shopCategory",
-        opposite[index].value
+        opposite[index]?.value || value
       )
     }
   }
@@ -354,12 +386,12 @@ export default function EditFoodTab({
                         variant="outline"
                         role="combobox"
                         aria-expanded={shopCategoryOpen}
-                        className="w-full justify-between"
+                        className="w-full justify-between font-normal"
                       >
                         <span
                           className={cn(
-                            !field.value && "text-muted-foreground font-normal",
-                            "truncate text-left flex-1"
+                            !field.value && "text-muted-foreground",
+                            "truncate text-left flex-1 font-normal"
                           )}
                         >
                           {field.value
@@ -377,7 +409,7 @@ export default function EditFoodTab({
                           placeholder={translations.selectShopCategory}
                           className="h-9"
                         />
-                        <CommandList>
+                        <CommandList className="max-h-60 overflow-y-auto">
                           <CommandEmpty>No category found</CommandEmpty>
                           <CommandGroup>
                             {[...shopcategory[activeLang]]
@@ -394,9 +426,9 @@ export default function EditFoodTab({
                                   {option.label}
                                   <Check
                                     className={cn(
-                                      "ml-auto",
+                                      "ml-auto h-4 w-4",
                                       field.value === option.value
-                                        ? "opacity-100"
+                                        ? "opacity-90"
                                         : "opacity-0"
                                     )}
                                   />

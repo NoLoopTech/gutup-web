@@ -350,12 +350,12 @@ export default function FoodTab({
                         variant="outline"
                         role="combobox"
                         aria-expanded={shopCategoryOpen}
-                        className="w-full justify-between"
+                        className="w-full justify-between font-normal"
                       >
                         <span
                           className={cn(
-                            !field.value && "text-muted-foreground font-normal",
-                            "truncate text-left flex-1"
+                            !field.value && "text-muted-foreground",
+                            "truncate text-left flex-1 font-normal"
                           )}
                         >
                           {field.value
@@ -373,7 +373,7 @@ export default function FoodTab({
                           placeholder={translations.selectShopCategory}
                           className="h-9"
                         />
-                        <CommandList>
+                        <CommandList className="max-h-60 overflow-y-auto">
                           <CommandEmpty>No category found</CommandEmpty>
                           <CommandGroup>
                             {[...shopcategory[activeLang]]
@@ -390,9 +390,9 @@ export default function FoodTab({
                                   {option.label}
                                   <Check
                                     className={cn(
-                                      "ml-auto",
+                                      "ml-auto h-4 w-4",
                                       field.value === option.value
-                                        ? "opacity-100"
+                                        ? "opacity-90"
                                         : "opacity-0"
                                     )}
                                   />
