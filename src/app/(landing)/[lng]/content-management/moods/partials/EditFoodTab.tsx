@@ -25,7 +25,7 @@ import { useTranslation } from "@/query/hooks/useTranslation"
 import { useMoodStore } from "@/stores/useMoodStore"
 import { type translationsTypes } from "@/types/moodsTypes"
 import { zodResolver } from "@hookform/resolvers/zod"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -46,6 +46,8 @@ import {
 import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useGetShopCategorys } from "@/query/hooks/useGetShopCategorys"
+import { getAllFoodsList } from "@/app/api/foods"
+import { useGetShopCategorys } from "@/query/hooks/useGetShopCategorys"
 
 interface Option {
   value: string
@@ -57,6 +59,11 @@ interface StoreCatogeryTypes {
   Tag: string
   TagName: string
   TagNameFr: string
+ }
+
+interface ListOfFoods {
+  en: string[]
+  fr: string[]
 }
 
 const moodOptions: Record<string, Option[]> = {
@@ -81,13 +88,15 @@ export default function EditFoodTab({
   onClose,
   EditFoodMood,
   isLoading,
-  userName
+  userName,
+  token
 }: {
   translations: translationsTypes
   onClose: () => void
   EditFoodMood: () => void
   isLoading: boolean
   userName: string
+  token: string
 }): JSX.Element {
   const {
     activeLang,
@@ -103,13 +112,39 @@ export default function EditFoodTab({
 
   const { translateText } = useTranslation()
   const [, setIsTranslating] = useState(false)
-
+  const [shopcategory, setShopcategory] = useState<Record<string, Option[]>>({
+    en: [],
+    fr: []
+  })
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [shopCategoryOpen, setShopCategoryOpen] = useState(false)
   const [shopcategory, setShopcategory] = useState<Record<string, Option[]>>({
     en: [],
     fr: []
   })
+          
+  const [filteredFoods, setFilteredFoods] = useState<string[]>([])
+  const [listOfFoods, setListOfFoods] = useState<ListOfFoods | undefined>(
+    undefined
+  )
+
+  const dropdownRef = useRef<HTMLUListElement>(null)
+
+  const handleClickOutside = (e: MouseEvent) => {
+    if (
+      dropdownRef.current &&
+      !dropdownRef.current.contains(e.target as Node)
+    ) {
+      setFilteredFoods([])
+    }
+  }
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
 
   const { shopCategorys } = useGetShopCategorys() as {
     shopCategorys: StoreCatogeryTypes[]
@@ -118,11 +153,11 @@ export default function EditFoodTab({
   useEffect(() => {
     if (shopCategorys) {
       const tagsOptions = {
-        en: shopCategorys.map(tag => ({
+        en: shopCategorys.map((tag: StoreCatogeryTypes) => ({
           value: tag.TagName,
           label: tag.TagName
         })),
-        fr: shopCategorys.map(tag => ({
+        fr: shopCategorys.map((tag: StoreCatogeryTypes) => ({
           value: tag.TagNameFr,
           label: tag.TagNameFr
         }))
@@ -139,6 +174,29 @@ export default function EditFoodTab({
       }
     }
   }, [shopCategorys, activeLang])
+
+  // handle get foods
+  const getFoods = async (): Promise<void> => {
+    try {
+      const response = await getAllFoodsList(token)
+      if (response.status === 200) {
+        const FoodsByLanguage = {
+          en: response.data.map((food: any) => food.name),
+          fr: response.data.map((food: any) => food.nameFR)
+        }
+
+        setListOfFoods(FoodsByLanguage)
+      } else {
+        console.log(response)
+      }
+    } catch (error) {
+      console.error("Failed to fetch Foods:", error)
+    }
+  }
+
+  useEffect(() => {
+    void getFoods()
+  }, [])
 
   const hasFoodUpdates =
     Object.keys(updatedTranslations.foodData.en).length > 0 ||
@@ -260,6 +318,34 @@ export default function EditFoodTab({
 
     setTranslationField("foodData", activeLang, fieldName, value)
     setUpdatedField("foodData", activeLang, fieldName, value)
+
+    if (fieldName === "foodName") {
+      const filtered = listOfFoods[activeLang]?.filter((food: string) =>
+        food.toLowerCase().includes(value.toLowerCase())
+      )
+      setFilteredFoods(filtered || [])
+    }
+  }
+
+  const handleFoodSelect = async (food: string) => {
+    form.setValue("foodName", food)
+    setTranslationField("foodData", activeLang, "foodName", food)
+    setUpdatedField("foodData", activeLang, "foodName", food)
+
+    if (activeLang !== "fr") {
+      try {
+        const translatedFood = await translateText(food)
+        setTranslationField("foodData", "fr", "foodName", translatedFood)
+        setUpdatedField("foodData", "fr", "foodName", translatedFood)
+
+        form.setValue("foodName", translatedFood)
+      } catch (error) {
+        console.log("Error Translating Food:", error)
+      }
+    }
+
+    // Close the filtered recipes dropdown
+    setFilteredFoods([])
   }
 
   const handleInputBlur = async (
@@ -341,6 +427,22 @@ export default function EditFoodTab({
                     onChange={e => handleInputChange(e, "foodName")}
                     onBlur={() => handleInputBlur(field.value, "foodName")}
                   />
+                  {filteredFoods.length > 0 && (
+                    <ul
+                      ref={dropdownRef}
+                      className="absolute mt-2 w-full text-sm bg-white rounded-md border border-gray-300 shadow-md"
+                    >
+                      {filteredFoods.map((food, idx) => (
+                        <li
+                          key={idx}
+                          className="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleFoodSelect(food)}
+                        >
+                          {food}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </FormControl>
                 <FormMessage />
               </FormItem>

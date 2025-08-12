@@ -226,6 +226,7 @@ export default function EditMoodMainPopUp({
                 EditMood={EditMood}
                 isLoading={isLoading}
                 userName={userName}
+                token={token}
               />
             </TabsContent>
           </Tabs>

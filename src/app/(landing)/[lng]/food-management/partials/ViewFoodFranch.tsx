@@ -370,7 +370,9 @@ export default function ViewFoodFrench({
                         : option.value || option.label
                     }
                   >
-                    {option.labelFr ?? option.label}
+                    {option.labelFr ??
+                      option.label.charAt(0).toUpperCase() +
+                        option.label.slice(1)}
                   </SelectItem>
                 ))}
             </SelectContent>

@@ -161,7 +161,7 @@ export default function RecipeManagementPage({
     setViewRecipeId(0)
   }
 
-  // handle get users
+  // handle get recipes
   const getRecipes = async (): Promise<void> => {
     try {
       const response = await getAllRecipes(token)

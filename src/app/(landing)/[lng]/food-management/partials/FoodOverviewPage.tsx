@@ -622,7 +622,7 @@ export default function FoodOverviewPage(): React.ReactElement {
                     .sort((a, b) => a.label.localeCompare(b.label))
                     .map(item => (
                       <SelectItem key={item.value} value={item.value}>
-                        {item.label}
+                        {item.label.charAt(0).toUpperCase() + item.label.slice(1)}
                       </SelectItem>
                     ))
                 ) : (
