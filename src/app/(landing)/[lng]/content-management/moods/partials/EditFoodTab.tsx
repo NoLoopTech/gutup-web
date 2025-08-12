@@ -47,7 +47,6 @@ import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useGetShopCategorys } from "@/query/hooks/useGetShopCategorys"
 import { getAllFoodsList } from "@/app/api/foods"
-import { useGetShopCategorys } from "@/query/hooks/useGetShopCategorys"
 
 interface Option {
   value: string
@@ -59,7 +58,7 @@ interface StoreCatogeryTypes {
   Tag: string
   TagName: string
   TagNameFr: string
- }
+}
 
 interface ListOfFoods {
   en: string[]
@@ -118,11 +117,7 @@ export default function EditFoodTab({
   })
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [shopCategoryOpen, setShopCategoryOpen] = useState(false)
-  const [shopcategory, setShopcategory] = useState<Record<string, Option[]>>({
-    en: [],
-    fr: []
-  })
-          
+
   const [filteredFoods, setFilteredFoods] = useState<string[]>([])
   const [listOfFoods, setListOfFoods] = useState<ListOfFoods | undefined>(
     undefined
