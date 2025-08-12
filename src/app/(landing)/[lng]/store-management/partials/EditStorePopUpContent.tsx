@@ -957,14 +957,9 @@ export default function EditStorePopUpContent({
             item.type === row.type
         )
         function handleToggleDisplay(index: number, checked: boolean): void {
-          const itemType = availData[index]?.type
-          const currentOnCount = availData.filter(
-            item => item.type === itemType && item.display
-          ).length
+          const currentOnCount = availData.filter(item => item.display).length
           if (checked && currentOnCount >= 3) {
-            toast.error(
-              `Maximum display status items are 3 for ${itemType.toLowerCase()}s.`
-            )
+            toast.error(`Maximum display status items are 3 in total.`)
             return
           }
           let updated
@@ -1116,17 +1111,13 @@ export default function EditStorePopUpContent({
     }
 
     // Enforce max 3 display ON for ingredients
-    const ingredientDisplayCount = availData.filter(
-      item =>
-        (item.type === "Ingredient" || item.type === "Ingrédient") &&
-        item.display
-    ).length
+    const totalDisplayCount = availData.filter(item => item.display).length
     const entry: AvailableItem = {
       ingOrCatId: matchingFood ? Number(matchingFood.id) : 0,
       name: matchingFood ? matchingFood.name ?? name : name,
       type: activeLang === "en" ? "Ingredient" : "Ingrédient",
       tags: ["InSystem"],
-      display: ingredientDisplayCount < 3, // Only ON if less than 3 are ON
+      display: totalDisplayCount < 3, // Only ON if less than 3 total items are ON
       quantity: "",
       isMain: false,
       status: "Active"
@@ -1211,10 +1202,7 @@ export default function EditStorePopUpContent({
     }
 
     // Enforce max 3 display ON for categories
-    const categoryDisplayCount = availData.filter(
-      item =>
-        (item.type === "Category" || item.type === "Catégorie") && item.display
-    ).length
+    const totalDisplayCount = availData.filter(item => item.display).length
     const entry: AvailableItem = {
       ingOrCatId: matchingCategory ? Number(matchingCategory.id) : 0,
       name: matchingCategory
@@ -1224,7 +1212,7 @@ export default function EditStorePopUpContent({
         : name,
       type: activeLang === "en" ? "Category" : "Catégorie",
       tags: ["InSystem"],
-      display: categoryDisplayCount < 3, // Only ON if less than 3 are ON
+      display: totalDisplayCount < 3, // Only ON if less than 3 total items are ON
       quantity: "",
       isMain: false,
       status: "Active"
