@@ -91,7 +91,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             subDescriptionOne: "",
             subTitleTwo: "",
             subDescriptionTwo: "",
-            concern: [], // updated
+            concern: [],  
             image: "",
             share: false
           },
@@ -101,7 +101,7 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             subDescriptionOne: "",
             subTitleTwo: "",
             subDescriptionTwo: "",
-            concern: [], // updated
+            concern: [],  
             image: "",
             share: false
           }

@@ -63,6 +63,14 @@ export default function EditDailyTipMainPopUp({
       if (res.status === 200) {
         const data = res.data
 
+        // Concerns data for both languages
+        const englishConcerns = data.concerns.map(
+          (item: { concern: string }) => item.concern
+        )
+        const frenchConcerns = data.concerns.map(
+          (item: { concernFR: string }) => item.concernFR
+        )
+
         setAllowMultiLang(data.allowMultiLang)
         setActiveTab(
           data.type === "basic"
@@ -73,12 +81,17 @@ export default function EditDailyTipMainPopUp({
         )
 
         if (data.type === "basic") {
-          setTranslationField("basicLayoutData", "en", "concern", data.concern)
+          setTranslationField(
+            "basicLayoutData",
+            "en",
+            "concern",
+            englishConcerns.join(", ")
+          )
           setTranslationField(
             "basicLayoutData",
             "fr",
             "concern",
-            data.concernFR
+            frenchConcerns.join(", ")
           )
 
           setTranslationField("basicLayoutData", "en", "title", data.title)
@@ -192,8 +205,8 @@ export default function EditDailyTipMainPopUp({
           setUpdatedField("shopPromotionData", "en", "publishDate", undefined)
           setUpdatedField("shopPromotionData", "fr", "publishDate", undefined)
         } else if (data.type === "video") {
-          setTranslationField("videoTipData", "en", "concern", data.concern)
-          setTranslationField("videoTipData", "fr", "concern", data.concernFR)
+          setTranslationField("videoTipData", "en", "concern", englishConcerns)
+          setTranslationField("videoTipData", "fr", "concern", frenchConcerns)
 
           setTranslationField("videoTipData", "en", "title", data.title)
           setTranslationField("videoTipData", "fr", "title", data.typeFR)
@@ -257,12 +270,17 @@ export default function EditDailyTipMainPopUp({
           setUpdatedField("shopPromotionData", "en", "publishDate", undefined)
           setUpdatedField("shopPromotionData", "fr", "publishDate", undefined)
         } else {
-          setTranslationField("shopPromotionData", "en", "reason", data.concern)
+          setTranslationField(
+            "shopPromotionData",
+            "en",
+            "reason",
+            englishConcerns
+          )
           setTranslationField(
             "shopPromotionData",
             "fr",
             "reason",
-            data.concernFR
+            frenchConcerns
           )
 
           setTranslationField(

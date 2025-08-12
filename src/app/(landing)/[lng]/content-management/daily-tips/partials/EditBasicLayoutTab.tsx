@@ -143,9 +143,9 @@ export default function EditBasicLayoutTab({
       .max(500, {
         message: translations.subDescriptionTwoMustNotExceed500Characters
       }),
-    concern: z.array(z.string()).min(1, {
-      message: translations.pleaseSelectAConcern
-    }),
+    concern: z
+      .array(z.string())
+      .min(1, { message: translations.pleaseSelectAConcern }),
     image: z.string().nonempty(translations.required),
     share: z
       .boolean({ required_error: translations.required })
@@ -187,7 +187,8 @@ export default function EditBasicLayoutTab({
     >,
     defaultValues: {
       ...(translationsData.basicLayoutData[activeLang] as any),
-      concern: (translationsData.basicLayoutData[activeLang].concern as any) || []
+      concern:
+        (translationsData.basicLayoutData[activeLang].concern as any) || []
     }
   })
 
@@ -298,7 +299,9 @@ export default function EditBasicLayoutTab({
                   control={form.control}
                   name="concern"
                   render={({ field }) => {
-                    const selectedConcerns: string[] = Array.isArray(field.value)
+                    const selectedConcerns: string[] = Array.isArray(
+                      field.value
+                    )
                       ? field.value
                       : field.value
                       ? [field.value as any]
@@ -313,10 +316,10 @@ export default function EditBasicLayoutTab({
                                 ref={triggerRef}
                                 type="button"
                                 variant="outline"
-                                className="w-full justify-between truncate"
+                                className="justify-between w-full truncate"
                               >
                                 {selectedConcerns.length > 0 ? (
-                                  <span className="text-left flex-1">
+                                  <span className="flex-1 text-left">
                                     {selectedConcerns
                                       .map(v => {
                                         const opt = concerns[activeLang].find(
@@ -327,7 +330,7 @@ export default function EditBasicLayoutTab({
                                       .join(", ")}
                                   </span>
                                 ) : (
-                                  <span className="text-muted-foreground font-normal">
+                                  <span className="font-normal text-muted-foreground">
                                     {translations.selectConcern}
                                   </span>
                                 )}
@@ -335,13 +338,15 @@ export default function EditBasicLayoutTab({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
                               style={{ width: menuWidth }}
-                              className="max-h-80 overflow-y-auto"
+                              className="overflow-y-auto max-h-80"
                             >
                               <DropdownMenuSeparator />
                               {[...concerns[activeLang]]
                                 .sort((a, b) => a.label.localeCompare(b.label))
                                 .map(item => {
-                                  const isSelected = selectedConcerns.includes(item.value)
+                                  const isSelected = selectedConcerns.includes(
+                                    item.value
+                                  )
                                   return (
                                     <DropdownMenuItem
                                       key={item.value}
@@ -349,9 +354,9 @@ export default function EditBasicLayoutTab({
                                         e.preventDefault()
                                         handleConcernsToggle(item.value)
                                       }}
-                                      className="cursor-pointer flex items-center gap-2"
+                                      className="flex gap-2 items-center cursor-pointer"
                                     >
-                                      <span className="flex items-center justify-center w-4 h-4">
+                                      <span className="flex justify-center items-center w-4 h-4">
                                         {isSelected && (
                                           <Check className="w-4 h-4 text-primary" />
                                         )}
