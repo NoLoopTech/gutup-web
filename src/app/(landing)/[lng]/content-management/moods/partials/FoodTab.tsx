@@ -386,7 +386,7 @@ export default function FoodTab({
                   {filteredFoods.length > 0 && (
                     <ul
                       ref={dropdownRef}
-                      className="absolute mt-2 w-full text-sm bg-white rounded-md border border-gray-300 shadow-md"
+                      className="overflow-y-auto absolute z-10 mt-2 w-full h-80 text-sm bg-white rounded-md border border-gray-300 shadow-md"
                     >
                       {filteredFoods.map((food, idx) => (
                         <li
@@ -444,7 +444,7 @@ export default function FoodTab({
                         variant="outline"
                         role="combobox"
                         aria-expanded={shopCategoryOpen}
-                        className="w-full justify-between font-normal"
+                        className="justify-between w-full font-normal"
                       >
                         <span
                           className={cn(
@@ -458,7 +458,7 @@ export default function FoodTab({
                               )?.label
                             : translations.selectShopCategory}
                         </span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <ChevronsUpDown className="ml-2 w-4 h-4 opacity-50 shrink-0" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-full min-w-[var(--radix-popover-trigger-width)] p-0">
@@ -467,7 +467,7 @@ export default function FoodTab({
                           placeholder={translations.selectShopCategory}
                           className="h-9"
                         />
-                        <CommandList className="max-h-60 overflow-y-auto">
+                        <CommandList className="overflow-y-auto max-h-60">
                           <CommandEmpty>No category found</CommandEmpty>
                           <CommandGroup>
                             {[...shopcategory[activeLang]]

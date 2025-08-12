@@ -345,7 +345,7 @@ export default function EditRecipeTab({
                   {filteredRecipes.length > 0 && (
                     <ul
                       ref={dropdownRef}
-                      className="absolute mt-2 w-full text-sm bg-white rounded-md border border-gray-300 shadow-md"
+                      className="overflow-y-auto absolute z-10 mt-2 w-full h-80 text-sm bg-white rounded-md border border-gray-300 shadow-md"
                     >
                       {filteredRecipes.map((recipe, idx) => (
                         <li
