@@ -40,7 +40,8 @@ export default function EditDailyTipMainPopUp({
     activeLang,
     setActiveLang,
     setActiveTab,
-    setTranslationField
+    setTranslationField,
+    setPublishDate
   } = useDailyTipStore()
   const { setUpdatedField } = useUpdateDailyTipStore()
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
@@ -72,6 +73,7 @@ export default function EditDailyTipMainPopUp({
         )
 
         setAllowMultiLang(data.allowMultiLang)
+        setPublishDate(data.publishDate)
         setActiveTab(
           data.type === "basic"
             ? "basicForm"
