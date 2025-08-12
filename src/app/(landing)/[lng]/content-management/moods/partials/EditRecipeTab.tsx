@@ -197,11 +197,13 @@ export default function EditRecipeTab({
     setUpdatedField("recipeData", activeLang, fieldName, value)
 
     if (fieldName === "recipe") {
-      // Filter the recipes as the user types
-      const filtered = listOfRecipes[activeLang]?.filter((recipe: string) =>
-        recipe.toLowerCase().includes(value.toLowerCase())
-      )
-      setFilteredRecipes(filtered || [])
+      // Check if listOfRecipes is defined before filtering
+      if (listOfRecipes) {
+        const filtered = listOfRecipes[activeLang]?.filter((recipe: string) =>
+          recipe.toLowerCase().includes(value.toLowerCase())
+        )
+        setFilteredRecipes(filtered || [])
+      }
     }
   }
 

@@ -139,7 +139,7 @@ export default function EditShopPromotionTab({
     setTranslationField,
     resetTranslations
   } = useDailyTipStore()
-  const [setIsTranslating] = useState(false)
+  const [isTranslating, setIsTranslating] = useState<boolean>(false)
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [foods, setFoods] = useState<Food[]>([])
   const [ingredientInput, setIngredientInput] = useState<string>("")
@@ -546,7 +546,7 @@ export default function EditShopPromotionTab({
     })
     setTranslationField("shopPromotionData", activeLang, fieldName, value)
     setUpdatedField("shopPromotionData", activeLang, fieldName, value)
-    if (fieldName !== "subDescription" || fieldName === "shopCategory") {
+    if (fieldName !== "subDescription") {
       setTranslationField("shopPromotionData", "fr", fieldName, value)
       setUpdatedField("shopPromotionData", "fr", fieldName, value)
     }

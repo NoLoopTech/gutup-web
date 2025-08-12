@@ -315,10 +315,12 @@ export default function EditFoodTab({
     setUpdatedField("foodData", activeLang, fieldName, value)
 
     if (fieldName === "foodName") {
-      const filtered = listOfFoods[activeLang]?.filter((food: string) =>
-        food.toLowerCase().includes(value.toLowerCase())
-      )
-      setFilteredFoods(filtered || [])
+      if (listOfFoods) {
+        const filtered = listOfFoods[activeLang]?.filter((food: string) =>
+          food.toLowerCase().includes(value.toLowerCase())
+        )
+        setFilteredFoods(filtered || [])
+      }
     }
   }
 

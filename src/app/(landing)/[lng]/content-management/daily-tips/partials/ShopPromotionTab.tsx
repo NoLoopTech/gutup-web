@@ -18,7 +18,13 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu"
 import { Check } from "lucide-react"
 import { Trash } from "lucide-react"
 import { getAllFoods } from "@/app/api/foods"
@@ -37,7 +43,13 @@ import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select"
 
 interface Food {
   id: number
@@ -143,7 +155,9 @@ export default function ShopPromotionTab({
     fr: []
   })
   const triggerReasonRef = useRef<HTMLButtonElement | null>(null)
-  const [reasonMenuWidth, setReasonMenuWidth] = useState<number | undefined>(undefined)
+  const [reasonMenuWidth, setReasonMenuWidth] = useState<number | undefined>(
+    undefined
+  )
 
   const { shopCategorys } = useGetShopCategorys() as {
     shopCategorys: StoreCatogeryTypes[]
@@ -353,7 +367,8 @@ export default function ShopPromotionTab({
       accessor: (row: AvailableItem) => {
         function handleToggleDisplayStatus(name: string): void {
           const currentOnCount = availData.filter(item => item.display).length
-          const isTurningOn = !availData.find(item => item.name === name)?.display
+          const isTurningOn = !availData.find(item => item.name === name)
+            ?.display
           if (isTurningOn && currentOnCount >= 3) {
             toast.error("Maximum display status items are 3.")
             return
@@ -382,7 +397,9 @@ export default function ShopPromotionTab({
         return (
           <Switch
             checked={row.display}
-            onCheckedChange={() => { handleToggleDisplayStatus(row.name); }}
+            onCheckedChange={() => {
+              handleToggleDisplayStatus(row.name)
+            }}
             className="scale-75"
           />
         )
@@ -411,7 +428,9 @@ export default function ShopPromotionTab({
   // Validate only inputs and select
   const FormSchema = z.object({
     shopName: z.string().min(1, { message: translations.required }),
-    reason: z.array(z.string()).min(1, { message: translations.pleaseSelectAReasonToDisplay }),
+    reason: z
+      .array(z.string())
+      .min(1, { message: translations.pleaseSelectAReasonToDisplay }),
     shopLocation: z.string().min(2, { message: translations.required }),
     shopCategory: z.string().min(2, { message: translations.required }),
     subDescription: z.string().nonempty(translations.required).min(10, {
@@ -459,10 +478,12 @@ export default function ShopPromotionTab({
   const handleInputChange = (fieldName: FieldNames, value: string) => {
     if (fieldName === "reason") return // reason handled by multi-select toggle
     form.setValue(fieldName, value)
-    form.trigger(fieldName).then(isValid => { if (isValid) form.clearErrors(fieldName) })
+    form.trigger(fieldName).then(isValid => {
+      if (isValid) form.clearErrors(fieldName)
+    })
 
     setTranslationField("shopPromotionData", activeLang, fieldName, value)
-    if (fieldName !== "subDescription" || fieldName === "shopCategory") {
+    if (fieldName !== "subDescription") {
       setTranslationField("shopPromotionData", "fr", fieldName, value)
     }
   }
@@ -517,17 +538,34 @@ export default function ShopPromotionTab({
   function buildReasonsObjects() {
     const enReasons = translationsData.shopPromotionData.en.reason || []
     const frReasons = translationsData.shopPromotionData.fr.reason || []
-    return enReasons.map((r, i) => ({ concern: r, concernFR: frReasons[i] || "" }))
+    return enReasons.map((r, i) => ({
+      concern: r,
+      concernFR: frReasons[i] || ""
+    }))
   }
 
-  // Keep form.shopPromoteFoods in sync with availData
   useEffect(() => {
-    const fixedFoods = availData.map(item => ({
-      ...item,
-      status: typeof item.status === "boolean" ? item.status : item.status === "true"
-    }))
-    form.setValue("shopPromoteFoods", fixedFoods, { shouldValidate: true })
-  }, [availData])
+    if (availData.length > 0) {
+      const fixedFoods = availData.map(item => ({
+        ...item,
+        status:
+          typeof item.status === "boolean"
+            ? item.status
+            : item.status === "true"
+      }))
+
+      // Ensure the first element is properly typed as part of the tuple
+      const fixedFoodsWithTuple: [
+        { name: string; id: number; status: boolean; display: boolean },
+        ...{ name: string; id: number; status: boolean; display: boolean }[]
+      ] = [fixedFoods[0], ...fixedFoods.slice(1)]
+
+      // Set the value in the form
+      form.setValue("shopPromoteFoods", fixedFoodsWithTuple, {
+        shouldValidate: true
+      })
+    }
+  }, [availData, form])
 
   // Define functions to handle page changes
   const handlePageChange = (newPage: number): void => {
@@ -672,10 +710,15 @@ export default function ShopPromotionTab({
       translationsData.shopPromotionData[activeLang]?.shopPromoteFoods ?? []
     setAvailData(foods)
     // Also update form value for shopPromoteFoods with boolean status
-    const fixedFoods = foods.map(item => ({
+    const fixedFoods = availData.map(item => ({
       ...item,
-      status: typeof item.status === "boolean" ? item.status : item.status === "true"
-    }))
+      status:
+        typeof item.status === "boolean" ? item.status : item.status === "true"
+    })) as [
+      { name: string; id: number; status: boolean; display: boolean },
+      ...{ name: string; id: number; status: boolean; display: boolean }[]
+    ]
+
     form.setValue("shopPromoteFoods", fixedFoods, { shouldValidate: true })
   }, [activeLang, translationsData.shopPromotionData])
 
@@ -684,11 +727,16 @@ export default function ShopPromotionTab({
     addDailyTip()
   }
 
-  useEffect(() => { if (triggerReasonRef.current) setReasonMenuWidth(triggerReasonRef.current.offsetWidth) }, [activeLang, form.watch("reason")])
+  useEffect(() => {
+    if (triggerReasonRef.current)
+      setReasonMenuWidth(triggerReasonRef.current.offsetWidth)
+  }, [activeLang, form.watch("reason")])
 
   const handleReasonsToggle = (value: string) => {
     const current = (form.getValues("reason") as string[]) || []
-    const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value]
+    const next = current.includes(value)
+      ? current.filter(v => v !== value)
+      : [...current, value]
     form.setValue("reason", next, { shouldValidate: true })
     setTranslationField("shopPromotionData", activeLang, "reason", next)
     const oppositeLang = activeLang === "en" ? "fr" : "en"
@@ -707,7 +755,7 @@ export default function ShopPromotionTab({
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="mt-4 space-y-3 text-black">
             {/* Shop Name */}
-            <div className="flex flex-col gap-2 md:flex-row md:gap-4">           
+            <div className="flex flex-col gap-2 md:flex-row md:gap-4">
               <div className="w-[25.5rem]">
                 <FormField
                   control={form.control}
@@ -730,55 +778,78 @@ export default function ShopPromotionTab({
                 />
               </div>
 
-            {/* Reason */}
-            <div className="w-full md:w-[25.5rem]">
-              <FormField
-                control={form.control}
-                name="reason"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{translations.reasonToDisplay}</FormLabel>
-                    <FormControl>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button ref={triggerReasonRef} type="button" variant="outline" className="w-full justify-between truncate">
-                            {field.value && field.value.length > 0 ? (
-                              <span className="text-left flex-1">
-                                {(field.value as string[]).map(v => {
-                                  const opt = reason[activeLang].find(o => o.value === v)
-                                  return opt ? opt.label : v
-                                }).join(", ")}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground font-normal">{translations.selectReason}</span>
-                            )}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent style={{ width: reasonMenuWidth }} className="max-h-80 overflow-y-auto">
-                          <DropdownMenuSeparator />
-                          {[...reason[activeLang]].sort((a, b) => a.label.localeCompare(b.label)).map(item => {
-                            const isSelected = (field.value as string[]).includes(item.value)
-                            return (
-                              <DropdownMenuItem
-                                key={item.value}
-                                onSelect={e => { e.preventDefault(); handleReasonsToggle(item.value) }}
-                                className="cursor-pointer flex items-center gap-2"
-                              >
-                                <span className="flex items-center justify-center w-4 h-4">
-                                  {isSelected && <Check className="w-4 h-4 text-primary" />}
+              {/* Reason */}
+              <div className="w-full md:w-[25.5rem]">
+                <FormField
+                  control={form.control}
+                  name="reason"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{translations.reasonToDisplay}</FormLabel>
+                      <FormControl>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              ref={triggerReasonRef}
+                              type="button"
+                              variant="outline"
+                              className="justify-between w-full truncate"
+                            >
+                              {field.value && field.value.length > 0 ? (
+                                <span className="flex-1 text-left">
+                                  {(field.value as string[])
+                                    .map(v => {
+                                      const opt = reason[activeLang].find(
+                                        o => o.value === v
+                                      )
+                                      return opt ? opt.label : v
+                                    })
+                                    .join(", ")}
                                 </span>
-                                <span>{item.label}</span>
-                              </DropdownMenuItem>
-                            )
-                          })}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                              ) : (
+                                <span className="font-normal text-muted-foreground">
+                                  {translations.selectReason}
+                                </span>
+                              )}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            style={{ width: reasonMenuWidth }}
+                            className="overflow-y-auto max-h-80"
+                          >
+                            <DropdownMenuSeparator />
+                            {[...reason[activeLang]]
+                              .sort((a, b) => a.label.localeCompare(b.label))
+                              .map(item => {
+                                const isSelected = (
+                                  field.value as string[]
+                                ).includes(item.value)
+                                return (
+                                  <DropdownMenuItem
+                                    key={item.value}
+                                    onSelect={e => {
+                                      e.preventDefault()
+                                      handleReasonsToggle(item.value)
+                                    }}
+                                    className="flex gap-2 items-center cursor-pointer"
+                                  >
+                                    <span className="flex justify-center items-center w-4 h-4">
+                                      {isSelected && (
+                                        <Check className="w-4 h-4 text-primary" />
+                                      )}
+                                    </span>
+                                    <span>{item.label}</span>
+                                  </DropdownMenuItem>
+                                )
+                              })}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -813,14 +884,17 @@ export default function ShopPromotionTab({
                         value={field.value}
                         onValueChange={handleShopCategoryChange}
                       >
-                        <SelectTrigger className=" w-full">
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder={"Select Category"} />
                         </SelectTrigger>
                         <SelectContent>
                           {[...shopcategory[activeLang]]
                             .sort((a, b) => a.label.localeCompare(b.label))
                             .map(option => (
-                              <SelectItem key={option.value} value={option.value}>
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
                                 {option.label}
                               </SelectItem>
                             ))}
@@ -981,12 +1055,12 @@ export default function ShopPromotionTab({
                     onInputChange={setIngredientInput}
                     onSelect={item => {
                       // Find the full food object to get the correct status
-                      const foodObj = foods.find(f => f.id === Number(item.id));
+                      const foodObj = foods.find(f => f.id === Number(item.id))
                       setSelected({
                         ...item,
                         id: Number(item.id),
                         status: foodObj?.status ?? false
-                      } satisfies Food);
+                      } satisfies Food)
                       setIngredientInput(item.name)
                     }}
                   />
