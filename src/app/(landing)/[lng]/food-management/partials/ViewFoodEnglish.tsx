@@ -15,7 +15,8 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem
+  DropdownMenuItem,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -547,63 +548,85 @@ export default function ViewFoodEnglish({
                                 setLocalSeasons(newSeasons)
                                 field.onChange(updated)
                               }}
-                              className="text-xs text-muted-foreground cursor-pointer font-semibold"
+                              className="cursor-pointer flex items-center gap-2 font-semibold text-xs text-muted-foreground"
                             >
-                              All Months
-                              <input
-                                type="checkbox"
-                                checked={seasons.every(m =>
+                              <span className="flex items-center justify-center w-4 h-4">
+                                {seasons.every(m =>
                                   selectedMonths.includes(m.value)
+                                ) && (
+                                  <svg
+                                    className="w-4 h-4 text-primary"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  </svg>
                                 )}
-                                readOnly
-                                className="ml-2"
-                              />
+                              </span>
+                              <span>All Months</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                              disabled
-                              className="text-xs text-muted-foreground"
-                            >
-                              Filter by Months
-                            </DropdownMenuItem>
-                            {seasons.map(month => (
-                              <DropdownMenuItem
-                                key={month.value}
-                                onSelect={e => {
-                                  e.preventDefault()
-                                  let updated = [...selectedMonths]
-                                  if (updated.includes(month.value)) {
-                                    updated = updated.filter(
-                                      m => m !== month.value
-                                    )
-                                  } else {
-                                    updated = [...updated, month.value]
-                                  }
-                                  const newSeasons = updated.map(enMonth => {
-                                    const found = seasonSyncMap.find(
-                                      m => m.en === enMonth
-                                    )
-                                    return {
-                                      season: enMonth,
-                                      seasonFR: found ? found.fr : enMonth,
-                                      foodId:
-                                        foodDetails?.seasons?.[0]?.foodId ?? 0
+                            <DropdownMenuSeparator />
+                            {seasons.map(month => {
+                              const isSelected = selectedMonths.includes(
+                                month.value
+                              )
+                              return (
+                                <DropdownMenuItem
+                                  key={month.value}
+                                  onSelect={e => {
+                                    e.preventDefault()
+                                    let updated = [...selectedMonths]
+                                    if (isSelected) {
+                                      updated = updated.filter(
+                                        m => m !== month.value
+                                      )
+                                    } else {
+                                      updated = [...updated, month.value]
                                     }
-                                  })
-                                  updateEditedData("seasons", newSeasons)
-                                  setLocalSeasons(newSeasons)
-                                  field.onChange(updated)
-                                }}
-                                className="cursor-pointer"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={selectedMonths.includes(month.value)}
-                                  readOnly
-                                  className="mr-2"
-                                />
-                                {month.label}
-                              </DropdownMenuItem>
-                            ))}
+                                    const newSeasons = updated.map(enMonth => {
+                                      const found = seasonSyncMap.find(
+                                        m => m.en === enMonth
+                                      )
+                                      return {
+                                        season: enMonth,
+                                        seasonFR: found ? found.fr : enMonth,
+                                        foodId:
+                                          foodDetails?.seasons?.[0]?.foodId ?? 0
+                                      }
+                                    })
+                                    updateEditedData("seasons", newSeasons)
+                                    setLocalSeasons(newSeasons)
+                                    field.onChange(updated)
+                                  }}
+                                  className="cursor-pointer flex items-center gap-2"
+                                >
+                                  <span className="flex items-center justify-center w-4 h-4">
+                                    {isSelected && (
+                                      <svg
+                                        className="w-4 h-4 text-primary"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          d="M5 13l4 4L19 7"
+                                        />
+                                      </svg>
+                                    )}
+                                  </span>
+                                  <span>{month.label}</span>
+                                </DropdownMenuItem>
+                              )
+                            })}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </FormControl>

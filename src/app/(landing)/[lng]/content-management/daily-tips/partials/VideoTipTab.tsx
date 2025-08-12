@@ -1,20 +1,21 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
+import { Check } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu"
 import {
   Form,
   FormControl,
@@ -86,7 +87,9 @@ export default function VideoTipTab({
 
   // Validation schema for this page
   const FormSchema = z.object({
-    concern: z.string().nonempty(translations.pleaseSelectAConcern),
+    concern: z.array(z.string()).min(1, {
+      message: translations.pleaseSelectAConcern
+    }),
     title: z
       .string()
       .nonempty(translations.required)
@@ -106,13 +109,19 @@ export default function VideoTipTab({
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: translationsData.videoTipData[activeLang]
+    defaultValues: {
+      ...(translationsData.videoTipData[activeLang] as any),
+      concern: translationsData.videoTipData[activeLang].concern || []
+    }
   })
 
   // Update form when lang changes
   useEffect(() => {
-    form.reset(translationsData.videoTipData[activeLang])
-  }, [activeLang, form.reset, translationsData.videoTipData])
+    form.reset({
+      ...(translationsData.videoTipData[activeLang] as any),
+      concern: translationsData.videoTipData[activeLang].concern || []
+    })
+  }, [activeLang, translationsData.videoTipData])
 
   const handleCancel = async (): Promise<void> => {
     // Collect unique image URLs
@@ -181,26 +190,37 @@ export default function VideoTipTab({
   }
 
   // handle change concerns function
-  const handleConcernsChange = (value: string) => {
-    form.setValue("concern", value)
-    setTranslationField("videoTipData", activeLang, "concern", value)
-
-    const current = concerns[activeLang]
+  const handleConcernsToggle = (value: string) => {
+    const current = (form.getValues("concern") as string[]) || []
+    const next = current.includes(value)
+      ? current.filter(v => v !== value)
+      : [...current, value]
+    form.setValue("concern", next, { shouldValidate: true })
+    setTranslationField("videoTipData", activeLang, "concern", next)
     const oppositeLang = activeLang === "en" ? "fr" : "en"
-    const opposite = concerns[oppositeLang]
+    const currentList = concerns[activeLang]
+    const oppositeList = concerns[oppositeLang]
+    const mapped = next.map(v => {
+      const idx = currentList.findIndex(c => c.value === v)
+      return idx > -1 ? oppositeList[idx].value : v
+    })
+    setTranslationField("videoTipData", oppositeLang, "concern", mapped)
+  }
 
-    const index = current.findIndex(opt => opt.value === value)
-    if (index !== -1) {
-      setTranslationField(
-        "videoTipData",
-        oppositeLang,
-        "concern",
-        opposite[index].value
-      )
-    }
+  const triggerRef = useRef<HTMLButtonElement | null>(null)
+  const [menuWidth, setMenuWidth] = useState<number | undefined>(undefined)
+  useEffect(() => {
+    if (triggerRef.current) setMenuWidth(triggerRef.current.offsetWidth)
+  }, [activeLang, form.watch("concern")])
+
+  function buildConcernsObjects() {
+    const en = translationsData.videoTipData.en.concern || []
+    const fr = translationsData.videoTipData.fr.concern || []
+    return en.map((c, i) => ({ concern: c, concernFR: fr[i] || "" }))
   }
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
+    buildConcernsObjects() // ensures pairing ready for parent payload builder
     addDailyTip()
   }
 
@@ -218,28 +238,63 @@ export default function VideoTipTab({
                   <FormItem>
                     <FormLabel>{translations.concern}</FormLabel>
                     <FormControl>
-                      <Select
-                        value={field.value}
-                        onValueChange={handleConcernsChange}
-                      >
-                        <SelectTrigger className="mt-1 w-full">
-                          <SelectValue
-                            placeholder={translations.selectConcern}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            ref={triggerRef}
+                            type="button"
+                            variant="outline"
+                            className="w-full justify-between truncate"
+                          >
+                            {field.value && field.value.length > 0 ? (
+                              <span className="text-left flex-1">
+                                {(field.value as string[])
+                                  .map(v => {
+                                    const opt = concerns[activeLang].find(
+                                      o => o.value === v
+                                    )
+                                    return opt ? opt.label : v
+                                  })
+                                  .join(", ")}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground font-normal">
+                                {translations.selectConcern}
+                              </span>
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          style={{ width: menuWidth }}
+                          className="max-h-80 overflow-y-auto"
+                        >
+                          <DropdownMenuSeparator />
                           {[...concerns[activeLang]]
                             .sort((a, b) => a.label.localeCompare(b.label))
-                            .map(option => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
+                            .map(item => {
+                              const isSelected = (field.value as string[]).includes(
+                                item.value
+                              )
+                              return (
+                                <DropdownMenuItem
+                                  key={item.value}
+                                  onSelect={e => {
+                                    e.preventDefault()
+                                    handleConcernsToggle(item.value)
+                                  }}
+                                  className="cursor-pointer flex items-center gap-2"
+                                >
+                                  <span className="flex items-center justify-center w-4 h-4">
+                                    {isSelected && (
+                                      <Check className="w-4 h-4 text-primary" />
+                                    )}
+                                  </span>
+                                  <span>{item.label}</span>
+                                </DropdownMenuItem>
+                              )
+                            })}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

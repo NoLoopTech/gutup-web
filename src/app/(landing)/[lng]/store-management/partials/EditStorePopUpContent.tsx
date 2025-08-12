@@ -144,7 +144,7 @@ export default function EditStorePopUpContent({
 }): JSX.Element {
   const { translateText } = useTranslation()
   const { storeData, setTranslationField, resetForm } = useStoreStore() as any
-  const [isTranslating, setIsTranslating] = useState(false)
+  const [, setIsTranslating] = useState(false)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [, setIsPremium] = React.useState(false)
@@ -956,52 +956,58 @@ export default function EditStorePopUpContent({
             item.name === row.name &&
             item.type === row.type
         )
+        function handleToggleDisplay(index: number, checked: boolean): void {
+          const currentOnCount = availData.filter(item => item.display).length
+          if (checked && currentOnCount >= 3) {
+            toast.error(`Maximum display status items are 3 in total.`)
+            return
+          }
+          let updated
+          if (row.ingOrCatId === 0) {
+            updated = availData.map((item, i) =>
+              i === index ? { ...item, display: checked } : item
+            )
+          } else {
+            updated = availData.map(item =>
+              item.ingOrCatId === row.ingOrCatId && item.type === row.type
+                ? { ...item, display: checked }
+                : item
+            )
+          }
+          setAvailData(
+            updated.map(item => ({
+              ...item,
+              status: item.status === "Active" ? "Active" : "Inactive"
+            })) as AvailableItem[]
+          )
+          form.setValue("availData", updated, { shouldValidate: true })
+          setTranslationField("storeData", activeLang, "availData", updated)
+
+          // Also update opposite language
+          const oppLang = activeLang === "en" ? "fr" : "en"
+          const oppCurrentData =
+            (storeData[oppLang]?.availData as AvailableItem[]) || []
+          let oppUpdated
+          if (row.ingOrCatId === 0) {
+            oppUpdated = oppCurrentData.map((item, i) =>
+              i === index ? { ...item, display: checked } : item
+            )
+          } else {
+            oppUpdated = oppCurrentData.map(item =>
+              item.ingOrCatId === row.ingOrCatId && item.type === row.type
+                ? { ...item, display: checked }
+                : item
+            )
+          }
+          setTranslationField("storeData", oppLang, "availData", oppUpdated)
+          setHasChanges(true)
+        }
         return (
           <Switch
             checked={row.display}
             className="scale-75"
             onCheckedChange={checked => {
-              let updated
-              if (row.ingOrCatId === 0) {
-                // Use index for manually added items
-                updated = availData.map((item, i) =>
-                  i === index ? { ...item, display: checked } : item
-                )
-              } else {
-                // Use id/type for others
-                updated = availData.map(item =>
-                  item.ingOrCatId === row.ingOrCatId && item.type === row.type
-                    ? { ...item, display: checked }
-                    : item
-                )
-              }
-              setAvailData(
-                updated.map(item => ({
-                  ...item,
-                  status: item.status === "Active" ? "Active" : "Inactive"
-                })) as AvailableItem[]
-              )
-              form.setValue("availData", updated, { shouldValidate: true })
-              setTranslationField("storeData", activeLang, "availData", updated)
-
-              // Also update opposite language
-              const oppLang = activeLang === "en" ? "fr" : "en"
-              const oppCurrentData =
-                (storeData[oppLang]?.availData as AvailableItem[]) || []
-              let oppUpdated
-              if (row.ingOrCatId === 0) {
-                oppUpdated = oppCurrentData.map((item, i) =>
-                  i === index ? { ...item, display: checked } : item
-                )
-              } else {
-                oppUpdated = oppCurrentData.map(item =>
-                  item.ingOrCatId === row.ingOrCatId && item.type === row.type
-                    ? { ...item, display: checked }
-                    : item
-                )
-              }
-              setTranslationField("storeData", oppLang, "availData", oppUpdated)
-              setHasChanges(true)
+              handleToggleDisplay(index, checked)
             }}
           />
         )
@@ -1080,14 +1086,6 @@ export default function EditStorePopUpContent({
 
   // handler for "Add Ingredient"
   const handleAddIngredient = async (): Promise<void> => {
-    // Limit to max 3 ingredients
-    const ingredientCount = availData.filter(item => item.type === "Ingredient")
-      .length
-    if (ingredientCount >= 3) {
-      toast.error("Maximum 3 ingredients only")
-      return
-    }
-
     const name = selected?.name ?? ingredientInput.trim()
     if (!name) return
 
@@ -1112,12 +1110,14 @@ export default function EditStorePopUpContent({
       return
     }
 
+    // Enforce max 3 display ON for ingredients
+    const totalDisplayCount = availData.filter(item => item.display).length
     const entry: AvailableItem = {
       ingOrCatId: matchingFood ? Number(matchingFood.id) : 0,
       name: matchingFood ? matchingFood.name ?? name : name,
       type: activeLang === "en" ? "Ingredient" : "Ingrédient",
       tags: ["InSystem"],
-      display: true,
+      display: totalDisplayCount < 3, // Only ON if less than 3 total items are ON
       quantity: "",
       isMain: false,
       status: "Active"
@@ -1168,14 +1168,6 @@ export default function EditStorePopUpContent({
 
   // handler for "Add Category"
   const handleAddCategory = async (): Promise<void> => {
-    // Limit to max 3 categories
-    const categoryCount = availData.filter(item => item.type === "Category")
-      .length
-    if (categoryCount >= 3) {
-      toast.error("Maximum 3 categories only")
-      return
-    }
-
     const name = selectedCategory
       ? (activeLang === "en"
           ? selectedCategory.tagName
@@ -1209,6 +1201,8 @@ export default function EditStorePopUpContent({
       return
     }
 
+    // Enforce max 3 display ON for categories
+    const totalDisplayCount = availData.filter(item => item.display).length
     const entry: AvailableItem = {
       ingOrCatId: matchingCategory ? Number(matchingCategory.id) : 0,
       name: matchingCategory
@@ -1218,7 +1212,7 @@ export default function EditStorePopUpContent({
         : name,
       type: activeLang === "en" ? "Category" : "Catégorie",
       tags: ["InSystem"],
-      display: true,
+      display: totalDisplayCount < 3, // Only ON if less than 3 total items are ON
       quantity: "",
       isMain: false,
       status: "Active"
@@ -1394,14 +1388,6 @@ export default function EditStorePopUpContent({
     setTranslationField("storeData", oppLang, "availData", oppUpdated)
   }
 
-  if (isTranslating && !isDataLoaded) {
-    return (
-      <div className="flex justify-center items-center p-8">
-        <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
-      </div>
-    )
-  }
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -1527,11 +1513,10 @@ export default function EditStorePopUpContent({
               />
             </div>
 
-            <div className="flex flex-col gap-1">
-              <Label>{translations.time}</Label>
+            <div className="flex flex-col gap-1 mt-1">
               <div className="flex gap-7 items-center">
                 <div className="flex flex-col">
-                  <Label htmlFor="time-from" className="text-xs text-gray-400">
+                  <Label htmlFor="time-from" className="mb-[6px]">
                     {translations.from}
                   </Label>
 
@@ -1550,7 +1535,7 @@ export default function EditStorePopUpContent({
                                 "timeFrom"
                               )(e.target.value)
                             }}
-                            className="h-6 bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                            className=" bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                           />
                         </FormControl>
                         <FormMessage />
@@ -1559,7 +1544,7 @@ export default function EditStorePopUpContent({
                   />
                 </div>
                 <div className="flex flex-col">
-                  <Label htmlFor="time-to" className="text-xs text-gray-400">
+                  <Label htmlFor="time-to" className="mb-[6px]">
                     {translations.to}
                   </Label>
 
@@ -1575,7 +1560,7 @@ export default function EditStorePopUpContent({
                             onChange={e => {
                               handleTimeChange(field, "timeTo")(e.target.value)
                             }}
-                            className=" h-6 bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                            className=" bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                           />
                         </FormControl>
                         <FormMessage />

@@ -22,6 +22,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
@@ -182,6 +183,11 @@ export default function FoodOverviewPage(): React.ReactElement {
     setFoodId(foodId)
   }
 
+  // Add: handle row click to open view popup
+  const handleRowClick = (row: FoodOverviewDataType): void => {
+    handleViewFoodOverview(row.id)
+  }
+
   // Handler to update the selected category filter
   const handleCategoryChange = (value: string): void => {
     setCategory(value)
@@ -254,27 +260,33 @@ export default function FoodOverviewPage(): React.ReactElement {
         if (
           nutritional === "fiber" &&
           (!food.attributes.fiber || food.attributes.fiber.trim() === "")
-        ) nutritionalMatch = false
+        )
+          nutritionalMatch = false
         if (
           nutritional === "proteins" &&
           (!food.attributes.proteins || food.attributes.proteins.trim() === "")
-        ) nutritionalMatch = false
+        )
+          nutritionalMatch = false
         if (
           nutritional === "vitamins" &&
           (!food.attributes.vitamins || food.attributes.vitamins.trim() === "")
-        ) nutritionalMatch = false
+        )
+          nutritionalMatch = false
         if (
           nutritional === "minerals" &&
           (!food.attributes.minerals || food.attributes.minerals.trim() === "")
-        ) nutritionalMatch = false
+        )
+          nutritionalMatch = false
         if (
           nutritional === "fat" &&
           (!food.attributes.fat || food.attributes.fat.trim() === "")
-        ) nutritionalMatch = false
+        )
+          nutritionalMatch = false
         if (
           nutritional === "sugar" &&
           (!food.attributes.sugar || food.attributes.sugar.trim() === "")
-        ) nutritionalMatch = false
+        )
+          nutritionalMatch = false
       } else if (nutritional && !food.attributes) {
         nutritionalMatch = false
       }
@@ -433,12 +445,7 @@ export default function FoodOverviewPage(): React.ReactElement {
   // Render row dropdown function (like StoreManagementPage)
   const renderRowDropdown = (row: FoodOverviewDataType): React.ReactNode => (
     <div className="row-action-popup">
-      <DropdownMenu
-        open={activeRowId === row.id}
-        onOpenChange={open => {
-          setActiveRowId(open ? row.id : null)
-        }}
-      >
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
@@ -451,15 +458,7 @@ export default function FoodOverviewPage(): React.ReactElement {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-32">
-          <DropdownMenuItem
-            onClick={e => {
-              e.stopPropagation()
-              handleViewFoodOverview(row.id)
-              setActiveRowId(null)
-            }}
-          >
-            View
-          </DropdownMenuItem>
+          <DropdownMenuItem>View</DropdownMenuItem>
           <DropdownMenuItem
             className="text-red-600"
             onClick={e => {
@@ -566,34 +565,49 @@ export default function FoodOverviewPage(): React.ReactElement {
             >
               <DropdownMenuItem
                 disabled
-                className="text-xs text-muted-foreground"
+                className="cursor-pointer flex items-center gap-2 font-semibold text-xs text-muted-foreground"
               >
-                Filter by Months
+                <span>Filter by Months</span>
               </DropdownMenuItem>
-              {months.map(month => (
-                <DropdownMenuItem
-                  key={month.value}
-                  onSelect={e => {
-                    e.preventDefault()
-                    if (selectedMonths.includes(month.value)) {
-                      setSelectedMonths(
-                        selectedMonths.filter(m => m !== month.value)
-                      )
-                    } else {
-                      setSelectedMonths([...selectedMonths, month.value])
-                    }
-                  }}
-                  className="cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedMonths.includes(month.value)}
-                    readOnly
-                    className="mr-2"
-                  />
-                  {month.label}
-                </DropdownMenuItem>
-              ))}
+              <DropdownMenuSeparator />
+              {months.map(month => {
+                const isSelected = selectedMonths.includes(month.value)
+                return (
+                  <DropdownMenuItem
+                    key={month.value}
+                    onSelect={e => {
+                      e.preventDefault()
+                      if (isSelected) {
+                        setSelectedMonths(
+                          selectedMonths.filter(m => m !== month.value)
+                        )
+                      } else {
+                        setSelectedMonths([...selectedMonths, month.value])
+                      }
+                    }}
+                    className="cursor-pointer flex items-center gap-2"
+                  >
+                    <span className="flex items-center justify-center w-4 h-4">
+                      {isSelected && (
+                        <svg
+                          className="w-4 h-4 text-primary"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                    </span>
+                    <span>{month.label}</span>
+                  </DropdownMenuItem>
+                )
+              })}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -601,7 +615,7 @@ export default function FoodOverviewPage(): React.ReactElement {
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
-            <SelectContent className="max-h-40">
+            <SelectContent className="max-h-80">
               <SelectGroup>
                 {categoryOptionsApi.length > 0 ? (
                   [...categoryOptionsApi]
@@ -624,7 +638,7 @@ export default function FoodOverviewPage(): React.ReactElement {
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Nutritional" />
             </SelectTrigger>
-            <SelectContent className="max-h-40">
+            <SelectContent className="max-h-80">
               <SelectGroup>
                 {[...nutritionals]
                   .sort((a, b) => a.label.localeCompare(b.label))
@@ -669,6 +683,7 @@ export default function FoodOverviewPage(): React.ReactElement {
         activeRowId={activeRowId}
         setActiveRowId={setActiveRowId}
         renderRowDropdown={renderRowDropdown}
+        onRowClick={handleRowClick}
       />
 
       {/* Add Food Popup */}

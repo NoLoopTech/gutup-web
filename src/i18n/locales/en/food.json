@@ -46,6 +46,7 @@
   "viewEditFoodItem": "View / Edit Food Item",
   "deleteFood": "Delete Food",
   "saveChanges": "Save Changes",
+  "allMonths": "All Months",
 
   "required": "Required",
   "mustbeatleast2characters": "Must be at least 2 characters",

@@ -8,7 +8,8 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem
+  DropdownMenuItem,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu"
 import {
   Form,
@@ -113,7 +114,7 @@ export default function AddFoodPopUpContent({
   const { translateText } = useTranslation()
   const { activeLang, foodData, setTranslationField, allowMultiLang } =
     useFoodStore() as any
-  const [isTranslating, setIsTranslating] = useState(false)
+  const [, setIsTranslating] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
   const { data: session } = useSession()
@@ -817,7 +818,7 @@ export default function AddFoodPopUpContent({
                         >
                           <DropdownMenuItem
                             onSelect={e => {
-                              e.preventDefault() // prevent menu from closing
+                              e.preventDefault()
                               const allMonthValues = seasonOptions[
                                 activeLang
                               ].map(m => m.value)
@@ -834,7 +835,6 @@ export default function AddFoodPopUpContent({
                                 "season",
                                 updated
                               )
-
                               const frMonths = updated.map(enMonth => {
                                 const found = seasonSyncMap.find(
                                   m => m.en === enMonth
@@ -849,92 +849,112 @@ export default function AddFoodPopUpContent({
                               )
                               field.onChange(updated)
                             }}
-                            className="text-xs text-muted-foreground cursor-pointer font-semibold"
+                            className="cursor-pointer flex items-center gap-2 font-semibold text-xs text-muted-foreground"
                           >
-                            All Months
-                            <input
-                              type="checkbox"
-                              checked={seasonOptions[activeLang].every(m =>
+                            <span className="flex items-center justify-center w-4 h-4">
+                              {seasonOptions[activeLang].every(m =>
                                 selectedMonths.includes(m.value)
+                              ) && (
+                                <svg
+                                  className="w-4 h-4 text-primary"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
                               )}
-                              readOnly
-                              className="ml-2"
-                            />
+                            </span>
+                            <span>{translations.allMonths}</span>
                           </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            disabled
-                            className="text-xs text-muted-foreground"
-                          >
-                            Filter by Months
-                          </DropdownMenuItem>
-
-                          {seasonOptions[activeLang].map(month => (
-                            <DropdownMenuItem
-                              key={month.value}
-                              onSelect={e => {
-                                e.preventDefault()
-                                let updated: string[]
-                                if (selectedMonths.includes(month.value)) {
-                                  updated = selectedMonths.filter(
-                                    m => m !== month.value
-                                  )
-                                } else {
-                                  updated = [...selectedMonths, month.value]
-                                }
-                                setSelectedMonths(updated)
-                                if (activeLang === "en") {
-                                  setTranslationField(
-                                    "foodData",
-                                    "en",
-                                    "season",
-                                    updated
-                                  )
-                                  const frMonths = updated.map(enMonth => {
-                                    const found = seasonSyncMap.find(
-                                      m => m.en === enMonth
+                          <DropdownMenuSeparator />
+                          {[...seasonOptions[activeLang]].map(month => {
+                            const isSelected = selectedMonths.includes(
+                              month.value
+                            )
+                            return (
+                              <DropdownMenuItem
+                                key={month.value}
+                                onSelect={e => {
+                                  e.preventDefault()
+                                  let updated: string[]
+                                  if (isSelected) {
+                                    updated = selectedMonths.filter(
+                                      m => m !== month.value
                                     )
-                                    return found ? found.fr : enMonth
-                                  })
-                                  setTranslationField(
-                                    "foodData",
-                                    "fr",
-                                    "season",
-                                    frMonths
-                                  )
-                                } else if (activeLang === "fr") {
-                                  setTranslationField(
-                                    "foodData",
-                                    "fr",
-                                    "season",
-                                    updated
-                                  )
-                                  const enMonths = updated.map(frMonth => {
-                                    const found = seasonSyncMap.find(
-                                      m => m.fr === frMonth
+                                  } else {
+                                    updated = [...selectedMonths, month.value]
+                                  }
+                                  setSelectedMonths(updated)
+                                  if (activeLang === "en") {
+                                    setTranslationField(
+                                      "foodData",
+                                      "en",
+                                      "season",
+                                      updated
                                     )
-                                    return found ? found.en : frMonth
-                                  })
-                                  setTranslationField(
-                                    "foodData",
-                                    "en",
-                                    "season",
-                                    enMonths
-                                  )
-                                }
-                                field.onChange(updated)
-                              }}
-                              className="cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedMonths.includes(month.value)}
-                                readOnly
-                                className="mr-2"
-                              />
-                              {month.label}
-                            </DropdownMenuItem>
-                          ))}
+                                    const frMonths = updated.map(enMonth => {
+                                      const found = seasonSyncMap.find(
+                                        m => m.en === enMonth
+                                      )
+                                      return found ? found.fr : enMonth
+                                    })
+                                    setTranslationField(
+                                      "foodData",
+                                      "fr",
+                                      "season",
+                                      frMonths
+                                    )
+                                  } else if (activeLang === "fr") {
+                                    setTranslationField(
+                                      "foodData",
+                                      "fr",
+                                      "season",
+                                      updated
+                                    )
+                                    const enMonths = updated.map(frMonth => {
+                                      const found = seasonSyncMap.find(
+                                        m => m.fr === frMonth
+                                      )
+                                      return found ? found.en : frMonth
+                                    })
+                                    setTranslationField(
+                                      "foodData",
+                                      "en",
+                                      "season",
+                                      enMonths
+                                    )
+                                  }
+                                  field.onChange(updated)
+                                }}
+                                className="cursor-pointer flex items-center gap-2"
+                              >
+                                <span className="flex items-center justify-center w-4 h-4">
+                                  {isSelected && (
+                                    <svg
+                                      className="w-4 h-4 text-primary"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                  )}
+                                </span>
+                                <span>{month.label}</span>
+                              </DropdownMenuItem>
+                            )
+                          })}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </FormControl>
@@ -1356,16 +1376,11 @@ export default function AddFoodPopUpContent({
             >
               {translations.cancel}
             </Button>
-            <Button type="submit" disabled={isLoading || isTranslating}>
+            <Button type="submit" disabled={isLoading}>
               {isLoading ? (
                 <div className="flex gap-2 items-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
-                  Saving..
-                </div>
-              ) : isTranslating ? (
-                <div className="flex gap-2 items-center">
-                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
-                  Translating..
+                  {translations.save}
                 </div>
               ) : (
                 translations.save

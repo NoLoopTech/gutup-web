@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Input } from "@/components/ui/input"
@@ -18,15 +18,14 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Check } from "lucide-react"
+import { Trash } from "lucide-react"
+import { getAllFoods } from "@/app/api/foods"
+import LocationDropdown from "@/components/Shared/dropdown/LocationDropdown"
+import { getLocationDetails } from "@/app/api/location"
+import { useGetShopCategorys } from "@/query/hooks/useGetShopCategorys"
+import { StoreCatogeryTypes } from "../../moods/partials/FoodTab"
 import {
   deleteImageFromFirebase,
   uploadImageToFirebase
@@ -36,12 +35,9 @@ import { useDailyTipStore } from "@/stores/useDailyTipStore"
 import { type translationsTypes } from "@/types/dailyTipTypes"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
-import { Trash } from "lucide-react"
-import { getAllFoods } from "@/app/api/foods"
-import LocationDropdown from "@/components/Shared/dropdown/LocationDropdown"
-import { getLocationDetails } from "@/app/api/location"
-import { useGetShopCategorys } from "@/query/hooks/useGetShopCategorys"
-import { StoreCatogeryTypes } from "../../moods/partials/FoodTab"
+import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Food {
   id: number
@@ -146,6 +142,8 @@ export default function ShopPromotionTab({
     en: [],
     fr: []
   })
+  const triggerReasonRef = useRef<HTMLButtonElement | null>(null)
+  const [reasonMenuWidth, setReasonMenuWidth] = useState<number | undefined>(undefined)
 
   const { shopCategorys } = useGetShopCategorys() as {
     shopCategorys: StoreCatogeryTypes[]
@@ -182,12 +180,6 @@ export default function ShopPromotionTab({
   }, [token])
 
   const handleAddIngredient = async (): Promise<void> => {
-    // Limit to max 3 items
-    if (availData.length >= 3) {
-      toast.error("Maximum 3 items only")
-      return
-    }
-
     let updatedAvailData: AvailableItem
 
     if (selected) {
@@ -202,11 +194,13 @@ export default function ShopPromotionTab({
         return
       }
 
+      // Enforce max 3 display ON
+      const currentOnCount = availData.filter(item => item.display).length
       updatedAvailData = {
         id: selected.id,
         name: selected.name ?? "",
         status: selected.status ?? false,
-        display: true
+        display: currentOnCount < 3
       }
     } else if (ingredientInput.trim()) {
       // Check if the entered ingredient exists in the foods list
@@ -223,13 +217,13 @@ export default function ShopPromotionTab({
       const matchedFood = foods.find(
         food => food.name?.toLowerCase() === ingredientInput.toLowerCase()
       )
-
+      const currentOnCount = availData.filter(item => item.display).length
       if (matchedFood) {
         updatedAvailData = {
           id: matchedFood.id,
           name: matchedFood.name ?? "",
           status: matchedFood.status ?? false,
-          display: true
+          display: currentOnCount < 3
         }
       } else {
         const isCustomItemExists = availData.some(
@@ -243,10 +237,10 @@ export default function ShopPromotionTab({
         }
 
         updatedAvailData = {
-          id: 0, // Custom item doesn't have an ID in foods list
+          id: Date.now(), // Use unique id for manual item
           name: ingredientInput,
           status: false,
-          display: true
+          display: currentOnCount < 3
         }
       }
     } else {
@@ -356,13 +350,43 @@ export default function ShopPromotionTab({
     },
     {
       header: "Display Status",
-      accessor: (row: AvailableItem) => (
-        <Switch
-          checked={row.display}
-          onCheckedChange={() => handleToggleDisplayStatus(row.name)}
-          className="scale-75"
-        />
-      )
+      accessor: (row: AvailableItem) => {
+        function handleToggleDisplayStatus(name: string): void {
+          const currentOnCount = availData.filter(item => item.display).length
+          const isTurningOn = !availData.find(item => item.name === name)?.display
+          if (isTurningOn && currentOnCount >= 3) {
+            toast.error("Maximum display status items are 3.")
+            return
+          }
+          const updatedAvailData = availData.map(item => {
+            if (item.name === name) {
+              return { ...item, display: !item.display }
+            }
+            return item
+          })
+          setAvailData(updatedAvailData)
+          setTranslationField(
+            "shopPromotionData",
+            activeLang,
+            "shopPromoteFoods",
+            updatedAvailData
+          )
+          setTranslationField(
+            "shopPromotionData",
+            activeLang === "en" ? "fr" : "en",
+            "shopPromoteFoods",
+            updatedAvailData
+          )
+          toast.success("Display status updated successfully!")
+        }
+        return (
+          <Switch
+            checked={row.display}
+            onCheckedChange={() => { handleToggleDisplayStatus(row.name); }}
+            className="scale-75"
+          />
+        )
+      }
     },
     {
       header: "", // No header for delete column
@@ -387,7 +411,7 @@ export default function ShopPromotionTab({
   // Validate only inputs and select
   const FormSchema = z.object({
     shopName: z.string().min(1, { message: translations.required }),
-    reason: z.string().nonempty(translations.pleaseSelectAReasonToDisplay),
+    reason: z.array(z.string()).min(1, { message: translations.pleaseSelectAReasonToDisplay }),
     shopLocation: z.string().min(2, { message: translations.required }),
     shopCategory: z.string().min(2, { message: translations.required }),
     subDescription: z.string().nonempty(translations.required).min(10, {
@@ -433,15 +457,12 @@ export default function ShopPromotionTab({
   })
 
   const handleInputChange = (fieldName: FieldNames, value: string) => {
+    if (fieldName === "reason") return // reason handled by multi-select toggle
     form.setValue(fieldName, value)
-    form.trigger(fieldName).then(isValid => {
-      if (isValid) {
-        form.clearErrors(fieldName)
-      }
-    })
+    form.trigger(fieldName).then(isValid => { if (isValid) form.clearErrors(fieldName) })
 
     setTranslationField("shopPromotionData", activeLang, fieldName, value)
-    if (fieldName !== "subDescription" || "shopCategory") {
+    if (fieldName !== "subDescription" || fieldName === "shopCategory") {
       setTranslationField("shopPromotionData", "fr", fieldName, value)
     }
   }
@@ -454,26 +475,6 @@ export default function ShopPromotionTab({
       } catch (error) {
         console.log("Error Translating", error)
       }
-    }
-  }
-
-  // handle change reason function
-  const handleReasonsChange = (value: string) => {
-    form.setValue("reason", value)
-    setTranslationField("shopPromotionData", activeLang, "reason", value)
-
-    const current = reason[activeLang]
-    const oppositeLang = activeLang === "en" ? "fr" : "en"
-    const opposite = reason[oppositeLang]
-
-    const index = current.findIndex(opt => opt.value === value)
-    if (index !== -1) {
-      setTranslationField(
-        "shopPromotionData",
-        oppositeLang,
-        "reason",
-        opposite[index].value
-      )
     }
   }
 
@@ -498,13 +499,35 @@ export default function ShopPromotionTab({
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: translationsData.shopPromotionData[activeLang]
+    defaultValues: {
+      ...(translationsData.shopPromotionData[activeLang] as any),
+      reason: translationsData.shopPromotionData[activeLang].reason || []
+    }
   })
 
   // Update form when lang changes
   useEffect(() => {
-    form.reset(translationsData.shopPromotionData[activeLang])
-  }, [activeLang, form.reset, translationsData.shopPromotionData])
+    form.reset({
+      ...(translationsData.shopPromotionData[activeLang] as any),
+      reason: translationsData.shopPromotionData[activeLang].reason || []
+    })
+  }, [activeLang, translationsData.shopPromotionData])
+
+  // Helper to pair reasons for payload (mirrors other tabs concerns helper)
+  function buildReasonsObjects() {
+    const enReasons = translationsData.shopPromotionData.en.reason || []
+    const frReasons = translationsData.shopPromotionData.fr.reason || []
+    return enReasons.map((r, i) => ({ concern: r, concernFR: frReasons[i] || "" }))
+  }
+
+  // Keep form.shopPromoteFoods in sync with availData
+  useEffect(() => {
+    const fixedFoods = availData.map(item => ({
+      ...item,
+      status: typeof item.status === "boolean" ? item.status : item.status === "true"
+    }))
+    form.setValue("shopPromoteFoods", fixedFoods, { shouldValidate: true })
+  }, [availData])
 
   // Define functions to handle page changes
   const handlePageChange = (newPage: number): void => {
@@ -648,10 +671,34 @@ export default function ShopPromotionTab({
     const foods =
       translationsData.shopPromotionData[activeLang]?.shopPromoteFoods ?? []
     setAvailData(foods)
+    // Also update form value for shopPromoteFoods with boolean status
+    const fixedFoods = foods.map(item => ({
+      ...item,
+      status: typeof item.status === "boolean" ? item.status : item.status === "true"
+    }))
+    form.setValue("shopPromoteFoods", fixedFoods, { shouldValidate: true })
   }, [activeLang, translationsData.shopPromotionData])
 
   function onSubmit(data: z.infer<typeof FormSchema>): void {
+    buildReasonsObjects()
     addDailyTip()
+  }
+
+  useEffect(() => { if (triggerReasonRef.current) setReasonMenuWidth(triggerReasonRef.current.offsetWidth) }, [activeLang, form.watch("reason")])
+
+  const handleReasonsToggle = (value: string) => {
+    const current = (form.getValues("reason") as string[]) || []
+    const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value]
+    form.setValue("reason", next, { shouldValidate: true })
+    setTranslationField("shopPromotionData", activeLang, "reason", next)
+    const oppositeLang = activeLang === "en" ? "fr" : "en"
+    const currentList = reason[activeLang]
+    const oppositeList = reason[oppositeLang]
+    const mapped = next.map(v => {
+      const idx = currentList.findIndex(r => r.value === v)
+      return idx > -1 ? oppositeList[idx].value : v
+    })
+    setTranslationField("shopPromotionData", oppositeLang, "reason", mapped)
   }
 
   return (
@@ -659,7 +706,8 @@ export default function ShopPromotionTab({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="mt-4 space-y-3 text-black">
-            {/* Shop Name */}           
+            {/* Shop Name */}
+            <div className="flex flex-col gap-2 md:flex-row md:gap-4">           
               <div className="w-[25.5rem]">
                 <FormField
                   control={form.control}
@@ -683,7 +731,7 @@ export default function ShopPromotionTab({
               </div>
 
             {/* Reason */}
-            <div className="w-full md:w-[25.5rem] mt-[-0.3rem]">
+            <div className="w-full md:w-[25.5rem]">
               <FormField
                 control={form.control}
                 name="reason"
@@ -691,33 +739,49 @@ export default function ShopPromotionTab({
                   <FormItem>
                     <FormLabel>{translations.reasonToDisplay}</FormLabel>
                     <FormControl>
-                      <Select
-                        value={field.value}
-                        onValueChange={handleReasonsChange}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue
-                            placeholder={translations.selectReason}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[...reason[activeLang]]
-                            .sort((a, b) => a.label.localeCompare(b.label))
-                            .map(option => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button ref={triggerReasonRef} type="button" variant="outline" className="w-full justify-between truncate">
+                            {field.value && field.value.length > 0 ? (
+                              <span className="text-left flex-1">
+                                {(field.value as string[]).map(v => {
+                                  const opt = reason[activeLang].find(o => o.value === v)
+                                  return opt ? opt.label : v
+                                }).join(", ")}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground font-normal">{translations.selectReason}</span>
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent style={{ width: reasonMenuWidth }} className="max-h-80 overflow-y-auto">
+                          <DropdownMenuSeparator />
+                          {[...reason[activeLang]].sort((a, b) => a.label.localeCompare(b.label)).map(item => {
+                            const isSelected = (field.value as string[]).includes(item.value)
+                            return (
+                              <DropdownMenuItem
+                                key={item.value}
+                                onSelect={e => { e.preventDefault(); handleReasonsToggle(item.value) }}
+                                className="cursor-pointer flex items-center gap-2"
+                              >
+                                <span className="flex items-center justify-center w-4 h-4">
+                                  {isSelected && <Check className="w-4 h-4 text-primary" />}
+                                </span>
+                                <span>{item.label}</span>
+                              </DropdownMenuItem>
+                            )
+                          })}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+            </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-4">
               {/* Location */}
               <FormField
                 control={form.control}
@@ -749,7 +813,7 @@ export default function ShopPromotionTab({
                         value={field.value}
                         onValueChange={handleShopCategoryChange}
                       >
-                        <SelectTrigger className="mt-1 w-full">
+                        <SelectTrigger className=" w-full">
                           <SelectValue placeholder={"Select Category"} />
                         </SelectTrigger>
                         <SelectContent>
@@ -916,8 +980,13 @@ export default function ShopPromotionTab({
                     value={ingredientInput}
                     onInputChange={setIngredientInput}
                     onSelect={item => {
-                      console.log(item)
-                      setSelected({ ...item, id: Number(item.id) } as Food)
+                      // Find the full food object to get the correct status
+                      const foodObj = foods.find(f => f.id === Number(item.id));
+                      setSelected({
+                        ...item,
+                        id: Number(item.id),
+                        status: foodObj?.status ?? false
+                      } satisfies Food);
                       setIngredientInput(item.name)
                     }}
                   />

@@ -112,7 +112,7 @@ export default function AddStorePopUpContent({
   const { translateText } = useTranslation()
   const { activeLang, storeData, setTranslationField, resetForm } =
     useStoreStore() as any
-  const [isTranslating, setIsTranslating] = useState(false)
+  const [, setIsTranslating] = useState(false)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [, setIsPremium] = React.useState(false)
@@ -302,7 +302,10 @@ export default function AddStorePopUpContent({
     }
     return storeTypes.map(type => ({
       value: type.id.toString(),
-      label: activeLang === "en" ? type.TagName : type.TagNameFr
+      label:
+        activeLang === "en"
+          ? type.TagName.charAt(0).toUpperCase() + type.TagName.slice(1)
+          : type.TagNameFr.charAt(0).toUpperCase() + type.TagNameFr.slice(1)
     }))
   }
 
@@ -590,6 +593,11 @@ export default function AddStorePopUpContent({
             item.name === row.name
         )
         function handleToggleDisplay(index: number, checked: boolean): void {
+          const currentOnCount = availData.filter(item => item.display).length
+          if (checked && currentOnCount >= 3) {
+            toast.error(`Maximum display status items are 3 in total.`)
+            return
+          }
           const updated = availData.map((item, i) =>
             i === index ? { ...item, display: checked } : item
           )
@@ -764,13 +772,6 @@ export default function AddStorePopUpContent({
 
   // handler for “Add Ingredient”
   const handleAddIngredient = async (): Promise<void> => {
-    // Limit to max 3 ingredients
-    const ingredientCount = availData.filter(item => item.type === "Ingredient").length;
-    if (ingredientCount >= 3) {
-      toast.error("Maximum 3 ingredients only");
-      return;
-    }
-
     const name = selected?.name ?? ingredientInput.trim()
     if (!name) return
     const matchingFood =
@@ -793,12 +794,14 @@ export default function AddStorePopUpContent({
       return
     }
 
+    // Enforce max 3 display ON for ingredients
+    const totalDisplayCount = availData.filter(item => item.display).length
     const entry: AvailableItem = {
       ingOrCatId: matchingFood ? Number(matchingFood.id) : 0,
       name: matchingFood ? matchingFood.name ?? name : name,
       type: "Ingredient",
       tags: ["InSystem"],
-      display: true,
+      display: totalDisplayCount < 3, // Only ON if less than 3 are ON
       quantity: "",
       isMain: false,
       status: "Active"
@@ -841,13 +844,6 @@ export default function AddStorePopUpContent({
 
   // handler for “Add Category”
   const handleAddCategory = async (): Promise<void> => {
-    // Limit to max 3 categories
-    const categoryCount = availData.filter(item => item.type === "Category").length;
-    if (categoryCount >= 3) {
-      toast.error("Maximum 3 categories only");
-      return;
-    }
-
     const name = selectedCategory
       ? (activeLang === "en"
           ? selectedCategory.tagName
@@ -880,6 +876,8 @@ export default function AddStorePopUpContent({
       return
     }
 
+    // Enforce max 3 display ON for categories
+    const totalDisplayCount = availData.filter(item => item.display).length
     const entry: AvailableItem = {
       ingOrCatId: matchingCategory ? Number(matchingCategory.id) : 0,
       name: matchingCategory
@@ -889,7 +887,7 @@ export default function AddStorePopUpContent({
         : name,
       type: "Category",
       tags: ["InSystem"],
-      display: true,
+      display: totalDisplayCount < 3, // Only ON if less than 3 total items are ON
       quantity: "",
       isMain: false,
       status: "Active"
@@ -1131,14 +1129,12 @@ export default function AddStorePopUpContent({
               />
             </div>
 
-            <div className="flex flex-col gap-1">
-              <Label>{translations.time}</Label>
+            <div className="flex flex-col gap-1 mt-1">
               <div className="flex gap-7 items-center">
                 <div className="flex flex-col">
-                  <Label htmlFor="time-from" className="text-xs text-gray-400">
+                  <Label htmlFor="time-from" className="mb-[6px]">
                     {translations.from}
                   </Label>
-
                   <FormField
                     control={form.control}
                     name="timeFrom"
@@ -1154,7 +1150,7 @@ export default function AddStorePopUpContent({
                                 "timeFrom"
                               )(e.target.value)
                             }}
-                            className="h-6 bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                            className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                           />
                         </FormControl>
                         <FormMessage />
@@ -1163,10 +1159,9 @@ export default function AddStorePopUpContent({
                   />
                 </div>
                 <div className="flex flex-col">
-                  <Label htmlFor="time-to" className="text-xs text-gray-400">
+                  <Label htmlFor="time-to" className="mb-[6px]">
                     {translations.to}
                   </Label>
-
                   <FormField
                     control={form.control}
                     name="timeTo"
@@ -1179,7 +1174,7 @@ export default function AddStorePopUpContent({
                             onChange={e => {
                               handleTimeChange(field, "timeTo")(e.target.value)
                             }}
-                            className=" h-6 bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                            className=" bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                           />
                         </FormControl>
                         <FormMessage />
@@ -1565,13 +1560,11 @@ export default function AddStorePopUpContent({
               {translations.cancel}
             </Button>
             {/* save button */}
-            {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
-            <Button type="submit" disabled={isLoading || isTranslating}>
-              {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
-              {isLoading || isTranslating ? (
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
                 <div className="flex gap-2 items-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
-                  {isTranslating ? "Translating.." : translations.save}
+                  {translations.save}
                 </div>
               ) : (
                 translations.save

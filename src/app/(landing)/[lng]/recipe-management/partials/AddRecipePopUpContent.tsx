@@ -736,15 +736,10 @@ export default function AddRecipePopUpContent({
 
   return (
     <div className="relative">
-      {isLoadingTrigger && (
-        <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/30">
-          <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
-        </div>
-      )}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 gap-4 pb-6 sm:grid-cols-2 md:grid-cols-3">
-            <div>
+            <div className="mt-1">
               <FormField
                 control={form.control}
                 name="name"

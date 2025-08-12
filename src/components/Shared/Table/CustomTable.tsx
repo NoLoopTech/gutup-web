@@ -26,6 +26,7 @@ interface CustomTableProps<T> {
   pageSizeOptions: number[]
   onPageChange: (page: number) => void
   onPageSizeChange: (size: number) => void
+  onRowClick?: (row: T, rowIndex: number) => void
 }
 
 export function CustomTable<T extends Record<string, any>>({
@@ -39,11 +40,13 @@ export function CustomTable<T extends Record<string, any>>({
   onPageSizeChange,
   activeRowId,
   setActiveRowId,
-  renderRowDropdown
+  renderRowDropdown,
+  onRowClick
 }: CustomTableProps<T> & {
   activeRowId?: number | null
   setActiveRowId?: (id: number | null) => void
   renderRowDropdown?: (row: T) => React.ReactNode
+  onRowClick?: (row: T, rowIndex: number) => void
 }): JSX.Element {
   const tableRef = useRef<HTMLTableSectionElement>(null)
 
@@ -83,6 +86,14 @@ export function CustomTable<T extends Record<string, any>>({
                       )
                     ) {
                       setActiveRowId(activeRowId === rowId ? null : rowId)
+                    }
+                    if (
+                      onRowClick &&
+                      !(e.target as HTMLElement).closest(
+                        ".row-action-trigger, .row-action-popup"
+                      )
+                    ) {
+                      onRowClick(row, rowIndex)
                     }
                   }}
                   tabIndex={0}

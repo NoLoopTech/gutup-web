@@ -44,12 +44,6 @@ interface UserManagementDataType {
   dailyScore: number
 }
 
-// Define the type for the range object
-interface DateRange {
-  startDate: Date | null
-  endDate: Date | null
-}
-
 export default function UserManagementPage({
   token
 }: {
@@ -165,37 +159,20 @@ export default function UserManagementPage({
   // Render row dropdown function (like StoreManagementPage)
   const renderRowDropdown = (row: UserManagementDataType): JSX.Element => (
     <div className="row-action-popup">
-      <DropdownMenu
-        open={activeRowId === row.id}
-        onOpenChange={open => {
-          setActiveRowId(open ? row.id : null)
-        }}
-      >
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             className="row-action-trigger data-[state=open]:bg-muted text-muted-foreground flex size-6"
             size="icon"
             tabIndex={-1}
-            onClick={e => {
-              e.stopPropagation()
-              setActiveRowId(row.id)
-            }}
           >
             <MoreVertical className="w-5 h-5" />
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-32">
-          <DropdownMenuItem
-            onClick={e => {
-              e.stopPropagation()
-              handleViewUserOverview(row.id)
-              setActiveRowId(null)
-            }}
-          >
-            View
-          </DropdownMenuItem>
+          <DropdownMenuItem>View</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
@@ -276,10 +253,7 @@ export default function UserManagementPage({
   }
 
   // handle dates change
-  const handleDateRangeChange = (range: DateRange): void => {
-    if (!range.startDate || !range.endDate) return
-    setSelectedDateRange(range)
-  }
+  // (removed unused handleDateRangeChange)
 
   // handle clear search values
   const handleClearSearchValues = (): void => {
@@ -294,6 +268,11 @@ export default function UserManagementPage({
     value: i + 1,
     label: (i + 1).toString()
   }))
+
+  // handle row click to open user overview popup
+  const handleRowClick = (row: UserManagementDataType): void => {
+    handleViewUserOverview(row.id)
+  }
 
   return (
     <div className="space-y-4" ref={tableContainerRef}>
@@ -310,7 +289,7 @@ export default function UserManagementPage({
           <SelectTrigger className="w-32">
             <SelectValue placeholder="Score Points" />
           </SelectTrigger>
-          <SelectContent className="max-h-40">
+          <SelectContent className="max-h-60">
             <SelectGroup>
               {scorePoints.map(item => (
                 <SelectItem key={item.value} value={item.value.toString()}>
@@ -339,8 +318,20 @@ export default function UserManagementPage({
         {/* select date range */}
         <div>
           <DateRangePicker
-            value={selectedDateRange}
-            onChange={handleDateRangeChange}
+            value={
+              selectedDateRange
+                ? {
+                    from: selectedDateRange.startDate ?? undefined,
+                    to: selectedDateRange.endDate ?? undefined
+                  }
+                : undefined
+            }
+            onChange={range => {
+              setSelectedDateRange({
+                startDate: range?.from ?? null,
+                endDate: range?.to ?? null
+              })
+            }}
           />
         </div>
 
@@ -369,6 +360,7 @@ export default function UserManagementPage({
         activeRowId={activeRowId}
         setActiveRowId={setActiveRowId}
         renderRowDropdown={renderRowDropdown}
+        onRowClick={handleRowClick}
       />
 
       <UserOverviewPopup

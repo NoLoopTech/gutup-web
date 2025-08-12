@@ -265,18 +265,38 @@ export default function UserOverviewPopup({
                 {userFavorites?.favouriteFoods.length ?? 0} Items
               </h3>
             </div>
-            <div className="flex flex-wrap gap-2 text-center">
-              {userFavorites?.favouriteFoods.map(f => (
-                <div key={f.id} className="flex flex-col items-center">
-                  <Image
-                    src={
-                      f.food.images?.[0] ? `${f.food.images[0]}` : Sample.src
+            <div
+              className={`text-center gap-2 ${
+                (userFavorites?.favouriteFoods?.length ?? 0) > 7
+                  ? "flex overflow-x-auto flex-nowrap hide-scrollbar"
+                  : "flex flex-wrap"
+              }`}
+              style={
+                (userFavorites?.favouriteFoods?.length ?? 0) > 7
+                  ? {
+                      maxWidth: "100%",
+                      scrollbarWidth: "none",
+                      msOverflowStyle: "none"
                     }
-                    alt={f.food.name}
-                    width={100}
-                    height={100}
-                    className="rounded-lg object-cover"
-                  />
+                  : { maxWidth: "100%" }
+              }
+            >
+              {userFavorites?.favouriteFoods.map(f => (
+                <div
+                  key={f.id}
+                  className="flex flex-col items-center min-w-[110px]"
+                >
+                  <div className="relative w-[100px] h-[100px]">
+                    <Image
+                      src={
+                        f.food.images?.[0] ? `${f.food.images[0]}` : Sample.src
+                      }
+                      alt={f.food.name}
+                      fill
+                      className="rounded-lg object-cover"
+                      style={{ objectFit: "cover" }}
+                    />
+                  </div>
                   <Label className="mt-2 text-sm">{f.food.name}</Label>
                 </div>
               ))}
@@ -300,20 +320,40 @@ export default function UserOverviewPopup({
                 {userFavorites?.favouriteRecipes.length ?? 0} Items
               </h3>
             </div>
-            <div className="flex flex-wrap gap-2 text-center">
-              {userFavorites?.favouriteRecipes.map(f => (
-                <div key={f.id} className="flex flex-col items-center">
-                  <Image
-                    src={
-                      f.recipe.images?.[0]
-                        ? `${f.recipe.images[0]}`
-                        : Sample.src
+            <div
+              className={`text-center gap-2 ${
+                (userFavorites?.favouriteRecipes?.length ?? 0) > 7
+                  ? "flex overflow-x-auto flex-nowrap hide-scrollbar"
+                  : "flex flex-wrap"
+              }`}
+              style={
+                (userFavorites?.favouriteRecipes?.length ?? 0) > 7
+                  ? {
+                      maxWidth: "100%",
+                      scrollbarWidth: "none",
+                      msOverflowStyle: "none"
                     }
-                    alt={f.recipe.name}
-                    width={100}
-                    height={100}
-                    className="rounded-lg object-cover"
-                  />
+                  : { maxWidth: "100%" }
+              }
+            >
+              {userFavorites?.favouriteRecipes.map(f => (
+                <div
+                  key={f.id}
+                  className="flex flex-col items-center min-w-[110px]"
+                >
+                  <div className="relative w-[100px] h-[100px]">
+                    <Image
+                      src={
+                        f.recipe.images?.[0]
+                          ? `${f.recipe.images[0]}`
+                          : Sample.src
+                      }
+                      alt={f.recipe.name}
+                      fill
+                      className="rounded-lg object-cover"
+                      style={{ objectFit: "cover" }}
+                    />
+                  </div>
                   <Label className="mt-2 text-sm">{f.recipe.name}</Label>
                 </div>
               ))}
@@ -329,14 +369,13 @@ export default function UserOverviewPopup({
         </div>
 
         <DialogFooter>
-          <div className="flex justify-between w-full gap-2">
+          <div className="flex justify-end w-full gap-2">
             <Button
               variant="outline"
               onClick={handleOpenDeleteConfirmationPopup}
             >
               Delete User
             </Button>
-            <Button>Reset Password</Button>
           </div>
         </DialogFooter>
       </DialogContent>
@@ -363,6 +402,17 @@ export default function UserOverviewPopup({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Hide scrollbar for Chrome, Safari and Opera */}
+      <style jsx global>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none; /* IE and Edge */
+          scrollbar-width: none; /* Firefox */
+        }
+      `}</style>
     </Dialog>
   )
 }

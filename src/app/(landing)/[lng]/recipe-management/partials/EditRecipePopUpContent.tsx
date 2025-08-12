@@ -764,15 +764,10 @@ export default function EditRecipePopUpContent({
 
   return (
     <div className="relative">
-      {isLoadingTrigger && (
-        <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/30">
-          <span className="w-10 h-10 rounded-full border-t-4 border-blue-500 border-solid animate-spin" />
-        </div>
-      )}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 gap-4 pb-6 sm:grid-cols-2 md:grid-cols-3">
-            <div>
+            <div className="mt-1">
               <FormField
                 control={form.control}
                 name="name"
@@ -1327,16 +1322,16 @@ export default function EditRecipePopUpContent({
               >
                 {translations.cancel}
               </Button>
-              <Button type="submit" disabled={isLoading}>
+                <Button type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <div className="flex gap-2 items-center">
-                    <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
-                    {translations.save}
+                  <span className="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent" />
+                  {translations.save}
                   </div>
                 ) : (
                   translations.save
                 )}
-              </Button>
+                </Button>
             </div>
           </DialogFooter>
         </form>

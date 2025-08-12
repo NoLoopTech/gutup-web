@@ -430,14 +430,15 @@ export default function MoodsPage({
     }
   ]
 
+  // Add: handle row click to open edit popup
+  const handleRowClick = (row: MoodsDataType): void => {
+    handleOpenEditMood(row.id)
+  }
+
   // Render row dropdown function (like StoreManagementPage)
   const renderRowDropdown = (row: MoodsDataType): React.ReactNode => (
     <div className="row-action-popup">
       <DropdownMenu
-        open={activeRowId === row.id}
-        onOpenChange={open => {
-          setActiveRowId(open ? row.id : null)
-        }}
       >
         <DropdownMenuTrigger asChild>
           <Button
@@ -519,6 +520,7 @@ export default function MoodsPage({
         activeRowId={activeRowId}
         setActiveRowId={setActiveRowId}
         renderRowDropdown={renderRowDropdown}
+        onRowClick={handleRowClick}
       />
 
       <AddMoodMainPopUp

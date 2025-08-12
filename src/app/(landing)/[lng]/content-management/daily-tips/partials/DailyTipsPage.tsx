@@ -227,32 +227,40 @@ export default function DailyTipsPage({
       const shopFoods =
         currentTranslations.shopPromotionData.en.shopPromoteFoods ?? []
 
+      // Ensure status is boolean for all foods
       const updateShopPromoteFoods = shopFoods.map((item, index) => {
-        // Access the corresponding French item by index
         const translatedItem =
           currentTranslations.shopPromotionData.fr.shopPromoteFoods[index]
-
+        const mappedId = typeof item.id === "number" && item.id > 1000000000000 ? 0 : item.id
         return {
           ...item,
+          id: mappedId,
+          status: typeof item.status === "boolean" ? item.status : item.status === "true",
           nameFR: translatedItem ? translatedItem.name : item.name
         }
       })
 
-      const requestBody = {
-        allowMultiLang: currentAllowMultiLang,
-        concern:
-          currentTab === "basicForm"
-            ? currentTranslations.basicLayoutData.en.concern
-            : currentTab === "videoForm"
-            ? currentTranslations.videoTipData.en.concern
-            : currentTranslations.shopPromotionData.en.reason,
-        concernFR:
-          currentTab === "basicForm"
-            ? currentTranslations.basicLayoutData.fr.concern
-            : currentTab === "videoForm"
-            ? currentTranslations.videoTipData.fr.concern
-            : currentTranslations.shopPromotionData.fr.reason,
+      // Build concerns (multi-lang paired objects)
+      const enConcerns: string[] =
+        currentTab === "basicForm"
+          ? currentTranslations.basicLayoutData.en.concern || []
+          : currentTab === "videoForm"
+          ? currentTranslations.videoTipData.en.concern || []
+          : currentTranslations.shopPromotionData.en.reason || []
+      const frConcerns: string[] =
+        currentTab === "basicForm"
+          ? currentTranslations.basicLayoutData.fr.concern || []
+          : currentTab === "videoForm"
+          ? currentTranslations.videoTipData.fr.concern || []
+          : currentTranslations.shopPromotionData.fr.reason || []
+      const concernsPayload = enConcerns.map((c, i) => ({
+        concern: c,
+        concernFR: frConcerns[i] || ""
+      }))
 
+      const requestBody: any = {
+        allowMultiLang: currentAllowMultiLang,
+        concerns: concernsPayload,
         title:
           currentTab === "basicForm"
             ? currentTranslations.basicLayoutData.en.title
@@ -280,25 +288,23 @@ export default function DailyTipsPage({
         status: true,
         publishDate: currentPublishDate,
         basicForm: {
-          subTitleOne: currentTranslations.basicLayoutData.en.subTitleOne,
-          subTitleOneFR: currentTranslations.basicLayoutData.fr.subTitleOne,
-          subDescOne: currentTranslations.basicLayoutData.en.subDescriptionOne,
-          subDescOneFR:
-            currentTranslations.basicLayoutData.fr.subDescriptionOne,
-          subTitleTwo: currentTranslations.basicLayoutData.en.subTitleTwo,
-          subTitleTwoFR: currentTranslations.basicLayoutData.fr.subTitleTwo,
-          subDescTwo: currentTranslations.basicLayoutData.en.subDescriptionTwo,
-          subDescTwoFR:
-            currentTranslations.basicLayoutData.fr.subDescriptionTwo,
-          share: currentTranslations.basicLayoutData.en.share,
-          image: uploadedImageUrl || ""
-        },
+            subTitleOne: currentTranslations.basicLayoutData.en.subTitleOne,
+            subTitleOneFR: currentTranslations.basicLayoutData.fr.subTitleOne,
+            subDescOne: currentTranslations.basicLayoutData.en.subDescriptionOne,
+            subDescOneFR: currentTranslations.basicLayoutData.fr.subDescriptionOne,
+            subTitleTwo: currentTranslations.basicLayoutData.en.subTitleTwo,
+            subTitleTwoFR: currentTranslations.basicLayoutData.fr.subTitleTwo,
+            subDescTwo: currentTranslations.basicLayoutData.en.subDescriptionTwo,
+            subDescTwoFR: currentTranslations.basicLayoutData.fr.subDescriptionTwo,
+            share: currentTranslations.basicLayoutData.en.share,
+            image: uploadedImageUrl || ""
+          },
         shopPromote: {
           name: currentTranslations.shopPromotionData.en.shopName,
           location: currentTranslations.shopPromotionData.en.shopLocation,
           locationLat:
             currentTranslations.shopPromotionData.en.shopLocationLatLng.lat,
-          locationLng:
+            locationLng:
             currentTranslations.shopPromotionData.en.shopLocationLatLng.lng,
           category: currentTranslations.shopPromotionData.en.shopCategory,
           categoryFR: currentTranslations.shopPromotionData.fr.shopCategory,
@@ -326,10 +332,7 @@ export default function DailyTipsPage({
         toast.success("Daily Tip added successfully")
         setIsOpenAddTip(false)
         getDailyTips()
-
         sessionStorage.removeItem("daily-tip-storage")
-
-        // clear store and session
         resetTranslations()
         resetUpdatedStore()
       } else {
@@ -366,52 +369,56 @@ export default function DailyTipsPage({
         uploadedImageUrl = await uploadDailyTipImageAndSetUrl()
       }
 
-      const requestBody: EditDailyTipTypes = {}
+      const requestBody: any = {}
       const updatedState = useUpdateDailyTipStore.getState().translationsData
+      const fullState = useDailyTipStore.getState().translationsData
+
+      // Build concerns payload (if any changes to concerns / reasons)
+      let enConcerns: string[] | undefined
+      let frConcerns: string[] | undefined
+      if (activeTab === "basicForm") {
+        enConcerns = (updatedState.basicLayoutData.en.concern as any) || fullState.basicLayoutData.en.concern || []
+        frConcerns = (updatedState.basicLayoutData.fr.concern as any) || fullState.basicLayoutData.fr.concern || []
+      } else if (activeTab === "videoForm") {
+        enConcerns = (updatedState.videoTipData.en.concern as any) || fullState.videoTipData.en.concern || []
+        frConcerns = (updatedState.videoTipData.fr.concern as any) || fullState.videoTipData.fr.concern || []
+      } else if (activeTab === "shopPromote") {
+        enConcerns = (updatedState.shopPromotionData.en.reason as any) || fullState.shopPromotionData.en.reason || []
+        frConcerns = (updatedState.shopPromotionData.fr.reason as any) || fullState.shopPromotionData.fr.reason || []
+      }
+      if (enConcerns && enConcerns.length) {
+        requestBody.concerns = enConcerns.map((c, i) => ({
+          concern: c,
+          concernFR: frConcerns?.[i] || ""
+        }))
+      }
 
       // Root-level fields
       if (activeTab === "basicForm") {
-        if ("concern" in updatedState.basicLayoutData.en)
-          requestBody.concern = updatedState.basicLayoutData.en
-            .concern as string
-        if ("concern" in updatedState.basicLayoutData.fr)
-          requestBody.concernFR = updatedState.basicLayoutData.fr
-            .concern as string
         if ("title" in updatedState.basicLayoutData.en)
           requestBody.title = updatedState.basicLayoutData.en.title as string
         if ("title" in updatedState.basicLayoutData.fr)
           requestBody.titleFR = updatedState.basicLayoutData.fr.title as string
-        // Add publishDate if present
         if ("publishDate" in updatedState.basicLayoutData.en) {
           requestBody.publishDate = updatedState.basicLayoutData.en.publishDate
         }
       }
 
       if (activeTab === "videoForm") {
-        if ("concern" in updatedState.videoTipData.en)
-          requestBody.concern = updatedState.videoTipData.en.concern as string
-        if ("concern" in updatedState.videoTipData.fr)
-          requestBody.concernFR = updatedState.videoTipData.fr.concern as string
         if ("title" in updatedState.videoTipData.en)
           requestBody.title = updatedState.videoTipData.en.title as string
         if ("title" in updatedState.videoTipData.fr)
           requestBody.titleFR = updatedState.videoTipData.fr.title as string
-        // Add publishDate if present
         if ("publishDate" in updatedState.videoTipData.en) {
           requestBody.publishDate = updatedState.videoTipData.en.publishDate as string
         }
       }
 
       if (activeTab === "shopPromote") {
-        if ("reason" in updatedState.shopPromotionData.en)
-          requestBody.concern = updatedState.shopPromotionData.en.reason as string
-        if ("reason" in updatedState.shopPromotionData.fr)
-          requestBody.concernFR = updatedState.shopPromotionData.fr.reason as string
         if ("shopName" in updatedState.shopPromotionData.en)
           requestBody.title = updatedState.shopPromotionData.en.shopName as string
         if ("shopName" in updatedState.shopPromotionData.fr)
           requestBody.titleFR = updatedState.shopPromotionData.fr.shopName as string
-        // Add publishDate if present
         if ("publishDate" in updatedState.shopPromotionData.en) {
           requestBody.publishDate = updatedState.shopPromotionData.en.publishDate as string
         }
@@ -421,31 +428,25 @@ export default function DailyTipsPage({
       if (activeTab === "basicForm") {
         const basicData = updatedState.basicLayoutData
         const basicForm: EditDailyTipTypes["basicForm"] = {}
-
         if ("subTitleOne" in basicData.en)
           basicForm.subTitleOne = basicData.en.subTitleOne as string
         if ("subTitleOne" in basicData.fr)
           basicForm.subTitleOneFR = basicData.fr.subTitleOne as string
-
         if ("subDescriptionOne" in basicData.en)
           basicForm.subDescOne = basicData.en.subDescriptionOne as string
         if ("subDescriptionOne" in basicData.fr)
           basicForm.subDescOneFR = basicData.fr.subDescriptionOne as string
-
         if ("subTitleTwo" in basicData.en)
           basicForm.subTitleTwo = basicData.en.subTitleTwo as string
         if ("subTitleTwo" in basicData.fr)
           basicForm.subTitleTwoFR = basicData.fr.subTitleTwo as string
-
         if ("subDescriptionTwo" in basicData.en)
           basicForm.subDescTwo = basicData.en.subDescriptionTwo as string
         if ("subDescriptionTwo" in basicData.fr)
           basicForm.subDescTwoFR = basicData.fr.subDescriptionTwo as string
-
         if ("share" in basicData.en)
           basicForm.share = basicData.en.share as boolean
         if (uploadedImageUrl) basicForm.image = uploadedImageUrl
-
         if (Object.keys(basicForm).length > 0) {
           requestBody.basicForm = basicForm
         }
@@ -455,7 +456,6 @@ export default function DailyTipsPage({
       if (activeTab === "shopPromote") {
         const shopData = updatedState.shopPromotionData
         const shopPromote: EditDailyTipTypes["shopPromote"] = {}
-
         if ("shopName" in shopData.en)
           shopPromote.name = shopData.en.shopName as string
         if ("shopLocation" in shopData.en)
@@ -490,20 +490,19 @@ export default function DailyTipsPage({
         ) {
           const enFoods = shopData.en.shopPromoteFoods ?? []
           const frFoods = shopData.fr.shopPromoteFoods ?? []
-
           const updatedShopPromoteFoods = enFoods.map((item, index) => {
             const translatedItem = frFoods[index]
-
+            const mappedId = typeof item.id === "number" && item.id > 1000000000000 ? 0 : item.id
             return {
               ...item,
+              id: mappedId,
+              status: typeof item.status === "boolean" ? item.status : item.status === "true",
               nameFR: translatedItem ? translatedItem.name : item.name
             }
           })
-
           shopPromote.shopPromoteFoods = updatedShopPromoteFoods
         }
         if (uploadedImageUrl) shopPromote.image = uploadedImageUrl
-
         if (Object.keys(shopPromote).length > 0) {
           requestBody.shopPromote = shopPromote
         }
@@ -513,18 +512,16 @@ export default function DailyTipsPage({
       if (activeTab === "videoForm") {
         const videoData = updatedState.videoTipData
         const videoForm: EditDailyTipTypes["videoForm"] = {}
-
         if ("subTitle" in videoData.en)
-          videoForm.subTitle = videoData.en.subTitle as string
+            videoForm.subTitle = videoData.en.subTitle as string
         if ("subTitle" in videoData.fr)
-          videoForm.subTitleFR = videoData.fr.subTitle as string
+            videoForm.subTitleFR = videoData.fr.subTitle as string
         if ("subDescription" in videoData.en)
-          videoForm.subDesc = videoData.en.subDescription as string
+            videoForm.subDesc = videoData.en.subDescription as string
         if ("subDescription" in videoData.fr)
-          videoForm.subDescFR = videoData.fr.subDescription as string
+            videoForm.subDescFR = videoData.fr.subDescription as string
         if ("videoLink" in videoData.en)
-          videoForm.videoUrl = videoData.en.videoLink as string
-
+            videoForm.videoUrl = videoData.en.videoLink as string
         if (Object.keys(videoForm).length > 0) {
           requestBody.videoForm = videoForm
         }
@@ -603,6 +600,11 @@ export default function DailyTipsPage({
     }
   }
 
+  // Add: handle row click to open edit popup
+  const handleRowClick = (row: DailyTipsDataType): void => {
+    handleOpenEditDailyTip(row.dailyTipsId)
+  }
+
   const columns: Array<Column<DailyTipsDataType>> = [
     {
       accessor: "imageOrVideoUrl",
@@ -669,8 +671,6 @@ export default function DailyTipsPage({
       cell: (row: DailyTipsDataType) => (
         <div className="row-action-popup">
           <DropdownMenu
-            open={activeRowId === row.dailyTipsId}
-            onOpenChange={open => { setActiveRowId(open ? row.dailyTipsId : null); }}
           >
             <DropdownMenuTrigger asChild>
               <Button
@@ -774,6 +774,7 @@ export default function DailyTipsPage({
         onPageSizeChange={handlePageSizeChange}
         activeRowId={activeRowId}
         setActiveRowId={setActiveRowId}
+        onRowClick={handleRowClick}
       />
 
       <AddDailyTipMainPopUp

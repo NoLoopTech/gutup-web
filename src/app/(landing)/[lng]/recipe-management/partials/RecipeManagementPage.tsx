@@ -13,11 +13,13 @@ import {
 } from "@/components/ui/select"
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuItem
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical } from "lucide-react"
+import { MoreVertical, Check } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
@@ -103,7 +105,7 @@ export default function RecipeManagementPage({
   const [pageSize, setPageSize] = useState(10)
   const [openAddRecipePopUp, setOpenAddRecipePopUp] = useState(false)
   const [searchText, setSearchText] = useState<string>("")
-  const [selectedCategory, setSelectedCategory] = useState<string>("")
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedBenefit, setSelectedBenefit] = useState<string>("")
   const [viewRecipe, setViewRecipe] = useState<boolean>(false)
   const [viewRecipeId, setViewRecipeId] = useState<number>(0)
@@ -236,6 +238,15 @@ export default function RecipeManagementPage({
     setSearchText(e.target.value)
   }
 
+  // Add handler for checkbox change
+  const handleCategoryCheckboxChange = (category: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(category)
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    )
+  }
+
   useEffect(() => {
     if (activeRowId === null) return
     function handleClickOutside(event: MouseEvent) {
@@ -338,15 +349,15 @@ export default function RecipeManagementPage({
     }
   ]
 
+  // Add: handle row click to open view popup
+  const handleRowClick = (row: TableDataTypes): void => {
+    handleOpenViewRecipePopUp(row.id, row.authorImage, row.imageUrl)
+  }
+
   // Render row dropdown function (like StoreManagementPage)
   const renderRowDropdown = (row: TableDataTypes): React.ReactNode => (
     <div className="row-action-popup">
-      <DropdownMenu
-        open={activeRowId === row.id}
-        onOpenChange={open => {
-          setActiveRowId(open ? row.id : null)
-        }}
-      >
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
@@ -399,10 +410,8 @@ export default function RecipeManagementPage({
       const nameMatch = recipe.recipeName
         .toLowerCase()
         .includes(searchText.toLowerCase())
-      // const scoreMatch =
-      //   selectedPersons === "" || recipe.servings === Number(selectedPersons)
       const categoryMatch =
-        selectedCategory === "" || recipe.category === selectedCategory
+        selectedCategories.length === 0 || selectedCategories.includes(recipe.category)
       const benefitMatch =
         selectedBenefit === "" ||
         (Array.isArray(recipe.benefits) &&
@@ -410,14 +419,12 @@ export default function RecipeManagementPage({
             benefit.toLowerCase().includes(selectedBenefit.toLowerCase())
           ))
 
-      // return nameMatch && categoryMatch && scoreMatch && benefitMatch
       return nameMatch && categoryMatch && benefitMatch
     })
   }, [
     tableData,
     searchText,
-    selectedCategory,
-    // selectedPersons,
+    selectedCategories,
     selectedBenefit
   ])
 
@@ -442,7 +449,7 @@ export default function RecipeManagementPage({
 
   // handle Category change
   const handleCategoryChange = (value: string): void => {
-    setSelectedCategory(value)
+    setSelectedCategories([value])
   }
 
   // handle Score change
@@ -453,8 +460,7 @@ export default function RecipeManagementPage({
   // handle clear search values
   const handleClearSearchValues = (): void => {
     setSearchText("")
-    setSelectedCategory("")
-    setSelectedBenefit("")
+    setSelectedCategories([])
     setSelectedBenefit("")
   }
 
@@ -872,30 +878,52 @@ export default function RecipeManagementPage({
             value={searchText}
             onChange={handleSearchTextChange}
           />
-          {/* select category */}
-          <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent className="max-h-40">
-              <SelectGroup>
-                {[...categoryOptions]
-                  .sort((a, b) => a.label.localeCompare(b.label))
-                  .map(item => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          {/* multi-select category */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-32 truncate text-left overflow-x-auto overflow-y-hidden justify-between">
+                {selectedCategories.length === 0 ? (
+                  <span className="text-muted-foreground font-normal">Category</span>
+                ) : (
+                  selectedCategories.join(", ")
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="max-h-80 overflow-y-auto min-w-[8rem]">
+              <DropdownMenuSeparator />
+              {[...categoryOptions]
+                .sort((a, b) => a.label.localeCompare(b.label))
+                .map(item => {
+                  const isSelected = selectedCategories.includes(item.value)
+                  return (
+                    <DropdownMenuItem
+                      key={item.value}
+                      onSelect={e => {
+                        e.preventDefault();
+                        if (isSelected) {
+                          setSelectedCategories(selectedCategories.filter(c => c !== item.value));
+                        } else {
+                          setSelectedCategories([...selectedCategories, item.value]);
+                        }
+                      }}
+                      className="cursor-pointer flex items-center gap-2"
+                    >
+                      <span className="flex items-center justify-center w-4 h-4">
+                        {isSelected && <Check className="w-4 h-4 text-primary" />}
+                      </span>
+                      <span>{item.label}</span>
+                    </DropdownMenuItem>
+                  )
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* select Health Benefits */}
           <Select value={selectedBenefit} onValueChange={handleBenefitChange}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-40">
               <SelectValue placeholder="Health Benefits" />
             </SelectTrigger>
-            <SelectContent className="max-h-40">
+            <SelectContent className="max-h-80">
               <SelectGroup>
                 {[...benefitsOptions]
                   .sort((a, b) => a.label.localeCompare(b.label))
@@ -910,7 +938,7 @@ export default function RecipeManagementPage({
 
           {/* clear filters button */}
           {(Boolean(searchText) ||
-            Boolean(selectedCategory) ||
+            Boolean(selectedCategories.length) ||
             Boolean(selectedBenefit)) && (
             <Button variant="outline" onClick={handleClearSearchValues}>
               Clear Filters
@@ -935,6 +963,7 @@ export default function RecipeManagementPage({
         activeRowId={activeRowId}
         setActiveRowId={setActiveRowId}
         renderRowDropdown={renderRowDropdown}
+        onRowClick={handleRowClick}
       />
 
       {/* add Recipe popup */}

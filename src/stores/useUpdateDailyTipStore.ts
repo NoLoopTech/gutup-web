@@ -18,14 +18,14 @@ interface BasicLayoutFields {
   subDescriptionOne?: string
   subTitleTwo?: string
   subDescriptionTwo?: string
-  concern?: string
+  concern?: string[] // updated to array
   image?: string
   share?: boolean
   publishDate?: string // Added for publish date support
 }
 
 interface ShopPromotionFields {
-  reason?: string
+  reason?: string[]
   shopName?: string
   shopLocation?: string
   shopLocationLatLng?: {
@@ -45,7 +45,7 @@ interface ShopPromotionFields {
 }
 
 interface VideoTipFields {
-  concern?: string
+  concern?: string[]
   title?: string
   subTitle?: string
   subDescription?: string
@@ -73,8 +73,15 @@ interface DailyTipStoreState {
 }
 
 // Helper
-function isLangDataEmpty<T>(data: LangData<T>): boolean {
-  return Object.keys(data.en).length === 0 && Object.keys(data.fr).length === 0
+function isLangDataEmpty<T>(data: LangData<T> | undefined | null): boolean {
+  if (!data || typeof data !== "object") return true
+  const { en, fr } = data as any
+  if (!en || !fr || typeof en !== "object" || typeof fr !== "object") return true
+  try {
+    return Object.keys(en).length === 0 && Object.keys(fr).length === 0
+  } catch {
+    return true
+  }
 }
 
 export const useUpdateDailyTipStore = create<DailyTipStoreState>()(
