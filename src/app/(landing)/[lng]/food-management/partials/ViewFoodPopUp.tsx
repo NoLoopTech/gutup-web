@@ -159,7 +159,9 @@ export default function ViewFoodPopUp({
   const [allowMultiLang, setAllowMultiLang] = useState(false)
   const [activeTab, setActiveTab] = useState<"english" | "french">("english")
   const [activeLang, setActiveLang] = useState<"en" | "fr">("en")
-  const [translations, setTranslations] = useState<Partial<translationsTypes>>({})
+  const [translations, setTranslations] = useState<Partial<translationsTypes>>(
+    {}
+  )
   const [foodDetails, setFoodDetails] = useState<FoodDetailsTypes | null>(null)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
   const [categoryOptionsApi, setCategoryOptionsApi] = useState<Option[]>([])
@@ -250,7 +252,14 @@ export default function ViewFoodPopUp({
       setIsDirty(false)
       return
     }
-    let isChanged = false
+
+    const allowMultiLangChanged =
+      allowMultiLang !== (initialDataRef.current?.allowMultiLang ?? false)
+
+    console.log("allowMultiLangChanged:", allowMultiLangChanged)
+
+    let isChanged = allowMultiLangChanged
+
     if (activeTab === "english") {
       const englishCurrent = {
         name: current.name,
@@ -262,9 +271,11 @@ export default function ViewFoodPopUp({
         images: current.images,
         healthBenefits: current.healthBenefits
       }
-      isChanged =
+      const englishDataChanged =
         JSON.stringify(englishCurrent) !==
         JSON.stringify(initialEnglishDataRef.current)
+
+      isChanged = isChanged || englishDataChanged
     } else if (activeTab === "french") {
       const frenchCurrent = {
         nameFR: (current as any).nameFR ?? "",
@@ -287,12 +298,15 @@ export default function ViewFoodPopUp({
         images: current.images,
         healthBenefits: current.healthBenefits
       }
-      isChanged =
+      const frenchDataChanged =
         JSON.stringify(frenchCurrent) !==
         JSON.stringify(initialFrenchDataRef.current)
+
+      isChanged = isChanged || frenchDataChanged
     }
+
     setIsDirty(isChanged)
-  }, [editedData, foodDetails, activeTab])
+  }, [editedData, foodDetails, activeTab, allowMultiLang])
 
   useEffect(() => {
     if (token) {
@@ -748,9 +762,13 @@ export default function ViewFoodPopUp({
             >
               <div className="flex flex-col items-start justify-between gap-4 mt-4 mb-6 sm:flex-row sm:items-center">
                 <TabsList>
-                  <TabsTrigger value="english">{translations.english ?? "English"}</TabsTrigger>
+                  <TabsTrigger value="english">
+                    {translations.english ?? "English"}
+                  </TabsTrigger>
                   {allowMultiLang && (
-                    <TabsTrigger value="french">{translations.french ?? "French"}</TabsTrigger>
+                    <TabsTrigger value="french">
+                      {translations.french ?? "French"}
+                    </TabsTrigger>
                   )}
                 </TabsList>
                 <div className="flex items-center gap-2">
@@ -759,6 +777,7 @@ export default function ViewFoodPopUp({
                     checked={allowMultiLang}
                     onCheckedChange={val => {
                       setAllowMultiLang(val)
+                      updateEditedData("allowMultiLang", val)
                       if (!val) {
                         setActiveTab("english")
                         setActiveLang("en")

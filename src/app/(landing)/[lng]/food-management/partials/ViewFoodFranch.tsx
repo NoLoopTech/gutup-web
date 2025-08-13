@@ -671,16 +671,6 @@ export default function ViewFoodFrench({
             initialContent={foodDetails?.describe?.selectionFR ?? ""}
             onChange={content => {
               updateNestedData("describe", "selectionFR", content)
-              // Translate and update English version
-              if (content?.trim()) {
-                translateText(content)
-                  .then(translated => {
-                    updateNestedData("describe", "selection", translated)
-                  })
-                  .catch(() => {
-                    updateNestedData("describe", "selection", content)
-                  })
-              }
             }}
           />
         </div>
@@ -691,16 +681,6 @@ export default function ViewFoodFrench({
             initialContent={foodDetails?.describe?.preparationFR ?? ""}
             onChange={content => {
               updateNestedData("describe", "preparationFR", content)
-              // Translate and update English version
-              if (content?.trim()) {
-                translateText(content)
-                  .then(translated => {
-                    updateNestedData("describe", "preparation", translated)
-                  })
-                  .catch(() => {
-                    updateNestedData("describe", "preparation", content)
-                  })
-              }
             }}
           />
         </div>
@@ -711,16 +691,6 @@ export default function ViewFoodFrench({
             initialContent={foodDetails?.describe?.conservationFR ?? ""}
             onChange={content => {
               updateNestedData("describe", "conservationFR", content)
-              // Translate and update English version
-              if (content?.trim()) {
-                translateText(content)
-                  .then(translated => {
-                    updateNestedData("describe", "conservation", translated)
-                  })
-                  .catch(() => {
-                    updateNestedData("describe", "conservation", content)
-                  })
-              }
             }}
           />
         </div>
