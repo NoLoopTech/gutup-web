@@ -104,12 +104,14 @@ export default function AddFoodPopUpContent({
   translations,
   onClose,
   getFoods,
-  onRegisterCleanup
+  onRegisterCleanup,
+  initialFoodName
 }: {
   translations: Partial<translationsTypes>
   onClose: () => void
   getFoods: () => void
   onRegisterCleanup?: (fn: () => void) => void
+  initialFoodName?: string
 }): JSX.Element {
   const { translateText } = useTranslation()
   const { activeLang, foodData, setTranslationField, allowMultiLang } =
@@ -714,6 +716,20 @@ export default function AddFoodPopUpContent({
     return { tagName: benefit, tagNameFr }
   }
 
+  // Add useEffect to set initial food name
+  useEffect(() => {
+    if (initialFoodName && initialFoodName.trim()) {
+      // Set the name in the form and store
+      form.setValue("name", initialFoodName)
+      setTranslationField("foodData", activeLang, "name", initialFoodName)
+
+      // Auto-translate if we're in English mode
+      if (activeLang === "en") {
+        void handleInputBlur("name", initialFoodName)
+      }
+    }
+  }, [initialFoodName, activeLang, form])
+
   return (
     <div>
       <Form {...form}>
@@ -775,7 +791,8 @@ export default function AddFoodPopUpContent({
                                 key={option.value}
                                 value={option.value}
                               >
-                                {option.label.charAt(0).toUpperCase() + option.label.slice(1)}
+                                {option.label.charAt(0).toUpperCase() +
+                                  option.label.slice(1)}
                               </SelectItem>
                             ))}
                         </SelectContent>
