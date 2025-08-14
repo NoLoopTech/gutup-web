@@ -314,7 +314,7 @@ export default function BasicLayoutTab({
                             {[...concerns[activeLang]]
                               .sort((a, b) => a.label.localeCompare(b.label))
                               .map(item => {
-                                const isSelected = (field.value ).includes(
+                                const isSelected = field.value.includes(
                                   item.value
                                 )
                                 return (

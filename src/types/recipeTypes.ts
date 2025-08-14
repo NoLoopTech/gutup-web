@@ -28,6 +28,7 @@ export interface translationsTypes {
   availableInIngredients: string
   availabilityStatus: string
   inTheSystem: string
+  incomplete: string
   addToIngredients: string
   describeTheRecipe: string
   recipe: string

@@ -42,6 +42,7 @@ import { getStoreCategories } from "@/app/api/store"
 import { getLocationDetails } from "@/app/api/location"
 
 import LocationDropdown from "@/components/Shared/dropdown/LocationDropdown"
+import { useSession } from "next-auth/react"
 
 const RichTextEditor = dynamic(
   async () => await import("@/components/Shared/TextEditor/RichTextEditor"),
@@ -131,6 +132,8 @@ export default function AddStorePopUpContent({
   const [selectedLocationName, setSelectedLocationName] =
     useState<OptionType | null>(null)
 
+  const { data: session } = useSession()
+
   // Validation schema using Zod
   const AddStoreSchema = z.object({
     storeName: z
@@ -186,8 +189,7 @@ export default function AddStorePopUpContent({
   })
 
   // Retrieve token
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : ""
+  const token = session?.apiToken ?? session?.user?.apiToken ?? ""
 
   // Initialize selected location from stored data
   useEffect(() => {

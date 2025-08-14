@@ -14,12 +14,14 @@ interface Props {
   open: boolean
   onClose: () => void
   getFoods: () => void
+  initialFoodName?: string // Add this prop
 }
 
 export default function AddFoodPopUp({
   open,
   onClose,
-  getFoods
+  getFoods,
+  initialFoodName
 }: Props): JSX.Element {
   const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
     useFoodStore()
@@ -108,6 +110,7 @@ export default function AddFoodPopUp({
                 onClose={handleClose}
                 getFoods={getFoods}
                 onRegisterCleanup={fn => (cleanupRef.current = fn)}
+                initialFoodName={initialFoodName}
               />
             </TabsContent>
 
@@ -118,6 +121,7 @@ export default function AddFoodPopUp({
                   onClose={handleClose}
                   getFoods={getFoods}
                   onRegisterCleanup={fn => (cleanupRef.current = fn)}
+                  initialFoodName={initialFoodName}
                 />
               </TabsContent>
             )}

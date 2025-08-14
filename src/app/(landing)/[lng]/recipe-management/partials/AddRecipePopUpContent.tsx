@@ -40,17 +40,20 @@ import LableInput from "@/components/Shared/LableInput/LableInput"
 import { uploadImageToFirebase } from "@/lib/firebaseImageUtils"
 import { useGetAllTags } from "@/query/hooks/useGetAllTags"
 import { useGetAllRecipeCategorys } from "@/query/hooks/useGetAllRecipeCategorys"
+import AddFoodPopUp from "../../food-management/partials/AddFoodPopUp"
 
 interface Food {
   id: number
   name: string
-  status: boolean
+  nameFR: string
+  status: "Active" | "Incomplete"
 }
 
 interface FoodResTypes {
   id: number
   name: string
-  status: string
+  nameFR: string
+  status: "Active" | "Incomplete"
 }
 
 interface Ingredient {
@@ -237,7 +240,8 @@ export default function AddRecipePopUpContent({
         const resData = res.data.foods.map((food: FoodResTypes) => ({
           id: food.id,
           name: food.name,
-          status: food.status !== "Incomplete"
+          nameFR: food.nameFR,
+          status: food.status
         }))
 
         setFoods(resData)
@@ -393,7 +397,11 @@ export default function AddRecipePopUpContent({
   const availColumns = [
     {
       header: "Item",
-      accessor: "ingredientName" as const
+      accessor: (row: Ingredient) => (
+        <div className="flex items-center gap-2">
+          <span>{row.ingredientName}</span>
+        </div>
+      )
     },
     {
       header: "Quantity",
@@ -420,18 +428,66 @@ export default function AddRecipePopUpContent({
       )
     },
     {
-      header: "Available In Ingredient",
-      accessor: (row: Ingredient) => (
-        <Badge
-          className={
-            row.available
-              ? "bg-green-200 text-black text-xs px-2 py-1 rounded-md border border-green-500 hover:bg-green-100 transition-colors"
-              : "bg-gray-200 text-black text-xs px-2 py-1 rounded-md border border-gray-500 hover:bg-gray-100 transition-colors"
-          }
-        >
-          {row.available ? "Active" : "Inactive"}
-        </Badge>
-      )
+      header: "Available in System",
+      accessor: (row: Ingredient) => {
+        const food = foods.find(f => f.id === row.foodId)
+        if (food?.status === "Active") {
+          return (
+            <Badge
+              className="text-xs px-2 py-1 rounded-md border text-black"
+              style={{
+                backgroundColor: "#B2FFAB",
+                borderColor: "#97BBA1"
+              }}
+            >
+              {translations.inTheSystem}
+            </Badge>
+          )
+        } else if (food?.status === "Incomplete") {
+          return (
+            <Badge
+              className="text-xs px-2 py-1 rounded-md border text-black"
+              style={{
+                backgroundColor: "#F0926A",
+                borderColor: "#F4B9A0"
+              }}
+            >
+              {translations.incomplete}
+            </Badge>
+          )
+        } else if (row.foodId === 0) {
+          // Custom ingredient not in system
+          return (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-xs hover:bg-transparent"
+              style={{ color: "#2F80ED" }}
+              onClick={() => handleAddToFood(row.ingredientName)}
+            >
+              <div className="flex items-center gap-1">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 5V19M5 12H19"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span>{translations.addToIngredients}</span>
+              </div>
+            </Button>
+          )
+        }
+        return null
+      }
     },
     {
       header: "", // No header for delete column
@@ -498,8 +554,8 @@ export default function AddRecipePopUpContent({
 
       updatedAvailData = {
         foodId: selected.id,
-        ingredientName: selected.name ?? "",
-        available: false,
+        ingredientName: activeLang === "en" ? selected.name : selected.nameFR,
+        available: selected.status === "Active",
         quantity: "",
         mainIngredient: true
       }
@@ -518,15 +574,17 @@ export default function AddRecipePopUpContent({
       }
 
       // Check if the entered ingredient exists in the foods list
-      const matchedFood = foods.find(
-        food => food.name?.toLowerCase() === ingredientInput.toLowerCase()
-      )
+      const matchedFood = foods.find(food => {
+        const foodName = activeLang === "en" ? food.name : food.nameFR
+        return foodName?.toLowerCase() === ingredientInput.toLowerCase()
+      })
 
       if (matchedFood) {
         updatedAvailData = {
           foodId: matchedFood.id,
-          ingredientName: matchedFood.name,
-          available: true,
+          ingredientName:
+            activeLang === "en" ? matchedFood.name : matchedFood.nameFR,
+          available: matchedFood.status === "Active",
           quantity: "",
           mainIngredient: true
         }
@@ -732,6 +790,84 @@ export default function AddRecipePopUpContent({
     }
 
     addRecipe()
+  }
+
+  // Add state for Add Food popup
+  const [showAddFoodPopup, setShowAddFoodPopup] = useState(false)
+  const [selectedIngredientName, setSelectedIngredientName] =
+    useState<string>("")
+
+  // Function to handle Add to Food click
+  const handleAddToFood = (ingredientName: string) => {
+    setSelectedIngredientName(ingredientName)
+    setShowAddFoodPopup(true)
+  }
+
+  // Function to handle Add Food popup close
+  const handleAddFoodClose = () => {
+    setShowAddFoodPopup(false)
+    setSelectedIngredientName("")
+  }
+
+  // Function to handle successful food addition
+  const handleFoodAdded = async () => {
+    try {
+      // Refresh the foods list
+      const res = await getAllFoods(token)
+      if (res && res.status === 200) {
+        const resData = res.data.foods.map((food: FoodResTypes) => ({
+          id: food.id,
+          name: food.name,
+          nameFR: food.nameFR,
+          status: food.status
+        }))
+        setFoods(resData)
+
+        // Find the newly added food and update the ingredient in the table
+        const newlyAddedFood = resData.find(food => {
+          const foodName = activeLang === "en" ? food.name : food.nameFR
+          return foodName.toLowerCase() === selectedIngredientName.toLowerCase()
+        })
+
+        if (newlyAddedFood) {
+          // Update the ingredient in availData to reflect the new food
+          const updatedAvailData = availData.map(item => {
+            if (
+              item.ingredientName.toLowerCase() ===
+                selectedIngredientName.toLowerCase() &&
+              item.foodId === 0
+            ) {
+              return {
+                ...item,
+                foodId: newlyAddedFood.id,
+                available: newlyAddedFood.status === "Active"
+              }
+            }
+            return item
+          })
+
+          setAvailData(updatedAvailData)
+
+          // Update the translation fields as well
+          setTranslationField("en", "ingredientData", updatedAvailData)
+          setTranslationField("fr", "ingredientData", updatedAvailData)
+
+          // Update the form data
+          form.setValue("ingredientData", updatedAvailData as any, {
+            shouldValidate: true
+          })
+
+          toast.success("Food added successfully and ingredient updated!")
+        } else {
+          toast.success("Food added successfully!")
+        }
+      }
+    } catch (error) {
+      console.error("Failed to refresh foods:", error)
+      toast.error("Failed to refresh food list. Please try again.")
+    }
+
+    handleAddFoodClose()
   }
 
   return (
@@ -1000,17 +1136,22 @@ export default function AddRecipePopUpContent({
                   placeholder="Search for food..."
                   dataList={foods.map(f => ({
                     id: f.id,
-                    name: f.name ?? ""
+                    name: activeLang === "en" ? f.name : f.nameFR
                   }))}
                   value={ingredientInput}
                   onInputChange={setIngredientInput}
                   onSelect={item => {
-                    setSelected({
-                      id: Number(item.id),
-                      name: item.name,
-                      status: true
-                    })
-                    setIngredientInput(item.name)
+                    const selectedFood = foods.find(
+                      f => f.id === Number(item.id)
+                    )
+                    if (selectedFood) {
+                      setSelected(selectedFood)
+                      setIngredientInput(
+                        activeLang === "en"
+                          ? selectedFood.name
+                          : selectedFood.nameFR
+                      )
+                    }
                   }}
                 />
               </div>
@@ -1302,6 +1443,14 @@ export default function AddRecipePopUpContent({
           </DialogFooter>
         </form>
       </Form>
+
+      {/* Add Food Popup */}
+      <AddFoodPopUp
+        open={showAddFoodPopup}
+        onClose={handleAddFoodClose}
+        getFoods={handleFoodAdded}
+        initialFoodName={selectedIngredientName}
+      />
     </div>
   )
 }

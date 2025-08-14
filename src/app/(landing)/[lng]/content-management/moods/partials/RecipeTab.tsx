@@ -326,12 +326,28 @@ export default function RecipeTab({
                   {filteredRecipes.length > 0 && (
                     <ul
                       ref={dropdownRef}
-                      className="overflow-y-auto absolute z-10 mt-2 w-full h-80 text-sm bg-white rounded-md border border-gray-300 shadow-md"
+                      className={`overflow-y-auto absolute z-10 mt-2 w-full text-sm bg-white rounded-md border border-gray-300 shadow-md ${
+                        filteredRecipes.length === 1
+                          ? "h-10"
+                          : filteredRecipes.length === 2
+                          ? "h-20"
+                          : filteredRecipes.length === 3
+                          ? "h-30"
+                          : filteredRecipes.length === 4
+                          ? "h-40"
+                          : filteredRecipes.length === 5
+                          ? "h-50"
+                          : filteredRecipes.length === 6
+                          ? "h-60"
+                          : filteredRecipes.length === 7
+                          ? "h-70"
+                          : "h-80"
+                      }`}
                     >
                       {filteredRecipes.map((recipe, idx) => (
                         <li
                           key={idx}
-                          className="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                          className="px-3 py-2 cursor-pointer hover:bg-gray-100 h-10"
                           onClick={() => handleRecipeSelect(recipe)}
                         >
                           {recipe}
