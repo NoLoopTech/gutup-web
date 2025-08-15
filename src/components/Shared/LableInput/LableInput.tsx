@@ -172,16 +172,18 @@ export default function LableInput({
       <Label className="block mb-1 text-black">{title}</Label>
       {!disable && (
         <div className="relative">
-          <Input
-            placeholder={placeholder}
-            className={`mb-2 ${width}`}
-            value={value}
-            onChange={e => {
-              setValueState(e.target.value)
-            }}
-            onKeyDown={handleKeyDown}
-            disabled={disable}
-          />
+          {activeLang === "en" && (
+            <Input
+              placeholder={placeholder}
+              className={`mb-2 ${width}`}
+              value={value}
+              onChange={e => {
+                setValueState(e.target.value)
+              }}
+              onKeyDown={handleKeyDown}
+              disabled={disable}
+            />
+          )}
           {value && filteredAllBenefits.length > 0 && (
             <div className="overflow-auto absolute z-50 mt-1 w-full max-h-48 bg-white rounded-md border border-gray-300 shadow-md">
               {filteredAllBenefits.map((item, idx) => (

@@ -72,14 +72,31 @@ export default function EditQuoteTab({
   } = useMoodStore()
 
   const {
+    allowMultiLang,
     translationsData: updatedTranslations,
     setUpdatedField,
     resetUpdatedStore
   } = useUpdatedMoodTranslationStore()
 
+  const hasAllowMultiLangInStore = React.useMemo(() => {
+    try {
+      const raw = sessionStorage.getItem("updated-mood-fields")
+      if (!raw) return false
+      const parsed = JSON.parse(raw)
+      const persistedState = parsed?.state ?? parsed
+      return Object.prototype.hasOwnProperty.call(
+        persistedState,
+        "allowMultiLang"
+      )
+    } catch {
+      return false
+    }
+  }, [allowMultiLang])
+
   const hasQuoteUpdates =
     Object.keys(updatedTranslations.quoteData.en).length > 0 ||
-    Object.keys(updatedTranslations.quoteData.fr).length > 0
+    Object.keys(updatedTranslations.quoteData.fr).length > 0 ||
+    hasAllowMultiLangInStore
 
   const [, setIsTranslating] = useState(false)
 

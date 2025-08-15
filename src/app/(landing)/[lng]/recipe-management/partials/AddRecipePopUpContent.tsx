@@ -332,6 +332,14 @@ export default function AddRecipePopUpContent({
       }
     }
   }
+
+  const frRichTextFieldOnBlur = async (fieldName: "recipe"): Promise<void> => {
+    if (activeLang === "fr") {
+      const val = form.getValues(fieldName)
+      setTranslationField("fr", fieldName, val)
+    }
+  }
+
   const makeRichHandlers = (
     fieldName: "recipe"
   ): { onChange: (val: string) => void } => {
@@ -398,7 +406,7 @@ export default function AddRecipePopUpContent({
     {
       header: "Item",
       accessor: (row: Ingredient) => (
-        <div className="flex items-center gap-2">
+        <div className="flex gap-2 items-center">
           <span>{row.ingredientName}</span>
         </div>
       )
@@ -434,7 +442,7 @@ export default function AddRecipePopUpContent({
         if (food?.status === "Active") {
           return (
             <Badge
-              className="text-xs px-2 py-1 rounded-md border text-black"
+              className="px-2 py-1 text-xs text-black rounded-md border"
               style={{
                 backgroundColor: "#B2FFAB",
                 borderColor: "#97BBA1"
@@ -446,7 +454,7 @@ export default function AddRecipePopUpContent({
         } else if (food?.status === "Incomplete") {
           return (
             <Badge
-              className="text-xs px-2 py-1 rounded-md border text-black"
+              className="px-2 py-1 text-xs text-black rounded-md border"
               style={{
                 backgroundColor: "#F0926A",
                 borderColor: "#F4B9A0"
@@ -461,11 +469,11 @@ export default function AddRecipePopUpContent({
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 px-2 text-xs hover:bg-transparent"
+              className="px-2 h-6 text-xs hover:bg-transparent"
               style={{ color: "#2F80ED" }}
               onClick={() => handleAddToFood(row.ingredientName)}
             >
-              <div className="flex items-center gap-1">
+              <div className="flex gap-1 items-center">
                 <svg
                   width="12"
                   height="12"
@@ -1117,6 +1125,7 @@ export default function AddRecipePopUpContent({
                       void handleBenefitsBlur()
                       field.onBlur()
                     }}
+                    chipsOnly={activeLang === "fr" ? true : false}
                   />
                   <FormMessage />
                 </FormItem>
@@ -1195,33 +1204,65 @@ export default function AddRecipePopUpContent({
           <DialogTitle>{translations.describeTheRecipe}</DialogTitle>
           <div className="flex flex-col gap-6 pt-4 pb-2">
             <div>
-              <FormField
-                control={form.control}
-                name="recipe"
-                render={({ field }) => {
-                  const { onChange } = makeRichHandlers("recipe")
-                  return (
-                    <FormItem>
-                      <FormLabel className="block mb-2 text-black">
-                        {translations.recipe}
-                      </FormLabel>
-                      <FormControl>
-                        <RichTextEditor
-                          initialContent={field.value}
-                          onChange={val => {
-                            onChange(val)
-                            field.onChange(val)
-                          }}
-                          onBlur={async () => {
-                            await richTextFieldOnBlur("recipe")
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )
-                }}
-              />
+              {activeLang === "en" && (
+                <FormField
+                  control={form.control}
+                  name="recipe"
+                  render={({ field }) => {
+                    const { onChange } = makeRichHandlers("recipe")
+                    return (
+                      <FormItem>
+                        <FormLabel className="block mb-2 text-black">
+                          {translations.recipe}
+                        </FormLabel>
+                        <FormControl>
+                          <RichTextEditor
+                            initialContent={field.value}
+                            onChange={val => {
+                              onChange(val)
+                              field.onChange(val)
+                            }}
+                            onBlur={async () => {
+                              await richTextFieldOnBlur("recipe")
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )
+                  }}
+                />
+              )}
+
+              {activeLang === "fr" && (
+                <FormField
+                  control={form.control}
+                  name="recipe"
+                  render={({ field }) => {
+                    const { onChange } = makeRichHandlers("recipe")
+                    return (
+                      <FormItem>
+                        <FormLabel className="block mb-2 text-black">
+                          {translations.recipe}
+                        </FormLabel>
+                        <FormControl>
+                          <RichTextEditor
+                            initialContent={field.value}
+                            onChange={val => {
+                              onChange(val)
+                              field.onChange(val)
+                            }}
+                            onBlur={async () => {
+                              await frRichTextFieldOnBlur("recipe")
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )
+                  }}
+                />
+              )}
             </div>
           </div>
 

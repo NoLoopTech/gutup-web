@@ -38,6 +38,8 @@ interface LangData<T> {
 }
 
 interface RecipeStoreState {
+  allowMultiLang: boolean
+  setUpdateAllowMultiLang: (value: boolean) => void
   translationsData: LangData<RecipeFields>
   setUpdatedField: (lang: Lang, field: keyof RecipeFields, value: any) => void
   resetUpdatedStore: () => void
@@ -51,6 +53,9 @@ function isLangDataEmpty<T>(data: LangData<T>): boolean {
 export const useUpdateRecipeStore = create<RecipeStoreState>()(
   persist(
     (set, get) => ({
+      allowMultiLang: false,
+      setUpdateAllowMultiLang: value => set({ allowMultiLang: value }),
+
       translationsData: {
         en: {},
         fr: {}
@@ -81,8 +86,9 @@ export const useUpdateRecipeStore = create<RecipeStoreState>()(
       name: "update-recipe-storage",
       storage: createJSONStorage(() => sessionStorage),
       partialize: state => {
-        const { translationsData } = state
+        const { translationsData, allowMultiLang } = state
         return {
+          allowMultiLang,
           translationsData: isLangDataEmpty(translationsData)
             ? {}
             : translationsData

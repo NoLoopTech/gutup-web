@@ -231,11 +231,15 @@ export default function DailyTipsPage({
       const updateShopPromoteFoods = shopFoods.map((item, index) => {
         const translatedItem =
           currentTranslations.shopPromotionData.fr.shopPromoteFoods[index]
-        const mappedId = typeof item.id === "number" && item.id > 1000000000000 ? 0 : item.id
+        const mappedId =
+          typeof item.id === "number" && item.id > 1000000000000 ? 0 : item.id
         return {
           ...item,
           id: mappedId,
-          status: typeof item.status === "boolean" ? item.status : item.status === "true",
+          status:
+            typeof item.status === "boolean"
+              ? item.status
+              : item.status === "true",
           nameFR: translatedItem ? translatedItem.name : item.name
         }
       })
@@ -288,23 +292,25 @@ export default function DailyTipsPage({
         status: true,
         publishDate: currentPublishDate,
         basicForm: {
-            subTitleOne: currentTranslations.basicLayoutData.en.subTitleOne,
-            subTitleOneFR: currentTranslations.basicLayoutData.fr.subTitleOne,
-            subDescOne: currentTranslations.basicLayoutData.en.subDescriptionOne,
-            subDescOneFR: currentTranslations.basicLayoutData.fr.subDescriptionOne,
-            subTitleTwo: currentTranslations.basicLayoutData.en.subTitleTwo,
-            subTitleTwoFR: currentTranslations.basicLayoutData.fr.subTitleTwo,
-            subDescTwo: currentTranslations.basicLayoutData.en.subDescriptionTwo,
-            subDescTwoFR: currentTranslations.basicLayoutData.fr.subDescriptionTwo,
-            share: currentTranslations.basicLayoutData.en.share,
-            image: uploadedImageUrl || ""
-          },
+          subTitleOne: currentTranslations.basicLayoutData.en.subTitleOne,
+          subTitleOneFR: currentTranslations.basicLayoutData.fr.subTitleOne,
+          subDescOne: currentTranslations.basicLayoutData.en.subDescriptionOne,
+          subDescOneFR:
+            currentTranslations.basicLayoutData.fr.subDescriptionOne,
+          subTitleTwo: currentTranslations.basicLayoutData.en.subTitleTwo,
+          subTitleTwoFR: currentTranslations.basicLayoutData.fr.subTitleTwo,
+          subDescTwo: currentTranslations.basicLayoutData.en.subDescriptionTwo,
+          subDescTwoFR:
+            currentTranslations.basicLayoutData.fr.subDescriptionTwo,
+          share: currentTranslations.basicLayoutData.en.share,
+          image: uploadedImageUrl || ""
+        },
         shopPromote: {
           name: currentTranslations.shopPromotionData.en.shopName,
           location: currentTranslations.shopPromotionData.en.shopLocation,
           locationLat:
             currentTranslations.shopPromotionData.en.shopLocationLatLng.lat,
-            locationLng:
+          locationLng:
             currentTranslations.shopPromotionData.en.shopLocationLatLng.lng,
           category: currentTranslations.shopPromotionData.en.shopCategory,
           categoryFR: currentTranslations.shopPromotionData.fr.shopCategory,
@@ -354,7 +360,7 @@ export default function DailyTipsPage({
       setIsLoading(true)
 
       const { activeTab } = useDailyTipStore.getState()
-      const { translationsData: updatedTranslations } =
+      const { translationsData: updatedTranslations, allowMultiLang } =
         useUpdateDailyTipStore.getState()
 
       let uploadedImageUrl: string | null = null
@@ -373,18 +379,38 @@ export default function DailyTipsPage({
       const updatedState = useUpdateDailyTipStore.getState().translationsData
       const fullState = useDailyTipStore.getState().translationsData
 
+      requestBody.allowMultiLang = allowMultiLang
+
       // Build concerns payload (if any changes to concerns / reasons)
       let enConcerns: string[] | undefined
       let frConcerns: string[] | undefined
       if (activeTab === "basicForm") {
-        enConcerns = (updatedState.basicLayoutData.en.concern as any) || fullState.basicLayoutData.en.concern || []
-        frConcerns = (updatedState.basicLayoutData.fr.concern as any) || fullState.basicLayoutData.fr.concern || []
+        enConcerns =
+          (updatedState.basicLayoutData.en.concern as any) ||
+          fullState.basicLayoutData.en.concern ||
+          []
+        frConcerns =
+          (updatedState.basicLayoutData.fr.concern as any) ||
+          fullState.basicLayoutData.fr.concern ||
+          []
       } else if (activeTab === "videoForm") {
-        enConcerns = (updatedState.videoTipData.en.concern as any) || fullState.videoTipData.en.concern || []
-        frConcerns = (updatedState.videoTipData.fr.concern as any) || fullState.videoTipData.fr.concern || []
+        enConcerns =
+          (updatedState.videoTipData.en.concern as any) ||
+          fullState.videoTipData.en.concern ||
+          []
+        frConcerns =
+          (updatedState.videoTipData.fr.concern as any) ||
+          fullState.videoTipData.fr.concern ||
+          []
       } else if (activeTab === "shopPromote") {
-        enConcerns = (updatedState.shopPromotionData.en.reason as any) || fullState.shopPromotionData.en.reason || []
-        frConcerns = (updatedState.shopPromotionData.fr.reason as any) || fullState.shopPromotionData.fr.reason || []
+        enConcerns =
+          (updatedState.shopPromotionData.en.reason as any) ||
+          fullState.shopPromotionData.en.reason ||
+          []
+        frConcerns =
+          (updatedState.shopPromotionData.fr.reason as any) ||
+          fullState.shopPromotionData.fr.reason ||
+          []
       }
       if (enConcerns && enConcerns.length) {
         requestBody.concerns = enConcerns.map((c, i) => ({
@@ -410,17 +436,21 @@ export default function DailyTipsPage({
         if ("title" in updatedState.videoTipData.fr)
           requestBody.titleFR = updatedState.videoTipData.fr.title as string
         if ("publishDate" in updatedState.videoTipData.en) {
-          requestBody.publishDate = updatedState.videoTipData.en.publishDate as string
+          requestBody.publishDate = updatedState.videoTipData.en
+            .publishDate as string
         }
       }
 
       if (activeTab === "shopPromote") {
         if ("shopName" in updatedState.shopPromotionData.en)
-          requestBody.title = updatedState.shopPromotionData.en.shopName as string
+          requestBody.title = updatedState.shopPromotionData.en
+            .shopName as string
         if ("shopName" in updatedState.shopPromotionData.fr)
-          requestBody.titleFR = updatedState.shopPromotionData.fr.shopName as string
+          requestBody.titleFR = updatedState.shopPromotionData.fr
+            .shopName as string
         if ("publishDate" in updatedState.shopPromotionData.en) {
-          requestBody.publishDate = updatedState.shopPromotionData.en.publishDate as string
+          requestBody.publishDate = updatedState.shopPromotionData.en
+            .publishDate as string
         }
       }
 
@@ -492,11 +522,17 @@ export default function DailyTipsPage({
           const frFoods = shopData.fr.shopPromoteFoods ?? []
           const updatedShopPromoteFoods = enFoods.map((item, index) => {
             const translatedItem = frFoods[index]
-            const mappedId = typeof item.id === "number" && item.id > 1000000000000 ? 0 : item.id
+            const mappedId =
+              typeof item.id === "number" && item.id > 1000000000000
+                ? 0
+                : item.id
             return {
               ...item,
               id: mappedId,
-              status: typeof item.status === "boolean" ? item.status : item.status === "true",
+              status:
+                typeof item.status === "boolean"
+                  ? item.status
+                  : item.status === "true",
               nameFR: translatedItem ? translatedItem.name : item.name
             }
           })
@@ -513,15 +549,15 @@ export default function DailyTipsPage({
         const videoData = updatedState.videoTipData
         const videoForm: EditDailyTipTypes["videoForm"] = {}
         if ("subTitle" in videoData.en)
-            videoForm.subTitle = videoData.en.subTitle as string
+          videoForm.subTitle = videoData.en.subTitle as string
         if ("subTitle" in videoData.fr)
-            videoForm.subTitleFR = videoData.fr.subTitle as string
+          videoForm.subTitleFR = videoData.fr.subTitle as string
         if ("subDescription" in videoData.en)
-            videoForm.subDesc = videoData.en.subDescription as string
+          videoForm.subDesc = videoData.en.subDescription as string
         if ("subDescription" in videoData.fr)
-            videoForm.subDescFR = videoData.fr.subDescription as string
+          videoForm.subDescFR = videoData.fr.subDescription as string
         if ("videoLink" in videoData.en)
-            videoForm.videoUrl = videoData.en.videoLink as string
+          videoForm.videoUrl = videoData.en.videoLink as string
         if (Object.keys(videoForm).length > 0) {
           requestBody.videoForm = videoForm
         }
@@ -670,8 +706,7 @@ export default function DailyTipsPage({
       className: "w-12",
       cell: (row: DailyTipsDataType) => (
         <div className="row-action-popup">
-          <DropdownMenu
-          >
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
@@ -745,8 +780,8 @@ export default function DailyTipsPage({
       if (
         tableContainerRef.current &&
         !tableContainerRef.current.contains(target) &&
-        !target.closest('.row-action-trigger') &&
-        !target.closest('.row-action-popup')
+        !target.closest(".row-action-trigger") &&
+        !target.closest(".row-action-popup")
       ) {
         setActiveRowId(null)
       }

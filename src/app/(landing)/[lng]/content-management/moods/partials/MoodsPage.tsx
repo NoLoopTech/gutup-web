@@ -216,7 +216,6 @@ export default function MoodsPage({
       }
 
       const response = await addNewMood(token, requestBody)
-      console.log(response)
       if (response.status === 200 || response.status === 201) {
         toast.success("Mood added successfully")
         setIsOpenAddMood(false)
@@ -247,7 +246,7 @@ export default function MoodsPage({
       setIsLoading(true)
 
       const { activeTab, activeLang } = useMoodStore.getState()
-      const { translationsData: updatedTranslations } =
+      const { translationsData: updatedTranslations, allowMultiLang } =
         useUpdatedMoodTranslationStore.getState()
 
       let uploadedImageUrl: string | null = null
@@ -268,6 +267,7 @@ export default function MoodsPage({
         useUpdatedMoodTranslationStore.getState()
 
       const requestBody: AddMoodRequestBody = {
+        allowMultiLang: allowMultiLang,
         translationsData: finalUpdatedTranslations
       }
 
@@ -438,8 +438,7 @@ export default function MoodsPage({
   // Render row dropdown function (like StoreManagementPage)
   const renderRowDropdown = (row: MoodsDataType): React.ReactNode => (
     <div className="row-action-popup">
-      <DropdownMenu
-      >
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"

@@ -10,6 +10,7 @@ import { defaultTranslations, type translationsTypes } from "@/types/moodsTypes"
 import { useMoodStore } from "@/stores/useMoodStore"
 import EditMoodPopUp from "./EditAddMoodPopUp"
 import { getMoodById } from "@/app/api/mood"
+import { useUpdatedMoodTranslationStore } from "@/stores/useUpdatedMoodTranslationStore"
 
 interface Props {
   open: boolean
@@ -38,6 +39,8 @@ export default function EditMoodMainPopUp({
     setTranslationField,
     setActiveTab
   } = useMoodStore()
+
+  const { setUpdateAllowMultiLang } = useUpdatedMoodTranslationStore()
 
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
@@ -179,6 +182,7 @@ export default function EditMoodMainPopUp({
   // Language toggle handler
   const handleLanguageToggle = (val: boolean) => {
     setAllowMultiLang(val)
+    setUpdateAllowMultiLang(val)
     if (!val) setActiveLang("en")
   }
 

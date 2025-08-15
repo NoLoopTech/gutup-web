@@ -104,6 +104,7 @@ export default function EditFoodTab({
     resetTranslations
   } = useMoodStore()
   const {
+    allowMultiLang,
     translationsData: updatedTranslations,
     setUpdatedField,
     resetUpdatedStore
@@ -193,9 +194,25 @@ export default function EditFoodTab({
     void getFoods()
   }, [])
 
+  const hasAllowMultiLangInStore = React.useMemo(() => {
+    try {
+      const raw = sessionStorage.getItem("updated-mood-fields")
+      if (!raw) return false
+      const parsed = JSON.parse(raw)
+      const persistedState = parsed?.state ?? parsed
+      return Object.prototype.hasOwnProperty.call(
+        persistedState,
+        "allowMultiLang"
+      )
+    } catch {
+      return false
+    }
+  }, [allowMultiLang])
+
   const hasFoodUpdates =
     Object.keys(updatedTranslations.foodData.en).length > 0 ||
-    Object.keys(updatedTranslations.foodData.fr).length > 0
+    Object.keys(updatedTranslations.foodData.fr).length > 0 ||
+    hasAllowMultiLangInStore
 
   const FormSchema = z.object({
     mood: z.string().nonempty(translations.pleaseSelectAMood),
@@ -448,7 +465,7 @@ export default function EditFoodTab({
                       {filteredFoods.map((food, idx) => (
                         <li
                           key={idx}
-                          className="px-3 py-2 cursor-pointer hover:bg-gray-100 h-10"
+                          className="px-3 py-2 h-10 cursor-pointer hover:bg-gray-100"
                           onClick={() => handleFoodSelect(food)}
                         >
                           {food}

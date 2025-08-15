@@ -58,6 +58,8 @@ interface LangData<T> {
 }
 
 interface DailyTipStoreState {
+  allowMultiLang: boolean
+  setUpdateAllowMultiLang: (value: boolean) => void
   translationsData: {
     basicLayoutData: LangData<BasicLayoutFields>
     shopPromotionData: LangData<ShopPromotionFields>
@@ -76,7 +78,8 @@ interface DailyTipStoreState {
 function isLangDataEmpty<T>(data: LangData<T> | undefined | null): boolean {
   if (!data || typeof data !== "object") return true
   const { en, fr } = data as any
-  if (!en || !fr || typeof en !== "object" || typeof fr !== "object") return true
+  if (!en || !fr || typeof en !== "object" || typeof fr !== "object")
+    return true
   try {
     return Object.keys(en).length === 0 && Object.keys(fr).length === 0
   } catch {
@@ -87,6 +90,9 @@ function isLangDataEmpty<T>(data: LangData<T> | undefined | null): boolean {
 export const useUpdateDailyTipStore = create<DailyTipStoreState>()(
   persist(
     (set, get) => ({
+      allowMultiLang: false,
+      setUpdateAllowMultiLang: value => set({ allowMultiLang: value }),
+
       translationsData: {
         basicLayoutData: { en: {}, fr: {} },
         shopPromotionData: { en: {}, fr: {} },
@@ -136,16 +142,24 @@ export const useUpdateDailyTipStore = create<DailyTipStoreState>()(
       name: "update-daily-tip-storage",
       storage: createJSONStorage(() => sessionStorage),
       partialize: state => {
+        const { translationsData } = state
         const { basicLayoutData, shopPromotionData, videoTipData } =
-          state.translationsData
+          translationsData
+        const filtered: Partial<DailyTipStoreState["translationsData"]> = {}
+
+        if (!isLangDataEmpty(basicLayoutData)) {
+          filtered.basicLayoutData = basicLayoutData
+        }
+        if (!isLangDataEmpty(shopPromotionData)) {
+          filtered.shopPromotionData = shopPromotionData
+        }
+        if (!isLangDataEmpty(videoTipData)) {
+          filtered.videoTipData = videoTipData
+        }
+
         return {
-          translationsData: {
-            ...(isLangDataEmpty(basicLayoutData) ? {} : { basicLayoutData }),
-            ...(isLangDataEmpty(shopPromotionData)
-              ? {}
-              : { shopPromotionData }),
-            ...(isLangDataEmpty(videoTipData) ? {} : { videoTipData })
-          }
+          allowMultiLang: state.allowMultiLang,
+          translationsData: filtered
         }
       }
     }

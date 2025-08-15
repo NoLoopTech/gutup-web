@@ -43,7 +43,7 @@ export default function EditDailyTipMainPopUp({
     setTranslationField,
     setPublishDate
   } = useDailyTipStore()
-  const { setUpdatedField } = useUpdateDailyTipStore()
+  const { setUpdatedField, setUpdateAllowMultiLang } = useUpdateDailyTipStore()
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
   )
@@ -507,6 +507,7 @@ export default function EditDailyTipMainPopUp({
   // Language toggle handler
   const handleLanguageToggle = (val: boolean) => {
     setAllowMultiLang(val)
+    setUpdateAllowMultiLang(val)
     if (!val) setActiveLang("en")
   }
 

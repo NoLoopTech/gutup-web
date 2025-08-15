@@ -349,6 +349,8 @@ export default function EditRecipePopUpContent({
     }
   }
 
+  
+
   const makeRichHandlers = (
     fieldName: "recipe"
   ): { onChange: (val: string) => void } => {
@@ -1251,33 +1253,65 @@ export default function EditRecipePopUpContent({
           <DialogTitle>{translations.describeTheRecipe}</DialogTitle>
           <div className="flex flex-col gap-6 pt-4 pb-2">
             <div>
-              <FormField
-                control={form.control}
-                name="recipe"
-                render={({ field }) => {
-                  const { onChange } = makeRichHandlers("recipe")
-                  return (
-                    <FormItem>
-                      <FormLabel className="block mb-2 text-black">
-                        {translations.recipe}
-                      </FormLabel>
-                      <FormControl>
-                        <RichTextEditor
-                          initialContent={field.value}
-                          onChange={val => {
-                            onChange(val)
-                            field.onChange(val)
-                          }}
-                          onBlur={async () => {
-                            await richTextFieldOnBlur("recipe")
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )
-                }}
-              />
+              {activeLang === "en" && (
+                <FormField
+                  control={form.control}
+                  name="recipe"
+                  render={({ field }) => {
+                    const { onChange } = makeRichHandlers("recipe")
+                    return (
+                      <FormItem>
+                        <FormLabel className="block mb-2 text-black">
+                          {translations.recipe}
+                        </FormLabel>
+                        <FormControl>
+                          <RichTextEditor
+                            initialContent={field.value}
+                            onChange={val => {
+                              onChange(val)
+                              field.onChange(val)
+                            }}
+                            onBlur={async () => {
+                              await richTextFieldOnBlur("recipe")
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )
+                  }}
+                />
+              )}
+
+              {activeLang === "fr" && (
+                <FormField
+                  control={form.control}
+                  name="recipe"
+                  render={({ field }) => {
+                    const { onChange } = makeRichHandlers("recipe")
+                    return (
+                      <FormItem>
+                        <FormLabel className="block mb-2 text-black">
+                          {translations.recipe}
+                        </FormLabel>
+                        <FormControl>
+                          <RichTextEditor
+                            initialContent={field.value}
+                            onChange={val => {
+                              onChange(val)
+                              field.onChange(val)
+                            }}
+                            onBlur={async () => {
+                              await frRichTextFieldOnBlur("recipe")
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )
+                  }}
+                />
+              )}
             </div>
           </div>
 

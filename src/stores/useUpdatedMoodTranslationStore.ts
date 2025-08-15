@@ -33,6 +33,9 @@ interface LangData<T> {
 }
 
 interface UpdatedStoreState {
+  allowMultiLang: boolean
+  setUpdateAllowMultiLang: (value: boolean) => void
+
   translationsData: {
     quoteData: LangData<QuoteFields>
     foodData: LangData<FoodFields>
@@ -55,6 +58,10 @@ function isLangDataEmpty<T>(data: LangData<T>): boolean {
 export const useUpdatedMoodTranslationStore = create<UpdatedStoreState>()(
   persist(
     (set, get) => ({
+      allowMultiLang: false,
+      setUpdateAllowMultiLang: (value: boolean) =>
+        set({ allowMultiLang: value }),
+
       translationsData: {
         quoteData: { en: {}, fr: {} },
         foodData: { en: {}, fr: {} },
@@ -78,6 +85,10 @@ export const useUpdatedMoodTranslationStore = create<UpdatedStoreState>()(
 
       resetUpdatedStore: () =>
         set({
+          allowMultiLang: opts?.resetAllowMultiLang
+            ? false
+            : get().allowMultiLang,
+
           translationsData: {
             quoteData: { en: {}, fr: {} },
             foodData: { en: {}, fr: {} },
@@ -93,6 +104,8 @@ export const useUpdatedMoodTranslationStore = create<UpdatedStoreState>()(
       partialize: state => {
         const { quoteData, foodData, recipeData } = state.translationsData
         return {
+          allowMultiLang: state.allowMultiLang,
+
           translationsData: {
             ...(isLangDataEmpty(quoteData) ? {} : { quoteData }),
             ...(isLangDataEmpty(foodData) ? {} : { foodData }),

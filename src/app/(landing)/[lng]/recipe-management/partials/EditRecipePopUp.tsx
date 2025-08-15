@@ -43,7 +43,7 @@ export default function EditRecipePopUp({
   const [translations, setTranslations] = useState<Partial<translationsTypes>>(
     {}
   )
-  const { setUpdatedField } = useUpdateRecipeStore()
+  const { setUpdatedField, setUpdateAllowMultiLang } = useUpdateRecipeStore()
 
   const MAX_RETRIES = 5
   const RETRY_DELAY_MS = 100
@@ -205,6 +205,7 @@ export default function EditRecipePopUp({
   // Language toggle handler
   const handleLanguageToggle = (val: boolean) => {
     setAllowMultiLang(val)
+    setUpdateAllowMultiLang(val)
     if (!val) setActiveLang("en")
   }
 

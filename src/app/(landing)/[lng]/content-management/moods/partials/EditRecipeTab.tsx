@@ -82,6 +82,7 @@ export default function EditRecipeTab({
     resetTranslations
   } = useMoodStore()
   const {
+    allowMultiLang,
     translationsData: updatedTranslations,
     setUpdatedField,
     resetUpdatedStore
@@ -133,9 +134,26 @@ export default function EditRecipeTab({
   useEffect(() => {
     void getRecipes()
   }, [])
+
+  const hasAllowMultiLangInStore = React.useMemo(() => {
+    try {
+      const raw = sessionStorage.getItem("updated-mood-fields")
+      if (!raw) return false
+      const parsed = JSON.parse(raw)
+      const persistedState = parsed?.state ?? parsed
+      return Object.prototype.hasOwnProperty.call(
+        persistedState,
+        "allowMultiLang"
+      )
+    } catch {
+      return false
+    }
+  }, [allowMultiLang])
+
   const hasRecipeUpdates =
     Object.keys(updatedTranslations.recipeData.en).length > 0 ||
-    Object.keys(updatedTranslations.recipeData.fr).length > 0
+    Object.keys(updatedTranslations.recipeData.fr).length > 0 ||
+    hasAllowMultiLangInStore
 
   const FormSchema = z.object({
     mood: z.string().nonempty(translations.pleaseSelectAMood),
@@ -368,7 +386,7 @@ export default function EditRecipeTab({
                       {filteredRecipes.map((recipe, idx) => (
                         <li
                           key={idx}
-                          className="px-3 py-2 cursor-pointer hover:bg-gray-100 h-10"
+                          className="px-3 py-2 h-10 cursor-pointer hover:bg-gray-100"
                           onClick={() => handleRecipeSelect(recipe)}
                         >
                           {recipe}

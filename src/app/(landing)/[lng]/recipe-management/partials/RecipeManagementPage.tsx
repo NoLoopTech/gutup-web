@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/select"
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -411,7 +410,8 @@ export default function RecipeManagementPage({
         .toLowerCase()
         .includes(searchText.toLowerCase())
       const categoryMatch =
-        selectedCategories.length === 0 || selectedCategories.includes(recipe.category)
+        selectedCategories.length === 0 ||
+        selectedCategories.includes(recipe.category)
       const benefitMatch =
         selectedBenefit === "" ||
         (Array.isArray(recipe.benefits) &&
@@ -421,12 +421,7 @@ export default function RecipeManagementPage({
 
       return nameMatch && categoryMatch && benefitMatch
     })
-  }, [
-    tableData,
-    searchText,
-    selectedCategories,
-    selectedBenefit
-  ])
+  }, [tableData, searchText, selectedCategories, selectedBenefit])
 
   const totalItems = filteredRecipes.length
 
@@ -609,7 +604,7 @@ export default function RecipeManagementPage({
   const handleUpdateRecipe = async (): Promise<void> => {
     setIsLoading(true)
 
-    const { translationsData, resetUpdatedStore } =
+    const { translationsData, resetUpdatedStore, allowMultiLang } =
       useUpdateRecipeStore.getState()
 
     const recipeImage = translationsData.en.recipeImage
@@ -659,6 +654,8 @@ export default function RecipeManagementPage({
     }
 
     const requestBody: Partial<NewRecipeTypes> = {}
+
+    if (allowMultiLang) requestBody.allowMultiLang = allowMultiLang
 
     // Root fields
     if (translationsData.en.name) requestBody.name = translationsData.en.name
@@ -776,7 +773,9 @@ export default function RecipeManagementPage({
       )
     )
 
-    requestBody.ingredients = translatedIngredients
+    if (translatedIngredients) {
+      requestBody.ingredients = translatedIngredients
+    }
 
     try {
       const res = await updateRecipe(token, viewRecipeId, requestBody)
@@ -881,9 +880,14 @@ export default function RecipeManagementPage({
           {/* multi-select category */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-32 truncate text-left overflow-x-auto overflow-y-hidden justify-between">
+              <Button
+                variant="outline"
+                className="overflow-x-auto overflow-y-hidden justify-between w-32 text-left truncate"
+              >
                 {selectedCategories.length === 0 ? (
-                  <span className="text-muted-foreground font-normal">Category</span>
+                  <span className="font-normal text-muted-foreground">
+                    Category
+                  </span>
                 ) : (
                   selectedCategories.join(", ")
                 )}
@@ -899,17 +903,24 @@ export default function RecipeManagementPage({
                     <DropdownMenuItem
                       key={item.value}
                       onSelect={e => {
-                        e.preventDefault();
+                        e.preventDefault()
                         if (isSelected) {
-                          setSelectedCategories(selectedCategories.filter(c => c !== item.value));
+                          setSelectedCategories(
+                            selectedCategories.filter(c => c !== item.value)
+                          )
                         } else {
-                          setSelectedCategories([...selectedCategories, item.value]);
+                          setSelectedCategories([
+                            ...selectedCategories,
+                            item.value
+                          ])
                         }
                       }}
-                      className="cursor-pointer flex items-center gap-2"
+                      className="flex gap-2 items-center cursor-pointer"
                     >
-                      <span className="flex items-center justify-center w-4 h-4">
-                        {isSelected && <Check className="w-4 h-4 text-primary" />}
+                      <span className="flex justify-center items-center w-4 h-4">
+                        {isSelected && (
+                          <Check className="w-4 h-4 text-primary" />
+                        )}
                       </span>
                       <span>{item.label}</span>
                     </DropdownMenuItem>
