@@ -349,7 +349,15 @@ export default function EditRecipePopUpContent({
     }
   }
 
-  
+    const frRichTextFieldOnBlur = async (
+      fieldName: "recipe"
+    ): Promise<void> => {
+      if (activeLang === "fr") {
+        const val = form.getValues(fieldName)
+        setTranslationField("fr", fieldName, val)
+      }
+    }
+
 
   const makeRichHandlers = (
     fieldName: "recipe"

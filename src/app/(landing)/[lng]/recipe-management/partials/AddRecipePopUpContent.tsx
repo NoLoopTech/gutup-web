@@ -1125,8 +1125,7 @@ export default function AddRecipePopUpContent({
                       void handleBenefitsBlur()
                       field.onBlur()
                     }}
-                    chipsOnly={activeLang === "fr" ? true : false}
-                  />
+                   />
                   <FormMessage />
                 </FormItem>
               )}
