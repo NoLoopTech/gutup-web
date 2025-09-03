@@ -253,6 +253,14 @@ export default function RecipeTab({
       } finally {
         setIsTranslating(false)
       }
+    } else {
+      form.setValue("image", "", {
+        shouldValidate: true,
+        shouldDirty: true
+      })
+      setTranslationField("recipeData", "en", "image", "")
+      setTranslationField("recipeData", "fr", "image", "")
+      setPreviewUrls([])
     }
   }
 

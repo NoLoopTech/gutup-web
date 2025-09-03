@@ -286,6 +286,14 @@ export default function EditFoodTab({
       } finally {
         setIsTranslating(false)
       }
+    } else {
+      form.setValue("image", "", {
+        shouldValidate: true,
+        shouldDirty: true
+      })
+      setTranslationField("foodData", "en", "image", "")
+      setTranslationField("foodData", "fr", "image", "")
+      setPreviewUrls([])
     }
   }
 
@@ -535,7 +543,12 @@ export default function EditFoodTab({
                         <ChevronsUpDown className="ml-2 w-4 h-4 opacity-50 shrink-0" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full min-w-[var(--radix-popover-trigger-width)] p-0">
+                    <PopoverContent
+                      className="w-full min-w-[var(--radix-popover-trigger-width)] p-0"
+                      onWheel={e => {
+                        e.stopPropagation()
+                      }}
+                    >
                       <Command>
                         <CommandInput
                           placeholder={translations.selectShopCategory}

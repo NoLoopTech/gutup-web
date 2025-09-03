@@ -1,6 +1,7 @@
 // app/api/translate/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import axios from "axios"
+import { decode } from "html-entities"
 
 export async function POST(req: NextRequest) {
   const { text } = await req.json()
@@ -19,7 +20,9 @@ export async function POST(req: NextRequest) {
       }
     )
 
-    const translatedText = response.data.data.translations[0].translatedText
+    let translatedText = response.data.data.translations[0].translatedText
+    translatedText = decode(translatedText)
+
     return NextResponse.json({ translated: translatedText })
   } catch (error) {
     console.error("Translation API Error:", error)

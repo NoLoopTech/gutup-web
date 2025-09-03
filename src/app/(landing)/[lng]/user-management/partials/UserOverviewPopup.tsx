@@ -266,47 +266,39 @@ export default function UserOverviewPopup({
               </h3>
             </div>
             <div
-              className={`text-center gap-2 ${
-                (userFavorites?.favouriteFoods?.length ?? 0) > 7
-                  ? "flex overflow-x-auto flex-nowrap hide-scrollbar"
-                  : "flex flex-wrap"
-              }`}
-              style={
-                (userFavorites?.favouriteFoods?.length ?? 0) > 7
-                  ? {
-                      maxWidth: "100%",
-                      scrollbarWidth: "none",
-                      msOverflowStyle: "none"
-                    }
-                  : { maxWidth: "100%" }
-              }
+              className="overflow-x-auto whitespace-nowrap py-2"
+              style={{ maxWidth: "100%" }}
             >
-              {userFavorites?.favouriteFoods.map(f => (
-                <div
-                  key={f.id}
-                  className="flex flex-col items-center min-w-[110px]"
-                >
-                  <div className="relative w-[100px] h-[100px]">
-                    <Image
-                      src={
-                        f.food.images?.[0] ? `${f.food.images[0]}` : Sample.src
-                      }
-                      alt={f.food.name}
-                      fill
-                      className="rounded-lg object-cover"
-                      style={{ objectFit: "cover" }}
-                    />
+              <div className="flex gap-2 flex-nowrap min-h-[130px]">
+                {userFavorites?.favouriteFoods.map(f => (
+                  <div
+                    key={f.id}
+                    className="flex flex-col items-center min-w-[110px]"
+                  >
+                    <div className="relative w-[100px] h-[100px]">
+                      <Image
+                        src={
+                          f.food.images?.[0]
+                            ? `${f.food.images[0]}`
+                            : Sample.src
+                        }
+                        alt={f.food.name}
+                        fill
+                        className="rounded-lg object-cover"
+                        style={{ objectFit: "cover" }}
+                      />
+                    </div>
+                    <Label className="mt-2 text-sm">{f.food.name}</Label>
                   </div>
-                  <Label className="mt-2 text-sm">{f.food.name}</Label>
-                </div>
-              ))}
+                ))}
 
-              {(!userFavorites?.favouriteFoods ||
-                userFavorites.favouriteFoods.length === 0) && (
-                <Label className="mt-4 text-gray-500">
-                  No favorite foods added yet
-                </Label>
-              )}
+                {(!userFavorites?.favouriteFoods ||
+                  userFavorites.favouriteFoods.length === 0) && (
+                  <Label className="mt-4 text-gray-500">
+                    No favorite foods added yet
+                  </Label>
+                )}
+              </div>
             </div>
           </div>
 
@@ -321,49 +313,39 @@ export default function UserOverviewPopup({
               </h3>
             </div>
             <div
-              className={`text-center gap-2 ${
-                (userFavorites?.favouriteRecipes?.length ?? 0) > 7
-                  ? "flex overflow-x-auto flex-nowrap hide-scrollbar"
-                  : "flex flex-wrap"
-              }`}
-              style={
-                (userFavorites?.favouriteRecipes?.length ?? 0) > 7
-                  ? {
-                      maxWidth: "100%",
-                      scrollbarWidth: "none",
-                      msOverflowStyle: "none"
-                    }
-                  : { maxWidth: "100%" }
-              }
+              className="overflow-x-auto whitespace-nowrap py-2"
+              style={{ maxWidth: "100%" }}
             >
-              {userFavorites?.favouriteRecipes.map(f => (
-                <div
-                  key={f.id}
-                  className="flex flex-col items-center min-w-[110px]"
-                >
-                  <div className="relative w-[100px] h-[100px]">
-                    <Image
-                      src={
-                        f.recipe.images?.[0]
-                          ? `${f.recipe.images[0]}`
-                          : Sample.src
-                      }
-                      alt={f.recipe.name}
-                      fill
-                      className="rounded-lg object-cover"
-                      style={{ objectFit: "cover" }}
-                    />
+              <div className="flex gap-2 flex-nowrap min-h-[130px]">
+                {userFavorites?.favouriteRecipes.map(f => (
+                  <div
+                    key={f.id}
+                    className="flex flex-col items-center min-w-[110px]"
+                  >
+                    <div className="relative w-[100px] h-[100px]">
+                      <Image
+                        src={
+                          f.recipe.images?.[0]
+                            ? `${f.recipe.images[0]}`
+                            : Sample.src
+                        }
+                        alt={f.recipe.name}
+                        fill
+                        className="rounded-lg object-cover"
+                        style={{ objectFit: "cover" }}
+                      />
+                    </div>
+                    <Label className="mt-2 text-sm">{f.recipe.name}</Label>
                   </div>
-                  <Label className="mt-2 text-sm">{f.recipe.name}</Label>
-                </div>
-              ))}
+                ))}
 
-              {(!userFavorites?.favouriteRecipes ||
-                userFavorites.favouriteRecipes.length === 0) && (
-                <Label className="mt-4 text-gray-500">
-                  No favorite recipes added yet
-                </Label>
-              )}
+                {(!userFavorites?.favouriteRecipes ||
+                  userFavorites.favouriteRecipes.length === 0) && (
+                  <Label className="mt-4 text-gray-500">
+                    No favorite recipes added yet
+                  </Label>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -411,6 +393,19 @@ export default function UserOverviewPopup({
         .hide-scrollbar {
           -ms-overflow-style: none; /* IE and Edge */
           scrollbar-width: none; /* Firefox */
+        }
+
+        /* Custom horizontal scrollbar with rounded track */
+        .overflow-x-auto::-webkit-scrollbar {
+          height: 8px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 8px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-thumb {
+          background: #c1c1c1;
+          border-radius: 8px;
         }
       `}</style>
     </Dialog>

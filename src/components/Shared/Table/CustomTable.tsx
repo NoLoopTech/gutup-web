@@ -27,6 +27,9 @@ interface CustomTableProps<T> {
   onPageChange: (page: number) => void
   onPageSizeChange: (size: number) => void
   onRowClick?: (row: T, rowIndex: number) => void
+  activeRowId?: number | null
+  setActiveRowId?: (id: number | null) => void
+  renderRowDropdown?: (row: T) => React.ReactNode
 }
 
 export function CustomTable<T extends Record<string, any>>({
@@ -72,27 +75,22 @@ export function CustomTable<T extends Record<string, any>>({
             </TableRow>
           ) : (
             data.map((row, rowIndex) => {
-              // Use a stable unique key for each row (prefer tagId for FoodsBenefitsPage)
               const rowId = row.tagId ?? row.dailyTipsId ?? row.id ?? rowIndex
               return (
                 <TableRow
                   key={rowId}
                   className={`group cursor-pointer hover:bg-muted relative transition-colors`}
                   onClick={e => {
+                    const target = e.target as HTMLElement
+                    // Prevent row click action when clicking on the dropdown trigger or popup
                     if (
-                      setActiveRowId &&
-                      !(e.target as HTMLElement).closest(
-                        ".row-action-trigger, .row-action-popup"
-                      )
+                      target.closest(".row-action-trigger") ||
+                      target.closest(".row-action-popup")
                     ) {
-                      setActiveRowId(activeRowId === rowId ? null : rowId)
+                      return
                     }
-                    if (
-                      onRowClick &&
-                      !(e.target as HTMLElement).closest(
-                        ".row-action-trigger, .row-action-popup"
-                      )
-                    ) {
+                    // Trigger row click to open ViewTagPopUp
+                    if (onRowClick) {
                       onRowClick(row, rowIndex)
                     }
                   }}
@@ -112,9 +110,19 @@ export function CustomTable<T extends Record<string, any>>({
                         : null}
                     </TableCell>
                   ))}
-                  {/* Always show 3-dots icon as trigger */}
+                  {/* Render the 3-dots icon for dropdown */}
                   <td className="py-4 px-2 align-middle">
-                    <div className="row-action-trigger inline-block">
+                    <div
+                      className="row-action-trigger inline-block"
+                      onClick={e => {
+                        // Stop propagation to prevent row click
+                        e.stopPropagation()
+                        // Toggle dropdown
+                        if (setActiveRowId) {
+                          setActiveRowId(activeRowId === rowId ? null : rowId)
+                        }
+                      }}
+                    >
                       {renderRowDropdown?.(row)}
                     </div>
                   </td>

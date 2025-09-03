@@ -214,9 +214,10 @@ export default function AddRecipePopUpContent({
       .email(translations.pleaseenteravalidemail),
     website: z
       .string()
-      .url(translations.invalidurlformat)
       .optional()
-      .or(z.literal("")),
+      .refine(val => !val || /^(https?:\/\/|www\.)[^\s]+$/.test(val), {
+        message: translations.invalidurlformat
+      }),
     recipe: z.string().refine(
       val => {
         const plainText = val.replace(/<(.|\n)*?>/g, "").trim()
@@ -832,7 +833,7 @@ export default function AddRecipePopUpContent({
         setFoods(resData)
 
         // Find the newly added food and update the ingredient in the table
-        const newlyAddedFood = resData.find(food => {
+        const newlyAddedFood = resData.find((food: FoodResTypes) => {
           const foodName = activeLang === "en" ? food.name : food.nameFR
           return foodName.toLowerCase() === selectedIngredientName.toLowerCase()
         })
@@ -941,7 +942,7 @@ export default function AddRecipePopUpContent({
               )}
             />
 
-            {/* Category */}
+            {/* Season */}
             <FormField
               control={form.control}
               name="season"
@@ -1125,7 +1126,7 @@ export default function AddRecipePopUpContent({
                       void handleBenefitsBlur()
                       field.onBlur()
                     }}
-                   />
+                  />
                   <FormMessage />
                 </FormItem>
               )}

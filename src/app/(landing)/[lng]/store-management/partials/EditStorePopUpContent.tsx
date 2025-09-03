@@ -190,9 +190,10 @@ export default function EditStorePopUpContent({
       .email(translations.pleaseenteravalidemail),
     website: z
       .string()
-      .url(translations.invalidurlformat)
       .optional()
-      .or(z.literal("")),
+      .refine(val => !val || /^(https?:\/\/|www\.)[^\s]+$/.test(val), {
+        message: translations.invalidWebsiteURL
+      }),
     facebook: z
       .string()
       .url(translations.invalidurlformat)

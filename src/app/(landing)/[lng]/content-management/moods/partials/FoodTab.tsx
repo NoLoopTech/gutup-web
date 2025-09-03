@@ -220,8 +220,8 @@ export default function FoodTab({
   }
 
   const handleImageSelect = async (files: File[] | null) => {
-    const file = files?.[0] ?? null
-    if (file) {
+    if (files && files.length > 0) {
+      const file = files[0]
       try {
         setIsTranslating(true)
         const imageUrl = await uploadImageToFirebase(
@@ -237,13 +237,21 @@ export default function FoodTab({
         setTranslationField("foodData", "en", "image", imageUrl)
         setTranslationField("foodData", "fr", "image", imageUrl)
 
-        setPreviewUrls([imageUrl]) // For single image preview
+        setPreviewUrls([imageUrl])
       } catch (error) {
         toast.error("Image upload failed. Please try again.")
         console.error("Firebase upload error:", error)
       } finally {
         setIsTranslating(false)
       }
+    } else {
+      form.setValue("image", "", {
+        shouldValidate: true,
+        shouldDirty: true
+      })
+      setTranslationField("foodData", "en", "image", "")
+      setTranslationField("foodData", "fr", "image", "")
+      setPreviewUrls([])
     }
   }
 
@@ -299,13 +307,12 @@ export default function FoodTab({
       try {
         const translatedFood = await translateText(food)
         setTranslationField("foodData", "fr", "foodName", translatedFood)
-        form.setValue("foodName", translatedFood) // Set the translated value in the form
+        form.setValue("foodName", translatedFood)
       } catch (error) {
         console.log("Error Translating Food:", error)
       }
     }
 
-    // Close the filtered recipes dropdown
     setFilteredFoods([])
   }
 
@@ -479,7 +486,12 @@ export default function FoodTab({
                         <ChevronsUpDown className="ml-2 w-4 h-4 opacity-50 shrink-0" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full min-w-[var(--radix-popover-trigger-width)] p-0">
+                    <PopoverContent
+                      className="w-full min-w-[var(--radix-popover-trigger-width)] p-0"
+                      onWheel={e => {
+                        e.stopPropagation()
+                      }}
+                    >
                       <Command>
                         <CommandInput
                           placeholder={translations.selectShopCategory}

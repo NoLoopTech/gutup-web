@@ -83,11 +83,11 @@ export const useUpdatedMoodTranslationStore = create<UpdatedStoreState>()(
         }))
       },
 
-      resetUpdatedStore: () =>
+      resetUpdatedStore: () => {
         set({
-          allowMultiLang: opts?.resetAllowMultiLang
-            ? false
-            : get().allowMultiLang,
+          // allowMultiLang: opts?.resetAllowMultiLang
+          //   ? false
+          //   : get().allowMultiLang,
 
           translationsData: {
             quoteData: { en: {}, fr: {} },
@@ -95,6 +95,7 @@ export const useUpdatedMoodTranslationStore = create<UpdatedStoreState>()(
             recipeData: { en: {}, fr: {} }
           }
         })
+      }
     }),
     {
       name: "updated-mood-fields",

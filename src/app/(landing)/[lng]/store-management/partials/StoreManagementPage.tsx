@@ -602,7 +602,7 @@ export default function StoreManagementPage({
           />
 
           {/* select location */}
-          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+          {/* <Select value={selectedLocation} onValueChange={setSelectedLocation}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Location" />
             </SelectTrigger>
@@ -615,7 +615,7 @@ export default function StoreManagementPage({
                 ))}
               </SelectGroup>
             </SelectContent>
-          </Select>
+          </Select> */}
 
           {/* select Store Type */}
           <Select

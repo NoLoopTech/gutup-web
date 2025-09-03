@@ -528,7 +528,7 @@ export default function EditShopPromotionTab({
     website: z
       .string()
       .optional()
-      .refine(val => !val || /^https?:\/\/.+$/.test(val), {
+      .refine(val => !val || /^(https?:\/\/|www\.)[^\s]+$/.test(val), {
         message: translations.invalidWebsiteURL
       }),
     shopPromoteFoods: z.array(z.any()).min(1, {
