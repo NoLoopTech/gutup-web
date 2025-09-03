@@ -12,6 +12,7 @@ import { MoreVertical } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { Badge } from "@/components/ui/badge"
 import AddNewTagPopUp from "../../partials/AddNewTagPopUp"
+import ViewTagPopUp from "../../partials/ViewTagPopUp"
 import { Label } from "@/components/ui/label"
 import { useGetAllTags } from "@/query/hooks/useGetAllTags"
 import { useDeleteTag } from "@/query/hooks/useDeleteTags"
@@ -48,7 +49,17 @@ export default function TypesOfFoodsPage({
   const { deleteTag } = useDeleteTag(token)
   const [tagId, setTagId] = useState<number | null>(null)
   const [activeRowId, setActiveRowId] = useState<number | null>(null)
+  const [viewTagPopUpOpen, setViewTagPopUpOpen] = useState<boolean>(false)
+  const [selectedTagData, setSelectedTagData] = useState<any>(null)
   const tableContainerRef = useRef<HTMLDivElement>(null)
+  // Handle row click to view tag details
+  const handleRowClick = (row: any): void => {
+    setSelectedTagData({
+      category: row.category,
+      tagNameFr: row.tagNameFr
+    })
+    setViewTagPopUpOpen(true)
+  }
 
   // handle delete tag OverView
   const handleDeleteTag = (tagId: number): void => {
@@ -81,7 +92,7 @@ export default function TypesOfFoodsPage({
     if (result.success) {
       toast.success(result.message)
       setConfirmDeleteOpen(false)
-      await fetchTags() // Refresh the data
+      await fetchTags()
     } else {
       toast.error("Failed to delete tag", {
         description: result.message
@@ -93,7 +104,7 @@ export default function TypesOfFoodsPage({
   // handle close delete confirmation popup
   const handleCloseDeleteConfirmationPopup = (): void => {
     setConfirmDeleteOpen(false)
-    setTagId(null) // Reset tagId when closing
+    setTagId(null)
   }
 
   // handle open add food popup
@@ -164,7 +175,7 @@ export default function TypesOfFoodsPage({
     {
       id: "actions",
       className: "w-12",
-      cell: (row: TypesOfFoodsDataType) => null // Remove icon from columns, handled by renderRowDropdown
+      cell: (row: TypesOfFoodsDataType) => null
     }
   ]
 
@@ -238,7 +249,18 @@ export default function TypesOfFoodsPage({
         activeRowId={activeRowId}
         setActiveRowId={setActiveRowId}
         renderRowDropdown={renderRowDropdown}
+        onRowClick={handleRowClick}
       />
+      {/* view tag popup */}
+      {selectedTagData && (
+        <ViewTagPopUp
+          open={viewTagPopUpOpen}
+          onClose={() => {
+            setViewTagPopUpOpen(false)
+          }}
+          tagData={selectedTagData}
+        />
+      )}
       {/* add food popup */}
       <AddNewTagPopUp
         open={openAddNewTagPopUp}

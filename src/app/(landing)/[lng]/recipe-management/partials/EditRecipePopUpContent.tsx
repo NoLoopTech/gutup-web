@@ -225,9 +225,10 @@ export default function EditRecipePopUpContent({
       .email(translations.pleaseenteravalidemail),
     website: z
       .string()
-      .url(translations.invalidurlformat)
       .optional()
-      .or(z.literal("")),
+      .refine(val => !val || /^(https?:\/\/|www\.)[^\s]+$/.test(val), {
+        message: translations.invalidurlformat
+      }),
     recipe: z.string().refine(
       val => {
         const plainText = val.replace(/<(.|\n)*?>/g, "").trim()
@@ -349,15 +350,12 @@ export default function EditRecipePopUpContent({
     }
   }
 
-    const frRichTextFieldOnBlur = async (
-      fieldName: "recipe"
-    ): Promise<void> => {
-      if (activeLang === "fr") {
-        const val = form.getValues(fieldName)
-        setTranslationField("fr", fieldName, val)
-      }
+  const frRichTextFieldOnBlur = async (fieldName: "recipe"): Promise<void> => {
+    if (activeLang === "fr") {
+      const val = form.getValues(fieldName)
+      setTranslationField("fr", fieldName, val)
     }
-
+  }
 
   const makeRichHandlers = (
     fieldName: "recipe"
@@ -456,7 +454,7 @@ export default function EditRecipePopUpContent({
         setFoods(resData)
 
         // Find the newly added food and update the ingredient in the table
-        const newlyAddedFood = resData.find(food => {
+        const newlyAddedFood = resData.find((food: FoodResTypes) => {
           const foodName = activeLang === "en" ? food.name : food.nameFR
           return foodName.toLowerCase() === selectedIngredientName.toLowerCase()
         })

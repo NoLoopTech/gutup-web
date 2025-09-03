@@ -23,6 +23,7 @@ export default function ImageUploader({
 }: ImageUploaderProps): JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null)
   const [imageList, setImageList] = useState<string[]>([])
+  const [isDragActive, setIsDragActive] = useState(false)
 
   // Initialize imageList with previewUrls when component first mounts
   useEffect(() => {
@@ -41,33 +42,54 @@ export default function ImageUploader({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const files = e.target.files
     if (files) {
-      const newFiles = Array.from(files)
-      const newImageList = [...imageList]
-
-      // Convert files to data URLs and update the state
-      newFiles.forEach(file => {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          newImageList.push(reader.result as string) // Add the new image to the list
-          setImageList(newImageList) // Update the image list in state
-        }
-        reader.readAsDataURL(file)
-      })
-
-      onChange?.(newFiles) // Pass the new files back to parent component (if needed)
+      handleFiles(Array.from(files))
     }
+  }
+
+  // Handle files from input or drop
+  const handleFiles = (newFiles: File[]) => {
+    const newImageList = [...imageList]
+    newFiles.forEach(file => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        newImageList.push(reader.result as string)
+        setImageList([...newImageList])
+      }
+      reader.readAsDataURL(file)
+    })
+    onChange?.(newFiles)
   }
 
   // Remove selected image from the list
   const handleRemoveImage = (imageUrl: string): void => {
     const updatedImageList = imageList.filter(image => image !== imageUrl)
-    setImageList(updatedImageList) // Update the state with the new list
-    // Only update parent with null if all images are removed, otherwise keep previous behavior
+    setImageList(updatedImageList)
     if (updatedImageList.length === 0) {
       onChange?.(null)
-    } else {
-      // Optionally, you could keep this line if you want to support multi-image upload in the future
-      // onChange?.(updatedImageList)
+    }
+  }
+
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!disabled) setIsDragActive(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragActive(false)
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragActive(false)
+    if (disabled) return
+    const files = Array.from(e.dataTransfer.files)
+    if (files.length > 0) {
+      handleFiles(files)
     }
   }
 
@@ -110,9 +132,12 @@ export default function ImageUploader({
       ) : (
         <div
           onClick={handleClick}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
           className={`flex flex-col items-center justify-center w-full h-48 p-6 text-center transition duration-200 bg-gray-100 border border-gray-300 rounded-lg  hover:bg-gray-200 ${
             disabled ? "cursor-not-allowed" : "cursor-pointer"
-          }`}
+          } ${isDragActive ? "ring-2 ring-blue-400 bg-blue-50" : ""}`}
         >
           <UploadCloud size={40} className="mb-2 text-Primary-500" />
           <p className="mb-1 text-sm font-medium text-gray-700">{uploadText}</p>
@@ -123,7 +148,7 @@ export default function ImageUploader({
             className="hidden"
             ref={inputRef}
             onChange={handleFileChange}
-            disabled={disabled} // Disable the input if the disabled prop is true
+            disabled={disabled}
           />
         </div>
       )}

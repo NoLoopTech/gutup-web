@@ -144,7 +144,8 @@ export const defaultTranslations: translationsTypes = {
   invalidmobilenumbereg0712345678or94712345678: "",
   pleaseenteravalidemail: "",
   invalidurlformat: "",
-  formSubmittedSuccessfully: ""
+  formSubmittedSuccessfully: "",
+  incomplete: ""
 }
 
 // rercipe types

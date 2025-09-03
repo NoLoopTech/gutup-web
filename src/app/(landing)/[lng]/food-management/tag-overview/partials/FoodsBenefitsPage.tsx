@@ -13,6 +13,7 @@ import { useState, useEffect, useRef } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import AddNewTagPopUp from "../../partials/AddNewTagPopUp"
+import ViewTagPopUp from "../../partials/ViewTagPopUp"
 import { useGetAllTags } from "@/query/hooks/useGetAllTags"
 import { useDeleteTag } from "@/query/hooks/useDeleteTags"
 import {
@@ -51,6 +52,8 @@ export default function FoodsBenefitsPage({
   const { deleteTag, loading: deleteLoading } = useDeleteTag(token)
   const [tagId, setTagId] = useState<number>(0)
   const [activeRowId, setActiveRowId] = useState<number | null>(null)
+  const [viewTagPopUpOpen, setViewTagPopUpOpen] = useState<boolean>(false)
+  const [selectedTagData, setSelectedTagData] = useState<any>(null)
   const tableContainerRef = useRef<HTMLDivElement>(null)
 
   // handle delete tag OverView
@@ -235,6 +238,15 @@ export default function FoodsBenefitsPage({
     </div>
   )
 
+  // Handle row click to view tag details
+  const handleRowClick = (row: any): void => {
+    setSelectedTagData({
+      category: row.category,
+      tagNameFr: row.tagNameFr
+    })
+    setViewTagPopUpOpen(true)
+  }
+
   return (
     <div className="space-y-4" ref={tableContainerRef}>
       {/* add new food button */}
@@ -255,7 +267,19 @@ export default function FoodsBenefitsPage({
         activeRowId={activeRowId}
         setActiveRowId={setActiveRowId}
         renderRowDropdown={renderRowDropdown}
+        onRowClick={handleRowClick}
       />
+
+      {/* view tag popup */}
+      {selectedTagData && (
+        <ViewTagPopUp
+          open={viewTagPopUpOpen}
+          onClose={() => {
+            setViewTagPopUpOpen(false)
+          }}
+          tagData={selectedTagData}
+        />
+      )}
 
       {/* add food popup */}
       <AddNewTagPopUp

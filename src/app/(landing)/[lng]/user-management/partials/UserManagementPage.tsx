@@ -264,9 +264,9 @@ export default function UserManagementPage({
   }
 
   // genarate score points
-  const scorePoints = Array.from({ length: 100 }, (_, i) => ({
-    value: i + 1,
-    label: (i + 1).toString()
+  const scorePoints = Array.from({ length: 240 }, (_, i) => ({
+    value: (i + 1) * 5,
+    label: ((i + 1) * 5).toString()
   }))
 
   // handle row click to open user overview popup
