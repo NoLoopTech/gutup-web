@@ -2,10 +2,18 @@ import axiosInstance from "@/query/axios.instance"
 import type { CreateFoodDto } from "@/types/foodTypes"
 
 // get all foods
-export const getAllFoods = async (token: string): Promise<any> => {
+export const getAllFoods = async (
+  token: string,
+  limit?: number,
+  offset?: number
+): Promise<any> => {
   try {
+    const params: any = {}
+    if (limit !== undefined) params.limit = limit
+    if (offset !== undefined) params.offset = offset
     const response = await axiosInstance.get("/food", {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
+      params
     })
     return response
   } catch (error) {
@@ -41,7 +49,8 @@ export const deleteFoodById = async (
       error: true,
       status: error?.response?.status || 500,
       data: {
-        message: error?.response?.data?.message || error.message || "Delete failed"
+        message:
+          error?.response?.data?.message || error.message || "Delete failed"
       }
     }
   }
