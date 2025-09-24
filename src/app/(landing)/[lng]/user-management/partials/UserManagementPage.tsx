@@ -41,7 +41,7 @@ interface UserManagementDataType {
   email: string
   createdAt: string
   updatedAt: string
-  dailyScore: number
+  points: number
 }
 
 export default function UserManagementPage({
@@ -148,7 +148,7 @@ export default function UserManagementPage({
         cell: (row: any) => dayjs(row.updatedAt).format("DD/MM/YYYY")
       },
       {
-        accessor: "dailyScore" as const,
+        accessor: "points" as const,
         header: "Daily Score Points",
         className: "w-40"
       }
@@ -187,7 +187,7 @@ export default function UserManagementPage({
         .toLowerCase()
         .includes(searchText.toLowerCase())
       const scoreMatch =
-        selectedScore === "" || user.dailyScore === Number(selectedScore)
+        selectedScore === "" || user.points === Number(selectedScore)
 
       const createdAt = dayjs(user.createdAt)
       const now = dayjs()
