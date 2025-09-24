@@ -36,7 +36,7 @@ import {
   SelectValue
 } from "@/components/ui/select"
 import dayjs from "dayjs"
-import { MoreVertical } from "lucide-react"
+import { Loader2, MoreVertical } from "lucide-react"
 import { useSession } from "next-auth/react"
 import Image from "next/image"
 import { useEffect, useMemo, useRef, useState } from "react"
@@ -100,6 +100,7 @@ export default function FoodOverviewPage(): React.ReactElement {
   const [pageSize, setPageSize] = useState(10)
   const [openAddFoodPopUp, setOpenAddFoodPopUp] = useState(false)
   const [foods, setFoods] = useState<FoodOverviewDataType[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const [searchText, setSearchText] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
 
@@ -122,6 +123,7 @@ export default function FoodOverviewPage(): React.ReactElement {
   const [selectedMonths, setSelectedMonths] = useState<string[]>([])
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [foodIdToDelete, setFoodIdToDelete] = useState<number | null>(null)
+  const [totalCount, setTotalCount] = useState(0)
 
   const [categoryOptionsApi, setCategoryOptionsApi] = useState<dataListTypes[]>(
     []
@@ -134,20 +136,27 @@ export default function FoodOverviewPage(): React.ReactElement {
   const getFoods = async (): Promise<void> => {
     if (!token) return
     try {
-      const response = await getAllFoods(token)
+      setIsLoading(true)
+      const offset = (page - 1) * pageSize
+      const response = await getAllFoods(token, pageSize, offset)
       if (response.status === 200) {
-        setFoods(response.data.foods)
+        setFoods(Array.isArray(response.data.foods) ? response.data.foods : [])
+        setTotalCount(
+          typeof response.data.count === "number" ? response.data.count : 0
+        )
       } else {
         console.log(response)
       }
     } catch (error) {
       console.error("Failed to fetch foods:", error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   useEffect(() => {
     void getFoods()
-  }, [token])
+  }, [token, page, pageSize])
 
   useEffect(() => {
     const fetchCategories = async (): Promise<void> => {
@@ -295,14 +304,7 @@ export default function FoodOverviewPage(): React.ReactElement {
     })
   }, [foods, debouncedSearch, category, nutritional, season, selectedMonths])
 
-  const totalItems = filteredFoods.length
-
-  // Paginating the filtered foods
-  const paginatedData = useMemo(() => {
-    const startIndex = (page - 1) * pageSize
-    const endIndex = startIndex + pageSize
-    return filteredFoods.slice(startIndex, endIndex)
-  }, [filteredFoods, page, pageSize])
+  const tableData = filteredFoods
 
   // Columns for the food management table
   const columns: Array<Column<FoodOverviewDataType>> = [
@@ -622,7 +624,8 @@ export default function FoodOverviewPage(): React.ReactElement {
                     .sort((a, b) => a.label.localeCompare(b.label))
                     .map(item => (
                       <SelectItem key={item.value} value={item.value}>
-                        {item.label.charAt(0).toUpperCase() + item.label.slice(1)}
+                        {item.label.charAt(0).toUpperCase() +
+                          item.label.slice(1)}
                       </SelectItem>
                     ))
                 ) : (
@@ -668,23 +671,31 @@ export default function FoodOverviewPage(): React.ReactElement {
       </div>
 
       {/* Food Table */}
-      <CustomTable
-        columns={columns}
-        data={paginatedData}
-        page={page}
-        pageSize={pageSize}
-        totalItems={totalItems}
-        pageSizeOptions={[5, 10, 20]}
-        onPageChange={setPage}
-        onPageSizeChange={size => {
-          setPageSize(size)
-          setPage(1)
-        }}
-        activeRowId={activeRowId}
-        setActiveRowId={setActiveRowId}
-        renderRowDropdown={renderRowDropdown}
-        onRowClick={handleRowClick}
-      />
+      <div className="relative">
+        <CustomTable
+          key={page}
+          columns={columns}
+          data={tableData}
+          page={page}
+          pageSize={pageSize}
+          totalItems={totalCount}
+          pageSizeOptions={[5, 10, 20]}
+          onPageChange={setPage}
+          onPageSizeChange={size => {
+            setPageSize(size)
+            setPage(1)
+          }}
+          activeRowId={activeRowId}
+          setActiveRowId={setActiveRowId}
+          renderRowDropdown={renderRowDropdown}
+          onRowClick={handleRowClick}
+        />
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        )}
+      </div>
 
       {/* Add Food Popup */}
       <AddFoodPopUp

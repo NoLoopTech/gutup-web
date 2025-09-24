@@ -201,88 +201,25 @@ export default function ViewFoodFrench({
     switch (field) {
       case "name":
         updateEditedData("nameFR", value)
-        if (value?.trim()) {
-          translateText(value)
-            .then(translated => {
-              updateEditedData("name", translated)
-            })
-            .catch(() => {
-              updateEditedData("name", value)
-            })
-        }
         break
       case "fiber":
         updateNestedData("attributes", "fiberFR", value)
-        if (value?.trim()) {
-          translateText(value)
-            .then(translated => {
-              updateNestedData("attributes", "fiber", translated)
-            })
-            .catch(() => {
-              updateNestedData("attributes", "fiber", value)
-            })
-        }
         break
       case "proteins":
         updateNestedData("attributes", "proteinsFR", value)
-        if (value?.trim()) {
-          translateText(value)
-            .then(translated => {
-              updateNestedData("attributes", "proteins", translated)
-            })
-            .catch(() => {
-              updateNestedData("attributes", "proteins", value)
-            })
-        }
         break
       case "fat":
         updateNestedData("attributes", "fatFR", value)
-        if (value?.trim()) {
-          translateText(value)
-            .then(translated => {
-              updateNestedData("attributes", "fat", translated)
-            })
-            .catch(() => {
-              updateNestedData("attributes", "fat", value)
-            })
-        }
         break
       case "sugar":
         updateNestedData("attributes", "sugarFR", value)
-        if (value?.trim()) {
-          translateText(value)
-            .then(translated => {
-              updateNestedData("attributes", "sugar", translated)
-            })
-            .catch(() => {
-              updateNestedData("attributes", "sugar", value)
-            })
-        }
         break
 
       case "vitamins":
         updateNestedData("attributes", "vitaminsFR", value)
-        if (value?.trim()) {
-          translateText(value)
-            .then(translated => {
-              updateNestedData("attributes", "vitamins", translated)
-            })
-            .catch(() => {
-              updateNestedData("attributes", "vitamins", value)
-            })
-        }
         break
       case "minerals":
         updateNestedData("attributes", "mineralsFR", value)
-        if (value?.trim()) {
-          translateText(value)
-            .then(translated => {
-              updateNestedData("attributes", "minerals", translated)
-            })
-            .catch(() => {
-              updateNestedData("attributes", "minerals", value)
-            })
-        }
         break
     }
   }
