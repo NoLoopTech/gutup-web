@@ -2,18 +2,41 @@ import axiosInstance from "@/query/axios.instance"
 import type { CreateFoodDto } from "@/types/foodTypes"
 
 // get all foods
+export interface GetAllFoodsFilters {
+  search?: string
+  categories?: string | string[]
+  seasons?: string | string[]
+  nutritional?: string
+}
+
 export const getAllFoods = async (
   token: string,
   limit?: number,
-  offset?: number
+  offset?: number,
+  filters?: GetAllFoodsFilters
 ): Promise<any> => {
   try {
     const params: any = {}
     if (limit !== undefined) params.limit = limit
     if (offset !== undefined) params.offset = offset
+    if (filters?.search) params.search = filters.search
+    if (filters?.categories) {
+      params.categories = Array.isArray(filters.categories)
+        ? filters.categories.join(",")
+        : filters.categories
+    }
+    if (filters?.seasons) {
+      params.seasons = filters.seasons
+    }
+    if (filters?.nutritional) {
+      params.nutritional = filters.nutritional
+    }
     const response = await axiosInstance.get("/food", {
       headers: { Authorization: `Bearer ${token}` },
-      params
+      params,
+      paramsSerializer: {
+        indexes: null
+      }
     })
     return response
   } catch (error) {
