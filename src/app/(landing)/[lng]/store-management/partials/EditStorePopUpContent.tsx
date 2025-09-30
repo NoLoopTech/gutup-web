@@ -149,6 +149,10 @@ export default function EditStorePopUpContent({
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [, setIsPremium] = React.useState(false)
   const [foods, setFoods] = useState<Food[]>([])
+  const [foodSuggestions, setFoodSuggestions] = useState<Food[]>([])
+  const [isFoodSearchLoading, setIsFoodSearchLoading] = useState(false)
+  const [foodSearchDropdownTrigger, setFoodSearchDropdownTrigger] =
+    useState(0)
   const [categoryTags, setCategoryTags] = useState<CategoryTag[]>([])
   const [storeCategories, setStoreCategories] = useState<StoreCategory[]>([])
   const [storeTypes, setStoreTypes] = useState<StoreType[]>([])
@@ -504,15 +508,62 @@ export default function EditStorePopUpContent({
   // fetch foods
   useEffect(() => {
     const fetchFoods = async (): Promise<void> => {
-      const res = await getAllFoods(token)
-      if (res && res.status === 200) {
-        setFoods(res.data.foods)
-      } else {
-        console.error("Failed to fetch foods:", res)
+      try {
+        const res = await getAllFoods(token, undefined, undefined, undefined, true)
+        if (res && res.status === 200) {
+          const resData: Food[] = res.data.foods
+          setFoods(resData)
+          setFoodSuggestions(resData)
+        } else {
+          console.error("Failed to fetch foods:", res)
+        }
+      } catch (error) {
+        console.error("Failed to fetch foods:", error)
       }
     }
     void fetchFoods()
   }, [token])
+
+  const handleFoodSearch = async (): Promise<void> => {
+    const searchTerm = ingredientInput.trim()
+
+    try {
+      setIsFoodSearchLoading(true)
+      const res = await getAllFoods(
+        token,
+        undefined,
+        undefined,
+        searchTerm ? { search: searchTerm } : undefined,
+        true
+      )
+
+      if (res && res.status === 200) {
+        const resData: Food[] = res.data.foods
+
+        setFoods(prev => {
+          const merged = new Map<string, Food>()
+          prev.forEach(item => {
+            merged.set(String(item.id), item)
+          })
+          resData.forEach(item => {
+            merged.set(String(item.id), item)
+          })
+          return Array.from(merged.values())
+        })
+
+        setFoodSuggestions(resData)
+        setSelected(null)
+        setFoodSearchDropdownTrigger(prev => prev + 1)
+      } else {
+        toast.error("Failed to fetch foods. Please try again.")
+      }
+    } catch (error) {
+      console.error("Failed to fetch foods:", error)
+      toast.error("Failed to fetch foods. Please try again.")
+    } finally {
+      setIsFoodSearchLoading(false)
+    }
+  }
 
   // fetch tags
   useEffect(() => {
@@ -1793,16 +1844,23 @@ export default function EditStorePopUpContent({
                   <SearchBar
                     title={translations.selectAvailableIngredients}
                     placeholder={translations.searchForIngredients}
-                    dataList={foods.map(f => ({
+                    dataList={foodSuggestions.map(f => ({
                       id: f.id,
                       name: f.name ?? ""
                     }))}
                     value={ingredientInput}
-                    onInputChange={setIngredientInput}
+                    onInputChange={value => {
+                      setIngredientInput(value)
+                      setSelected(null)
+                    }}
                     onSelect={item => {
                       setSelected(item)
                       setIngredientInput(item.name)
                     }}
+                    onSearch={handleFoodSearch}
+                    searchLoading={isFoodSearchLoading}
+                    searchButtonLabel={translations.searchForIngredients}
+                    dropdownOpenTrigger={foodSearchDropdownTrigger}
                   />
                 </div>
                 <div className="flex items-end h-full mt-7">

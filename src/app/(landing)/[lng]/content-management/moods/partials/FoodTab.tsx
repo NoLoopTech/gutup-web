@@ -1,6 +1,6 @@
 "use client"
 
-import { getAllFoodsList } from "@/app/api/foods"
+import { getAllFoods } from "@/app/api/foods"
 import ImageUploader from "@/components/Shared/ImageUploder/ImageUploader"
 import { Button } from "@/components/ui/button"
 import {
@@ -44,7 +44,7 @@ import React, { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Option {
@@ -111,9 +111,9 @@ export default function FoodTab({
   })
   const [shopCategoryOpen, setShopCategoryOpen] = useState(false)
   const [filteredFoods, setFilteredFoods] = useState<string[]>([])
-  const [listOfFoods, setListOfFoods] = useState<ListOfFoods | undefined>(
-    undefined
-  )
+  const [foodSearchResults, setFoodSearchResults] =
+    useState<ListOfFoods | null>(null)
+  const [isFoodSearchLoading, setIsFoodSearchLoading] = useState(false)
 
   const dropdownRef = useRef<HTMLUListElement>(null)
 
@@ -131,29 +131,6 @@ export default function FoodTab({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
     }
-  }, [])
-
-  // handle get foods
-  const getFoods = async (): Promise<void> => {
-    try {
-      const response = await getAllFoodsList(token)
-      if (response.status === 200) {
-        const FoodsByLanguage = {
-          en: response.data.map((food: any) => food.name),
-          fr: response.data.map((food: any) => food.nameFR)
-        }
-
-        setListOfFoods(FoodsByLanguage)
-      } else {
-        console.log(response)
-      }
-    } catch (error) {
-      console.error("Failed to fetch Foods:", error)
-    }
-  }
-
-  useEffect(() => {
-    void getFoods()
   }, [])
 
   const { shopCategorys } = useGetShopCategorys() as {
@@ -176,6 +153,17 @@ export default function FoodTab({
       setShopcategory(tagsOptions)
     }
   }, [shopCategorys])
+
+  useEffect(() => {
+    if (!foodSearchResults) return
+    const currentValue = form.getValues("foodName") ?? ""
+    const baseList = foodSearchResults[activeLang] ?? []
+    const normalized = currentValue.toLowerCase()
+    const filtered = baseList.filter((food: string) =>
+      normalized ? food.toLowerCase().includes(normalized) : true
+    )
+    setFilteredFoods(filtered)
+  }, [activeLang, foodSearchResults, form])
 
   const FormSchema = z.object({
     mood: z.string().nonempty(translations.pleaseSelectAMood),
@@ -290,11 +278,15 @@ export default function FoodTab({
     setTranslationField("foodData", activeLang, fieldName, value)
 
     if (fieldName === "foodName") {
-      if (listOfFoods) {
-        const filtered = listOfFoods[activeLang]?.filter((food: string) =>
-          food.toLowerCase().includes(value.toLowerCase())
+      if (foodSearchResults) {
+        const baseList = foodSearchResults[activeLang] ?? []
+        const normalized = value.toLowerCase()
+        const filtered = baseList.filter((food: string) =>
+          normalized ? food.toLowerCase().includes(normalized) : true
         )
-        setFilteredFoods(filtered || [])
+        setFilteredFoods(filtered)
+      } else {
+        setFilteredFoods([])
       }
     }
   }
@@ -314,6 +306,45 @@ export default function FoodTab({
     }
 
     setFilteredFoods([])
+  }
+
+  const handleFoodSearch = async (): Promise<void> => {
+    const rawSearch = form.getValues("foodName") ?? ""
+    const searchTerm = rawSearch.trim()
+
+    try {
+      setIsFoodSearchLoading(true)
+      const response = await getAllFoods(
+        token,
+        undefined,
+        undefined,
+        searchTerm ? { search: searchTerm } : undefined,
+        true
+      )
+
+      if (response && response.status === 200) {
+        const foodsByLanguage: ListOfFoods = {
+          en: response.data.foods.map((food: any) => food.name ?? ""),
+          fr: response.data.foods.map((food: any) => food.nameFR ?? "")
+        }
+
+        setFoodSearchResults(foodsByLanguage)
+
+        const baseList = foodsByLanguage[activeLang] ?? []
+        const normalized = searchTerm.toLowerCase()
+        const filtered = baseList.filter((food: string) =>
+          normalized ? food.toLowerCase().includes(normalized) : true
+        )
+        setFilteredFoods(filtered)
+      } else {
+        toast.error("Failed to fetch foods. Please try again.")
+      }
+    } catch (error) {
+      console.error("Failed to fetch foods:", error)
+      toast.error("Failed to fetch foods. Please try again.")
+    } finally {
+      setIsFoodSearchLoading(false)
+    }
   }
 
   const handleInputBlur = async (
@@ -386,44 +417,60 @@ export default function FoodTab({
               <FormItem>
                 <FormLabel>{translations.foodName}</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder={translations.searchForFood}
-                    {...field}
-                    onChange={e => handleInputChange(e, "foodName")}
-                    onBlur={() => handleInputBlur(field.value, "foodName")}
-                  />
-                  {filteredFoods.length > 0 && (
-                    <ul
-                      ref={dropdownRef}
-                      className={`overflow-y-auto absolute z-10 mt-2 w-full text-sm bg-white rounded-md border border-gray-300 shadow-md ${
-                        filteredFoods.length === 1
-                          ? "h-10"
-                          : filteredFoods.length === 2
-                          ? "h-20"
-                          : filteredFoods.length === 3
-                          ? "h-30"
-                          : filteredFoods.length === 4
-                          ? "h-40"
-                          : filteredFoods.length === 5
-                          ? "h-50"
-                          : filteredFoods.length === 6
-                          ? "h-60"
-                          : filteredFoods.length === 7
-                          ? "h-70"
-                          : "h-80"
-                      }`}
-                    >
-                      {filteredFoods.map((food, idx) => (
-                        <li
-                          key={idx}
-                          className="px-3 py-2 cursor-pointer hover:bg-gray-100 h-10"
-                          onClick={() => handleFoodSelect(food)}
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        placeholder={translations.searchForFood}
+                        {...field}
+                        onChange={e => handleInputChange(e, "foodName")}
+                        onBlur={() => handleInputBlur(field.value, "foodName")}
+                      />
+                      {filteredFoods.length > 0 && (
+                        <ul
+                          ref={dropdownRef}
+                          className={`overflow-y-auto absolute z-10 mt-2 w-full text-sm bg-white rounded-md border border-gray-300 shadow-md ${
+                            filteredFoods.length === 1
+                              ? "h-10"
+                              : filteredFoods.length === 2
+                              ? "h-20"
+                              : filteredFoods.length === 3
+                              ? "h-30"
+                              : filteredFoods.length === 4
+                              ? "h-40"
+                              : filteredFoods.length === 5
+                              ? "h-50"
+                              : filteredFoods.length === 6
+                              ? "h-60"
+                              : filteredFoods.length === 7
+                              ? "h-70"
+                              : "h-80"
+                          }`}
                         >
-                          {food}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                          {filteredFoods.map((food, idx) => (
+                            <li
+                              key={idx}
+                              className="px-3 py-2 cursor-pointer hover:bg-gray-100 h-10"
+                              onClick={() => handleFoodSelect(food)}
+                            >
+                              {food}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={handleFoodSearch}
+                      className="shrink-0"
+                      disabled={isFoodSearchLoading}
+                    >
+                      {isFoodSearchLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        translations.searchForFood
+                      )}
+                    </Button>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>

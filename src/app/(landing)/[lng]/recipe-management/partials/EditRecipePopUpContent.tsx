@@ -117,8 +117,11 @@ export default function EditRecipePopUpContent({
   const { translateText } = useTranslation()
   const [isLoadingTrigger, setIsLoadingTrigger] = useState(false)
   const [foods, setFoods] = useState<Food[]>([])
+  const [foodSuggestions, setFoodSuggestions] = useState<Food[]>([])
   const [ingredientData, setIngredientData] = useState<Ingredient[]>([])
   const [selected, setSelected] = useState<Food | null>(null)
+  const [isFoodSearchLoading, setIsFoodSearchLoading] = useState(false)
+  const [searchDropdownTrigger, setSearchDropdownTrigger] = useState(0)
   const [previewFoodUrls, setPreviewFoodUrls] = useState<string[]>([])
   const [previewAuthorUrls, setPreviewAuthorUrls] = useState<string[]>([])
   const [ingredientInput, setIngredientInput] = useState<string>("")
@@ -248,7 +251,47 @@ export default function EditRecipePopUpContent({
   // Update fetchFoods to match AddRecipePopUpContent structure
   useEffect(() => {
     const fetchFoods = async (): Promise<void> => {
-      const res = await getAllFoods(token)
+      try {
+        const res = await getAllFoods(
+          token,
+          undefined,
+          undefined,
+          undefined,
+          true
+        )
+        if (res && res.status === 200) {
+          const resData = res.data.foods.map((food: FoodResTypes) => ({
+            id: food.id,
+            name: food.name,
+            nameFR: food.nameFR,
+            status: food.status
+          }))
+
+          setFoods(resData)
+          setFoodSuggestions(resData)
+        } else {
+          console.error("Failed to fetch foods:", res)
+        }
+      } catch (error) {
+        console.error("Failed to fetch foods:", error)
+      }
+    }
+    void fetchFoods()
+  }, [token])
+
+  const handleFoodSearch = async (): Promise<void> => {
+    const searchTerm = ingredientInput.trim()
+
+    try {
+      setIsFoodSearchLoading(true)
+      const res = await getAllFoods(
+        token,
+        undefined,
+        undefined,
+        searchTerm ? { search: searchTerm } : undefined,
+        true
+      )
+
       if (res && res.status === 200) {
         const resData = res.data.foods.map((food: FoodResTypes) => ({
           id: food.id,
@@ -257,13 +300,30 @@ export default function EditRecipePopUpContent({
           status: food.status
         }))
 
-        setFoods(resData)
+        setFoods(prev => {
+          const merged = new Map<number, Food>()
+          prev.forEach(item => {
+            merged.set(item.id, item)
+          })
+          resData.forEach(item => {
+            merged.set(item.id, item)
+          })
+          return Array.from(merged.values())
+        })
+
+        setFoodSuggestions(resData)
+        setSelected(null)
+        setSearchDropdownTrigger(prev => prev + 1)
       } else {
-        console.error("Failed to fetch foods:", res)
+        toast.error("Failed to fetch foods. Please try again.")
       }
+    } catch (error) {
+      console.error("Failed to fetch foods:", error)
+      toast.error("Failed to fetch foods. Please try again.")
+    } finally {
+      setIsFoodSearchLoading(false)
     }
-    void fetchFoods()
-  }, [token])
+  }
 
   const handleCancel = async (): Promise<void> => {
     // Clear preview image state
@@ -443,7 +503,13 @@ export default function EditRecipePopUpContent({
   const handleFoodAdded = async () => {
     try {
       // Refresh the foods list
-      const res = await getAllFoods(token)
+      const res = await getAllFoods(
+        token,
+        undefined,
+        undefined,
+        undefined,
+        true
+      )
       if (res && res.status === 200) {
         const resData = res.data.foods.map((food: FoodResTypes) => ({
           id: food.id,
@@ -452,6 +518,8 @@ export default function EditRecipePopUpContent({
           status: food.status
         }))
         setFoods(resData)
+        setFoodSuggestions(resData)
+        setSelected(null)
 
         // Find the newly added food and update the ingredient in the table
         const newlyAddedFood = resData.find((food: FoodResTypes) => {
@@ -1198,12 +1266,15 @@ export default function EditRecipePopUpContent({
                 <SearchBar
                   title="Select Food"
                   placeholder="Search for food..."
-                  dataList={foods.map(f => ({
+                  dataList={foodSuggestions.map(f => ({
                     id: f.id,
                     name: activeLang === "en" ? f.name : f.nameFR
                   }))}
                   value={ingredientInput}
-                  onInputChange={setIngredientInput}
+                  onInputChange={value => {
+                    setIngredientInput(value)
+                    setSelected(null)
+                  }}
                   onSelect={item => {
                     const selectedFood = foods.find(
                       f => f.id === Number(item.id)
@@ -1217,6 +1288,10 @@ export default function EditRecipePopUpContent({
                       )
                     }
                   }}
+                  onSearch={handleFoodSearch}
+                  searchLoading={isFoodSearchLoading}
+                  searchButtonLabel={translations.searchForIngredient}
+                  dropdownOpenTrigger={searchDropdownTrigger}
                 />
               </div>
               <div className="flex items-end mt-7 h-full">
@@ -1246,7 +1321,7 @@ export default function EditRecipePopUpContent({
                   />
                   {availData.length === 0 && (
                     <FormMessage className="text-red-500">
-                      At least one ingredient category must be added
+                      At least one ingredient must be added
                     </FormMessage>
                   )}
                 </>

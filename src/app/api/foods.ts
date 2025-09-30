@@ -13,12 +13,19 @@ export const getAllFoods = async (
   token: string,
   limit?: number,
   offset?: number,
-  filters?: GetAllFoodsFilters
+  filters?: GetAllFoodsFilters,
+  all?: boolean
 ): Promise<any> => {
   try {
-    const params: any = {}
-    if (limit !== undefined) params.limit = limit
-    if (offset !== undefined) params.offset = offset
+    const params: Record<string, unknown> = {}
+
+    if (all) {
+      params.all = true
+    } else {
+      if (limit !== undefined) params.limit = limit
+      if (offset !== undefined) params.offset = offset
+    }
+
     if (filters?.search) params.search = filters.search
     if (filters?.categories) {
       params.categories = Array.isArray(filters.categories)
@@ -31,6 +38,7 @@ export const getAllFoods = async (
     if (filters?.nutritional) {
       params.nutritional = filters.nutritional
     }
+
     const response = await axiosInstance.get("/food", {
       headers: { Authorization: `Bearer ${token}` },
       params,
