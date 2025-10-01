@@ -454,19 +454,68 @@ export default function AddRecipePopUpContent({
     ingredientName: string,
     value: string
   ): void => {
-    // Update the ingredient quantity in availData
     const updatedAvailData = availData.map(item => {
       if (item.ingredientName.toLowerCase() === ingredientName.toLowerCase()) {
-        // If the ingredient matches, update the quantity
         return { ...item, quantity: value }
       }
       return item
     })
 
     setAvailData(updatedAvailData)
+    setTranslationField(activeLang, "ingredientData", updatedAvailData)
+  }
 
-    setTranslationField("en", "ingredientData", updatedAvailData)
-    setTranslationField("fr", "ingredientData", updatedAvailData)
+  const handleQuantityBlur = async (
+    ingredientName: string,
+    value: string
+  ): Promise<void> => {
+    if (activeLang !== "en") return
+
+    const trimmedValue = value.trim()
+    const englishIngredients = translationData.en?.ingredientData ?? []
+    const targetIndex = englishIngredients.findIndex(
+      item => item.ingredientName.toLowerCase() === ingredientName.toLowerCase()
+    )
+
+    if (targetIndex === -1) return
+
+    const frIngredients = translationData.fr?.ingredientData ?? []
+    const updatedFrIngredients = [...frIngredients]
+    const fallbackEnglish = englishIngredients[targetIndex]
+
+    const ensureFrEntry = () => {
+      const existing = updatedFrIngredients[targetIndex]
+      if (existing != null) return existing
+      return {
+        foodId: fallbackEnglish?.foodId ?? 0,
+        ingredientName:
+          fallbackEnglish?.ingredientName ?? frIngredients[targetIndex]?.ingredientName ?? ingredientName,
+        quantity: "",
+        mainIngredient: fallbackEnglish?.mainIngredient ?? false,
+        available: fallbackEnglish?.available ?? false
+      }
+    }
+
+    if (!trimmedValue) {
+      updatedFrIngredients[targetIndex] = {
+        ...ensureFrEntry(),
+        quantity: ""
+      }
+      setTranslationField("fr", "ingredientData", updatedFrIngredients)
+      return
+    }
+
+    try {
+      const translatedQuantity = await translateText(trimmedValue)
+      updatedFrIngredients[targetIndex] = {
+        ...ensureFrEntry(),
+        quantity: translatedQuantity
+      }
+      setTranslationField("fr", "ingredientData", updatedFrIngredients)
+    } catch (error) {
+      console.log("Error Translating", error)
+      toast.error("Failed to translate quantity.")
+    }
   }
 
   // table columns for available ingredients and categories
@@ -487,6 +536,9 @@ export default function AddRecipePopUpContent({
           value={row.quantity}
           onChange={e =>
             handleQuantityChange(row.ingredientName, e.target.value)
+          }
+          onBlur={e =>
+            void handleQuantityBlur(row.ingredientName, e.target.value)
           }
           placeholder="Enter quantity"
           className="w-[80%]"
