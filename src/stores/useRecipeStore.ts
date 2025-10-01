@@ -28,6 +28,7 @@ export interface RecipeFields {
   phone: string
   email: string
   website: string
+  instagram: string
   recipeImage: string
   authorimage: string
 }
@@ -85,6 +86,7 @@ const emptyRecipe: RecipeFields = {
   phone: "",
   email: "",
   website: "",
+  instagram: "",
   recipeImage: "",
   authorimage: ""
 }

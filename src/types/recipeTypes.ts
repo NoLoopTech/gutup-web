@@ -41,6 +41,8 @@ export interface translationsTypes {
   enterAuthorEmail: string
   website: string
   enterAuthorWebSite: string
+  instagram: string
+  enterAuthorInstagram: string
   uploadAuthorImage: string
   selectImagesForYourFoodItem: string
   uploadImages: string
@@ -115,6 +117,8 @@ export const defaultTranslations: translationsTypes = {
   enterAuthorEmail: "",
   website: "",
   enterAuthorWebSite: "",
+  instagram: "",
+  enterAuthorInstagram: "",
   uploadAuthorImage: "",
   selectImagesForYourFoodItem: "",
   uploadImages: "",
@@ -174,6 +178,7 @@ interface Author {
   authorPhone?: string
   authorEmail?: string
   authorWebsite?: string
+  authorInstagramLink?: string
   authorImage?: string
 }
 

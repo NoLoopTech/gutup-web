@@ -569,6 +569,7 @@ export default function RecipeManagementPage({
         authorPhone: translations.en.phone,
         authorEmail: translations.en.email,
         authorWebsite: translations.en.website,
+        authorInstagramLink: translations.en.instagram,
         authorImage: authorImageUrl ?? ""
       },
       ingredients: translatedIngredients
@@ -732,6 +733,9 @@ export default function RecipeManagementPage({
     }
     if (translationsData.en.website) {
       author.authorWebsite = translationsData.en.website
+    }
+    if (translationsData.en.instagram) {
+      author.authorInstagramLink = translationsData.en.instagram
     }
     if (authorImageUrl) {
       author.authorImage = authorImageUrl

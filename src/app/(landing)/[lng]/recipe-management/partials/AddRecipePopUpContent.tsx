@@ -221,6 +221,12 @@ export default function AddRecipePopUpContent({
       .refine(val => !val || /^(https?:\/\/|www\.)[^\s]+$/.test(val), {
         message: translations.invalidurlformat
       }),
+    instagram: z
+      .string()
+      .optional()
+      .refine(val => !val || /^(https?:\/\/|www\.)[^\s]+$/.test(val), {
+        message: translations.invalidurlformat
+      }),
     recipe: z.string().refine(
       val => {
         const plainText = val.replace(/<(.|\n)*?>/g, "").trim()
@@ -339,6 +345,7 @@ export default function AddRecipePopUpContent({
       | "phone"
       | "email"
       | "website"
+      | "instagram"
   ): void => {
     const value = e.target.value
     form.setValue(fieldName, value)
@@ -1484,6 +1491,35 @@ export default function AddRecipePopUpContent({
                             await handleInputBlurWithoutTranslate(
                               field.value ?? "",
                               "website"
+                            )
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="w-full">
+                <FormField
+                  control={form.control}
+                  name="instagram"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel className="block mb-1 text-black">
+                        {translations.instagram}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={translations.enterAuthorInstagram}
+                          {...field}
+                          onChange={e => {
+                            handleInputChange(e, "instagram")
+                          }}
+                          onBlur={async () => {
+                            await handleInputBlurWithoutTranslate(
+                              field.value ?? "",
+                              "instagram"
                             )
                           }}
                         />

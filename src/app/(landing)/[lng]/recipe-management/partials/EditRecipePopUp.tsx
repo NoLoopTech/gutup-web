@@ -109,6 +109,10 @@ export default function EditRecipePopUp({
         setTranslationField("en", "website", data.author.authorWebsite)
         setTranslationField("fr", "website", data.author.authorWebsite)
 
+        const instagramLink = data.author.authorInstagramLink ?? ""
+        setTranslationField("en", "instagram", instagramLink)
+        setTranslationField("fr", "instagram", instagramLink)
+
         setTranslationField("en", "season", data.season)
         setTranslationField("fr", "season", data.seasonFR)
 
