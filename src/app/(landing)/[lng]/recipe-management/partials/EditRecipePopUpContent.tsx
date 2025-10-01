@@ -82,11 +82,11 @@ const seasonOptions: Record<string, Option[]> = {
     { value: "noSeason", label: "No Season" }
   ],
   fr: [
-    { value: "spring", label: "Printemps" },
-    { value: "summer", label: "Été" },
-    { value: "autmn", label: "Automne" },
-    { value: "winter", label: "Hiver" },
-    { value: "noSeason", label: "Aucune saison" }
+    { value: "Printemps", label: "Printemps" },
+    { value: "Été", label: "Été" },
+    { value: "Automne", label: "Automne" },
+    { value: "Hiver", label: "Hiver" },
+    { value: "Aucune saison", label: "Aucune saison" }
   ]
 }
 
