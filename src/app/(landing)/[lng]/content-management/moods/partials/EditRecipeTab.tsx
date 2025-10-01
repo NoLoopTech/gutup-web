@@ -296,6 +296,8 @@ export default function EditRecipeTab({
       })
       setTranslationField("recipeData", "en", "image", "")
       setTranslationField("recipeData", "fr", "image", "")
+      setUpdatedField("recipeData", "en", "image", "")
+      setUpdatedField("recipeData", "fr", "image", "")
       setPreviewUrls([])
     }
   }
@@ -441,7 +443,9 @@ export default function EditRecipeTab({
                       previewUrls={
                         previewUrls.length > 0
                           ? previewUrls
-                          : [translationsData.recipeData.en.image]
+                          : translationsData.recipeData.en.image
+                          ? [translationsData.recipeData.en.image]
+                          : []
                       }
                       onChange={handleImageSelect}
                       uploadText={translations.imagesContentText}

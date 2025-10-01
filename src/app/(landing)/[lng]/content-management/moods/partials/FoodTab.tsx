@@ -83,6 +83,20 @@ const moodOptions: Record<string, Option[]> = {
   ]
 }
 
+const createTempFoodImageFileName = (userName: string) => {
+  const safeUserName = userName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+  const uniqueId =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+
+  return `temp-food-mood-image-${safeUserName || "user"}-${uniqueId}`
+}
+
 export default function FoodTab({
   translations,
   onClose,
@@ -238,7 +252,7 @@ export default function FoodTab({
         const imageUrl = await uploadImageToFirebase(
           file,
           "moods/temp-food-tab",
-          `temp-food-mood-image-${userName}`
+          createTempFoodImageFileName(userName)
         )
 
         form.setValue("image", imageUrl, {

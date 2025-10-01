@@ -84,6 +84,20 @@ const moodOptions: Record<string, Option[]> = {
   ]
 }
 
+const createTempFoodImageFileName = (userName: string) => {
+  const safeUserName = userName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+  const uniqueId =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+
+  return `temp-food-mood-image-${safeUserName || "user"}-${uniqueId}`
+}
+
 export default function EditFoodTab({
   translations,
   onClose,
@@ -276,7 +290,7 @@ export default function EditFoodTab({
         const imageUrl = await uploadImageToFirebase(
           file,
           "moods/temp-food-tab",
-          `temp-food-mood-image-${userName}`
+          createTempFoodImageFileName(userName)
         )
 
         form.setValue("image", imageUrl, {
@@ -303,6 +317,8 @@ export default function EditFoodTab({
       })
       setTranslationField("foodData", "en", "image", "")
       setTranslationField("foodData", "fr", "image", "")
+      setUpdatedField("foodData", "en", "image", "")
+      setUpdatedField("foodData", "fr", "image", "")
       setPreviewUrls([])
     }
   }
@@ -676,7 +692,9 @@ export default function EditFoodTab({
                       previewUrls={
                         previewUrls.length > 0
                           ? previewUrls
-                          : [translationsData.foodData.en.image]
+                          : translationsData.foodData.en.image
+                          ? [translationsData.foodData.en.image]
+                          : []
                       }
                       onChange={handleImageSelect}
                       uploadText={translations.imagesContentText}
