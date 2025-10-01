@@ -237,29 +237,35 @@ export default function AddRecipePopUpContent({
 
   type RecipeSchemaType = z.infer<typeof RecipeSchema>
 
-  useEffect(() => {
-    const fetchFoods = async (): Promise<void> => {
-      try {
-        const res = await getAllFoods(token, undefined, undefined, undefined, true)
-        if (res && res.status === 200) {
-          const resData = res.data.foods.map((food: FoodResTypes) => ({
-            id: food.id,
-            name: food.name,
-            nameFR: food.nameFR,
-            status: food.status
-          }))
+  // useEffect(() => {
+  //   const fetchFoods = async (): Promise<void> => {
+  //     try {
+  //       const res = await getAllFoods(
+  //         token,
+  //         undefined,
+  //         undefined,
+  //         undefined,
+  //         true
+  //       )
+  //       if (res && res.status === 200) {
+  //         const resData = res.data.foods.map((food: FoodResTypes) => ({
+  //           id: food.id,
+  //           name: food.name,
+  //           nameFR: food.nameFR,
+  //           status: food.status
+  //         }))
 
-          setFoods(resData)
-          setFoodSuggestions(resData)
-        } else {
-          console.error("Failed to fetch foods:", res)
-        }
-      } catch (error) {
-        console.error("Failed to fetch foods:", error)
-      }
-    }
-    void fetchFoods()
-  }, [token])
+  //         setFoods(resData)
+  //         setFoodSuggestions(resData)
+  //       } else {
+  //         console.error("Failed to fetch foods:", res)
+  //       }
+  //     } catch (error) {
+  //       console.error("Failed to fetch foods:", error)
+  //     }
+  //   }
+  //   void fetchFoods()
+  // }, [token])
 
   const handleFoodSearch = async (): Promise<void> => {
     const searchTerm = ingredientInput.trim()
@@ -275,7 +281,7 @@ export default function AddRecipePopUpContent({
       )
 
       if (res && res.status === 200) {
-        const resData = res.data.foods.map((food: FoodResTypes) => ({
+        const resData: Food[] = res.data.foods.map((food: FoodResTypes) => ({
           id: food.id,
           name: food.name,
           nameFR: food.nameFR,
@@ -602,6 +608,7 @@ export default function AddRecipePopUpContent({
 
   const handleAddIngredient = async (): Promise<void> => {
     let updatedAvailData: Ingredient
+    let existingFood: Food | null = null
 
     if (selected) {
       const isItemExists = availData.some(
@@ -614,6 +621,8 @@ export default function AddRecipePopUpContent({
         setIngredientInput("")
         return
       }
+
+      existingFood = selected
 
       updatedAvailData = {
         foodId: selected.id,
@@ -643,6 +652,8 @@ export default function AddRecipePopUpContent({
       })
 
       if (matchedFood) {
+        existingFood = matchedFood
+
         updatedAvailData = {
           foodId: matchedFood.id,
           ingredientName:
@@ -680,7 +691,9 @@ export default function AddRecipePopUpContent({
 
     try {
       const translatedName =
-        activeLang === "en"
+        existingFood != null
+          ? existingFood.nameFR
+          : activeLang === "en"
           ? await translateText(updatedAvailData.ingredientName)
           : updatedAvailData.ingredientName
 
@@ -876,9 +889,15 @@ export default function AddRecipePopUpContent({
   const handleFoodAdded = async () => {
     try {
       // Refresh the foods list
-      const res = await getAllFoods(token, undefined, undefined, undefined, true)
+      const res = await getAllFoods(
+        token,
+        undefined,
+        undefined,
+        undefined,
+        true
+      )
       if (res && res.status === 200) {
-        const resData = res.data.foods.map((food: FoodResTypes) => ({
+        const resData: Food[] = res.data.foods.map((food: FoodResTypes) => ({
           id: food.id,
           name: food.name,
           nameFR: food.nameFR,

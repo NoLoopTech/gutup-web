@@ -211,7 +211,7 @@ export default function EditDailyTipMainPopUp({
           setTranslationField("videoTipData", "fr", "concern", frenchConcerns)
 
           setTranslationField("videoTipData", "en", "title", data.title)
-          setTranslationField("videoTipData", "fr", "title", data.typeFR)
+          setTranslationField("videoTipData", "fr", "title", data.titleFR)
 
           setTranslationField(
             "videoTipData",

@@ -60,9 +60,11 @@ interface StoreCatogeryTypes {
   TagNameFr: string
 }
 
-interface ListOfFoods {
-  en: string[]
-  fr: string[]
+interface FoodOption {
+  id: number | string
+  name?: string
+  nameFR?: string
+  tagName?: string
 }
 
 const moodOptions: Record<string, Option[]> = {
@@ -119,12 +121,32 @@ export default function EditFoodTab({
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [shopCategoryOpen, setShopCategoryOpen] = useState(false)
 
-  const [filteredFoods, setFilteredFoods] = useState<string[]>([])
+  const [filteredFoods, setFilteredFoods] = useState<FoodOption[]>([])
   const [foodSearchResults, setFoodSearchResults] =
-    useState<ListOfFoods | null>(null)
+    useState<FoodOption[] | null>(null)
   const [isFoodSearchLoading, setIsFoodSearchLoading] = useState(false)
 
   const dropdownRef = useRef<HTMLUListElement>(null)
+
+  const normalizeFood = (food: any): FoodOption => ({
+    ...food,
+    id: food?.id ?? food?.foodId ?? food?.food_id ?? Math.random(),
+    name: typeof food?.name === "string" ? food.name : food?.tagName ?? "",
+    nameFR:
+      (typeof food?.nameFR === "string" && food.nameFR) ||
+      (typeof food?.nameFr === "string" && food.nameFr) ||
+      (typeof food?.name_fr === "string" && food.name_fr) ||
+      (typeof food?.frName === "string" && food.frName) ||
+      (typeof food?.name === "string" && food.name) ||
+      ""
+  })
+
+  const getLocalizedFoodName = (food: FoodOption | null | undefined, lang: string): string => {
+    if (!food) return ""
+    return lang === "fr"
+      ? food?.nameFR ?? food?.name ?? ""
+      : food?.name ?? ""
+  }
 
   const handleClickOutside = (e: MouseEvent) => {
     if (
@@ -145,42 +167,6 @@ export default function EditFoodTab({
   const { shopCategorys } = useGetShopCategorys() as {
     shopCategorys: StoreCatogeryTypes[]
   }
-
-  useEffect(() => {
-    if (shopCategorys) {
-      const tagsOptions = {
-        en: shopCategorys.map((tag: StoreCatogeryTypes) => ({
-          value: tag.TagName,
-          label: tag.TagName
-        })),
-        fr: shopCategorys.map((tag: StoreCatogeryTypes) => ({
-          value: tag.TagNameFr,
-          label: tag.TagNameFr
-        }))
-      }
-      setShopcategory(tagsOptions)
-
-      // Ensure existing value is valid; if not, clear to show placeholder
-      const currentVal = form.getValues("shopCategory")
-      const existsInCurrentLang = tagsOptions[activeLang].some(
-        o => o.value === currentVal
-      )
-      if (!existsInCurrentLang) {
-        form.setValue("shopCategory", "")
-      }
-    }
-  }, [shopCategorys, activeLang])
-
-  useEffect(() => {
-    if (!foodSearchResults) return
-    const currentValue = form.getValues("foodName") ?? ""
-    const baseList = foodSearchResults[activeLang] ?? []
-    const normalized = currentValue.toLowerCase()
-    const filtered = baseList.filter((food: string) =>
-      normalized ? food.toLowerCase().includes(normalized) : true
-    )
-    setFilteredFoods(filtered)
-  }, [activeLang, foodSearchResults, form])
 
   const hasAllowMultiLangInStore = React.useMemo(() => {
     try {
@@ -224,6 +210,42 @@ export default function EditFoodTab({
   useEffect(() => {
     form.reset(translationsData.foodData[activeLang])
   }, [activeLang, form.reset, translationsData.foodData])
+
+  useEffect(() => {
+    if (shopCategorys) {
+      const tagsOptions = {
+        en: shopCategorys.map((tag: StoreCatogeryTypes) => ({
+          value: tag.TagName,
+          label: tag.TagName
+        })),
+        fr: shopCategorys.map((tag: StoreCatogeryTypes) => ({
+          value: tag.TagNameFr,
+          label: tag.TagNameFr
+        }))
+      }
+      setShopcategory(tagsOptions)
+
+      // Ensure existing value is valid; if not, clear to show placeholder
+      const currentVal = form.getValues("shopCategory")
+      const existsInCurrentLang = tagsOptions[activeLang].some(
+        o => o.value === currentVal
+      )
+      if (!existsInCurrentLang) {
+        form.setValue("shopCategory", "")
+      }
+    }
+  }, [activeLang, form, shopCategorys])
+
+  useEffect(() => {
+    if (!foodSearchResults) return
+    const currentValue = form.getValues("foodName") ?? ""
+    const normalized = currentValue.toLowerCase()
+    const filtered = foodSearchResults.filter(food => {
+      const localized = getLocalizedFoodName(food, activeLang)
+      return normalized ? localized.toLowerCase().includes(normalized) : true
+    })
+    setFilteredFoods(filtered)
+  }, [activeLang, foodSearchResults, form])
 
   const handleMoodChange = (value: string) => {
     form.setValue("mood", value)
@@ -329,11 +351,11 @@ export default function EditFoodTab({
 
     if (fieldName === "foodName") {
       if (foodSearchResults) {
-        const baseList = foodSearchResults[activeLang] ?? []
         const normalized = value.toLowerCase()
-        const filtered = baseList.filter((food: string) =>
-          normalized ? food.toLowerCase().includes(normalized) : true
-        )
+        const filtered = foodSearchResults.filter(food => {
+          const localized = getLocalizedFoodName(food, activeLang)
+          return normalized ? localized.toLowerCase().includes(normalized) : true
+        })
         setFilteredFoods(filtered)
       } else {
         setFilteredFoods([])
@@ -341,18 +363,23 @@ export default function EditFoodTab({
     }
   }
 
-  const handleFoodSelect = async (food: string) => {
-    form.setValue("foodName", food)
-    setTranslationField("foodData", activeLang, "foodName", food)
-    setUpdatedField("foodData", activeLang, "foodName", food)
+  const handleFoodSelect = async (food: FoodOption) => {
+    const displayName = getLocalizedFoodName(food, activeLang)
+    form.setValue("foodName", displayName)
+    setTranslationField("foodData", activeLang, "foodName", displayName)
+    setUpdatedField("foodData", activeLang, "foodName", displayName)
 
-    if (activeLang !== "fr") {
+    const oppLang = activeLang === "en" ? "fr" : "en"
+    const oppositeName = getLocalizedFoodName(food, oppLang)
+
+    if (oppositeName) {
+      setTranslationField("foodData", oppLang, "foodName", oppositeName)
+      setUpdatedField("foodData", oppLang, "foodName", oppositeName)
+    } else if (activeLang === "en" && oppLang === "fr") {
       try {
-        const translatedFood = await translateText(food)
-        setTranslationField("foodData", "fr", "foodName", translatedFood)
-        setUpdatedField("foodData", "fr", "foodName", translatedFood)
-
-        form.setValue("foodName", translatedFood)
+        const translated = await translateText(displayName)
+        setTranslationField("foodData", oppLang, "foodName", translated)
+        setUpdatedField("foodData", oppLang, "foodName", translated)
       } catch (error) {
         console.log("Error Translating Food:", error)
       }
@@ -377,18 +404,17 @@ export default function EditFoodTab({
       )
 
       if (response && response.status === 200) {
-        const foodsByLanguage: ListOfFoods = {
-          en: response.data.foods.map((food: any) => food.name ?? ""),
-          fr: response.data.foods.map((food: any) => food.nameFR ?? "")
-        }
+        const foods: FoodOption[] = Array.isArray(response.data.foods)
+          ? response.data.foods.map(normalizeFood)
+          : []
 
-        setFoodSearchResults(foodsByLanguage)
+        setFoodSearchResults(foods)
 
-        const baseList = foodsByLanguage[activeLang] ?? []
         const normalized = searchTerm.toLowerCase()
-        const filtered = baseList.filter((food: string) =>
-          normalized ? food.toLowerCase().includes(normalized) : true
-        )
+        const filtered = foods.filter(food => {
+          const localized = getLocalizedFoodName(food, activeLang)
+          return normalized ? localized.toLowerCase().includes(normalized) : true
+        })
         setFilteredFoods(filtered)
       } else {
         toast.error("Failed to fetch foods. Please try again.")
@@ -503,13 +529,13 @@ export default function EditFoodTab({
                               : "h-80"
                           }`}
                         >
-                          {filteredFoods.map((food, idx) => (
+                          {filteredFoods.map(food => (
                             <li
-                              key={idx}
+                              key={`${food.id}-${getLocalizedFoodName(food, activeLang)}`}
                               className="px-3 py-2 h-10 cursor-pointer hover:bg-gray-100"
                               onClick={() => handleFoodSelect(food)}
                             >
-                              {food}
+                              {getLocalizedFoodName(food, activeLang)}
                             </li>
                           ))}
                         </ul>

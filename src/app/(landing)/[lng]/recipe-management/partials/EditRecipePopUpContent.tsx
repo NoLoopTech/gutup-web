@@ -293,7 +293,7 @@ export default function EditRecipePopUpContent({
       )
 
       if (res && res.status === 200) {
-        const resData = res.data.foods.map((food: FoodResTypes) => ({
+        const resData: Food[] = res.data.foods.map((food: FoodResTypes) => ({
           id: food.id,
           name: food.name,
           nameFR: food.nameFR,
@@ -719,6 +719,7 @@ export default function EditRecipePopUpContent({
   // Update handleAddIngredient to match AddRecipePopUpContent
   const handleAddIngredient = async (): Promise<void> => {
     let updatedAvailData: Ingredient
+    let existingFood: Food | null = null
 
     if (selected) {
       const isItemExists = availData.some(
@@ -731,6 +732,8 @@ export default function EditRecipePopUpContent({
         setIngredientInput("")
         return
       }
+
+      existingFood = selected
 
       updatedAvailData = {
         foodId: selected.id,
@@ -760,6 +763,8 @@ export default function EditRecipePopUpContent({
       })
 
       if (matchedFood) {
+        existingFood = matchedFood
+
         updatedAvailData = {
           foodId: matchedFood.id,
           ingredientName:
@@ -797,9 +802,11 @@ export default function EditRecipePopUpContent({
 
     try {
       const translatedName =
-        activeLang === "en"
-          ? await translateText(updatedAvailData.ingredientName)
-          : updatedAvailData.ingredientName
+        existingFood != null
+          ? existingFood.nameFR
+          : activeLang === "en"
+              ? await translateText(updatedAvailData.ingredientName)
+              : updatedAvailData.ingredientName
 
       const enList = [...availData, updatedAvailData]
       const frList = [

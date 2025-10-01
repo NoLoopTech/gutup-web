@@ -51,6 +51,7 @@ const RichTextEditor = dynamic(
 interface Food {
   id: number | string
   name?: string
+  nameFR?: string
   tagName?: string
 }
 
@@ -169,6 +170,25 @@ export default function EditStorePopUpContent({
   const [, setCurrentStoreData] = useState<StoreData | null>(null)
   const [isDataLoaded, setIsDataLoaded] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+
+  const normalizeFood = (food: any): Food => ({
+    ...food,
+    name: typeof food?.name === "string" ? food.name : food?.tagName ?? "",
+    nameFR:
+      (typeof food?.nameFR === "string" && food.nameFR) ||
+      (typeof food?.nameFr === "string" && food.nameFr) ||
+      (typeof food?.name_fr === "string" && food.name_fr) ||
+      (typeof food?.frName === "string" && food.frName) ||
+      (typeof food?.name === "string" && food.name) ||
+      ""
+  })
+
+  const getLocalizedFoodName = (food: Food | null | undefined, lang: string): string => {
+    if (!food) return ""
+    return lang === "fr"
+      ? food.nameFR ?? food.name ?? ""
+      : food.name ?? ""
+  }
 
   // Validation schema using Zod
   const EditStoreSchema = z.object({
@@ -511,7 +531,9 @@ export default function EditStorePopUpContent({
       try {
         const res = await getAllFoods(token, undefined, undefined, undefined, true)
         if (res && res.status === 200) {
-          const resData: Food[] = res.data.foods
+          const resData: Food[] = Array.isArray(res.data.foods)
+            ? res.data.foods.map(normalizeFood)
+            : []
           setFoods(resData)
           setFoodSuggestions(resData)
         } else {
@@ -538,15 +560,17 @@ export default function EditStorePopUpContent({
       )
 
       if (res && res.status === 200) {
-        const resData: Food[] = res.data.foods
+        const resData: Food[] = Array.isArray(res.data.foods)
+          ? res.data.foods.map(normalizeFood)
+          : []
 
         setFoods(prev => {
-          const merged = new Map<string, Food>()
+          const merged = new Map<string | number, Food>()
           prev.forEach(item => {
-            merged.set(String(item.id), item)
+            merged.set(item.id, item)
           })
           resData.forEach(item => {
-            merged.set(String(item.id), item)
+            merged.set(item.id, item)
           })
           return Array.from(merged.values())
         })
@@ -1138,11 +1162,23 @@ export default function EditStorePopUpContent({
 
   // handler for "Add Ingredient"
   const handleAddIngredient = async (): Promise<void> => {
-    const name = selected?.name ?? ingredientInput.trim()
-    if (!name) return
+    const typedName = ingredientInput.trim()
+    const referenceName = selected
+      ? getLocalizedFoodName(selected, activeLang) || selected.name || typedName
+      : typedName
+    if (!referenceName) return
 
+    const lowerReference = referenceName.toLowerCase()
     const matchingFood =
-      selected ?? foods.find(f => f.name?.toLowerCase() === name.toLowerCase())
+      selected ??
+      foods.find(food => {
+        const enName = getLocalizedFoodName(food, "en").toLowerCase()
+        const frName = getLocalizedFoodName(food, "fr").toLowerCase()
+        return enName === lowerReference || frName === lowerReference
+      })
+
+    const displayName =
+      getLocalizedFoodName(matchingFood, activeLang) || referenceName
 
     // Check if the item is already added to the table
     const isAlreadyAdded = availData.some(item => {
@@ -1152,9 +1188,9 @@ export default function EditStorePopUpContent({
 
       if (matchingFood) {
         return item.ingOrCatId === Number(matchingFood.id)
-      } else {
-        return item.name.toLowerCase() === name.toLowerCase()
       }
+
+      return item.name.toLowerCase() === displayName.toLowerCase()
     })
 
     if (isAlreadyAdded) {
@@ -1166,7 +1202,7 @@ export default function EditStorePopUpContent({
     const totalDisplayCount = availData.filter(item => item.display).length
     const entry: AvailableItem = {
       ingOrCatId: matchingFood ? Number(matchingFood.id) : 0,
-      name: matchingFood ? matchingFood.name ?? name : name,
+      name: displayName,
       type: activeLang === "en" ? "Ingredient" : "Ingrédient",
       tags: ["InSystem"],
       display: totalDisplayCount < 3, // Only ON if less than 3 total items are ON
@@ -1188,12 +1224,20 @@ export default function EditStorePopUpContent({
 
     // Prepare translated entry for opposite lang
     const oppLang = activeLang === "en" ? "fr" : "en"
-    let translatedName = name
-    try {
-      translatedName = await translateText(name)
-    } catch {
-      translatedName = name
+    let translatedName = getLocalizedFoodName(matchingFood, oppLang)
+
+    if (!translatedName) {
+      if (oppLang === "fr" && activeLang === "en") {
+        try {
+          translatedName = await translateText(displayName)
+        } catch {
+          translatedName = displayName
+        }
+      } else {
+        translatedName = getLocalizedFoodName(matchingFood, activeLang) || displayName
+      }
     }
+
     const translatedType = oppLang === "en" ? "Ingredient" : "Ingrédient"
     const translatedStatus = getTranslatedStatus(entry.status, oppLang)
     const translatedEntry: AvailableItem = {
@@ -1846,7 +1890,10 @@ export default function EditStorePopUpContent({
                     placeholder={translations.searchForIngredients}
                     dataList={foodSuggestions.map(f => ({
                       id: f.id,
-                      name: f.name ?? ""
+                      name:
+                        activeLang === "fr"
+                          ? f.nameFR ?? f.name ?? ""
+                          : f.name ?? ""
                     }))}
                     value={ingredientInput}
                     onInputChange={value => {
@@ -1854,7 +1901,12 @@ export default function EditStorePopUpContent({
                       setSelected(null)
                     }}
                     onSelect={item => {
-                      setSelected(item)
+                      const matched = foods.find(
+                        food => String(food.id) === String(item.id)
+                      )
+                      setSelected(
+                        matched ?? { id: item.id, name: item.name, nameFR: item.name }
+                      )
                       setIngredientInput(item.name)
                     }}
                     onSearch={handleFoodSearch}
