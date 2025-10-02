@@ -489,6 +489,21 @@ export default function EditRecipePopUpContent({
     setAvailData(updatedAvailData)
     setTranslationField(activeLang, "ingredientData", updatedAvailData)
     setUpdatedField(activeLang, "ingredientData", updatedAvailData)
+
+    if (activeLang === "fr") {
+      const { translationsData } = useUpdateRecipeStore.getState()
+      if (translationsData.en.ingredientData == null) {
+        const englishSnapshot =
+          useRecipeStore
+            .getState()
+            .translations.en.ingredientData?.map(item => ({ ...item })) ?? []
+        setUpdatedField(
+          "en",
+          "ingredientData",
+          englishSnapshot
+        )
+      }
+    }
   }
 
   const handleQuantityBlur = async (
