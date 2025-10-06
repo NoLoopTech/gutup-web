@@ -82,7 +82,7 @@ export default function LoginForm(): React.ReactNode {
             {/* title  */}
             <h1
               className="font-semibold text-center "
-              title="Login to your account"
+              title="Login to your account (trig)"
             >
               Login to your Account
             </h1>

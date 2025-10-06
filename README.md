@@ -34,3 +34,6 @@ pnpm dev
 
 * If errors where the compiler is unable to identify moved/ changed files (specially layouts)
   + Remove __.next__ folder and restart both the client and server
+
+## Manual Vercel Deployment
+* Make the repo public and deploy
