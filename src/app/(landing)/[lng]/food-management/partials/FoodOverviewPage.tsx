@@ -97,7 +97,7 @@ export default function FoodOverviewPage(): React.ReactElement {
   const token = session?.apiToken
 
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(600) // TODO: change back to 10 once properly fixed
   const [openAddFoodPopUp, setOpenAddFoodPopUp] = useState(false)
   const [foods, setFoods] = useState<FoodOverviewDataType[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -679,7 +679,8 @@ export default function FoodOverviewPage(): React.ReactElement {
           page={page}
           pageSize={pageSize}
           totalItems={totalCount}
-          pageSizeOptions={[5, 10, 20]}
+          // TODO: remove 600 once quick fix is not needed
+          pageSizeOptions={[5, 10, 20, 600]}
           onPageChange={setPage}
           onPageSizeChange={size => {
             setPageSize(size)
