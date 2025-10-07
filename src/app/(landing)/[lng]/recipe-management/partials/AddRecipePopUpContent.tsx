@@ -89,11 +89,11 @@ const seasonOptions: Record<string, Option[]> = {
     { value: "noSeason", label: "No Season" }
   ],
   fr: [
-    { value: "spring", label: "Printemps" },
-    { value: "summer", label: "Été" },
-    { value: "autmn", label: "Automne" },
-    { value: "winter", label: "Hiver" },
-    { value: "noSeason", label: "Aucune saison" }
+    { value: "Printemps", label: "Printemps" },
+    { value: "Été", label: "Été" },
+    { value: "Automne", label: "Automne" },
+    { value: "Hiver", label: "Hiver" },
+    { value: "Aucune saison", label: "Aucune saison" }
   ]
 }
 
@@ -125,8 +125,11 @@ export default function AddRecipePopUpContent({
   const { translateText } = useTranslation()
   const [isLoadingTrigger, setIsLoadingTrigger] = useState(false)
   const [foods, setFoods] = useState<Food[]>([])
+  const [foodSuggestions, setFoodSuggestions] = useState<Food[]>([])
   const [ingredientData, setIngredientData] = useState<Ingredient[]>([])
   const [selected, setSelected] = useState<Food | null>(null)
+  const [isFoodSearchLoading, setIsFoodSearchLoading] = useState(false)
+  const [searchDropdownTrigger, setSearchDropdownTrigger] = useState(0)
   const [previewFoodUrls, setPreviewFoodUrls] = useState<string[]>([])
   const [previewAuthorUrls, setPreviewAuthorUrls] = useState<string[]>([])
   const [ingredientInput, setIngredientInput] = useState<string>("")
@@ -218,6 +221,12 @@ export default function AddRecipePopUpContent({
       .refine(val => !val || /^(https?:\/\/|www\.)[^\s]+$/.test(val), {
         message: translations.invalidurlformat
       }),
+    instagram: z
+      .string()
+      .optional()
+      .refine(val => !val || /^(https?:\/\/|www\.)[^\s]+$/.test(val), {
+        message: translations.invalidurlformat
+      }),
     recipe: z.string().refine(
       val => {
         const plainText = val.replace(/<(.|\n)*?>/g, "").trim()
@@ -234,24 +243,81 @@ export default function AddRecipePopUpContent({
 
   type RecipeSchemaType = z.infer<typeof RecipeSchema>
 
-  useEffect(() => {
-    const fetchFoods = async (): Promise<void> => {
-      const res = await getAllFoods(token)
+  // useEffect(() => {
+  //   const fetchFoods = async (): Promise<void> => {
+  //     try {
+  //       const res = await getAllFoods(
+  //         token,
+  //         undefined,
+  //         undefined,
+  //         undefined,
+  //         true
+  //       )
+  //       if (res && res.status === 200) {
+  //         const resData = res.data.foods.map((food: FoodResTypes) => ({
+  //           id: food.id,
+  //           name: food.name,
+  //           nameFR: food.nameFR,
+  //           status: food.status
+  //         }))
+
+  //         setFoods(resData)
+  //         setFoodSuggestions(resData)
+  //       } else {
+  //         console.error("Failed to fetch foods:", res)
+  //       }
+  //     } catch (error) {
+  //       console.error("Failed to fetch foods:", error)
+  //     }
+  //   }
+  //   void fetchFoods()
+  // }, [token])
+
+  const handleFoodSearch = async (): Promise<void> => {
+    const searchTerm = ingredientInput.trim()
+
+    try {
+      setIsFoodSearchLoading(true)
+      const res = await getAllFoods(
+        token,
+        undefined,
+        undefined,
+        searchTerm ? { search: searchTerm } : undefined,
+        true
+      )
+
       if (res && res.status === 200) {
-        const resData = res.data.foods.map((food: FoodResTypes) => ({
+        const resData: Food[] = res.data.foods.map((food: FoodResTypes) => ({
           id: food.id,
           name: food.name,
           nameFR: food.nameFR,
           status: food.status
         }))
 
-        setFoods(resData)
+        setFoods(prev => {
+          const merged = new Map<number, Food>()
+          prev.forEach(item => {
+            merged.set(item.id, item)
+          })
+          resData.forEach(item => {
+            merged.set(item.id, item)
+          })
+          return Array.from(merged.values())
+        })
+
+        setFoodSuggestions(resData)
+        setSelected(null)
+        setSearchDropdownTrigger(prev => prev + 1)
       } else {
-        console.error("Failed to fetch foods:", res)
+        toast.error("Failed to fetch foods. Please try again.")
       }
+    } catch (error) {
+      console.error("Failed to fetch foods:", error)
+      toast.error("Failed to fetch foods. Please try again.")
+    } finally {
+      setIsFoodSearchLoading(false)
     }
-    void fetchFoods()
-  }, [token])
+  }
 
   const handleCancel = async (): Promise<void> => {
     // Clear preview image state
@@ -279,6 +345,7 @@ export default function AddRecipePopUpContent({
       | "phone"
       | "email"
       | "website"
+      | "instagram"
   ): void => {
     const value = e.target.value
     form.setValue(fieldName, value)
@@ -387,19 +454,68 @@ export default function AddRecipePopUpContent({
     ingredientName: string,
     value: string
   ): void => {
-    // Update the ingredient quantity in availData
     const updatedAvailData = availData.map(item => {
       if (item.ingredientName.toLowerCase() === ingredientName.toLowerCase()) {
-        // If the ingredient matches, update the quantity
         return { ...item, quantity: value }
       }
       return item
     })
 
     setAvailData(updatedAvailData)
+    setTranslationField(activeLang, "ingredientData", updatedAvailData)
+  }
 
-    setTranslationField("en", "ingredientData", updatedAvailData)
-    setTranslationField("fr", "ingredientData", updatedAvailData)
+  const handleQuantityBlur = async (
+    ingredientName: string,
+    value: string
+  ): Promise<void> => {
+    if (activeLang !== "en") return
+
+    const trimmedValue = value.trim()
+    const englishIngredients = translationData.en?.ingredientData ?? []
+    const targetIndex = englishIngredients.findIndex(
+      item => item.ingredientName.toLowerCase() === ingredientName.toLowerCase()
+    )
+
+    if (targetIndex === -1) return
+
+    const frIngredients = translationData.fr?.ingredientData ?? []
+    const updatedFrIngredients = [...frIngredients]
+    const fallbackEnglish = englishIngredients[targetIndex]
+
+    const ensureFrEntry = () => {
+      const existing = updatedFrIngredients[targetIndex]
+      if (existing != null) return existing
+      return {
+        foodId: fallbackEnglish?.foodId ?? 0,
+        ingredientName:
+          fallbackEnglish?.ingredientName ?? frIngredients[targetIndex]?.ingredientName ?? ingredientName,
+        quantity: "",
+        mainIngredient: fallbackEnglish?.mainIngredient ?? false,
+        available: fallbackEnglish?.available ?? false
+      }
+    }
+
+    if (!trimmedValue) {
+      updatedFrIngredients[targetIndex] = {
+        ...ensureFrEntry(),
+        quantity: ""
+      }
+      setTranslationField("fr", "ingredientData", updatedFrIngredients)
+      return
+    }
+
+    try {
+      const translatedQuantity = await translateText(trimmedValue)
+      updatedFrIngredients[targetIndex] = {
+        ...ensureFrEntry(),
+        quantity: translatedQuantity
+      }
+      setTranslationField("fr", "ingredientData", updatedFrIngredients)
+    } catch (error) {
+      console.log("Error Translating", error)
+      toast.error("Failed to translate quantity.")
+    }
   }
 
   // table columns for available ingredients and categories
@@ -420,6 +536,9 @@ export default function AddRecipePopUpContent({
           value={row.quantity}
           onChange={e =>
             handleQuantityChange(row.ingredientName, e.target.value)
+          }
+          onBlur={e =>
+            void handleQuantityBlur(row.ingredientName, e.target.value)
           }
           placeholder="Enter quantity"
           className="w-[80%]"
@@ -548,6 +667,7 @@ export default function AddRecipePopUpContent({
 
   const handleAddIngredient = async (): Promise<void> => {
     let updatedAvailData: Ingredient
+    let existingFood: Food | null = null
 
     if (selected) {
       const isItemExists = availData.some(
@@ -560,6 +680,8 @@ export default function AddRecipePopUpContent({
         setIngredientInput("")
         return
       }
+
+      existingFood = selected
 
       updatedAvailData = {
         foodId: selected.id,
@@ -589,6 +711,8 @@ export default function AddRecipePopUpContent({
       })
 
       if (matchedFood) {
+        existingFood = matchedFood
+
         updatedAvailData = {
           foodId: matchedFood.id,
           ingredientName:
@@ -626,7 +750,9 @@ export default function AddRecipePopUpContent({
 
     try {
       const translatedName =
-        activeLang === "en"
+        existingFood != null
+          ? existingFood.nameFR
+          : activeLang === "en"
           ? await translateText(updatedAvailData.ingredientName)
           : updatedAvailData.ingredientName
 
@@ -822,15 +948,23 @@ export default function AddRecipePopUpContent({
   const handleFoodAdded = async () => {
     try {
       // Refresh the foods list
-      const res = await getAllFoods(token)
+      const res = await getAllFoods(
+        token,
+        undefined,
+        undefined,
+        undefined,
+        true
+      )
       if (res && res.status === 200) {
-        const resData = res.data.foods.map((food: FoodResTypes) => ({
+        const resData: Food[] = res.data.foods.map((food: FoodResTypes) => ({
           id: food.id,
           name: food.name,
           nameFR: food.nameFR,
           status: food.status
         }))
         setFoods(resData)
+        setFoodSuggestions(resData)
+        setSelected(null)
 
         // Find the newly added food and update the ingredient in the table
         const newlyAddedFood = resData.find((food: FoodResTypes) => {
@@ -1143,12 +1277,15 @@ export default function AddRecipePopUpContent({
                 <SearchBar
                   title="Select Food"
                   placeholder="Search for food..."
-                  dataList={foods.map(f => ({
+                  dataList={foodSuggestions.map(f => ({
                     id: f.id,
                     name: activeLang === "en" ? f.name : f.nameFR
                   }))}
                   value={ingredientInput}
-                  onInputChange={setIngredientInput}
+                  onInputChange={value => {
+                    setIngredientInput(value)
+                    setSelected(null)
+                  }}
                   onSelect={item => {
                     const selectedFood = foods.find(
                       f => f.id === Number(item.id)
@@ -1162,6 +1299,10 @@ export default function AddRecipePopUpContent({
                       )
                     }
                   }}
+                  onSearch={handleFoodSearch}
+                  searchLoading={isFoodSearchLoading}
+                  searchButtonLabel={translations.searchForIngredient}
+                  dropdownOpenTrigger={searchDropdownTrigger}
                 />
               </div>
               <div className="flex items-end mt-7 h-full">
@@ -1402,6 +1543,35 @@ export default function AddRecipePopUpContent({
                             await handleInputBlurWithoutTranslate(
                               field.value ?? "",
                               "website"
+                            )
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="w-full">
+                <FormField
+                  control={form.control}
+                  name="instagram"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel className="block mb-1 text-black">
+                        {translations.instagram}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={translations.enterAuthorInstagram}
+                          {...field}
+                          onChange={e => {
+                            handleInputChange(e, "instagram")
+                          }}
+                          onBlur={async () => {
+                            await handleInputBlurWithoutTranslate(
+                              field.value ?? "",
+                              "instagram"
                             )
                           }}
                         />

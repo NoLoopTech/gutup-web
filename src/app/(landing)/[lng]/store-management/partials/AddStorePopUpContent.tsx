@@ -52,6 +52,7 @@ const RichTextEditor = dynamic(
 interface Food {
   id: number | string
   name?: string
+  nameFR?: string
   tagName?: string
 }
 
@@ -118,6 +119,9 @@ export default function AddStorePopUpContent({
   const [pageSize, setPageSize] = React.useState<number>(5)
   const [, setIsPremium] = React.useState(false)
   const [foods, setFoods] = useState<Food[]>([])
+  const [foodSuggestions, setFoodSuggestions] = useState<Food[]>([])
+  const [isFoodSearchLoading, setIsFoodSearchLoading] = useState(false)
+  const [foodSearchDropdownTrigger, setFoodSearchDropdownTrigger] = useState(0)
   const [categoryTags, setCategoryTags] = useState<CategoryTag[]>([])
   const [storeCategories, setStoreCategories] = useState<StoreCategory[]>([])
   const [storeTypes, setStoreTypes] = useState<StoreType[]>([])
@@ -133,6 +137,26 @@ export default function AddStorePopUpContent({
     useState<OptionType | null>(null)
 
   const { data: session } = useSession()
+
+  const normalizeFood = (food: any): Food => ({
+    ...food,
+    name: typeof food?.name === "string" ? food.name : food?.tagName ?? "",
+    nameFR:
+      (typeof food?.nameFR === "string" && food.nameFR) ||
+      (typeof food?.nameFr === "string" && food.nameFr) ||
+      (typeof food?.name_fr === "string" && food.name_fr) ||
+      (typeof food?.frName === "string" && food.frName) ||
+      (typeof food?.name === "string" && food.name) ||
+      ""
+  })
+
+  const getLocalizedFoodName = (
+    food: Food | null | undefined,
+    lang: string
+  ): string => {
+    if (!food) return ""
+    return lang === "fr" ? food.nameFR ?? food.name ?? "" : food.name ?? ""
+  }
 
   // Validation schema using Zod
   const AddStoreSchema = z.object({
@@ -201,17 +225,68 @@ export default function AddStorePopUpContent({
   }, [activeLang, storeData])
 
   // fetch once on mount
-  useEffect(() => {
-    const fetchFoods = async (): Promise<void> => {
-      const res = await getAllFoods(token)
+  // useEffect(() => {
+  //   const fetchFoods = async (): Promise<void> => {
+  //     try {
+  //       const res = await getAllFoods(token, undefined, undefined, undefined, true)
+  //       if (res && res.status === 200) {
+  //         const resData: Food[] = Array.isArray(res.data.foods)
+  //           ? res.data.foods.map(normalizeFood)
+  //           : []
+  //         setFoods(resData)
+  //         setFoodSuggestions(resData)
+  //       } else {
+  //         console.error("Failed to fetch foods:", res)
+  //       }
+  //     } catch (error) {
+  //       console.error("Failed to fetch foods:", error)
+  //     }
+  //   }
+  //   void fetchFoods()
+  // }, [token])
+
+  const handleFoodSearch = async (): Promise<void> => {
+    const searchTerm = ingredientInput.trim()
+
+    try {
+      setIsFoodSearchLoading(true)
+      const res = await getAllFoods(
+        token,
+        undefined,
+        undefined,
+        searchTerm ? { search: searchTerm } : undefined,
+        true
+      )
+
       if (res && res.status === 200) {
-        setFoods(res.data.foods)
+        const resData: Food[] = Array.isArray(res.data.foods)
+          ? res.data.foods.map(normalizeFood)
+          : []
+
+        setFoods(prev => {
+          const merged = new Map<string | number, Food>()
+          prev.forEach(item => {
+            merged.set(item.id, item)
+          })
+          resData.forEach(item => {
+            merged.set(item.id, item)
+          })
+          return Array.from(merged.values())
+        })
+
+        setFoodSuggestions(resData)
+        setSelected(null)
+        setFoodSearchDropdownTrigger(prev => prev + 1)
       } else {
-        console.error("Failed to fetch foods:", res)
+        toast.error("Failed to fetch foods. Please try again.")
       }
+    } catch (error) {
+      console.error("Failed to fetch foods:", error)
+      toast.error("Failed to fetch foods. Please try again.")
+    } finally {
+      setIsFoodSearchLoading(false)
     }
-    void fetchFoods()
-  }, [token])
+  }
 
   useEffect(() => {
     const fetchTags = async (): Promise<void> => {
@@ -775,10 +850,21 @@ export default function AddStorePopUpContent({
 
   // handler for “Add Ingredient”
   const handleAddIngredient = async (): Promise<void> => {
-    const name = selected?.name ?? ingredientInput.trim()
-    if (!name) return
+    const typedName = ingredientInput.trim()
+    const referenceName = selected?.name ?? typedName
+    if (!referenceName) return
+
+    const lowerReference = referenceName.toLowerCase()
     const matchingFood =
-      selected ?? foods.find(f => f.name?.toLowerCase() === name.toLowerCase())
+      selected ??
+      foods.find(food => {
+        const enName = getLocalizedFoodName(food, "en").toLowerCase()
+        const frName = getLocalizedFoodName(food, "fr").toLowerCase()
+        return enName === lowerReference || frName === lowerReference
+      })
+
+    const displayName =
+      getLocalizedFoodName(matchingFood, activeLang) || referenceName
 
     const isAlreadyAdded = availData.some(item => {
       if (item.type !== "Ingredient") {
@@ -787,9 +873,9 @@ export default function AddStorePopUpContent({
 
       if (matchingFood) {
         return item.ingOrCatId === Number(matchingFood.id)
-      } else {
-        return item.name.toLowerCase() === name.toLowerCase()
       }
+
+      return item.name.toLowerCase() === displayName.toLowerCase()
     })
 
     if (isAlreadyAdded) {
@@ -801,7 +887,7 @@ export default function AddStorePopUpContent({
     const totalDisplayCount = availData.filter(item => item.display).length
     const entry: AvailableItem = {
       ingOrCatId: matchingFood ? Number(matchingFood.id) : 0,
-      name: matchingFood ? matchingFood.name ?? name : name,
+      name: displayName,
       type: "Ingredient",
       tags: ["InSystem"],
       display: totalDisplayCount < 3, // Only ON if less than 3 are ON
@@ -818,12 +904,21 @@ export default function AddStorePopUpContent({
 
     // Prepare translated entry for opposite lang
     const oppLang = activeLang === "en" ? "fr" : "en"
-    let translatedName = name
-    try {
-      translatedName = await translateText(name)
-    } catch {
-      translatedName = name
+    let translatedName = getLocalizedFoodName(matchingFood, oppLang)
+
+    if (!translatedName) {
+      if (oppLang === "fr" && activeLang === "en") {
+        try {
+          translatedName = await translateText(displayName)
+        } catch {
+          translatedName = displayName
+        }
+      } else {
+        translatedName =
+          getLocalizedFoodName(matchingFood, activeLang) || displayName
+      }
     }
+
     const translatedType = getTranslatedType(entry.type, oppLang)
     const translatedStatus = getTranslatedStatus(entry.status, oppLang)
     const translatedEntry: AvailableItem = {
@@ -1408,16 +1503,35 @@ export default function AddStorePopUpContent({
                   <SearchBar
                     title={translations.selectAvailableIngredients}
                     placeholder={translations.searchForIngredients}
-                    dataList={foods.map(f => ({
+                    dataList={foodSuggestions.map(f => ({
                       id: f.id,
-                      name: f.name ?? ""
+                      name:
+                        activeLang === "fr"
+                          ? f.nameFR ?? f.name ?? ""
+                          : f.name ?? ""
                     }))}
                     value={ingredientInput}
-                    onInputChange={setIngredientInput}
+                    onInputChange={value => {
+                      setIngredientInput(value)
+                      setSelected(null)
+                    }}
                     onSelect={item => {
-                      setSelected(item)
+                      const matched = foods.find(
+                        food => String(food.id) === String(item.id)
+                      )
+                      setSelected(
+                        matched ?? {
+                          id: item.id,
+                          name: item.name,
+                          nameFR: item.name
+                        }
+                      )
                       setIngredientInput(item.name)
                     }}
+                    onSearch={handleFoodSearch}
+                    searchLoading={isFoodSearchLoading}
+                    searchButtonLabel={translations.searchForIngredients}
+                    dropdownOpenTrigger={foodSearchDropdownTrigger}
                   />
                 </div>
                 <div className="flex items-end h-full mt-7">

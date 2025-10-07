@@ -145,6 +145,9 @@ export default function ShopPromotionTab({
   const [isTranslating, setIsTranslating] = useState(false)
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [foods, setFoods] = useState<Food[]>([])
+  const [foodSuggestions, setFoodSuggestions] = useState<Food[]>([])
+  const [isFoodSearchLoading, setIsFoodSearchLoading] = useState(false)
+  const [foodSearchDropdownTrigger, setFoodSearchDropdownTrigger] = useState(0)
   const [ingredientInput, setIngredientInput] = useState<string>("")
   const [selected, setSelected] = useState<Food | null>(null)
   const [availData, setAvailData] = useState<AvailableItem[]>([])
@@ -183,15 +186,68 @@ export default function ShopPromotionTab({
   // fetch once on mount
   useEffect(() => {
     const fetchFoods = async (): Promise<void> => {
-      const res = await getAllFoods(token)
-      if (res && res.status === 200) {
-        setFoods(res.data.foods)
-      } else {
-        console.error("Failed to fetch foods:", res)
+      try {
+        const res = await getAllFoods(
+          token,
+          undefined,
+          undefined,
+          undefined,
+          true
+        )
+        if (res && res.status === 200) {
+          const resData: Food[] = res.data.foods
+          setFoods(resData)
+          setFoodSuggestions(resData)
+        } else {
+          console.error("Failed to fetch foods:", res)
+        }
+      } catch (error) {
+        console.error("Failed to fetch foods:", error)
       }
     }
     void fetchFoods()
   }, [token])
+
+  const handleFoodSearch = async (): Promise<void> => {
+    const searchTerm = ingredientInput.trim()
+
+    try {
+      setIsFoodSearchLoading(true)
+      const res = await getAllFoods(
+        token,
+        undefined,
+        undefined,
+        searchTerm ? { search: searchTerm } : undefined,
+        true
+      )
+
+      if (res && res.status === 200) {
+        const resData: Food[] = res.data.foods
+
+        setFoods(prev => {
+          const merged = new Map<string, Food>()
+          prev.forEach(item => {
+            merged.set(String(item.id), item)
+          })
+          resData.forEach(item => {
+            merged.set(String(item.id), item)
+          })
+          return Array.from(merged.values())
+        })
+
+        setFoodSuggestions(resData)
+        setSelected(null)
+        setFoodSearchDropdownTrigger(prev => prev + 1)
+      } else {
+        toast.error("Failed to fetch foods. Please try again.")
+      }
+    } catch (error) {
+      console.error("Failed to fetch foods:", error)
+      toast.error("Failed to fetch foods. Please try again.")
+    } finally {
+      setIsFoodSearchLoading(false)
+    }
+  }
 
   const handleAddIngredient = async (): Promise<void> => {
     let updatedAvailData: AvailableItem
@@ -1047,14 +1103,16 @@ export default function ShopPromotionTab({
                   <SearchBar
                     title="Select Food"
                     placeholder="Search for food..."
-                    dataList={foods.map(f => ({
+                    dataList={foodSuggestions.map(f => ({
                       id: f.id,
                       name: f.name ?? ""
                     }))}
                     value={ingredientInput}
-                    onInputChange={setIngredientInput}
+                    onInputChange={value => {
+                      setIngredientInput(value)
+                      setSelected(null)
+                    }}
                     onSelect={item => {
-                      // Find the full food object to get the correct status
                       const foodObj = foods.find(f => f.id === Number(item.id))
                       setSelected({
                         ...item,
@@ -1063,6 +1121,10 @@ export default function ShopPromotionTab({
                       } satisfies Food)
                       setIngredientInput(item.name)
                     }}
+                    onSearch={handleFoodSearch}
+                    searchLoading={isFoodSearchLoading}
+                    searchButtonLabel={translations.searchForIngredients}
+                    dropdownOpenTrigger={foodSearchDropdownTrigger}
                   />
                 </div>
                 <div className="flex items-end mt-7 h-full">
@@ -1092,7 +1154,7 @@ export default function ShopPromotionTab({
                     />
                     {availData.length === 0 && (
                       <FormMessage className="text-red-500">
-                        At least one ingredient category must be added
+                        At least one ingredient must be added
                       </FormMessage>
                     )}
                   </>

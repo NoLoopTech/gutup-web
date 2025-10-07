@@ -43,10 +43,10 @@ import {
   CommandItem,
   CommandList
 } from "@/components/ui/command"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useGetShopCategorys } from "@/query/hooks/useGetShopCategorys"
-import { getAllFoodsList } from "@/app/api/foods"
+import { getAllFoods } from "@/app/api/foods"
 
 interface Option {
   value: string
@@ -60,9 +60,11 @@ interface StoreCatogeryTypes {
   TagNameFr: string
 }
 
-interface ListOfFoods {
-  en: string[]
-  fr: string[]
+interface FoodOption {
+  id: number | string
+  name?: string
+  nameFR?: string
+  tagName?: string
 }
 
 const moodOptions: Record<string, Option[]> = {
@@ -80,6 +82,20 @@ const moodOptions: Record<string, Option[]> = {
     { value: "sad", label: "Triste" },
     { value: "very sad", label: "Très triste" }
   ]
+}
+
+const createTempFoodImageFileName = (userName: string) => {
+  const safeUserName = userName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+  const uniqueId =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+
+  return `temp-food-mood-image-${safeUserName || "user"}-${uniqueId}`
 }
 
 export default function EditFoodTab({
@@ -119,12 +135,32 @@ export default function EditFoodTab({
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [shopCategoryOpen, setShopCategoryOpen] = useState(false)
 
-  const [filteredFoods, setFilteredFoods] = useState<string[]>([])
-  const [listOfFoods, setListOfFoods] = useState<ListOfFoods | undefined>(
-    undefined
-  )
+  const [filteredFoods, setFilteredFoods] = useState<FoodOption[]>([])
+  const [foodSearchResults, setFoodSearchResults] =
+    useState<FoodOption[] | null>(null)
+  const [isFoodSearchLoading, setIsFoodSearchLoading] = useState(false)
 
   const dropdownRef = useRef<HTMLUListElement>(null)
+
+  const normalizeFood = (food: any): FoodOption => ({
+    ...food,
+    id: food?.id ?? food?.foodId ?? food?.food_id ?? Math.random(),
+    name: typeof food?.name === "string" ? food.name : food?.tagName ?? "",
+    nameFR:
+      (typeof food?.nameFR === "string" && food.nameFR) ||
+      (typeof food?.nameFr === "string" && food.nameFr) ||
+      (typeof food?.name_fr === "string" && food.name_fr) ||
+      (typeof food?.frName === "string" && food.frName) ||
+      (typeof food?.name === "string" && food.name) ||
+      ""
+  })
+
+  const getLocalizedFoodName = (food: FoodOption | null | undefined, lang: string): string => {
+    if (!food) return ""
+    return lang === "fr"
+      ? food?.nameFR ?? food?.name ?? ""
+      : food?.name ?? ""
+  }
 
   const handleClickOutside = (e: MouseEvent) => {
     if (
@@ -145,54 +181,6 @@ export default function EditFoodTab({
   const { shopCategorys } = useGetShopCategorys() as {
     shopCategorys: StoreCatogeryTypes[]
   }
-
-  useEffect(() => {
-    if (shopCategorys) {
-      const tagsOptions = {
-        en: shopCategorys.map((tag: StoreCatogeryTypes) => ({
-          value: tag.TagName,
-          label: tag.TagName
-        })),
-        fr: shopCategorys.map((tag: StoreCatogeryTypes) => ({
-          value: tag.TagNameFr,
-          label: tag.TagNameFr
-        }))
-      }
-      setShopcategory(tagsOptions)
-
-      // Ensure existing value is valid; if not, clear to show placeholder
-      const currentVal = form.getValues("shopCategory")
-      const existsInCurrentLang = tagsOptions[activeLang].some(
-        o => o.value === currentVal
-      )
-      if (!existsInCurrentLang) {
-        form.setValue("shopCategory", "")
-      }
-    }
-  }, [shopCategorys, activeLang])
-
-  // handle get foods
-  const getFoods = async (): Promise<void> => {
-    try {
-      const response = await getAllFoodsList(token)
-      if (response.status === 200) {
-        const FoodsByLanguage = {
-          en: response.data.map((food: any) => food.name),
-          fr: response.data.map((food: any) => food.nameFR)
-        }
-
-        setListOfFoods(FoodsByLanguage)
-      } else {
-        console.log(response)
-      }
-    } catch (error) {
-      console.error("Failed to fetch Foods:", error)
-    }
-  }
-
-  useEffect(() => {
-    void getFoods()
-  }, [])
 
   const hasAllowMultiLangInStore = React.useMemo(() => {
     try {
@@ -237,6 +225,42 @@ export default function EditFoodTab({
     form.reset(translationsData.foodData[activeLang])
   }, [activeLang, form.reset, translationsData.foodData])
 
+  useEffect(() => {
+    if (shopCategorys) {
+      const tagsOptions = {
+        en: shopCategorys.map((tag: StoreCatogeryTypes) => ({
+          value: tag.TagName,
+          label: tag.TagName
+        })),
+        fr: shopCategorys.map((tag: StoreCatogeryTypes) => ({
+          value: tag.TagNameFr,
+          label: tag.TagNameFr
+        }))
+      }
+      setShopcategory(tagsOptions)
+
+      // Ensure existing value is valid; if not, clear to show placeholder
+      const currentVal = form.getValues("shopCategory")
+      const existsInCurrentLang = tagsOptions[activeLang].some(
+        o => o.value === currentVal
+      )
+      if (!existsInCurrentLang) {
+        form.setValue("shopCategory", "")
+      }
+    }
+  }, [activeLang, form, shopCategorys])
+
+  useEffect(() => {
+    if (!foodSearchResults) return
+    const currentValue = form.getValues("foodName") ?? ""
+    const normalized = currentValue.toLowerCase()
+    const filtered = foodSearchResults.filter(food => {
+      const localized = getLocalizedFoodName(food, activeLang)
+      return normalized ? localized.toLowerCase().includes(normalized) : true
+    })
+    setFilteredFoods(filtered)
+  }, [activeLang, foodSearchResults, form])
+
   const handleMoodChange = (value: string) => {
     form.setValue("mood", value)
     setTranslationField("foodData", activeLang, "mood", value)
@@ -266,7 +290,7 @@ export default function EditFoodTab({
         const imageUrl = await uploadImageToFirebase(
           file,
           "moods/temp-food-tab",
-          `temp-food-mood-image-${userName}`
+          createTempFoodImageFileName(userName)
         )
 
         form.setValue("image", imageUrl, {
@@ -293,6 +317,8 @@ export default function EditFoodTab({
       })
       setTranslationField("foodData", "en", "image", "")
       setTranslationField("foodData", "fr", "image", "")
+      setUpdatedField("foodData", "en", "image", "")
+      setUpdatedField("foodData", "fr", "image", "")
       setPreviewUrls([])
     }
   }
@@ -340,27 +366,36 @@ export default function EditFoodTab({
     setUpdatedField("foodData", activeLang, fieldName, value)
 
     if (fieldName === "foodName") {
-      if (listOfFoods) {
-        const filtered = listOfFoods[activeLang]?.filter((food: string) =>
-          food.toLowerCase().includes(value.toLowerCase())
-        )
-        setFilteredFoods(filtered || [])
+      if (foodSearchResults) {
+        const normalized = value.toLowerCase()
+        const filtered = foodSearchResults.filter(food => {
+          const localized = getLocalizedFoodName(food, activeLang)
+          return normalized ? localized.toLowerCase().includes(normalized) : true
+        })
+        setFilteredFoods(filtered)
+      } else {
+        setFilteredFoods([])
       }
     }
   }
 
-  const handleFoodSelect = async (food: string) => {
-    form.setValue("foodName", food)
-    setTranslationField("foodData", activeLang, "foodName", food)
-    setUpdatedField("foodData", activeLang, "foodName", food)
+  const handleFoodSelect = async (food: FoodOption) => {
+    const displayName = getLocalizedFoodName(food, activeLang)
+    form.setValue("foodName", displayName)
+    setTranslationField("foodData", activeLang, "foodName", displayName)
+    setUpdatedField("foodData", activeLang, "foodName", displayName)
 
-    if (activeLang !== "fr") {
+    const oppLang = activeLang === "en" ? "fr" : "en"
+    const oppositeName = getLocalizedFoodName(food, oppLang)
+
+    if (oppositeName) {
+      setTranslationField("foodData", oppLang, "foodName", oppositeName)
+      setUpdatedField("foodData", oppLang, "foodName", oppositeName)
+    } else if (activeLang === "en" && oppLang === "fr") {
       try {
-        const translatedFood = await translateText(food)
-        setTranslationField("foodData", "fr", "foodName", translatedFood)
-        setUpdatedField("foodData", "fr", "foodName", translatedFood)
-
-        form.setValue("foodName", translatedFood)
+        const translated = await translateText(displayName)
+        setTranslationField("foodData", oppLang, "foodName", translated)
+        setUpdatedField("foodData", oppLang, "foodName", translated)
       } catch (error) {
         console.log("Error Translating Food:", error)
       }
@@ -368,6 +403,44 @@ export default function EditFoodTab({
 
     // Close the filtered recipes dropdown
     setFilteredFoods([])
+  }
+
+  const handleFoodSearch = async (): Promise<void> => {
+    const rawSearch = form.getValues("foodName") ?? ""
+    const searchTerm = rawSearch.trim()
+
+    try {
+      setIsFoodSearchLoading(true)
+      const response = await getAllFoods(
+        token,
+        undefined,
+        undefined,
+        searchTerm ? { search: searchTerm } : undefined,
+        true
+      )
+
+      if (response && response.status === 200) {
+        const foods: FoodOption[] = Array.isArray(response.data.foods)
+          ? response.data.foods.map(normalizeFood)
+          : []
+
+        setFoodSearchResults(foods)
+
+        const normalized = searchTerm.toLowerCase()
+        const filtered = foods.filter(food => {
+          const localized = getLocalizedFoodName(food, activeLang)
+          return normalized ? localized.toLowerCase().includes(normalized) : true
+        })
+        setFilteredFoods(filtered)
+      } else {
+        toast.error("Failed to fetch foods. Please try again.")
+      }
+    } catch (error) {
+      console.error("Failed to fetch foods:", error)
+      toast.error("Failed to fetch foods. Please try again.")
+    } finally {
+      setIsFoodSearchLoading(false)
+    }
   }
 
   const handleInputBlur = async (
@@ -443,44 +516,60 @@ export default function EditFoodTab({
               <FormItem>
                 <FormLabel>{translations.foodName}</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder={translations.searchForFood}
-                    {...field}
-                    onChange={e => handleInputChange(e, "foodName")}
-                    onBlur={() => handleInputBlur(field.value, "foodName")}
-                  />
-                  {filteredFoods.length > 0 && (
-                    <ul
-                      ref={dropdownRef}
-                      className={`absolute z-10 mt-2 w-full text-sm bg-white rounded-md border border-gray-300 shadow-md overflow-y-auto ${
-                        filteredFoods.length === 1
-                          ? "h-10"
-                          : filteredFoods.length === 2
-                          ? "h-20"
-                          : filteredFoods.length === 3
-                          ? "h-30"
-                          : filteredFoods.length === 4
-                          ? "h-40"
-                          : filteredFoods.length === 5
-                          ? "h-50"
-                          : filteredFoods.length === 6
-                          ? "h-60"
-                          : filteredFoods.length === 7
-                          ? "h-70"
-                          : "h-80"
-                      }`}
-                    >
-                      {filteredFoods.map((food, idx) => (
-                        <li
-                          key={idx}
-                          className="px-3 py-2 h-10 cursor-pointer hover:bg-gray-100"
-                          onClick={() => handleFoodSelect(food)}
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        placeholder={translations.searchForFood}
+                        {...field}
+                        onChange={e => handleInputChange(e, "foodName")}
+                        onBlur={() => handleInputBlur(field.value, "foodName")}
+                      />
+                      {filteredFoods.length > 0 && (
+                        <ul
+                          ref={dropdownRef}
+                          className={`absolute z-10 mt-2 w-full text-sm bg-white rounded-md border border-gray-300 shadow-md overflow-y-auto ${
+                            filteredFoods.length === 1
+                              ? "h-10"
+                              : filteredFoods.length === 2
+                              ? "h-20"
+                              : filteredFoods.length === 3
+                              ? "h-30"
+                              : filteredFoods.length === 4
+                              ? "h-40"
+                              : filteredFoods.length === 5
+                              ? "h-50"
+                              : filteredFoods.length === 6
+                              ? "h-60"
+                              : filteredFoods.length === 7
+                              ? "h-70"
+                              : "h-80"
+                          }`}
                         >
-                          {food}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                          {filteredFoods.map(food => (
+                            <li
+                              key={`${food.id}-${getLocalizedFoodName(food, activeLang)}`}
+                              className="px-3 py-2 h-10 cursor-pointer hover:bg-gray-100"
+                              onClick={() => handleFoodSelect(food)}
+                            >
+                              {getLocalizedFoodName(food, activeLang)}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={handleFoodSearch}
+                      className="shrink-0"
+                      disabled={isFoodSearchLoading}
+                    >
+                      {isFoodSearchLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        translations.searchForFood
+                      )}
+                    </Button>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -603,7 +692,9 @@ export default function EditFoodTab({
                       previewUrls={
                         previewUrls.length > 0
                           ? previewUrls
-                          : [translationsData.foodData.en.image]
+                          : translationsData.foodData.en.image
+                          ? [translationsData.foodData.en.image]
+                          : []
                       }
                       onChange={handleImageSelect}
                       uploadText={translations.imagesContentText}

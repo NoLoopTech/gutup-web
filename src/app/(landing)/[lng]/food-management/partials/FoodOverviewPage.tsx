@@ -39,7 +39,7 @@ import dayjs from "dayjs"
 import { Loader2, MoreVertical } from "lucide-react"
 import { useSession } from "next-auth/react"
 import Image from "next/image"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import AddFoodPopUp from "./AddFoodPopUp"
 import ViewFoodPopUp from "./ViewFoodPopUp"
@@ -102,22 +102,9 @@ export default function FoodOverviewPage(): React.ReactElement {
   const [foods, setFoods] = useState<FoodOverviewDataType[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [searchText, setSearchText] = useState("")
-  const [debouncedSearch, setDebouncedSearch] = useState("")
-
-  // Debounce searchText for real-time search
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(searchText)
-    }, 300) // 300ms debounce
-
-    return () => {
-      clearTimeout(handler)
-    }
-  }, [searchText])
+  const [appliedSearch, setAppliedSearch] = useState("")
 
   const [category, setCategory] = useState("")
-  const [nutritional, setNutritional] = useState("")
-  const [season, setSeason] = useState("")
   const [viewFood, setViewFood] = useState(false)
   const [foodId, setFoodId] = useState<number | null>(null)
   const [selectedMonths, setSelectedMonths] = useState<string[]>([])
@@ -138,7 +125,11 @@ export default function FoodOverviewPage(): React.ReactElement {
     try {
       setIsLoading(true)
       const offset = (page - 1) * pageSize
-      const response = await getAllFoods(token, pageSize, offset)
+      const response = await getAllFoods(token, pageSize, offset, {
+        search: appliedSearch || undefined,
+        categories: category || undefined,
+        seasons: selectedMonths.length > 0 ? selectedMonths : undefined
+      })
       if (response.status === 200) {
         setFoods(Array.isArray(response.data.foods) ? response.data.foods : [])
         setTotalCount(
@@ -156,7 +147,7 @@ export default function FoodOverviewPage(): React.ReactElement {
 
   useEffect(() => {
     void getFoods()
-  }, [token, page, pageSize])
+  }, [token, page, pageSize, appliedSearch, category, selectedMonths])
 
   useEffect(() => {
     const fetchCategories = async (): Promise<void> => {
@@ -200,32 +191,36 @@ export default function FoodOverviewPage(): React.ReactElement {
   // Handler to update the selected category filter
   const handleCategoryChange = (value: string): void => {
     setCategory(value)
+    setPage(1)
   }
-  // Handler to update the selected nutritional filter
-  const handleNutritionalChange = (value: string): void => {
-    setNutritional(value)
+
+  const handleSearchSubmit = (
+    event?:
+      | React.FormEvent<HTMLFormElement>
+      | React.MouseEvent<HTMLButtonElement>
+  ): void => {
+    event?.preventDefault()
+    const nextSearch = searchText.trim()
+    if (nextSearch === appliedSearch) {
+      if (page === 1) {
+        void getFoods()
+      } else {
+        setPage(1)
+      }
+      return
+    }
+    setAppliedSearch(nextSearch)
+    setPage(1)
   }
 
   // Handler to clear all search and filter values
   const handleClearSearchValues = (): void => {
     setSearchText("")
     setCategory("")
-    setNutritional("")
-    setSeason("")
     setSelectedMonths([])
+    setAppliedSearch("")
+    setPage(1)
   }
-
-  // Static categories for filtering foods
-
-  // Static nutritional options for filtering foods
-  const nutritionals: dataListTypes[] = [
-    { value: "fiber", label: "Fiber" },
-    { value: "proteins", label: "Proteins" },
-    { value: "vitamins", label: "Vitamins" },
-    { value: "minerals", label: "Minerals" },
-    { value: "fat", label: "Fat" },
-    { value: "sugar", label: "Sugar" }
-  ]
 
   // Static months for filtering foods by month
   const months: dataListTypes[] = [
@@ -243,68 +238,7 @@ export default function FoodOverviewPage(): React.ReactElement {
     { value: "December", label: "December" }
   ]
 
-  // Filtering logic for foods based on user input
-  const filteredFoods = useMemo(() => {
-    return foods.filter(food => {
-      const nameMatch = food.name
-        ? food.name.toLowerCase().includes(debouncedSearch.toLowerCase())
-        : debouncedSearch === ""
-      const categoryMatch = category ? food.category === category : true
-
-      // FIX: Check seasons array for selected months
-      const seasonMatch = selectedMonths.length
-        ? Array.isArray(food.seasons)
-          ? food.seasons.some(
-              seasonObj =>
-                seasonObj?.season && selectedMonths.includes(seasonObj.season)
-            )
-          : food.season
-          ? selectedMonths.includes(food.season)
-          : false
-        : true
-
-      let nutritionalMatch = true
-      if (nutritional && food.attributes) {
-        // Check the selected nutritional value and apply filter logic
-        if (
-          nutritional === "fiber" &&
-          (!food.attributes.fiber || food.attributes.fiber.trim() === "")
-        )
-          nutritionalMatch = false
-        if (
-          nutritional === "proteins" &&
-          (!food.attributes.proteins || food.attributes.proteins.trim() === "")
-        )
-          nutritionalMatch = false
-        if (
-          nutritional === "vitamins" &&
-          (!food.attributes.vitamins || food.attributes.vitamins.trim() === "")
-        )
-          nutritionalMatch = false
-        if (
-          nutritional === "minerals" &&
-          (!food.attributes.minerals || food.attributes.minerals.trim() === "")
-        )
-          nutritionalMatch = false
-        if (
-          nutritional === "fat" &&
-          (!food.attributes.fat || food.attributes.fat.trim() === "")
-        )
-          nutritionalMatch = false
-        if (
-          nutritional === "sugar" &&
-          (!food.attributes.sugar || food.attributes.sugar.trim() === "")
-        )
-          nutritionalMatch = false
-      } else if (nutritional && !food.attributes) {
-        nutritionalMatch = false
-      }
-
-      return nameMatch && categoryMatch && nutritionalMatch && seasonMatch
-    })
-  }, [foods, debouncedSearch, category, nutritional, season, selectedMonths])
-
-  const tableData = filteredFoods
+  const tableData = foods
 
   // Columns for the food management table
   const columns: Array<Column<FoodOverviewDataType>> = [
@@ -536,14 +470,24 @@ export default function FoodOverviewPage(): React.ReactElement {
       {/* Filters and Search */}
       <div className="flex flex-wrap justify-between gap-2">
         <div className="flex flex-wrap w-[80%] gap-2">
-          <Input
-            className="max-w-xs"
-            placeholder="Search by food name..."
-            value={searchText}
-            onChange={e => {
-              setSearchText(e.target.value)
+          <form
+            className="flex gap-2"
+            onSubmit={event => {
+              handleSearchSubmit(event)
             }}
-          />
+          >
+            <Input
+              className="max-w-xs"
+              placeholder="Search by food name..."
+              value={searchText}
+              onChange={e => {
+                setSearchText(e.target.value)
+              }}
+            />
+            <Button type="submit" disabled={isLoading}>
+              Search
+            </Button>
+          </form>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -579,12 +523,15 @@ export default function FoodOverviewPage(): React.ReactElement {
                     key={month.value}
                     onSelect={e => {
                       e.preventDefault()
+                      setPage(1)
                       if (isSelected) {
-                        setSelectedMonths(
-                          selectedMonths.filter(m => m !== month.value)
+                        setSelectedMonths(prev =>
+                          prev.filter(
+                            selectedMonth => selectedMonth !== month.value
+                          )
                         )
                       } else {
-                        setSelectedMonths([...selectedMonths, month.value])
+                        setSelectedMonths(prev => [...prev, month.value])
                       }
                     }}
                     className="cursor-pointer flex items-center gap-2"
@@ -637,28 +584,10 @@ export default function FoodOverviewPage(): React.ReactElement {
             </SelectContent>
           </Select>
 
-          <Select value={nutritional} onValueChange={handleNutritionalChange}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Nutritional" />
-            </SelectTrigger>
-            <SelectContent className="max-h-80">
-              <SelectGroup>
-                {[...nutritionals]
-                  .sort((a, b) => a.label.localeCompare(b.label))
-                  .map(item => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
           {/* Clear Filters Button */}
           {(Boolean(searchText) ||
             Boolean(category) ||
-            Boolean(nutritional) ||
-            Boolean(season) ||
+            Boolean(appliedSearch) ||
             selectedMonths.length > 0) && (
             <Button variant="outline" onClick={handleClearSearchValues}>
               Clear Filters
