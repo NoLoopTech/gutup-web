@@ -142,11 +142,7 @@ export default function EditRecipePopUpContent({
   })
 
   const cloneIngredientList = (lang: "en" | "fr"): Ingredient[] => {
-    const translationsByLang = translationData as Record<
-      string,
-      { ingredientData?: Ingredient[] }
-    >
-    const list = translationsByLang?.[lang]?.ingredientData ?? []
+    const list = translationData[lang]?.ingredientData ?? []
     return list.map(item => ({ ...item }))
   }
 
