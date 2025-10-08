@@ -119,8 +119,7 @@ export default function AddRecipePopUpContent({
   const {
     activeLang,
     setTranslationField,
-    translations: translationData,
-    resetRecipe
+    translations: translationData
   } = useRecipeStore()
   const { translateText } = useTranslation()
   const [isLoadingTrigger, setIsLoadingTrigger] = useState(false)
@@ -145,6 +144,26 @@ export default function AddRecipePopUpContent({
   const [benefitsOptions, setBenefitsOptions] = useState<
     { tagName: string; tagNameFr: string }[]
   >([])
+
+  const cloneIngredientList = (lang: "en" | "fr"): Ingredient[] => {
+    const translationsByLang = translationData as Record<
+      string,
+      { ingredientData?: Ingredient[] }
+    >
+    const list = translationsByLang?.[lang]?.ingredientData ?? []
+    return list.map(item => ({ ...item }))
+  }
+
+  const updateListAtIndex = (
+    list: Ingredient[],
+    index: number,
+    updates: Partial<Ingredient>
+  ): Ingredient[] => {
+    if (index < 0 || index >= list.length) return list
+    const copy = [...list]
+    copy[index] = { ...copy[index], ...updates }
+    return copy
+  }
 
   const { recipeCategory } = useGetAllRecipeCategorys() as {
     recipeCategory: CategoryTypes[]
@@ -319,14 +338,10 @@ export default function AddRecipePopUpContent({
     }
   }
 
-  const handleCancel = async (): Promise<void> => {
+  const handleCancel = (): void => {
     // Clear preview image state
     setPreviewFoodUrls([])
     setPreviewAuthorUrls([])
-
-    // clear store and session
-    await resetRecipe()
-    sessionStorage.removeItem("recipe-storage")
 
     // Close the modal or section
     onClose()
@@ -434,19 +449,33 @@ export default function AddRecipePopUpContent({
   })
 
   const handleToggleDisplayStatus = (name: string) => {
-    // Create a new updatedAvailData array by mapping over the existing availData
-    const updatedAvailData = availData.map(item => {
-      if (item.ingredientName === name) {
-        return { ...item, mainIngredient: !item.mainIngredient }
-      }
-      return item
-    })
+    const targetIndex = availData.findIndex(
+      item => item.ingredientName === name
+    )
 
-    // Update the state with the new updatedAvailData
+    if (targetIndex === -1) return
+
+    const updatedAvailData = availData.map((item, idx) =>
+      idx === targetIndex
+        ? { ...item, mainIngredient: !item.mainIngredient }
+        : item
+    )
+
+    const updatedEnglish = updateListAtIndex(
+      cloneIngredientList("en"),
+      targetIndex,
+      { mainIngredient: !availData[targetIndex].mainIngredient }
+    )
+
+    const updatedFrench = updateListAtIndex(
+      cloneIngredientList("fr"),
+      targetIndex,
+      { mainIngredient: !availData[targetIndex].mainIngredient }
+    )
+
     setAvailData(updatedAvailData)
-
-    setTranslationField("en", "ingredientData", updatedAvailData)
-    setTranslationField("fr", "ingredientData", updatedAvailData)
+    setTranslationField("en", "ingredientData", updatedEnglish)
+    setTranslationField("fr", "ingredientData", updatedFrench)
   }
 
   // Update the ingredient's quantity
@@ -639,18 +668,28 @@ export default function AddRecipePopUpContent({
 
   // Delete handler for ingredientData
   const handleDeleteAvailItem = (foodName: string): void => {
-    // Filter out the ingredient with the given foodName
-    const updated = availData.filter(item => item.ingredientName !== foodName)
-    setAvailData(updated)
-    form.setValue("ingredientData", updated as any, { shouldValidate: true })
-    setTranslationField(activeLang, "ingredientData", updated as any)
-    setTranslationField(
-      activeLang === "en" ? "fr" : "en",
-      "ingredientData",
-      updated as any
+    const targetIndex = availData.findIndex(
+      item => item.ingredientName === foodName
     )
 
-    // Optionally, show a success message
+    if (targetIndex === -1) return
+
+    const updatedAvailData = availData.filter((_, idx) => idx !== targetIndex)
+    const updatedEnglish = cloneIngredientList("en").filter(
+      (_, idx) => idx !== targetIndex
+    )
+    const updatedFrench = cloneIngredientList("fr").filter(
+      (_, idx) => idx !== targetIndex
+    )
+
+    setAvailData(updatedAvailData)
+    form.setValue("ingredientData", updatedAvailData as any, {
+      shouldValidate: true
+    })
+
+    setTranslationField("en", "ingredientData", updatedEnglish)
+    setTranslationField("fr", "ingredientData", updatedFrench)
+
     toast.success("Ingredient deleted successfully!")
   }
 
@@ -666,111 +705,127 @@ export default function AddRecipePopUpContent({
   }, [form, ingredientData])
 
   const handleAddIngredient = async (): Promise<void> => {
-    let updatedAvailData: Ingredient
-    let existingFood: Food | null = null
+    const trimmedInput = ingredientInput.trim()
+    const englishIngredients = cloneIngredientList("en")
+    const frenchIngredients = cloneIngredientList("fr")
+
+    let englishEntry: Ingredient | null = null
+    let frenchEntry: Ingredient | null = null
+    let displayEntry: Ingredient | null = null
+
+    const hasFoodAlready = (foodId: number): boolean =>
+      foodId !== 0 &&
+      (availData.some(item => item.foodId === foodId) ||
+        englishIngredients.some(item => item.foodId === foodId) ||
+        frenchIngredients.some(item => item.foodId === foodId))
 
     if (selected) {
-      const isItemExists = availData.some(
-        item => item.ingredientName === selected.name
-      )
-
-      if (isItemExists) {
+      if (hasFoodAlready(selected.id)) {
         toast.error("This food item is already in the list!")
         setSelected(null)
         setIngredientInput("")
         return
       }
 
-      existingFood = selected
-
-      updatedAvailData = {
+      const base: Omit<Ingredient, "ingredientName"> = {
         foodId: selected.id,
-        ingredientName: activeLang === "en" ? selected.name : selected.nameFR,
         available: selected.status === "Active",
         quantity: "",
         mainIngredient: true
       }
-    } else if (ingredientInput.trim()) {
-      // Check if the entered ingredient exists in the foods list
-      const isItemExists = availData.some(
-        item => item.ingredientName === ingredientInput
-      )
 
-      if (isItemExists) {
-        // Show an error and return early if the item already exists in the table
-        toast.error("This food item is already in the list!")
-        setSelected(null)
-        setIngredientInput("")
-        return
-      }
+      englishEntry = { ...base, ingredientName: selected.name }
+      frenchEntry = { ...base, ingredientName: selected.nameFR }
+      displayEntry =
+        activeLang === "en" ? englishEntry : { ...frenchEntry }
+    } else if (trimmedInput) {
+      const normalizedInput = trimmedInput.toLowerCase()
 
-      // Check if the entered ingredient exists in the foods list
       const matchedFood = foods.find(food => {
-        const foodName = activeLang === "en" ? food.name : food.nameFR
-        return foodName?.toLowerCase() === ingredientInput.toLowerCase()
+        return (
+          food.name.toLowerCase() === normalizedInput ||
+          food.nameFR.toLowerCase() === normalizedInput
+        )
       })
 
       if (matchedFood) {
-        existingFood = matchedFood
+        if (hasFoodAlready(matchedFood.id)) {
+          toast.error("This food item is already in the list!")
+          setSelected(null)
+          setIngredientInput("")
+          return
+        }
 
-        updatedAvailData = {
+        const base: Omit<Ingredient, "ingredientName"> = {
           foodId: matchedFood.id,
-          ingredientName:
-            activeLang === "en" ? matchedFood.name : matchedFood.nameFR,
           available: matchedFood.status === "Active",
           quantity: "",
           mainIngredient: true
         }
-      } else {
-        const isCustomItemExists = availData.some(
-          item =>
-            item.ingredientName.toLowerCase() === ingredientInput.toLowerCase()
-        )
 
-        if (isCustomItemExists) {
+        englishEntry = { ...base, ingredientName: matchedFood.name }
+        frenchEntry = { ...base, ingredientName: matchedFood.nameFR }
+        displayEntry =
+          activeLang === "en" ? englishEntry : { ...frenchEntry }
+      } else {
+        const existsAsCustom =
+          englishIngredients.some(
+            item =>
+              item.foodId === 0 &&
+              item.ingredientName.toLowerCase() === normalizedInput
+          ) ||
+          frenchIngredients.some(
+            item =>
+              item.foodId === 0 &&
+              item.ingredientName.toLowerCase() === normalizedInput
+          )
+
+        if (existsAsCustom) {
           toast.error("This custom food item is already in the list!")
           setIngredientInput("")
           return
         }
 
-        updatedAvailData = {
+        const base: Omit<Ingredient, "ingredientName"> = {
           foodId: 0,
-          ingredientName: ingredientInput ?? "",
           available: false,
           quantity: "",
           mainIngredient: true
         }
+
+        englishEntry = { ...base, ingredientName: trimmedInput }
+
+        let frenchName = trimmedInput
+        if (activeLang === "en") {
+          try {
+            frenchName = await translateText(trimmedInput)
+          } catch (err) {
+            console.error("Translation failed:", err)
+            toast.error("Failed to translate food name.")
+          }
+        }
+
+        frenchEntry = { ...base, ingredientName: frenchName }
+        displayEntry =
+          activeLang === "en" ? englishEntry : { ...frenchEntry }
       }
     } else {
       toast.error("Please select or enter a food item first!")
       return
     }
 
-    setAvailData([...availData, updatedAvailData])
-
-    try {
-      const translatedName =
-        existingFood != null
-          ? existingFood.nameFR
-          : activeLang === "en"
-          ? await translateText(updatedAvailData.ingredientName)
-          : updatedAvailData.ingredientName
-
-      const enList = [...availData, updatedAvailData]
-      const frList = [
-        ...availData,
-        {
-          ...updatedAvailData,
-          ingredientName: translatedName
-        }
-      ]
-
-      setTranslationField("en", "ingredientData", enList)
-      setTranslationField("fr", "ingredientData", frList)
-    } catch (err) {
-      console.error("Translation failed:", err)
-      toast.error("Failed to translate food name.")
+    if (englishEntry == null || frenchEntry == null || displayEntry == null) {
+      toast.error("Unable to add ingredient. Please try again.")
+      return
     }
+
+    const updatedAvailData = [...availData, displayEntry]
+    const updatedEnglish = [...englishIngredients, englishEntry]
+    const updatedFrench = [...frenchIngredients, frenchEntry]
+
+    setAvailData(updatedAvailData)
+    setTranslationField("en", "ingredientData", updatedEnglish)
+    setTranslationField("fr", "ingredientData", updatedFrench)
 
     toast.success("Food item added successfully!")
 
@@ -911,7 +966,66 @@ export default function AddRecipePopUpContent({
     }))
 
     setAvailData(mappedIngredients)
-  }, [activeLang, translationData[activeLang]])
+
+    const englishIngredients = cloneIngredientList("en")
+    const frenchIngredients = cloneIngredientList("fr")
+    const derivedFoods = new Map<number, Food>()
+
+    englishIngredients.forEach((item, idx) => {
+      if (item.foodId && item.foodId > 0) {
+        const frenchName =
+          frenchIngredients[idx]?.ingredientName ?? item.ingredientName
+        const status: Food["status"] = item.available ? "Active" : "Incomplete"
+        derivedFoods.set(item.foodId, {
+          id: item.foodId,
+          name: item.ingredientName,
+          nameFR: frenchName,
+          status
+        })
+      }
+    })
+
+    frenchIngredients.forEach((item, idx) => {
+      if (item.foodId && item.foodId > 0 && !derivedFoods.has(item.foodId)) {
+        const englishName =
+          englishIngredients[idx]?.ingredientName ?? item.ingredientName
+        const isActive =
+          englishIngredients[idx]?.available ?? item.available ?? false
+        derivedFoods.set(item.foodId, {
+          id: item.foodId,
+          name: englishName,
+          nameFR: item.ingredientName,
+          status: isActive ? "Active" : "Incomplete"
+        })
+      }
+    })
+
+    if (derivedFoods.size > 0) {
+      const derivedList = Array.from(derivedFoods.values())
+
+      setFoods(prev => {
+        const merged = new Map<number, Food>()
+        prev.forEach(food => merged.set(food.id, food))
+        derivedList.forEach(food => {
+          if (!merged.has(food.id)) {
+            merged.set(food.id, food)
+          }
+        })
+        return Array.from(merged.values())
+      })
+
+      setFoodSuggestions(prev => {
+        const merged = new Map<number, Food>()
+        prev.forEach(food => merged.set(food.id, food))
+        derivedList.forEach(food => {
+          if (!merged.has(food.id)) {
+            merged.set(food.id, food)
+          }
+        })
+        return Array.from(merged.values())
+      })
+    }
+  }, [activeLang, translationData])
 
   const onSubmit = (data: RecipeSchemaType): void => {
     const invalidIngredients = data.ingredientData.filter(item => {
@@ -973,29 +1087,80 @@ export default function AddRecipePopUpContent({
         })
 
         if (newlyAddedFood) {
-          // Update the ingredient in availData to reflect the new food
-          const updatedAvailData = availData.map(item => {
-            if (
-              item.ingredientName.toLowerCase() ===
-                selectedIngredientName.toLowerCase() &&
-              item.foodId === 0
-            ) {
-              return {
-                ...item,
-                foodId: newlyAddedFood.id,
-                available: newlyAddedFood.status === "Active"
-              }
+          const normalizedSelected = selectedIngredientName.toLowerCase()
+          const englishIngredients = cloneIngredientList("en")
+          const frenchIngredients = cloneIngredientList("fr")
+
+          const findTargetIndex = (): number => {
+            const byAvail = availData.findIndex(
+              item =>
+                item.foodId === 0 &&
+                item.ingredientName.toLowerCase() === normalizedSelected
+            )
+            if (byAvail !== -1) return byAvail
+
+            const byEn = englishIngredients.findIndex(
+              item =>
+                item.foodId === 0 &&
+                item.ingredientName.toLowerCase() === normalizedSelected
+            )
+            if (byEn !== -1) return byEn
+
+            return frenchIngredients.findIndex(
+              item =>
+                item.foodId === 0 &&
+                item.ingredientName.toLowerCase() === normalizedSelected
+            )
+          }
+
+          const targetIndex = findTargetIndex()
+
+          if (targetIndex === -1) {
+            toast.success("Food added successfully!")
+            return
+          }
+
+          const activeName =
+            activeLang === "en"
+              ? newlyAddedFood.name
+              : newlyAddedFood.nameFR
+
+          const updatedAvailData = availData.map((item, idx) =>
+            idx === targetIndex
+              ? {
+                  ...item,
+                  foodId: newlyAddedFood.id,
+                  available: newlyAddedFood.status === "Active",
+                  ingredientName: activeName
+                }
+              : item
+          )
+
+          const updatedEnglish = updateListAtIndex(
+            englishIngredients,
+            targetIndex,
+            {
+              foodId: newlyAddedFood.id,
+              available: newlyAddedFood.status === "Active",
+              ingredientName: newlyAddedFood.name
             }
-            return item
-          })
+          )
+
+          const updatedFrench = updateListAtIndex(
+            frenchIngredients,
+            targetIndex,
+            {
+              foodId: newlyAddedFood.id,
+              available: newlyAddedFood.status === "Active",
+              ingredientName: newlyAddedFood.nameFR
+            }
+          )
 
           setAvailData(updatedAvailData)
 
-          // Update the translation fields as well
-          setTranslationField("en", "ingredientData", updatedAvailData)
-          setTranslationField("fr", "ingredientData", updatedAvailData)
+          setTranslationField("en", "ingredientData", updatedEnglish)
+          setTranslationField("fr", "ingredientData", updatedFrench)
 
-          // Update the form data
           form.setValue("ingredientData", updatedAvailData as any, {
             shouldValidate: true
           })
@@ -1633,8 +1798,8 @@ export default function AddRecipePopUpContent({
             <div className="flex fixed bottom-0 left-0 z-50 gap-2 justify-between px-4 py-4 w-full bg-white border-t">
               <Button
                 variant="outline"
-                onClick={async () => {
-                  await handleCancel()
+                onClick={() => {
+                  handleCancel()
                 }}
                 disabled={isLoading}
               >

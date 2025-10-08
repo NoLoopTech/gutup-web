@@ -19,7 +19,7 @@ import {
   DropdownMenuItem
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical, Check } from "lucide-react"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import AddRecipePopup from "./AddRecipePopUp"
@@ -204,14 +204,22 @@ export default function RecipeManagementPage({
     }
   }, [viewRecipe])
 
+  const clearAddRecipeDraft = useCallback(() => {
+    resetRecipe()
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("recipe-storage")
+    }
+  }, [resetRecipe])
+
   // handle open add Recipe popup
   const handleOpenAddRecipePopUp = (): void => {
     setOpenAddRecipePopUp(true)
   }
   // handle close add Recipe popup
-  const handleCloseAddRecipePopUp = (): void => {
+  const handleCloseAddRecipePopUp = useCallback((): void => {
     setOpenAddRecipePopUp(false)
-  }
+    clearAddRecipeDraft()
+  }, [clearAddRecipeDraft])
 
   // handle open view Recipe popup
   const handleOpenViewRecipePopUp = (
@@ -507,6 +515,68 @@ export default function RecipeManagementPage({
     return { recipeImageUrl, authorImageUrl }
   }
 
+  const buildIngredientPayload = async (
+    englishIngredients: Array<{
+      foodId: number
+      ingredientName: string
+      quantity: string
+      mainIngredient: boolean
+      available: boolean
+    }>,
+    frenchIngredients: Array<{
+      foodId?: number
+      ingredientName: string
+      quantity: string
+      mainIngredient: boolean
+      available: boolean
+    }> = []
+  ) => {
+    return await Promise.all(
+      englishIngredients.map(async (ingredient, index) => {
+        const frenchEntry = frenchIngredients[index]
+
+        const quantity = ingredient.quantity ?? ""
+        const available =
+          typeof ingredient.available === "boolean"
+            ? ingredient.available
+            : Boolean(frenchEntry?.available)
+
+        let ingredientNameFR = frenchEntry?.ingredientName?.trim() ?? ""
+        if (!ingredientNameFR && ingredient.ingredientName) {
+          try {
+            ingredientNameFR = await translateText(ingredient.ingredientName)
+          } catch (error) {
+            console.error(
+              "Failed to translate ingredient name for French payload:",
+              ingredient.ingredientName,
+              error
+            )
+            ingredientNameFR = ingredient.ingredientName
+          }
+        }
+
+        const quantityFR =
+          frenchEntry?.quantity?.trim() ??
+          (frenchEntry?.quantity === "" ? "" : quantity)
+
+        const mainIngredient =
+          typeof ingredient.mainIngredient === "boolean"
+            ? ingredient.mainIngredient
+            : Boolean(frenchEntry?.mainIngredient)
+
+        return {
+          ingredientName: ingredient.ingredientName,
+          ingredientNameFR: ingredientNameFR || ingredient.ingredientName,
+          quantity,
+          quantityFR,
+          mainIngredient,
+          foodId: ingredient.foodId,
+          available
+        }
+      })
+    )
+  }
+
   // handle create new recipe
   const handleCreateNewRecipe = async (): Promise<void> => {
     setIsLoading(true)
@@ -516,21 +586,9 @@ export default function RecipeManagementPage({
 
     await uploadMoodImageAndSetUrl()
 
-    const translatedIngredients = await Promise.all(
-      translations.en.ingredientData.map(async (ingredient, index) => {
-        const translatedName = await translateText(ingredient.ingredientName)
-
-        return {
-          ingredientName: ingredient.ingredientName,
-          ingredientNameFR: translatedName,
-          quantity: ingredient.quantity ?? "",
-          quantityFR: translations.fr.ingredientData?.[index]?.quantity ?? "",
-          mainIngredient:
-            translations.fr.ingredientData?.[index]?.mainIngredient ?? false,
-          foodId: ingredient.foodId,
-          available: Boolean(ingredient.available)
-        }
-      })
+    const translatedIngredients = await buildIngredientPayload(
+      translations.en.ingredientData ?? [],
+      translations.fr.ingredientData ?? []
     )
 
     const requestBody: NewRecipeTypes = {
@@ -580,13 +638,8 @@ export default function RecipeManagementPage({
 
       if (res.status === 200 || res.status === 201) {
         toast.success("Recipe added successfully")
-        setOpenAddRecipePopUp(false)
+        handleCloseAddRecipePopUp()
         void getRecipes()
-
-        // clear store and session
-        resetRecipe()
-
-        sessionStorage.removeItem("recipe-storage")
       } else {
         toast.error(res.data.message[0])
         if (recipeImageUrl && authorImageUrl) {
@@ -747,34 +800,9 @@ export default function RecipeManagementPage({
     }
 
     // Ingredients
-    const translatedIngredients = await Promise.all(
-      (translationsData.en.ingredientData ?? []).map(
-        async (ingredient, index) => {
-          let translatedName = ""
-          try {
-            translatedName = await translateText(ingredient.ingredientName)
-          } catch (error) {
-            console.error(
-              "Translation error for ingredient:",
-              ingredient.ingredientName,
-              error
-            )
-          }
-
-          return {
-            ingredientName: ingredient.ingredientName,
-            ingredientNameFR: translatedName,
-            quantity: ingredient.quantity ?? "",
-            quantityFR:
-              translationsData.fr.ingredientData?.[index]?.quantity ?? "",
-            mainIngredient:
-              translationsData.fr.ingredientData?.[index]?.mainIngredient ??
-              false,
-            foodId: ingredient.foodId,
-            available: ingredient.available
-          }
-        }
-      )
+    const translatedIngredients = await buildIngredientPayload(
+      translationsData.en.ingredientData ?? [],
+      translationsData.fr.ingredientData ?? []
     )
 
     if (translatedIngredients) {
