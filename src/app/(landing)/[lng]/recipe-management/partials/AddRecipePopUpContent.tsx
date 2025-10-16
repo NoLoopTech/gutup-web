@@ -65,8 +65,13 @@ interface Ingredient {
 }
 
 export interface TagTypes {
-  id: number
+  id?: number
+  tagId?: number
   category: string
+  tagNameFr?: string
+  tagName?: string
+  count?: number
+  status?: boolean
 }
 
 export interface CategoryTypes {
@@ -174,7 +179,7 @@ export default function AddRecipePopUpContent({
         .filter(tag => tag?.category && tag?.category)
         .map(tag => ({
           tagName: tag.category,
-          tagNameFr: tag.category
+          tagNameFr: tag.tagNameFr ?? tag.category
         }))
       setBenefitsOptions(suggestions)
     }
