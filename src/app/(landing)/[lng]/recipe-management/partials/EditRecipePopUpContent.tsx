@@ -179,7 +179,7 @@ export default function EditRecipePopUpContent({
         .filter(tag => tag?.category && tag?.category)
         .map(tag => ({
           tagName: tag.category,
-          tagNameFr: tag.category
+          tagNameFr: tag.tagNameFr ?? tag.category
         }))
       setBenefitsOptions(suggestions)
     }
