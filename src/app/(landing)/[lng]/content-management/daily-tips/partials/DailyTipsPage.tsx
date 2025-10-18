@@ -56,6 +56,7 @@ interface DailyTipsDataType {
   title: string
   content: string
   dateCreated: string
+  puplishDate: string // TODO: incorrect spellings
   status: boolean
   countLikes: number
   countDisLikes: number
@@ -667,6 +668,11 @@ export default function DailyTipsPage({
       accessor: "dateCreated",
       header: "Date Created",
       cell: (row: any) => dayjs(row.dateCreated).format("DD/MM/YYYY")
+    },
+    {
+      accessor: "puplishDate",
+      header: "Publish Date",
+      cell: (row: any) => dayjs(row.puplishDate).format("DD/MM/YYYY")
     },
     {
       accessor: "status",
