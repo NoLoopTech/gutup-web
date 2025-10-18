@@ -672,7 +672,8 @@ export default function DailyTipsPage({
     {
       accessor: "puplishDate",
       header: "Publish Date",
-      cell: (row: any) => dayjs(row.puplishDate).format("DD/MM/YYYY")
+      cell: (row: any) =>
+        row.puplishDate ? dayjs(row.puplishDate).format("DD/MM/YYYY") : "N/A"
     },
     {
       accessor: "status",
