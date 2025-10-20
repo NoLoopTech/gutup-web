@@ -16,6 +16,7 @@ import EditShopPromotionTab from "./EditShopPromotionTab"
 import EditVideoTipTab from "./EditVideoTipTab"
 import { SimpleDatePicker } from "@/components/Shared/DateSelect/SimpleDatePicker"
 import { useUpdateDailyTipStore } from "@/stores/useUpdateDailyTipStore"
+import { asDate, toUtcMidnightIso } from "@/lib/dateUtils"
 
 // Tab option
 interface TabOption {
@@ -63,12 +64,9 @@ export default function EditDailyTipPopUp({
       translationsData.videoTipData?.en as { publishDate?: string }
     )?.publishDate
   }
-  if (publishDateRaw && typeof publishDateRaw === "string") {
-    const d = new Date(publishDateRaw)
-    publishDate = isNaN(d.getTime()) ? null : d
-  }
+  publishDate = asDate(publishDateRaw)
   const handlePublishDateChange = (date: Date | null): void => {
-    const isoString = date ? date.toISOString() : ""
+    const isoString = date ? toUtcMidnightIso(date) : null
     // Remove publishDate from all sections first
     setUpdatedField("basicLayoutData", "en", "publishDate", undefined)
     setUpdatedField("basicLayoutData", "fr", "publishDate", undefined)
@@ -77,6 +75,7 @@ export default function EditDailyTipPopUp({
     setUpdatedField("videoTipData", "en", "publishDate", undefined)
     setUpdatedField("videoTipData", "fr", "publishDate", undefined)
     // Set only for the active tab
+    if (!isoString) return
     if (activeTab === "basicForm") {
       setUpdatedField("basicLayoutData", "en", "publishDate", isoString)
       setUpdatedField("basicLayoutData", "fr", "publishDate", isoString)
