@@ -14,6 +14,7 @@ import { useDailyTipStore } from "@/stores/useDailyTipStore"
 import { useUpdateDailyTipStore } from "@/stores/useUpdateDailyTipStore"
 import EditDailyTipPopUp from "./EditDailyTipPopUp"
 import { getDailyTipById } from "@/app/api/daily-tip"
+import { asDate, toUtcMidnightIso } from "@/lib/dateUtils"
 
 interface Props {
   open: boolean
@@ -63,6 +64,7 @@ export default function EditDailyTipMainPopUp({
       const res = await getDailyTipById(token, tipId)
       if (res.status === 200) {
         const data = res.data
+        const normalizedPublishDate = toUtcMidnightIso(data.publishDate)
 
         // Concerns data for both languages
         const englishConcerns = data.concerns.map(
@@ -73,7 +75,7 @@ export default function EditDailyTipMainPopUp({
         )
 
         setAllowMultiLang(data.allowMultiLang)
-        setPublishDate(data.publishDate)
+        setPublishDate(asDate(data.publishDate))
         setActiveTab(
           data.type === "basic"
             ? "basicForm"
@@ -193,13 +195,13 @@ export default function EditDailyTipMainPopUp({
             "basicLayoutData",
             "en",
             "publishDate",
-            data.publishDate
+            normalizedPublishDate ?? undefined
           )
           setUpdatedField(
             "basicLayoutData",
             "fr",
             "publishDate",
-            data.publishDate
+            normalizedPublishDate ?? undefined
           )
           // Clear publishDate from other sections
           setUpdatedField("videoTipData", "en", "publishDate", undefined)
@@ -264,8 +266,18 @@ export default function EditDailyTipMainPopUp({
             "publishDate",
             data.publishDate
           )
-          setUpdatedField("videoTipData", "en", "publishDate", data.publishDate)
-          setUpdatedField("videoTipData", "fr", "publishDate", data.publishDate)
+          setUpdatedField(
+            "videoTipData",
+            "en",
+            "publishDate",
+            normalizedPublishDate ?? undefined
+          )
+          setUpdatedField(
+            "videoTipData",
+            "fr",
+            "publishDate",
+            normalizedPublishDate ?? undefined
+          )
           // Clear publishDate from other sections
           setUpdatedField("basicLayoutData", "en", "publishDate", undefined)
           setUpdatedField("basicLayoutData", "fr", "publishDate", undefined)
@@ -478,13 +490,13 @@ export default function EditDailyTipMainPopUp({
             "shopPromotionData",
             "en",
             "publishDate",
-            data.publishDate
+            normalizedPublishDate ?? undefined
           )
           setUpdatedField(
             "shopPromotionData",
             "fr",
             "publishDate",
-            data.publishDate
+            normalizedPublishDate ?? undefined
           )
           // Clear publishDate from other sections
           setUpdatedField("basicLayoutData", "en", "publishDate", undefined)

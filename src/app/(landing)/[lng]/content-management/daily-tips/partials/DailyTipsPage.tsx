@@ -26,6 +26,7 @@ import {
   deleteImageFromFirebase,
   uploadImageToFirebase
 } from "@/lib/firebaseImageUtils"
+import { toUtcMidnightIso } from "@/lib/dateUtils"
 import { toast } from "sonner"
 import EditDailyTipMainPopUp from "./EditDailyTipMainPopUp"
 import { useUpdateDailyTipStore } from "@/stores/useUpdateDailyTipStore"
@@ -101,7 +102,7 @@ export default function DailyTipsPage({
     try {
       const response = await getDailyTipById(token, id)
       if (response.status === 200 && response.data) {
-        const publishDate = response.data.publishDate
+        const publishDate = toUtcMidnightIso(response.data.publishDate)
         if (publishDate) {
           useUpdateDailyTipStore
             .getState()
@@ -223,6 +224,7 @@ export default function DailyTipsPage({
         translationsData: currentTranslations,
         publishDate: currentPublishDate
       } = useDailyTipStore.getState()
+      const normalizedPublishDate = toUtcMidnightIso(currentPublishDate)
 
       const shopFoods =
         currentTranslations.shopPromotionData.en.shopPromoteFoods ?? []
@@ -290,7 +292,7 @@ export default function DailyTipsPage({
             ? "video"
             : "store",
         status: true,
-        publishDate: currentPublishDate,
+        publishDate: normalizedPublishDate,
         basicForm: {
           subTitleOne: currentTranslations.basicLayoutData.en.subTitleOne,
           subTitleOneFR: currentTranslations.basicLayoutData.fr.subTitleOne,
@@ -426,7 +428,12 @@ export default function DailyTipsPage({
         if ("title" in updatedState.basicLayoutData.fr)
           requestBody.titleFR = updatedState.basicLayoutData.fr.title as string
         if ("publishDate" in updatedState.basicLayoutData.en) {
-          requestBody.publishDate = updatedState.basicLayoutData.en.publishDate
+          const publishDateIso = toUtcMidnightIso(
+            updatedState.basicLayoutData.en.publishDate
+          )
+          if (publishDateIso) {
+            requestBody.publishDate = publishDateIso
+          }
         }
       }
 
@@ -436,8 +443,12 @@ export default function DailyTipsPage({
         if ("title" in updatedState.videoTipData.fr)
           requestBody.titleFR = updatedState.videoTipData.fr.title as string
         if ("publishDate" in updatedState.videoTipData.en) {
-          requestBody.publishDate = updatedState.videoTipData.en
-            .publishDate as string
+          const publishDateIso = toUtcMidnightIso(
+            updatedState.videoTipData.en.publishDate
+          )
+          if (publishDateIso) {
+            requestBody.publishDate = publishDateIso
+          }
         }
       }
 
@@ -449,8 +460,12 @@ export default function DailyTipsPage({
           requestBody.titleFR = updatedState.shopPromotionData.fr
             .shopName as string
         if ("publishDate" in updatedState.shopPromotionData.en) {
-          requestBody.publishDate = updatedState.shopPromotionData.en
-            .publishDate as string
+          const publishDateIso = toUtcMidnightIso(
+            updatedState.shopPromotionData.en.publishDate
+          )
+          if (publishDateIso) {
+            requestBody.publishDate = publishDateIso
+          }
         }
       }
 

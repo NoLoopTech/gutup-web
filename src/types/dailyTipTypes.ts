@@ -228,6 +228,7 @@ export interface AddDailyTipTypes {
   type: string
   typeFR: string
   status: boolean
+  publishDate?: string | null
   basicForm: BasicForm | null
   shopPromote: ShopPromote | null
   videoForm: VideoForm | null
@@ -247,7 +248,7 @@ export interface EditDailyTipTypes {
   basicForm?: BasicForm | null
   shopPromote?: ShopPromote | null
   videoForm?: VideoForm | null
-  publishDate?: string
+  publishDate?: string | null
 }
 
 export interface ShopPromotionFields {
