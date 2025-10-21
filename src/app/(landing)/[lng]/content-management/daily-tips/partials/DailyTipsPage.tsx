@@ -26,7 +26,7 @@ import {
   deleteImageFromFirebase,
   uploadImageToFirebase
 } from "@/lib/firebaseImageUtils"
-import { toUtcMidnightIso } from "@/lib/dateUtils"
+import { DateInput, toUtcMidnightIso } from "@/lib/dateUtils"
 import { toast } from "sonner"
 import EditDailyTipMainPopUp from "./EditDailyTipMainPopUp"
 import { useUpdateDailyTipStore } from "@/stores/useUpdateDailyTipStore"
@@ -444,7 +444,7 @@ export default function DailyTipsPage({
           requestBody.titleFR = updatedState.videoTipData.fr.title as string
         if ("publishDate" in updatedState.videoTipData.en) {
           const publishDateIso = toUtcMidnightIso(
-            updatedState.videoTipData.en.publishDate
+            updatedState.videoTipData.en.publishDate as DateInput
           )
           if (publishDateIso) {
             requestBody.publishDate = publishDateIso
@@ -461,7 +461,7 @@ export default function DailyTipsPage({
             .shopName as string
         if ("publishDate" in updatedState.shopPromotionData.en) {
           const publishDateIso = toUtcMidnightIso(
-            updatedState.shopPromotionData.en.publishDate
+            updatedState.shopPromotionData.en.publishDate as DateInput
           )
           if (publishDateIso) {
             requestBody.publishDate = publishDateIso
