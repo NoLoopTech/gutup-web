@@ -79,7 +79,7 @@ export default function EditRecipePopUp({
         setAllowMultiLang(data.allowMultiLang)
 
         setTranslationField("en", "name", data.name)
-        setTranslationField("fr", "name", data.name)
+        setTranslationField("fr", "name", data.nameFR)
 
         setTranslationField("en", "preparation", data.attribute.preparation)
         setTranslationField("fr", "preparation", data.attribute.preparationFR)
