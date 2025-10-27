@@ -209,8 +209,8 @@ export interface AddStoreRequestBody {
   shopStatus: boolean
   deliverible: boolean
   storeMapLocation: string
-  startTime: string
-  endTime: string
+  startTime?: string
+  endTime?: string
   storeType: string
   storeTypeFR: string
   subscriptionType: string

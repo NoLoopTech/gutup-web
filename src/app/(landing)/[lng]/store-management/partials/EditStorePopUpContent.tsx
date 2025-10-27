@@ -132,8 +132,7 @@ export default function EditStorePopUpContent({
   isLoading,
   onClose,
   storeId,
-  token,
-  activeLang
+  token
 }: {
   translations: translationsTypes
   onUpdateStore?: () => Promise<void>
@@ -141,10 +140,10 @@ export default function EditStorePopUpContent({
   onClose?: () => void
   storeId: number | null
   token: string
-  activeLang: "en" | "fr"
 }): JSX.Element {
   const { translateText } = useTranslation()
-  const { storeData, setTranslationField, resetForm } = useStoreStore() as any
+  const { storeData, setTranslationField, resetForm, activeLang } =
+    useStoreStore() as any
   const [, setIsTranslating] = useState(false)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
@@ -210,8 +209,8 @@ export default function EditStorePopUpContent({
     storeLocation: z.string().min(1, translations.required),
     storeType: z.string().min(1, translations.pleaseselectaStoreType),
     subscriptionType: z.boolean().optional(),
-    timeFrom: z.string().optional().or(z.literal("")),
-    timeTo: z.string().optional().or(z.literal("")),
+    timeFrom: z.string().nullable().optional(),
+    timeTo: z.string().nullable().optional(),
     phone: z
       .string()
       .nonempty(translations.required)
@@ -351,13 +350,6 @@ export default function EditStorePopUpContent({
               quantity: "",
               isMain: false
             })) || []
-
-          // Set availData for current language
-          if (activeLang === "en") {
-            setAvailData(transformedAvailDataEn)
-          } else {
-            setAvailData(transformedAvailDataFr)
-          }
 
           setTranslationField("storeData", "en", "storeName", data.storeName)
           setTranslationField("storeData", "en", "category", data.category)
@@ -540,34 +532,34 @@ export default function EditStorePopUpContent({
     }
 
     void fetchStoreData()
-  }, [storeId, token, activeLang, setTranslationField])
+  }, [storeId, token, setTranslationField])
 
   // fetch foods
-  useEffect(() => {
-    const fetchFoods = async (): Promise<void> => {
-      try {
-        const res = await getAllFoods(
-          token,
-          undefined,
-          undefined,
-          undefined,
-          true
-        )
-        if (res && res.status === 200) {
-          const resData: Food[] = Array.isArray(res.data.foods)
-            ? res.data.foods.map(normalizeFood)
-            : []
-          setFoods(resData)
-          setFoodSuggestions(resData)
-        } else {
-          console.error("Failed to fetch foods:", res)
-        }
-      } catch (error) {
-        console.error("Failed to fetch foods:", error)
-      }
-    }
-    void fetchFoods()
-  }, [token])
+  // useEffect(() => {
+  //   const fetchFoods = async (): Promise<void> => {
+  //     try {
+  //       const res = await getAllFoods(
+  //         token,
+  //         undefined,
+  //         undefined,
+  //         undefined,
+  //         true
+  //       )
+  //       if (res && res.status === 200) {
+  //         const resData: Food[] = Array.isArray(res.data.foods)
+  //           ? res.data.foods.map(normalizeFood)
+  //           : []
+  //         setFoods(resData)
+  //         setFoodSuggestions(resData)
+  //       } else {
+  //         console.error("Failed to fetch foods:", res)
+  //       }
+  //     } catch (error) {
+  //       console.error("Failed to fetch foods:", error)
+  //     }
+  //   }
+  //   void fetchFoods()
+  // }, [token])
 
   const handleFoodSearch = async (): Promise<void> => {
     const searchTerm = ingredientInput.trim()
@@ -734,6 +726,8 @@ export default function EditStorePopUpContent({
       storeImage: currentStoreData?.storeImage || "",
       category: categoryId,
       storeType: storeTypeId,
+      timeFrom: currentStoreData?.timeFrom ?? "",
+      timeTo: currentStoreData?.timeTo ?? "",
       availData: currentStoreData?.availData || [],
       deliverible:
         typeof currentStoreData?.deliverible === "boolean"
@@ -1041,6 +1035,13 @@ export default function EditStorePopUpContent({
           setIsTranslating(false)
         }
       }
+    }
+  }
+
+  const frRichTextFieldOnBlur = async (fieldName: "about"): Promise<void> => {
+    if (activeLang === "fr") {
+      const val = form.getValues(fieldName)
+      setTranslationField("storeData", "fr", fieldName, val)
     }
   }
 
@@ -1770,7 +1771,7 @@ export default function EditStorePopUpContent({
                             <FormControl>
                               <Input
                                 type="time"
-                                value={field.value}
+                                value={field.value ?? ""}
                                 onChange={e => {
                                   handleTimeChange(
                                     field,
@@ -1798,7 +1799,7 @@ export default function EditStorePopUpContent({
                             <FormControl>
                               <Input
                                 type="time"
-                                value={field.value}
+                                value={field.value ?? ""}
                                 onChange={e => {
                                   handleTimeChange(
                                     field,
@@ -2148,31 +2149,61 @@ export default function EditStorePopUpContent({
           </DialogTitle>
           <div className="flex flex-col gap-6 pt-4 pb-6">
             <div>
-              <FormField
-                control={form.control}
-                name="about"
-                render={({ field }) => {
-                  const { onChange } = makeRichHandlers("about")
-                  return (
-                    <FormItem className="relative">
-                      <FormLabel>{translations.aboutUs}</FormLabel>
-                      <FormControl>
-                        <RichTextEditor
-                          initialContent={field.value}
-                          onChange={val => {
-                            onChange(val)
-                            field.onChange(val)
-                          }}
-                          onBlur={async () => {
-                            await richTextFieldOnBlur("about")
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )
-                }}
-              />
+              {activeLang === "en" && (
+                <FormField
+                  control={form.control}
+                  name="about"
+                  render={({ field }) => {
+                    const { onChange } = makeRichHandlers("about")
+                    return (
+                      <FormItem className="relative">
+                        <FormLabel>{translations.aboutUs}</FormLabel>
+                        <FormControl>
+                          <RichTextEditor
+                            initialContent={field.value}
+                            onChange={val => {
+                              onChange(val)
+                              field.onChange(val)
+                            }}
+                            onBlur={async () => {
+                              await richTextFieldOnBlur("about")
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )
+                  }}
+                />
+              )}
+
+              {activeLang === "fr" && (
+                <FormField
+                  control={form.control}
+                  name="about"
+                  render={({ field }) => {
+                    const { onChange } = makeRichHandlers("about")
+                    return (
+                      <FormItem className="relative">
+                        <FormLabel>{translations.aboutUs}</FormLabel>
+                        <FormControl>
+                          <RichTextEditor
+                            initialContent={field.value}
+                            onChange={val => {
+                              onChange(val)
+                              field.onChange(val)
+                            }}
+                            onBlur={async () => {
+                              await frRichTextFieldOnBlur("about")
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )
+                  }}
+                />
+              )}
             </div>
           </div>
 
