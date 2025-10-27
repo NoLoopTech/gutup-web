@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import EditStorePopUpContent from "./EditStorePopUpContent"
 import { loadLanguage } from "@/../../src/i18n/locales"
 import { defaultTranslations, type translationsTypes } from "@/types/storeTypes"
+import { useStoreStore } from "@/stores/useStoreStore"
 
 interface EditStorePopUpProps {
   open: boolean
@@ -26,9 +27,9 @@ export default function EditStorePopUp({
   storeId,
   token
 }: EditStorePopUpProps): JSX.Element {
-  const [allowMultiLang, setAllowMultiLang] = useState(true)
-  const [activeLang, setActiveLang] = useState<"en" | "fr">("en")
   const [translations, setTranslations] = useState<Partial<translationsTypes>>({})
+  const { allowMultiLang, setAllowMultiLang, activeLang, setActiveLang } =
+    useStoreStore()
 
   // Load translations based on the selected language
   useEffect(() => {
@@ -45,6 +46,12 @@ export default function EditStorePopUp({
     setAllowMultiLang(val)
     if (!val) setActiveLang("en")
   }
+
+  useEffect(() => {
+    if (!open) return
+    setActiveLang("en")
+    setAllowMultiLang(true)
+  }, [open, setActiveLang, setAllowMultiLang])
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -89,8 +96,7 @@ export default function EditStorePopUp({
               </div>
             </div>
 
-            {/* English Tab Content */}
-            <TabsContent value="en">
+            <TabsContent value={activeLang}>
               <EditStorePopUpContent
                 translations={{
                   ...defaultTranslations,
@@ -103,29 +109,8 @@ export default function EditStorePopUp({
                 onClose={onClose}
                 storeId={storeId}
                 token={token}
-                activeLang="en"
               />
             </TabsContent>
-
-            {/* French Tab Content (if multi-language is allowed) */}
-            {allowMultiLang && (
-              <TabsContent value="fr">
-                <EditStorePopUpContent
-                  translations={{
-                    ...defaultTranslations,
-                    ...Object.fromEntries(
-                      Object.entries(translations).map(([k, v]) => [k, v ?? ""])
-                    )
-                  }}
-                  onUpdateStore={onUpdateStore}
-                  isLoading={isLoading}
-                  onClose={onClose}
-                  storeId={storeId}
-                  token={token}
-                  activeLang="fr"
-                />
-              </TabsContent>
-            )}
           </Tabs>
         </div>
       </DialogContent>

@@ -132,8 +132,7 @@ export default function EditStorePopUpContent({
   isLoading,
   onClose,
   storeId,
-  token,
-  activeLang
+  token
 }: {
   translations: translationsTypes
   onUpdateStore?: () => Promise<void>
@@ -141,10 +140,10 @@ export default function EditStorePopUpContent({
   onClose?: () => void
   storeId: number | null
   token: string
-  activeLang: "en" | "fr"
 }): JSX.Element {
   const { translateText } = useTranslation()
-  const { storeData, setTranslationField, resetForm } = useStoreStore() as any
+  const { storeData, setTranslationField, resetForm, activeLang } =
+    useStoreStore() as any
   const [, setIsTranslating] = useState(false)
   const [page, setPage] = React.useState<number>(1)
   const [pageSize, setPageSize] = React.useState<number>(5)
@@ -352,13 +351,6 @@ export default function EditStorePopUpContent({
               isMain: false
             })) || []
 
-          // Set availData for current language
-          if (activeLang === "en") {
-            setAvailData(transformedAvailDataEn)
-          } else {
-            setAvailData(transformedAvailDataFr)
-          }
-
           setTranslationField("storeData", "en", "storeName", data.storeName)
           setTranslationField("storeData", "en", "category", data.category)
           setTranslationField(
@@ -540,7 +532,7 @@ export default function EditStorePopUpContent({
     }
 
     void fetchStoreData()
-  }, [storeId, token, activeLang, setTranslationField])
+  }, [storeId, token, setTranslationField])
 
   // fetch foods
   useEffect(() => {
