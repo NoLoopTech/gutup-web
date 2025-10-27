@@ -74,7 +74,19 @@ export function transformStoreDataToApiRequest(
     return subscriptionType === "premium" ? "premium" : "freemium"
   }
 
-  return {
+  const normalizeType = (value?: string): string =>
+    typeof value === "string" ? value.trim().toLowerCase() : ""
+
+  const normalizedEnStoreType = normalizeType(enData.storeType)
+  const normalizedFrStoreType = normalizeType(frData?.storeType)
+
+  const isNutritionistStore =
+    normalizedEnStoreType.includes("nutritionist") ||
+    normalizedEnStoreType.includes("nutritionniste") ||
+    normalizedFrStoreType.includes("nutritionist") ||
+    normalizedFrStoreType.includes("nutritionniste")
+
+  const request: AddStoreRequestBody = {
     storeName: enData.storeName || "",
     category: enData.category || "",
     categoryFR: frData?.category || enData.category || "",
@@ -82,8 +94,6 @@ export function transformStoreDataToApiRequest(
     shopStatus: enData.shopStatus !== undefined ? enData.shopStatus : true,
     deliverible: enData.deliverible !== undefined ? enData.deliverible : false,
     storeMapLocation: enData.storeMapLocation || enData.storeLocation || "",
-    startTime: enData.timeFrom || enData.startTime || "08:00",
-    endTime: enData.timeTo || enData.endTime || "18:00",
     storeType: enData.storeType || "physical",
     storeTypeFR: frData?.storeType || getStoreTypeFR(enData.storeType),
     subscriptionType:
@@ -111,4 +121,11 @@ export function transformStoreDataToApiRequest(
     storeImage: enData.storeImage || "",
     ingAndCatData
   }
+
+  if (!isNutritionistStore) {
+    request.startTime = enData.timeFrom || enData.startTime || "08:00"
+    request.endTime = enData.timeTo || enData.endTime || "18:00"
+  }
+
+  return request
 }
