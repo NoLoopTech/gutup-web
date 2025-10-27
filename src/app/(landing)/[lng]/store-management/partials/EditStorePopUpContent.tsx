@@ -152,8 +152,7 @@ export default function EditStorePopUpContent({
   const [foods, setFoods] = useState<Food[]>([])
   const [foodSuggestions, setFoodSuggestions] = useState<Food[]>([])
   const [isFoodSearchLoading, setIsFoodSearchLoading] = useState(false)
-  const [foodSearchDropdownTrigger, setFoodSearchDropdownTrigger] =
-    useState(0)
+  const [foodSearchDropdownTrigger, setFoodSearchDropdownTrigger] = useState(0)
   const [categoryTags, setCategoryTags] = useState<CategoryTag[]>([])
   const [storeCategories, setStoreCategories] = useState<StoreCategory[]>([])
   const [storeTypes, setStoreTypes] = useState<StoreType[]>([])
@@ -170,6 +169,16 @@ export default function EditStorePopUpContent({
   const [, setCurrentStoreData] = useState<StoreData | null>(null)
   const [isDataLoaded, setIsDataLoaded] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+  const [initialStoreTypeId, setInitialStoreTypeId] = useState<string>("")
+
+  const isNutritionistType = (storeTypeValue?: string): boolean => {
+    if (!storeTypeValue) return false
+    const type = storeTypes.find(t => t.id.toString() === storeTypeValue)
+    if (!type) return false
+    const english = (type.TagName || "").toLowerCase()
+    const french = (type.TagNameFr || "").toLowerCase()
+    return english === "nutritionist" || french === "nutritionniste"
+  }
 
   const normalizeFood = (food: any): Food => ({
     ...food,
@@ -183,11 +192,12 @@ export default function EditStorePopUpContent({
       ""
   })
 
-  const getLocalizedFoodName = (food: Food | null | undefined, lang: string): string => {
+  const getLocalizedFoodName = (
+    food: Food | null | undefined,
+    lang: string
+  ): string => {
     if (!food) return ""
-    return lang === "fr"
-      ? food.nameFR ?? food.name ?? ""
-      : food.name ?? ""
+    return lang === "fr" ? food.nameFR ?? food.name ?? "" : food.name ?? ""
   }
 
   // Validation schema using Zod
@@ -200,8 +210,8 @@ export default function EditStorePopUpContent({
     storeLocation: z.string().min(1, translations.required),
     storeType: z.string().min(1, translations.pleaseselectaStoreType),
     subscriptionType: z.boolean().optional(),
-    timeFrom: z.string().min(1, translations.required),
-    timeTo: z.string().min(1, translations.required),
+    timeFrom: z.string().optional().or(z.literal("")),
+    timeTo: z.string().optional().or(z.literal("")),
     phone: z
       .string()
       .nonempty(translations.required)
@@ -238,9 +248,7 @@ export default function EditStorePopUpContent({
         message: translations.required
       }
     ),
-    availData: z
-      .array(z.any())
-      .min(1, translations.atleastoneingredientcategorymustbeadded),
+    availData: z.array(z.any()),
     storeImage: z.string().min(1, translations.required),
     deliverible: z.boolean().optional()
   })
@@ -259,6 +267,15 @@ export default function EditStorePopUpContent({
           : false
     }
   })
+  const selectedStoreTypeValue = form.watch("storeType")
+  const isNutritionistSelected = React.useMemo(
+    () => isNutritionistType(selectedStoreTypeValue),
+    [selectedStoreTypeValue, storeTypes]
+  )
+  const isInitialNutritionist = React.useMemo(
+    () => isNutritionistType(initialStoreTypeId),
+    [initialStoreTypeId, storeTypes]
+  )
 
   // fetch store data for editing
   useEffect(() => {
@@ -529,7 +546,13 @@ export default function EditStorePopUpContent({
   useEffect(() => {
     const fetchFoods = async (): Promise<void> => {
       try {
-        const res = await getAllFoods(token, undefined, undefined, undefined, true)
+        const res = await getAllFoods(
+          token,
+          undefined,
+          undefined,
+          undefined,
+          true
+        )
         if (res && res.status === 200) {
           const resData: Food[] = Array.isArray(res.data.foods)
             ? res.data.foods.map(normalizeFood)
@@ -724,7 +747,18 @@ export default function EditStorePopUpContent({
     }
 
     void recreatePreview()
-  }, [activeLang, form, storeData, storeCategories, storeTypes, isDataLoaded])
+    if (!initialStoreTypeId && storeTypeId) {
+      setInitialStoreTypeId(storeTypeId)
+    }
+  }, [
+    activeLang,
+    form,
+    storeData,
+    storeCategories,
+    storeTypes,
+    isDataLoaded,
+    initialStoreTypeId
+  ])
 
   // Sync availData with form value and filter by active language
   useEffect(() => {
@@ -737,6 +771,27 @@ export default function EditStorePopUpContent({
       form.setValue("availData", currentStoreData.availData)
     }
   }, [activeLang, storeData, form])
+
+  useEffect(() => {
+    if (isNutritionistSelected) {
+      form.clearErrors(["availData", "timeFrom", "timeTo", "storeType"])
+      return
+    }
+
+    if (availData.length === 0) {
+      form.setError("availData", {
+        type: "manual",
+        message: translations.atleastoneingredientcategorymustbeadded
+      })
+    } else {
+      form.clearErrors("availData")
+    }
+  }, [
+    availData.length,
+    form,
+    isNutritionistSelected,
+    translations.atleastoneingredientcategorymustbeadded
+  ])
 
   // Watch for form changes to set hasChanges
   useEffect(() => {
@@ -780,7 +835,21 @@ export default function EditStorePopUpContent({
     if (!Array.isArray(storeTypes) || storeTypes.length === 0) {
       return []
     }
-    return storeTypes.map(type => ({
+    let filteredTypes = storeTypes
+
+    if (initialStoreTypeId) {
+      if (isNutritionistType(initialStoreTypeId)) {
+        filteredTypes = storeTypes.filter(
+          type => type.id.toString() === initialStoreTypeId
+        )
+      } else {
+        filteredTypes = storeTypes.filter(
+          type => !isNutritionistType(type.id.toString())
+        )
+      }
+    }
+
+    return filteredTypes.map(type => ({
       value: type.id.toString(),
       label: activeLang === "en" ? type.TagName : type.TagNameFr
     }))
@@ -1234,7 +1303,8 @@ export default function EditStorePopUpContent({
           translatedName = displayName
         }
       } else {
-        translatedName = getLocalizedFoodName(matchingFood, activeLang) || displayName
+        translatedName =
+          getLocalizedFoodName(matchingFood, activeLang) || displayName
       }
     }
 
@@ -1414,6 +1484,75 @@ export default function EditStorePopUpContent({
   const onSubmit = async (
     data: z.infer<typeof EditStoreSchema>
   ): Promise<void> => {
+    const selectedTypeIsNutritionist = isNutritionistType(data.storeType)
+    const initialTypeIsNutritionist = isNutritionistType(initialStoreTypeId)
+    const availItems = availData
+    let hasError = false
+
+    if (
+      initialStoreTypeId &&
+      initialTypeIsNutritionist &&
+      !selectedTypeIsNutritionist
+    ) {
+      form.setError("storeType", {
+        type: "manual",
+        message: "Store type cannot be changed from Nutritionist."
+      })
+      return
+    }
+
+    if (
+      initialStoreTypeId &&
+      !initialTypeIsNutritionist &&
+      selectedTypeIsNutritionist
+    ) {
+      form.setError("storeType", {
+        type: "manual",
+        message: "Store type cannot be changed to Nutritionist."
+      })
+      return
+    }
+
+    form.clearErrors("storeType")
+
+    if (selectedTypeIsNutritionist) {
+      form.clearErrors(["timeFrom", "timeTo", "availData"])
+    } else {
+      if (!data.timeFrom) {
+        form.setError("timeFrom", {
+          type: "manual",
+          message: translations.required
+        })
+        hasError = true
+      } else {
+        form.clearErrors("timeFrom")
+      }
+
+      if (!data.timeTo) {
+        form.setError("timeTo", {
+          type: "manual",
+          message: translations.required
+        })
+        hasError = true
+      } else {
+        form.clearErrors("timeTo")
+      }
+
+      if (!availItems || availItems.length === 0) {
+        form.setError("availData", {
+          type: "manual",
+          message: translations.atleastoneingredientcategorymustbeadded
+        })
+        hasError = true
+      } else {
+        form.clearErrors("availData")
+      }
+    }
+
+    if (hasError) {
+      return
+    }
+
     try {
       const currentStoreData = storeData[activeLang]
       const updatedStoreData = {
@@ -1447,6 +1586,10 @@ export default function EditStorePopUpContent({
       toast.error("Failed to update store. Please try again.")
     }
   }
+
+  useEffect(() => {
+    setInitialStoreTypeId("")
+  }, [storeId])
 
   // Add this function before availColumns
   const handleToggleAvailability = (index: number, checked: boolean): void => {
@@ -1585,6 +1728,7 @@ export default function EditStorePopUpContent({
                     <FormControl>
                       <Select
                         value={field.value}
+                        disabled={isInitialNutritionist}
                         onValueChange={value => {
                           handleSelectChange("storeType", value)
                         }}
@@ -1609,64 +1753,71 @@ export default function EditStorePopUpContent({
               />
             </div>
 
-            <div className="flex flex-col gap-1 mt-1">
-              <div className="flex gap-7 items-center">
-                <div className="flex flex-col">
-                  <Label htmlFor="time-from" className="mb-[6px]">
-                    {translations.from}
-                  </Label>
+            {!isNutritionistSelected && (
+              <>
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className="flex gap-7 items-center">
+                    <div className="flex flex-col">
+                      <Label htmlFor="time-from" className="mb-[6px]">
+                        {translations.from}
+                      </Label>
 
-                  <FormField
-                    control={form.control}
-                    name="timeFrom"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input
-                            type="time"
-                            value={field.value}
-                            onChange={e => {
-                              handleTimeChange(
-                                field,
-                                "timeFrom"
-                              )(e.target.value)
-                            }}
-                            className=" bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <Label htmlFor="time-to" className="mb-[6px]">
-                    {translations.to}
-                  </Label>
+                      <FormField
+                        control={form.control}
+                        name="timeFrom"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                type="time"
+                                value={field.value}
+                                onChange={e => {
+                                  handleTimeChange(
+                                    field,
+                                    "timeFrom"
+                                  )(e.target.value)
+                                }}
+                                className=" bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <Label htmlFor="time-to" className="mb-[6px]">
+                        {translations.to}
+                      </Label>
 
-                  <FormField
-                    control={form.control}
-                    name="timeTo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input
-                            type="time"
-                            value={field.value}
-                            onChange={e => {
-                              handleTimeChange(field, "timeTo")(e.target.value)
-                            }}
-                            className=" bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                      <FormField
+                        control={form.control}
+                        name="timeTo"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                type="time"
+                                value={field.value}
+                                onChange={e => {
+                                  handleTimeChange(
+                                    field,
+                                    "timeTo"
+                                  )(e.target.value)
+                                }}
+                                className=" bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div></div>
+                <div></div>
+              </>
+            )}
             <div>
               <Label className="text-black mb-1 block">
                 {translations.subscription}
@@ -1905,7 +2056,11 @@ export default function EditStorePopUpContent({
                         food => String(food.id) === String(item.id)
                       )
                       setSelected(
-                        matched ?? { id: item.id, name: item.name, nameFR: item.name }
+                        matched ?? {
+                          id: item.id,
+                          name: item.name,
+                          nameFR: item.name
+                        }
                       )
                       setIngredientInput(item.name)
                     }}
@@ -1973,11 +2128,13 @@ export default function EditStorePopUpContent({
                     onPageChange={handlePageChange}
                     onPageSizeChange={handlePageSizeChange}
                   />
-                  {availData.length === 0 && (
-                    <FormMessage className="text-red-500">
-                      {translations.atleastoneingredientcategorymustbeadded}
-                    </FormMessage>
-                  )}
+                  {!isNutritionistSelected &&
+                    form.formState.errors.availData && (
+                      <FormMessage className="text-red-500">
+                        {form.formState.errors.availData.message?.toString() ??
+                          translations.atleastoneingredientcategorymustbeadded}
+                      </FormMessage>
+                    )}
                 </>
               )}
             />

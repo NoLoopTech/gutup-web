@@ -138,6 +138,17 @@ export default function AddStorePopUpContent({
 
   const { data: session } = useSession()
 
+  const isNutritionistType = (storeTypeValue?: string): boolean => {
+    if (!storeTypeValue) return false
+    const matchedType = storeTypes.find(
+      type => type.id.toString() === storeTypeValue
+    )
+    if (!matchedType) return false
+    const englishName = (matchedType.TagName || "").toLowerCase()
+    const frenchName = (matchedType.TagNameFr || "").toLowerCase()
+    return englishName === "nutritionist" || frenchName === "nutritionniste"
+  }
+
   const normalizeFood = (food: any): Food => ({
     ...food,
     name: typeof food?.name === "string" ? food.name : food?.tagName ?? "",
@@ -169,8 +180,8 @@ export default function AddStorePopUpContent({
     storeType: z.string().min(1, translations.pleaseselectaStoreType),
     subscriptionType: z.boolean().optional(),
     deliverible: z.boolean().optional(),
-    timeFrom: z.string().min(1, translations.required),
-    timeTo: z.string().min(1, translations.required),
+    timeFrom: z.string().optional().or(z.literal("")),
+    timeTo: z.string().optional().or(z.literal("")),
     phone: z
       .string()
       .nonempty(translations.required)
@@ -207,9 +218,7 @@ export default function AddStorePopUpContent({
         message: translations.required
       }
     ),
-    availData: z
-      .array(z.any())
-      .min(1, translations.atleastoneingredientcategorymustbeadded),
+    availData: z.array(z.any()),
     storeImage: z.string().min(1, translations.required)
   })
 
@@ -342,6 +351,12 @@ export default function AddStorePopUpContent({
       storeLocation: storeData[activeLang]?.storeLocation || ""
     }
   })
+
+  const selectedStoreTypeValue = form.watch("storeType")
+  const isNutritionistSelected = React.useMemo(
+    () => isNutritionistType(selectedStoreTypeValue),
+    [selectedStoreTypeValue, storeTypes]
+  )
 
   // Update form when lang changes
   useEffect(() => {
@@ -838,6 +853,27 @@ export default function AddStorePopUpContent({
     }
   }, [activeLang, storeData, form])
 
+  useEffect(() => {
+    if (isNutritionistSelected) {
+      form.clearErrors(["availData", "timeFrom", "timeTo"])
+      return
+    }
+
+    if (availData.length === 0) {
+      form.setError("availData", {
+        type: "manual",
+        message: translations.atleastoneingredientcategorymustbeadded
+      })
+    } else {
+      form.clearErrors("availData")
+    }
+  }, [
+    availData.length,
+    form,
+    isNutritionistSelected,
+    translations.atleastoneingredientcategorymustbeadded
+  ])
+
   // translated type/status using translations object
   const getTranslatedType = (type: string, lang: string): string => {
     const key = type.toLowerCase()
@@ -1089,6 +1125,47 @@ export default function AddStorePopUpContent({
   const onSubmit = async (
     data: z.infer<typeof AddStoreSchema>
   ): Promise<void> => {
+    const nutritionist = isNutritionistType(data.storeType)
+    let hasError = false
+
+    if (nutritionist) {
+      form.clearErrors(["timeFrom", "timeTo", "availData"])
+    } else {
+      if (!data.timeFrom) {
+        form.setError("timeFrom", {
+          type: "manual",
+          message: translations.required
+        })
+        hasError = true
+      } else {
+        form.clearErrors("timeFrom")
+      }
+
+      if (!data.timeTo) {
+        form.setError("timeTo", {
+          type: "manual",
+          message: translations.required
+        })
+        hasError = true
+      } else {
+        form.clearErrors("timeTo")
+      }
+
+      if (!data.availData || data.availData.length === 0) {
+        form.setError("availData", {
+          type: "manual",
+          message: translations.atleastoneingredientcategorymustbeadded
+        })
+        hasError = true
+      } else {
+        form.clearErrors("availData")
+      }
+    }
+
+    if (hasError) {
+      return
+    }
+
     try {
       if (onAddStore) {
         await onAddStore()
@@ -1227,62 +1304,69 @@ export default function AddStorePopUpContent({
               />
             </div>
 
-            <div className="flex flex-col gap-1 mt-1">
-              <div className="flex gap-7 items-center">
-                <div className="flex flex-col">
-                  <Label htmlFor="time-from" className="mb-[6px]">
-                    {translations.from}
-                  </Label>
-                  <FormField
-                    control={form.control}
-                    name="timeFrom"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input
-                            type="time"
-                            value={field.value}
-                            onChange={e => {
-                              handleTimeChange(
-                                field,
-                                "timeFrom"
-                              )(e.target.value)
-                            }}
-                            className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+            {!isNutritionistSelected && (
+              <>
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className="flex gap-7 items-center">
+                    <div className="flex flex-col">
+                      <Label htmlFor="time-from" className="mb-[6px]">
+                        {translations.from}
+                      </Label>
+                      <FormField
+                        control={form.control}
+                        name="timeFrom"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                type="time"
+                                value={field.value}
+                                onChange={e => {
+                                  handleTimeChange(
+                                    field,
+                                    "timeFrom"
+                                  )(e.target.value)
+                                }}
+                                className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <Label htmlFor="time-to" className="mb-[6px]">
+                        {translations.to}
+                      </Label>
+                      <FormField
+                        control={form.control}
+                        name="timeTo"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                type="time"
+                                value={field.value}
+                                onChange={e => {
+                                  handleTimeChange(
+                                    field,
+                                    "timeTo"
+                                  )(e.target.value)
+                                }}
+                                className=" bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <Label htmlFor="time-to" className="mb-[6px]">
-                    {translations.to}
-                  </Label>
-                  <FormField
-                    control={form.control}
-                    name="timeTo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input
-                            type="time"
-                            value={field.value}
-                            onChange={e => {
-                              handleTimeChange(field, "timeTo")(e.target.value)
-                            }}
-                            className=" bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-            </div>
-            <div></div>
+                <div></div>
+              </>
+            )}
             <div>
               <Label className="text-black mb-1 block">
                 {translations.subscription}
@@ -1590,11 +1674,13 @@ export default function AddStorePopUpContent({
                     onPageChange={handlePageChange}
                     onPageSizeChange={handlePageSizeChange}
                   />
-                  {availData.length === 0 && (
-                    <FormMessage className="text-red-500">
-                      {translations.atleastoneingredientcategorymustbeadded}
-                    </FormMessage>
-                  )}
+                  {!isNutritionistSelected &&
+                    form.formState.errors.availData && (
+                      <FormMessage className="text-red-500">
+                        {form.formState.errors.availData.message?.toString() ??
+                          translations.atleastoneingredientcategorymustbeadded}
+                      </FormMessage>
+                    )}
                 </>
               )}
             />
