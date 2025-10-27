@@ -1349,9 +1349,10 @@ export default function AddStorePopUpContent({
                                 type="time"
                                 value={field.value}
                                 onChange={e => {
-                                  handleTimeChange(field, "timeTo")(
-                                    e.target.value
-                                  )
+                                  handleTimeChange(
+                                    field,
+                                    "timeTo"
+                                  )(e.target.value)
                                 }}
                                 className=" bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                               />
@@ -1675,10 +1676,10 @@ export default function AddStorePopUpContent({
                   />
                   {!isNutritionistSelected &&
                     form.formState.errors.availData && (
-                    <FormMessage className="text-red-500">
+                      <FormMessage className="text-red-500">
                         {form.formState.errors.availData.message?.toString() ??
                           translations.atleastoneingredientcategorymustbeadded}
-                    </FormMessage>
+                      </FormMessage>
                     )}
                 </>
               )}

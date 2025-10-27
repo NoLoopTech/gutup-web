@@ -152,8 +152,7 @@ export default function EditStorePopUpContent({
   const [foods, setFoods] = useState<Food[]>([])
   const [foodSuggestions, setFoodSuggestions] = useState<Food[]>([])
   const [isFoodSearchLoading, setIsFoodSearchLoading] = useState(false)
-  const [foodSearchDropdownTrigger, setFoodSearchDropdownTrigger] =
-    useState(0)
+  const [foodSearchDropdownTrigger, setFoodSearchDropdownTrigger] = useState(0)
   const [categoryTags, setCategoryTags] = useState<CategoryTag[]>([])
   const [storeCategories, setStoreCategories] = useState<StoreCategory[]>([])
   const [storeTypes, setStoreTypes] = useState<StoreType[]>([])
@@ -193,11 +192,12 @@ export default function EditStorePopUpContent({
       ""
   })
 
-  const getLocalizedFoodName = (food: Food | null | undefined, lang: string): string => {
+  const getLocalizedFoodName = (
+    food: Food | null | undefined,
+    lang: string
+  ): string => {
     if (!food) return ""
-    return lang === "fr"
-      ? food.nameFR ?? food.name ?? ""
-      : food.name ?? ""
+    return lang === "fr" ? food.nameFR ?? food.name ?? "" : food.name ?? ""
   }
 
   // Validation schema using Zod
@@ -546,7 +546,13 @@ export default function EditStorePopUpContent({
   useEffect(() => {
     const fetchFoods = async (): Promise<void> => {
       try {
-        const res = await getAllFoods(token, undefined, undefined, undefined, true)
+        const res = await getAllFoods(
+          token,
+          undefined,
+          undefined,
+          undefined,
+          true
+        )
         if (res && res.status === 200) {
           const resData: Food[] = Array.isArray(res.data.foods)
             ? res.data.foods.map(normalizeFood)
@@ -1297,7 +1303,8 @@ export default function EditStorePopUpContent({
           translatedName = displayName
         }
       } else {
-        translatedName = getLocalizedFoodName(matchingFood, activeLang) || displayName
+        translatedName =
+          getLocalizedFoodName(matchingFood, activeLang) || displayName
       }
     }
 
@@ -1793,9 +1800,10 @@ export default function EditStorePopUpContent({
                                 type="time"
                                 value={field.value}
                                 onChange={e => {
-                                  handleTimeChange(field, "timeTo")(
-                                    e.target.value
-                                  )
+                                  handleTimeChange(
+                                    field,
+                                    "timeTo"
+                                  )(e.target.value)
                                 }}
                                 className=" bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                               />
@@ -2048,7 +2056,11 @@ export default function EditStorePopUpContent({
                         food => String(food.id) === String(item.id)
                       )
                       setSelected(
-                        matched ?? { id: item.id, name: item.name, nameFR: item.name }
+                        matched ?? {
+                          id: item.id,
+                          name: item.name,
+                          nameFR: item.name
+                        }
                       )
                       setIngredientInput(item.name)
                     }}
@@ -2118,10 +2130,10 @@ export default function EditStorePopUpContent({
                   />
                   {!isNutritionistSelected &&
                     form.formState.errors.availData && (
-                    <FormMessage className="text-red-500">
+                      <FormMessage className="text-red-500">
                         {form.formState.errors.availData.message?.toString() ??
                           translations.atleastoneingredientcategorymustbeadded}
-                    </FormMessage>
+                      </FormMessage>
                     )}
                 </>
               )}
