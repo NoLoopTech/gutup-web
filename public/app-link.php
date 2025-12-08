@@ -2,7 +2,7 @@
 // Store URLs - using app deep links to open directly in store apps
 define('PLAY_STORE_URL', 'market://details?id=com.gutup.app');
 define('PLAY_STORE_WEB_URL', 'https://play.google.com/store/apps/details?id=com.gutup.app');
-define('APP_STORE_URL', 'https://apps.apple.com/us/app/gutup-trust-your-gut/id6738651172');
+define('APP_STORE_URL', 'https://apps.apple.com/ch/app/gutup-trust-your-gut/id6751872478');
 
 // Server-side device detection
 function detectDevice() {
