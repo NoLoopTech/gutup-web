@@ -1,47 +1,8 @@
 <?php
-// Load environment variables
-function loadEnv($path) {
-    if (!file_exists($path)) {
-        return;
-    }
-
-    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        // Skip comments
-        if (strpos(trim($line), '#') === 0) {
-            continue;
-        }
-
-        // Parse key=value pairs
-        if (strpos($line, '=') !== false) {
-            list($key, $value) = explode('=', $line, 2);
-            $key = trim($key);
-            $value = trim($value);
-
-            // Set as environment variable if not already set
-            if (!getenv($key)) {
-                putenv("$key=$value");
-                $_ENV[$key] = $value;
-                $_SERVER[$key] = $value;
-            }
-        }
-    }
-}
-
-// Load .env files (try development first, then production)
-$envPath = dirname(__DIR__) . '/.env.development.local';
-if (!file_exists($envPath)) {
-    $envPath = dirname(__DIR__) . '/.env.local';
-}
-if (!file_exists($envPath)) {
-    $envPath = dirname(__DIR__) . '/.env';
-}
-loadEnv($envPath);
-
 // Store URLs - using app deep links to open directly in store apps
-define('PLAY_STORE_URL', getenv('PLAY_STORE_URL') ?: 'market://details?id=com.gutup.app');
-define('PLAY_STORE_WEB_URL', getenv('PLAY_STORE_WEB_URL') ?: 'https://play.google.com/store/apps/details?id=com.gutup.app');
-define('APP_STORE_URL', getenv('APP_STORE_URL') ?: 'https://apps.apple.com/us/app/gutup-trust-your-gut/id6738651172');
+define('PLAY_STORE_URL', 'market://details?id=com.gutup.app');
+define('PLAY_STORE_WEB_URL', 'https://play.google.com/store/apps/details?id=com.gutup.app');
+define('APP_STORE_URL', 'https://apps.apple.com/us/app/gutup-trust-your-gut/id6738651172');
 
 // Server-side device detection
 function detectDevice() {
