@@ -39,14 +39,17 @@ function renderStoreCard($type) {
     if ($type === 'android') {
         $platform = 'Android';
         $storeUrl = $playStoreWebUrl;
-        $badgeImg = 'https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png';
+        // Self-hosted official Google Play badge (PNG)
+        $badgeImg = '/app-link-assets/GetItOnGooglePlay.png';
         $badgeAlt = 'Get it on Google Play';
     } else {
         $platform = 'iOS';
         $storeUrl = $appStoreUrl;
-        $badgeImg = 'https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&releaseDate=1722556800';
+        // Self-hosted official App Store badge (SVG)
+        $badgeImg = '/app-link-assets/DownloadOnTheAppStore.svg';
         $badgeAlt = 'Download on the App Store';
     }
+
     ?>
     <div class="store-card">
         <div class="store-card-header">
