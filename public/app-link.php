@@ -51,12 +51,15 @@ function renderStoreCard($type) {
     }
 
     ?>
-    <div class="store-card">
-        <div class="store-card-header">
-            <div class="store-label">Mobile/Tablet</div>
-            <div class="store-platform"><?php echo htmlspecialchars($platform); ?></div>
-        </div>
-        <div class="store-button-wrapper">
+        <div class="store-card">
+            <div class="store-card-header">
+                <div class="store-card-text">
+                    <div class="store-label">Mobile/Tablet</div>
+                    <div class="store-platform"><?php echo htmlspecialchars($platform); ?></div>
+                </div>
+                <img src="/app-link-assets/download.svg" alt="" class="download-icon">
+            </div>
+            <div class="store-button-wrapper">
             <a href="<?php echo htmlspecialchars($storeUrl); ?>" class="store-button" target="_blank" rel="noopener noreferrer">
                 <img src="<?php echo htmlspecialchars($badgeImg); ?>" alt="<?php echo htmlspecialchars($badgeAlt); ?>">
             </a>
@@ -114,6 +117,16 @@ function renderStoreCard($type) {
             margin: 0;
         }
 
+        /* layout toggles */
+        .mobile-layout {
+            display: block;
+        }
+
+        .desktop-layout {
+            display: none;
+        }
+
+        /* ===== MOBILE LAYOUT (existing) ===== */
 
         .page-header {
             text-align: center;
@@ -166,7 +179,15 @@ function renderStoreCard($type) {
         }
 
         .store-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 12px;
+        }
+
+        .store-card-text {
+            display: flex;
+            flex-direction: column;
         }
 
         .store-label {
@@ -184,6 +205,12 @@ function renderStoreCard($type) {
             line-height: 1.2;
         }
 
+        .download-icon {
+            width: 18px;
+            height: 18px;
+            display: none; /* only show on desktop */
+        }
+
         .store-button-wrapper {
             position: relative;
             display: inline-block;
@@ -198,6 +225,7 @@ function renderStoreCard($type) {
         .store-button img {
             height: 44px;
             width: auto;
+            display: block;
         }
 
         .store-button:hover {
@@ -252,7 +280,6 @@ function renderStoreCard($type) {
             flex-grow: 1;
         }
 
-
         .green-section .store-card {
             background: white;
         }
@@ -266,7 +293,6 @@ function renderStoreCard($type) {
         @media (max-width: 768px) {
             body {
                 overflow-y: auto;
-                align-items: flex-start;
                 padding: 15px 0;
             }
 
@@ -421,73 +447,456 @@ function renderStoreCard($type) {
                 padding: 0 16px;
             }
         }
+
+        /* ===== DESKTOP LAYOUT ===== */
+
+        @media (min-width: 900px) {
+            body {
+                background: #ffffff;
+                padding: 0;
+                overflow: hidden;
+                position: relative;
+                height: 100vh;
+            }
+
+            .mobile-layout {
+                display: none;
+            }
+
+            .desktop-layout {
+                display: block;
+            }
+
+            .desktop-page {
+                position: relative;
+                height: 100vh;
+                width: 100%;
+                overflow: hidden;
+                background: #ffffff;
+            }
+
+            .desktop-header {
+                background: #FF8B5A;
+                padding: 20px 80px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                position: relative;
+                z-index: 10;
+            }
+
+            .desktop-header-logo img {
+                height: 36px;
+                width: auto;
+            }
+
+            .desktop-header-signup {
+                font-size: 16px;
+                font-weight: 500;
+                color: #ffffff;
+                text-decoration: none;
+            }
+
+            .desktop-header-signup:hover {
+                text-decoration: underline;
+            }
+
+            .desktop-main {
+                padding: 60px 80px;
+                position: relative;
+                z-index: 2;
+                max-width: 1500px;
+                margin: 0 auto;
+                height: calc(100vh - 76px);
+                display: flex;
+                align-items: center;
+            }
+
+            .desktop-hero {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 60px;
+                position: relative;
+            }
+
+            .hero-left {
+                max-width: 540px;
+                flex-shrink: 0;
+            }
+
+            .hero-title {
+                font-size: 54px;
+                line-height: 1.15;
+                font-weight: 700;
+                color: #000;
+                margin-bottom: 20px;
+                letter-spacing: -0.4px;
+            }
+
+            .hero-title span.highlight {
+                color: #FF8B5A;
+            }
+
+            .hero-tagline {
+                font-size: 20px;
+                color: #666;
+                line-height: 1.6;
+                margin-bottom: 42px;
+                max-width: 480px;
+            }
+
+            .hero-download-title {
+                font-size: 18px;
+                font-weight: 600;
+                margin-bottom: 20px;
+                color: #000;
+            }
+
+            .hero-store-row {
+                display: flex;
+                gap: 16px;
+                flex-wrap: wrap;
+            }
+
+            .desktop-layout .store-card {
+                background: #F7F7F7;
+                border-radius: 20px;
+                padding: 20px 24px;
+                margin: 0;
+                box-shadow: none;
+                min-width: 240px;
+                max-width: 260px;
+                border: 1px solid rgba(0, 0, 0, 0.04);
+                transition: transform 0.25s ease, box-shadow 0.25s ease;
+            }
+
+            .desktop-layout .store-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            }
+
+            .desktop-layout .store-card-header {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                margin-bottom: 14px;
+            }
+
+            .desktop-layout .store-card-text {
+                display: block;
+            }
+
+            .desktop-layout .store-label {
+                font-size: 11px;
+                color: #888;
+                margin-bottom: 5px;
+                letter-spacing: 0.5px;
+                text-transform: uppercase;
+                font-weight: 500;
+            }
+
+            .desktop-layout .store-platform {
+                font-size: 21px;
+                line-height: 1.2;
+                font-weight: 700;
+                color: #111;
+            }
+            
+            .desktop-layout .download-icon {
+                display: block;
+                width: 15px;
+                height: 15px;
+                opacity: 0.7;
+                margin-top: 3px;
+            }
+
+            .desktop-layout .store-button-wrapper {
+                margin-top: 0;
+            }
+
+            .desktop-layout .store-button img {
+                height: 46px;
+                width: auto;
+            }
+
+            .hero-right {
+                flex: 1;
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                position: relative;
+                min-height: 500px;
+                padding-right: 0;
+            }
+
+            .hero-image {
+                max-width: 900px;
+                width: 100%;
+                height: auto;
+                position: relative;
+                z-index: 3;
+            }
+
+
+            /* background vectors */
+            .bg-shape {
+                position: absolute;
+                pointer-events: none;
+                z-index: 1;
+            }
+
+            /* blob-green-lg-top.svg – moderate size, sits behind top-right of phones */
+            .bg-green-big-top {
+                top: -4%;
+                right: 6%;
+                width: 38vw;
+                min-width: 420px;
+                max-width: 520px;
+                opacity: 0.9;
+                z-index: 1;
+            }
+
+            /* blob-green-lg-bottom.svg – sits lower, slightly left of top blob */
+            .bg-green-big-bottom {
+                bottom: -12%;
+                right: 14%;
+                width: 34vw;
+                min-width: 380px;
+                max-width: 480px;
+                opacity: 0.9;
+                z-index: 1;
+            }
+
+
+            /* blob-orange-lg-bg.svg - Large orange in background */
+            .bg-orange-top-bottom {
+                top: -100px;
+                right: -80px;
+                width: 620px;
+                height: auto;
+                opacity: 0.7;
+                z-index: 0;
+            }
+
+            /* Small decorative blobs */
+
+            /* blob-green-sm-top.svg - Small blob top right */
+            .bg-green-small-top {
+                top: 85px;
+                right: 11%;
+                width: 32px;
+                height: auto;
+                opacity: 1;
+                z-index: 2;
+            }
+
+            /* blob-green-sm-right.svg - Small blob far right */
+            .bg-green-small-right {
+                top: 30%;
+                right: 1.5%;
+                width: 26px;
+                height: auto;
+                opacity: 1;
+                z-index: 2;
+            }
+
+            /* blob-orange-sm-top.svg - Small orange top-left */
+            .bg-orange-top-small {
+                top: 150px;
+                left: 40%;
+                width: 24px;
+                height: auto;
+                opacity: 1;
+                z-index: 2;
+            }
+
+            /* blob-green-sm-left.svg - Small blob left-center */
+            .bg-green-small-left {
+                top: 48%;
+                left: 32%;
+                width: 28px;
+                height: auto;
+                opacity: 1;
+                z-index: 2;
+            }
+
+            /* blob-green-sm-bottom.svg - Small blob bottom-center */
+            .bg-green-small-bottom {
+                bottom: 120px;
+                right: 36%;
+                width: 32px;
+                height: auto;
+                opacity: 1;
+                z-index: 2;
+            }
+
+            /* blob-orange-sm-bottom.svg - Orange blob bottom-left */
+            .bg-orange-small-bottom {
+                bottom: 90px;
+                left: 9%;
+                width: 48px;
+                height: auto;
+                opacity: 1;
+                z-index: 2;
+            }
+
+            /* blob-orange-sm-side.svg - Orange blob bottom-right */
+            .bg-orange-small-side {
+                bottom: 110px;
+                right: 5%;
+                width: 30px;
+                height: auto;
+                opacity: 1;
+                z-index: 2;
+            }
+        }
+
+        /* For very large screens */
+        @media (min-width: 1400px) {
+            .desktop-main {
+                padding: 80px 120px 120px;
+            }
+
+            .hero-left {
+                max-width: 560px;
+            }
+
+            .hero-title {
+                font-size: 56px;
+            }
+
+            .hero-tagline {
+                font-size: 18px;
+            }
+
+            .hero-image {
+                max-width: 900px;
+            }
+
+            .bg-green-big-top {
+                width: 900px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="page-header">
-            <h1 class="page-title">Open in the App</h1>
-            <p class="page-subtitle">Download</p>
-        </div>
 
-        <div class="logo-container">
-            <img src="/app-link-assets/gutup-logo.svg" alt="GutUp Logo" class="logo">
-        </div>
+    <!-- MOBILE LAYOUT -->
+    <div class="mobile-layout">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Open in the App</h1>
+                <p class="page-subtitle">Download</p>
+            </div>
 
-        <p class="tagline">
-            Taking care of your health has never been so easy or so delicious!
-        </p>
+            <div class="logo-container">
+                <img src="/app-link-assets/gutup-logo.svg" alt="GutUp Logo" class="logo">
+            </div>
 
-        <?php if ($device === 'android'): ?>
-            <!-- Android detected - show Play Store prominently -->
-            <?php renderStoreCard('android'); ?>
+            <p class="tagline">
+                Taking care of your health has never been so easy or so delicious!
+            </p>
 
-            <div class="green-section">
-                <div class="divider-section">
-                    <div class="divider-title">Other download options</div>
-                    <div class="divider-text">Taking care of your health has never been so easy or so delicious!</div>
+            <?php if ($device === 'android'): ?>
+                <!-- Android detected - show Play Store prominently -->
+                <?php renderStoreCard('android'); ?>
+
+                <div class="green-section">
+                    <div class="divider-section">
+                        <div class="divider-title">Other download options</div>
+                        <div class="divider-text">Taking care of your health has never been so easy or so delicious!</div>
+                    </div>
+
+                    <?php renderStoreCard('ios'); ?>
+
+                    <p class="redirecting">Redirecting to Google Play Store...</p>
                 </div>
 
+            <?php elseif ($device === 'ios'): ?>
+                <!-- iOS detected - show App Store prominently -->
                 <?php renderStoreCard('ios'); ?>
 
-                <p class="redirecting">Redirecting to Google Play Store...</p>
-            </div>
+                <div class="green-section">
+                    <div class="divider-section">
+                        <div class="divider-title">Other download options</div>
+                        <div class="divider-text">Taking care of your health has never been so easy or so delicious!</div>
+                    </div>
 
+                    <?php renderStoreCard('android'); ?>
 
-        <?php elseif ($device === 'ios'): ?>
-            <!-- iOS detected - show App Store prominently -->
-            <?php renderStoreCard('ios'); ?>
-
-            <div class="green-section">
-                <div class="divider-section">
-                    <div class="divider-title">Other download options</div>
-                    <div class="divider-text">Taking care of your health has never been so easy or so delicious!</div>
+                    <p class="redirecting">Redirecting to App Store...</p>
                 </div>
 
-                <?php renderStoreCard('android'); ?>
+            <?php else: ?>
+                <!-- Unknown device - show both equally -->
+                <?php renderStoreCard('ios'); ?>
 
-                <p class="redirecting">Redirecting to App Store...</p>
-            </div>
+                <div class="green-section">
+                    <div class="divider-section">
+                        <div class="divider-title">Other download options</div>
+                        <div class="divider-text">Taking care of your health has never been so easy or so delicious!</div>
+                    </div>
 
-        <?php else: ?>
-            <!-- Unknown device - show both equally -->
-            <?php renderStoreCard('ios'); ?>
-
-            <div class="green-section">
-                <div class="divider-section">
-                    <div class="divider-title">Other download options</div>
-                    <div class="divider-text">Taking care of your health has never been so easy or so delicious!</div>
+                    <?php renderStoreCard('android'); ?>
                 </div>
+            <?php endif; ?>
+        </div>
+    </div>
 
-                <?php renderStoreCard('android'); ?>
-            </div>
-        <?php endif; ?>
+    <!-- DESKTOP LAYOUT -->
+    <div class="desktop-layout">
+        <div class="desktop-page">
+            <header class="desktop-header">
+                <div class="desktop-header-logo">
+                    <img src="/app-link-assets/gutup-logo-desktop.svg" alt="GutUp logo">
+                </div>
+                <!-- <a href="#" class="desktop-header-signup">Sign up</a> -->
+            </header>
 
 
+            <main class="desktop-main">
+                <section class="desktop-hero">
+                    <div class="hero-left">
+                        <h1 class="hero-title">
+                            Trust Your Gut.<br>
+                            Start with <span class="highlight">Gutup</span>
+                        </h1>
+                        <p class="hero-tagline">
+                            Taking care of your health has never been so easy or so delicious!
+                        </p>
+
+                        <div class="hero-download-title">Download Gutup</div>
+
+                        <div class="hero-store-row">
+                            <?php renderStoreCard('android'); ?>
+                            <?php renderStoreCard('ios'); ?>
+                        </div>
+                    </div>
+
+                    <div class="hero-right">
+                        <img src="/app-link-assets/gutup-desktop.svg"
+                             alt="GutUp app screens"
+                             class="hero-image">
+                    </div>
+                </section>
+            </main>
+
+            <!-- background vectors -->
+            <img src="/app-link-assets/blob-green-lg-top.svg" alt="" class="bg-shape bg-green-big-top">
+            <img src="/app-link-assets/blob-orange-lg-bg.svg" alt="" class="bg-shape bg-orange-top-bottom">
+            <img src="/app-link-assets/blob-green-sm-top.svg" alt="" class="bg-shape bg-green-small-top">
+            <img src="/app-link-assets/blob-green-sm-right.svg" alt="" class="bg-shape bg-green-small-right">
+            <img src="/app-link-assets/blob-orange-sm-top.svg" alt="" class="bg-shape bg-orange-top-small">
+            <img src="/app-link-assets/blob-green-sm-left.svg" alt="" class="bg-shape bg-green-small-left">
+            <img src="/app-link-assets/blob-green-lg-bottom.svg" alt="" class="bg-shape bg-green-big-bottom">
+            <img src="/app-link-assets/blob-green-sm-bottom.svg" alt="" class="bg-shape bg-green-small-bottom">
+            <img src="/app-link-assets/blob-orange-sm-bottom.svg" alt="" class="bg-shape bg-orange-small-bottom">
+            <img src="/app-link-assets/blob-orange-sm-side.svg" alt="" class="bg-shape bg-orange-small-side">
+        </div>
     </div>
 
     <?php if ($redirectUrl): ?>
-
     <script>
         (function() {
             var redirectUrl = '<?php echo addslashes($redirectUrl); ?>';
