@@ -50,13 +50,13 @@ function renderStoreCard($type, $t, $lang) {
         $storeUrl = $playStoreWebUrl;
         // Self-hosted official Google Play badge (PNG) - language specific
         $badgeImg = '/app-link/assets/GetItOnGooglePlay' . $langSuffix . '.png';
-        $badgeAlt = $lang === 'fr' ? 'Disponible sur Google Play' : 'Get it on Google Play';
+        $badgeAlt = $t['badge_alt_google_play'];
     } else {
         $platform = $t['ios'];
         $storeUrl = $appStoreUrl;
         // Self-hosted official App Store badge (SVG) - language specific
         $badgeImg = '/app-link/assets/DownloadOnTheAppStore' . $langSuffix . '.svg';
-        $badgeAlt = $lang === 'fr' ? 'Télécharger dans l\'App Store' : 'Download on the App Store';
+        $badgeAlt = $t['badge_alt_app_store'];
     }
 
     ?>

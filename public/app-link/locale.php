@@ -31,6 +31,8 @@ function getTranslations($lang) {
             'other_options_title' => 'Other download options',
             'other_options_text' => 'Not your device? Choose the right app for your platform.',
             'meta_description' => 'Share recipes, track your gut health, and discover delicious meals with GutUp. Download the app now!',
+            'badge_alt_google_play' => 'Get it on Google Play',
+            'badge_alt_app_store' => 'Download on the App Store',
         ],
         'fr' => [
             'title' => 'Trust Your Gut.',
@@ -44,6 +46,8 @@ function getTranslations($lang) {
             'other_options_title' => 'Other download options',
             'other_options_text' => 'Not your device? Choose the right app for your platform.',
             'meta_description' => 'Share recipes, track your gut health, and discover delicious meals with GutUp. Download the app now!',
+            'badge_alt_google_play' => 'Disponible sur Google Play',
+            'badge_alt_app_store' => 'Télécharger dans l\'App Store',
         ],
     ];
 
