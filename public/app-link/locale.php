@@ -22,9 +22,9 @@ function getTranslations($lang) {
         'en' => [
             'title' => 'Trust Your Gut.',
             'start_with' => 'Start with',
-            'gutup' => 'Gutup',
+            'gutup' => 'GutUp',
             'tagline' => 'Taking care of your health has never been so easy or so delicious!',
-            'download_title' => 'Download Gutup',
+            'download_title' => 'Download GutUp',
             'mobile_tablet' => 'Mobile/Tablet',
             'android' => 'Android',
             'ios' => 'iOS',
@@ -37,9 +37,9 @@ function getTranslations($lang) {
         'fr' => [
             'title' => 'Trust Your Gut.',
             'start_with' => 'Start with',
-            'gutup' => 'Gutup',
+            'gutup' => 'GutUp',
             'tagline' => 'Taking care of your health has never been so easy or so delicious!',
-            'download_title' => 'Download Gutup',
+            'download_title' => 'Download GutUp',
             'mobile_tablet' => 'Mobile/Tablet',
             'android' => 'Android',
             'ios' => 'iOS',
