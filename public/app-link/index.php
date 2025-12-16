@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/locale.php';
+
 // Store URLs - using app deep links to open directly in store apps
 define('PLAY_STORE_URL', 'market://details?id=com.gutup.app');
 define('PLAY_STORE_WEB_URL', 'https://play.google.com/store/apps/details?id=com.gutup.app');
@@ -27,27 +29,34 @@ function detectDevice() {
     return 'unknown';
 }
 
+// Initialize language and translations
+$lang = detectLanguage();
+$t = getTranslations($lang);
+
 $device = detectDevice();
 $primaryStore = ($device === 'android') ? 'android' : 'ios';
 $redirectUrl = ($device === 'android') ? PLAY_STORE_URL : (($device === 'ios') ? APP_STORE_URL : '');
 
 // Function to render store card
-function renderStoreCard($type) {
+function renderStoreCard($type, $t, $lang) {
     $playStoreWebUrl = PLAY_STORE_WEB_URL;
     $appStoreUrl = APP_STORE_URL;
 
+    // Determine language suffix for badge files
+    $langSuffix = strtoupper($lang === 'fr' ? 'FR' : 'EN');
+
     if ($type === 'android') {
-        $platform = 'Android';
+        $platform = $t['android'];
         $storeUrl = $playStoreWebUrl;
-        // Self-hosted official Google Play badge (PNG)
-        $badgeImg = '/app-link-assets/GetItOnGooglePlay.png';
-        $badgeAlt = 'Get it on Google Play';
+        // Self-hosted official Google Play badge (PNG) - language specific
+        $badgeImg = '/app-link/assets/GetItOnGooglePlay' . $langSuffix . '.png';
+        $badgeAlt = $lang === 'fr' ? 'Disponible sur Google Play' : 'Get it on Google Play';
     } else {
-        $platform = 'iOS';
+        $platform = $t['ios'];
         $storeUrl = $appStoreUrl;
-        // Self-hosted official App Store badge (SVG)
-        $badgeImg = '/app-link-assets/DownloadOnTheAppStore.svg';
-        $badgeAlt = 'Download on the App Store';
+        // Self-hosted official App Store badge (SVG) - language specific
+        $badgeImg = '/app-link/assets/DownloadOnTheAppStore' . $langSuffix . '.svg';
+        $badgeAlt = $lang === 'fr' ? 'Télécharger dans l\'App Store' : 'Download on the App Store';
     }
 
     ?>
@@ -55,10 +64,10 @@ function renderStoreCard($type) {
             <div class="store-card">
                 <div class="store-card-header">
                     <div class="store-card-text">
-                        <div class="store-label">Mobile/Tablet</div>
+                        <div class="store-label"><?php echo htmlspecialchars($t['mobile_tablet']); ?></div>
                         <div class="store-platform"><?php echo htmlspecialchars($platform); ?></div>
                     </div>
-                    <img src="/app-link-assets/download.svg" alt="" class="download-icon">
+                    <img src="/app-link/assets/download.svg" alt="" class="download-icon">
                 </div>
                 <div class="store-button-wrapper">
                     <img src="<?php echo htmlspecialchars($badgeImg); ?>" alt="<?php echo htmlspecialchars($badgeAlt); ?>" class="store-badge">
@@ -69,7 +78,7 @@ function renderStoreCard($type) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars($lang); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -80,23 +89,24 @@ function renderStoreCard($type) {
     <?php endif; ?>
 
     <!-- Primary Meta Tags -->
-    <title>GutUp - Trust your gut</title>
-    <meta name="title" content="GutUp - Trust your gut">
-    <meta name="description" content="Share recipes, track your gut health, and discover delicious meals with GutUp. Download the app now!">
+    <title>GutUp - <?php echo htmlspecialchars($t['title']); ?></title>
+    <meta name="title" content="GutUp - <?php echo htmlspecialchars($t['title']); ?>">
+    <meta name="description" content="<?php echo htmlspecialchars($t['meta_description']); ?>">
     <meta name="keywords" content="GutUp, recipes, gut health, food tracking, meal planning">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://gutup.com/">
-    <meta property="og:title" content="GutUp - Trust your gut">
-    <meta property="og:description" content="Share recipes, track your gut health, and discover delicious meals with GutUp. Download the app now!">
+    <meta property="og:title" content="GutUp - <?php echo htmlspecialchars($t['title']); ?>">
+    <meta property="og:description" content="<?php echo htmlspecialchars($t['meta_description']); ?>">
     <meta property="og:image" content="/logo/logo.png">
+    <meta property="og:locale" content="<?php echo htmlspecialchars($lang); ?>_<?php echo strtoupper($lang); ?>">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://gutup.com/">
-    <meta property="twitter:title" content="GutUp - Trust your gut">
-    <meta property="twitter:description" content="Share recipes, track your gut health, and discover delicious meals with GutUp. Download the app now!">
+    <meta property="twitter:title" content="GutUp - <?php echo htmlspecialchars($t['title']); ?>">
+    <meta property="twitter:description" content="<?php echo htmlspecialchars($t['meta_description']); ?>">
     <meta property="twitter:image" content="/logo/logo.png">
 
     <!-- Favicon -->
@@ -816,54 +826,54 @@ function renderStoreCard($type) {
             </div>
 
             <div class="logo-container">
-                <img src="/app-link-assets/gutup-logo.svg" alt="GutUp Logo" class="logo">
+                <img src="/app-link/assets/gutup-logo.svg" alt="GutUp Logo" class="logo">
             </div>
 
             <p class="tagline">
-                Taking care of your health has never been so easy or so delicious!
+                <?php echo htmlspecialchars($t['tagline']); ?>
             </p>
 
             <?php if ($device === 'android'): ?>
                 <!-- Android detected - show Play Store prominently -->
-                <?php renderStoreCard('android'); ?>
+                <?php renderStoreCard('android', $t, $lang); ?>
 
                 <div class="green-section">
                     <div class="divider-section">
-                        <div class="divider-title">Other download options</div>
-                        <div class="divider-text">Taking care of your health has never been so easy or so delicious!</div>
+                        <div class="divider-title"><?php echo htmlspecialchars($t['other_options_title']); ?></div>
+                        <div class="divider-text"><?php echo htmlspecialchars($t['other_options_text']); ?></div>
                     </div>
 
-                    <?php renderStoreCard('ios'); ?>
+                    <?php renderStoreCard('ios', $t, $lang); ?>
 
                     <p class="redirecting">Redirecting to Google Play Store...</p>
                 </div>
 
             <?php elseif ($device === 'ios'): ?>
                 <!-- iOS detected - show App Store prominently -->
-                <?php renderStoreCard('ios'); ?>
+                <?php renderStoreCard('ios', $t, $lang); ?>
 
                 <div class="green-section">
                     <div class="divider-section">
-                        <div class="divider-title">Other download options</div>
-                        <div class="divider-text">Taking care of your health has never been so easy or so delicious!</div>
+                        <div class="divider-title"><?php echo htmlspecialchars($t['other_options_title']); ?></div>
+                        <div class="divider-text"><?php echo htmlspecialchars($t['other_options_text']); ?></div>
                     </div>
 
-                    <?php renderStoreCard('android'); ?>
+                    <?php renderStoreCard('android', $t, $lang); ?>
 
                     <p class="redirecting">Redirecting to App Store...</p>
                 </div>
 
             <?php else: ?>
                 <!-- Unknown device - show both equally -->
-                <?php renderStoreCard('ios'); ?>
+                <?php renderStoreCard('ios', $t, $lang); ?>
 
                 <div class="green-section">
                     <div class="divider-section">
-                        <div class="divider-title">Other download options</div>
-                        <div class="divider-text">Taking care of your health has never been so easy or so delicious!</div>
+                        <div class="divider-title"><?php echo htmlspecialchars($t['other_options_title']); ?></div>
+                        <div class="divider-text"><?php echo htmlspecialchars($t['other_options_text']); ?></div>
                     </div>
 
-                    <?php renderStoreCard('android'); ?>
+                    <?php renderStoreCard('android', $t, $lang); ?>
                 </div>
             <?php endif; ?>
         </div>
@@ -874,7 +884,7 @@ function renderStoreCard($type) {
         <div class="desktop-page">
             <header class="desktop-header">
                 <div class="desktop-header-logo">
-                    <img src="/app-link-assets/gutup-logo-desktop.svg" alt="GutUp logo">
+                    <img src="/app-link/assets/gutup-logo-desktop.svg" alt="GutUp logo">
                 </div>
                 <!-- <a href="#" class="desktop-header-signup">Sign up</a> -->
             </header>
@@ -884,23 +894,23 @@ function renderStoreCard($type) {
                 <section class="desktop-hero">
                     <div class="hero-left">
                         <h1 class="hero-title">
-                            Trust Your Gut.<br>
-                            Start with <span class="highlight">Gutup</span>
+                            <?php echo htmlspecialchars($t['title']); ?><br>
+                            <?php echo htmlspecialchars($t['start_with']); ?> <span class="highlight"><?php echo htmlspecialchars($t['gutup']); ?></span>
                         </h1>
                         <p class="hero-tagline">
-                            Taking care of your health has never been so easy or so delicious!
+                            <?php echo htmlspecialchars($t['tagline']); ?>
                         </p>
 
-                        <div class="hero-download-title">Download Gutup</div>
+                        <div class="hero-download-title"><?php echo htmlspecialchars($t['download_title']); ?></div>
 
                         <div class="hero-store-row">
-                            <?php renderStoreCard('android'); ?>
-                            <?php renderStoreCard('ios'); ?>
+                            <?php renderStoreCard('android', $t, $lang); ?>
+                            <?php renderStoreCard('ios', $t, $lang); ?>
                         </div>
                     </div>
 
                     <div class="hero-right">
-                        <img src="/app-link-assets/gutup-desktop.svg"
+                        <img src="/app-link/assets/gutup-desktop.svg"
                              alt="GutUp app screens"
                              class="hero-image">
                     </div>
@@ -908,16 +918,16 @@ function renderStoreCard($type) {
             </main>
 
             <!-- background vectors -->
-            <img src="/app-link-assets/blob-green-lg-top.svg" alt="" class="bg-shape bg-green-big-top">
-            <img src="/app-link-assets/blob-orange-lg-bg.svg" alt="" class="bg-shape bg-orange-top-bottom">
-            <img src="/app-link-assets/blob-green-sm-top.svg" alt="" class="bg-shape bg-green-small-top">
-            <img src="/app-link-assets/blob-green-sm-right.svg" alt="" class="bg-shape bg-green-small-right">
-            <img src="/app-link-assets/blob-orange-sm-top.svg" alt="" class="bg-shape bg-orange-top-small">
-            <img src="/app-link-assets/blob-green-sm-left.svg" alt="" class="bg-shape bg-green-small-left">
-            <img src="/app-link-assets/blob-green-lg-bottom.svg" alt="" class="bg-shape bg-green-big-bottom">
-            <img src="/app-link-assets/blob-green-sm-bottom.svg" alt="" class="bg-shape bg-green-small-bottom">
-            <img src="/app-link-assets/blob-orange-sm-bottom.svg" alt="" class="bg-shape bg-orange-small-bottom">
-            <img src="/app-link-assets/blob-orange-sm-side.svg" alt="" class="bg-shape bg-orange-small-side">
+            <img src="/app-link/assets/blob-green-lg-top.svg" alt="" class="bg-shape bg-green-big-top">
+            <img src="/app-link/assets/blob-orange-lg-bg.svg" alt="" class="bg-shape bg-orange-top-bottom">
+            <img src="/app-link/assets/blob-green-sm-top.svg" alt="" class="bg-shape bg-green-small-top">
+            <img src="/app-link/assets/blob-green-sm-right.svg" alt="" class="bg-shape bg-green-small-right">
+            <img src="/app-link/assets/blob-orange-sm-top.svg" alt="" class="bg-shape bg-orange-top-small">
+            <img src="/app-link/assets/blob-green-sm-left.svg" alt="" class="bg-shape bg-green-small-left">
+            <img src="/app-link/assets/blob-green-lg-bottom.svg" alt="" class="bg-shape bg-green-big-bottom">
+            <img src="/app-link/assets/blob-green-sm-bottom.svg" alt="" class="bg-shape bg-green-small-bottom">
+            <img src="/app-link/assets/blob-orange-sm-bottom.svg" alt="" class="bg-shape bg-orange-small-bottom">
+            <img src="/app-link/assets/blob-orange-sm-side.svg" alt="" class="bg-shape bg-orange-small-side">
         </div>
     </div>
 
