@@ -51,20 +51,20 @@ function renderStoreCard($type) {
     }
 
     ?>
-        <div class="store-card">
-            <div class="store-card-header">
-                <div class="store-card-text">
-                    <div class="store-label">Mobile/Tablet</div>
-                    <div class="store-platform"><?php echo htmlspecialchars($platform); ?></div>
+        <a href="<?php echo htmlspecialchars($storeUrl); ?>" class="store-card-link" target="_blank" rel="noopener noreferrer">
+            <div class="store-card">
+                <div class="store-card-header">
+                    <div class="store-card-text">
+                        <div class="store-label">Mobile/Tablet</div>
+                        <div class="store-platform"><?php echo htmlspecialchars($platform); ?></div>
+                    </div>
+                    <img src="/app-link-assets/download.svg" alt="" class="download-icon">
                 </div>
-                <img src="/app-link-assets/download.svg" alt="" class="download-icon">
+                <div class="store-button-wrapper">
+                    <img src="<?php echo htmlspecialchars($badgeImg); ?>" alt="<?php echo htmlspecialchars($badgeAlt); ?>" class="store-badge">
+                </div>
             </div>
-            <div class="store-button-wrapper">
-            <a href="<?php echo htmlspecialchars($storeUrl); ?>" class="store-button" target="_blank" rel="noopener noreferrer">
-                <img src="<?php echo htmlspecialchars($badgeImg); ?>" alt="<?php echo htmlspecialchars($badgeAlt); ?>">
-            </a>
-        </div>
-    </div>
+        </a>
     <?php
 }
 ?>
@@ -170,24 +170,45 @@ function renderStoreCard($type) {
             background: #EBEBEB;
         }
 
+        .store-card-link {
+            text-decoration: none;
+            display: block;
+            margin: 0 15px 12px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .store-card-link:hover {
+            transform: translateY(-2px);
+        }
+
         .store-card {
             background: white;
             border-radius: 14px;
             padding: 18px 22px;
-            margin: 0 15px 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .store-card-link:hover .store-card {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .store-card-header {
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+            justify-content: center;
+            align-items: center;
             margin-bottom: 12px;
+            width: 100%;
         }
 
         .store-card-text {
             display: flex;
             flex-direction: column;
+            align-items: center;
         }
 
         .store-label {
@@ -212,24 +233,21 @@ function renderStoreCard($type) {
         }
 
         .store-button-wrapper {
-            position: relative;
-            display: inline-block;
+            display: flex;
+            justify-content: center;
+            width: 100%;
             margin-top: 10px;
         }
 
-        .store-button {
+        .store-badge {
             display: block;
             transition: opacity 0.2s;
         }
 
-        .store-button img {
+        .store-badge {
             height: 44px;
             width: auto;
             display: block;
-        }
-
-        .store-button:hover {
-            opacity: 0.85;
         }
 
         .divider-section {
@@ -559,11 +577,14 @@ function renderStoreCard($type) {
                 flex-wrap: wrap;
             }
 
+            .desktop-layout .store-card-link {
+                margin: 0;
+            }
+
             .desktop-layout .store-card {
                 background: #F7F7F7;
                 border-radius: 20px;
                 padding: 20px 24px;
-                margin: 0;
                 box-shadow: none;
                 min-width: 240px;
                 max-width: 260px;
@@ -571,20 +592,25 @@ function renderStoreCard($type) {
                 transition: transform 0.25s ease, box-shadow 0.25s ease;
             }
 
-            .desktop-layout .store-card:hover {
+            .desktop-layout .store-card-link:hover {
                 transform: translateY(-3px);
+            }
+
+            .desktop-layout .store-card-link:hover .store-card {
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             }
 
             .desktop-layout .store-card-header {
                 display: flex;
-                align-items: flex-start;
-                justify-content: space-between;
+                align-items: center;
+                justify-content: center;
                 margin-bottom: 14px;
             }
 
             .desktop-layout .store-card-text {
-                display: block;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
             }
 
             .desktop-layout .store-label {
@@ -604,18 +630,17 @@ function renderStoreCard($type) {
             }
             
             .desktop-layout .download-icon {
-                display: block;
-                width: 15px;
-                height: 15px;
-                opacity: 0.7;
-                margin-top: 3px;
+                display: none;
             }
 
             .desktop-layout .store-button-wrapper {
                 margin-top: 0;
+                display: flex;
+                justify-content: center;
+                width: 100%;
             }
 
-            .desktop-layout .store-button img {
+            .desktop-layout .store-badge {
                 height: 46px;
                 width: auto;
             }
