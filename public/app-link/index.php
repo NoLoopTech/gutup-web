@@ -910,7 +910,7 @@ function renderStoreCard($type, $t, $lang) {
                     </div>
 
                     <div class="hero-right">
-                        <img src="/app-link/assets/gutup-desktop.svg"
+                        <img src="/app-link/assets/gutup-desktop-<?php echo strtoupper($lang); ?>.svg"
                              alt="GutUp app screens"
                              class="hero-image">
                     </div>
