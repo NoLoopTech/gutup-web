@@ -2,6 +2,7 @@
 
 export interface LocationDetails {
   name: string
+  city: string
   country: string
   lat: number
   lng: number

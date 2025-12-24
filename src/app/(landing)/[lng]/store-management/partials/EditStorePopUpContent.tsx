@@ -207,6 +207,7 @@ export default function EditStorePopUpContent({
       .min(2, { message: translations.mustbeatleast2characters }),
     category: z.string().min(1, translations.pleaseselectacategory),
     storeLocation: z.string().min(1, translations.required),
+    storeMapLocation: z.string().optional(),
     storeType: z.string().min(1, translations.pleaseselectaStoreType),
     subscriptionType: z.boolean().optional(),
     timeFrom: z.string().nullable().optional(),
@@ -904,18 +905,25 @@ export default function EditStorePopUpContent({
       return
     }
 
-    const { name, country, lat, lng } = location
+    const { name, city, country, lat, lng } = location
 
     const selectedLocation = {
       value: placeId,
-      label: `${name}, ${country}`,
+      label: `${name}, ${city}`,
       lat,
       lng
     }
 
+    // Map location with country for fallback
+    const mapLocation = `${name}, ${country}`
+
     setSelectedLocationName(selectedLocation)
 
+    // Set storeLocation with city format
     form.setValue("storeLocation", selectedLocation.label)
+
+    // Set storeMapLocation with country format
+    form.setValue("storeMapLocation", mapLocation)
 
     setTranslationField(
       "storeData",
@@ -928,6 +936,19 @@ export default function EditStorePopUpContent({
       activeLang === "en" ? "fr" : "en",
       "storeLocation",
       selectedLocation.label
+    )
+
+    setTranslationField(
+      "storeData",
+      activeLang,
+      "storeMapLocation",
+      mapLocation
+    )
+    setTranslationField(
+      "storeData",
+      activeLang === "en" ? "fr" : "en",
+      "storeMapLocation",
+      mapLocation
     )
 
     setTranslationField(

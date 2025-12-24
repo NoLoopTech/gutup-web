@@ -29,6 +29,16 @@ export async function GET(req: NextRequest) {
 
     const { name, address_components } = response.data.result
 
+    // Extract city (locality, postal_town for UK/Sweden, or sublocality_level_1 for NYC)
+    const city =
+      address_components.find(
+        (c: { types: string[] }) =>
+          c.types.includes("locality") ||
+          c.types.includes("postal_town") ||
+          c.types.includes("sublocality_level_1")
+      )?.long_name || ""
+
+    // Extract country
     const country =
       address_components.find((c: { types: string[] }) =>
         c.types.includes("country")
@@ -40,6 +50,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       location: {
         name,
+        city,
         country,
         lat,
         lng
