@@ -27,6 +27,17 @@ export function SimpleDatePicker({
   maxDate
 }: SimpleDatePickerProps): React.ReactElement {
   const [open, setOpen] = React.useState(false)
+  const startMonth = React.useMemo(
+    () => new Date(minDate.getFullYear(), minDate.getMonth(), 1),
+    [minDate]
+  )
+  const endMonth = React.useMemo(() => {
+    if (maxDate) {
+      return new Date(maxDate.getFullYear(), maxDate.getMonth(), 1)
+    }
+    const futureYear = new Date().getFullYear() + 2
+    return new Date(futureYear, 11, 1)
+  }, [maxDate])
 
   return (
     <div className="flex flex-col gap-1">
@@ -52,9 +63,11 @@ export function SimpleDatePicker({
               setOpen(false)
             }}
             disabled={date =>
-              (maxDate && date > maxDate) || (minDate && date < minDate)
+              (maxDate && date > maxDate) ?? (minDate && date < minDate)
             }
             captionLayout="dropdown"
+            startMonth={startMonth}
+            endMonth={endMonth}
           />
         </PopoverContent>
       </Popover>
