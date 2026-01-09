@@ -45,6 +45,7 @@ export interface UserDetails {
   dob: string | null
   currentDiet: string | null
   rhythmOfLife: string | null
+  concerns?: string[] | null
   dailyScore: number
   createdAt: string
   updatedAt: string
@@ -141,20 +142,14 @@ export default function UserOverviewPopup({
     setConfirmDeleteOpen(false)
   }
 
-  const badges: any[] = [
-    {
-      label: "Stress",
-      value: "stress"
-    },
-    {
-      label: "Fatigue",
-      value: "fatigue"
-    },
-    {
-      label: "Weight",
-      value: "weight"
-    }
-  ]
+  const concerns = userDetails?.concerns ?? []
+
+  const formatConcernLabel = (concern: string): string => {
+    const cleaned = concern.replace(/_/g, " ").trim()
+    return cleaned
+      ? cleaned.charAt(0).toUpperCase() + cleaned.slice(1)
+      : concern
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -241,12 +236,12 @@ export default function UserOverviewPopup({
             <div className="flex flex-col gap-2">
               <Label>Concerns</Label>
               <div className="flex flex-wrap gap-2">
-                {badges.map(badge => (
-                  <Badge key={badge.value} variant={"outline"}>
-                    {badge.label}
+                {concerns.map(concern => (
+                  <Badge key={concern} variant={"outline"}>
+                    {formatConcernLabel(concern)}
                   </Badge>
                 ))}
-                {badges.length === 0 && (
+                {concerns.length === 0 && (
                   <Label className="mt-4 text-gray-500">
                     No concerns added yet
                   </Label>
