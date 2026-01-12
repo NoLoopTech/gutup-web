@@ -206,7 +206,7 @@ export default function EditStorePopUpContent({
       .nonempty(translations.required)
       .min(2, { message: translations.mustbeatleast2characters }),
     category: z.string().min(1, translations.pleaseselectacategory),
-    storeLocation: z.string().min(1, translations.required),
+    storeLocation: z.string().optional().or(z.literal("")),
     storeMapLocation: z.string().optional(),
     storeType: z.string().min(1, translations.pleaseselectaStoreType),
     subscriptionType: z.boolean().optional(),
