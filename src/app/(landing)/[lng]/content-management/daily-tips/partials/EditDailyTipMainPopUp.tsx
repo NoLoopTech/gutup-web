@@ -99,7 +99,7 @@ export default function EditDailyTipMainPopUp({
           )
 
           setTranslationField("basicLayoutData", "en", "title", data.title)
-          setTranslationField("basicLayoutData", "fr", "title", data.typeFR)
+          setTranslationField("basicLayoutData", "fr", "title", data.titleFR)
 
           setTranslationField(
             "basicLayoutData",
