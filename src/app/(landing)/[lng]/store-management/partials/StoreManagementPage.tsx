@@ -212,29 +212,6 @@ export default function StoreManagementPage({
         allowMultiLang
       }
 
-      const existingPhone = stores.some(
-        store => store.phoneNumber === requestBody.phoneNumber
-      )
-      const existingEmail = stores.some(
-        store => store.email === requestBody.email
-      )
-
-      if (existingPhone && existingEmail) {
-        toast.error(
-          translations.phoneEmailAlreadyExists ||
-            "Phone number and email already exist"
-        )
-        return
-      } else if (existingPhone) {
-        toast.error(
-          translations.phoneAlreadyExists || "Phone number already exists"
-        )
-        return
-      } else if (existingEmail) {
-        toast.error(translations.emailAlreadyExists || "Email already exists")
-        return
-      }
-
       const response = await AddNewStore(token, requestBody)
       if (response && (response.status === 201 || response.status === 200)) {
         toast.success(
