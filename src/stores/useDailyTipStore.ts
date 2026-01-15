@@ -19,6 +19,11 @@ interface BasicLayoutFields {
   concern: string[] // changed to array for multi-select
   image: string
   share: boolean
+  // CTA button fields
+  buttonLabel: string
+  navigationType: string | null
+  navigationTarget: string | null
+  navigationTargetName: string | null // Store the name for display
 }
 
 interface ShopPromotionFields {
@@ -46,6 +51,12 @@ interface VideoTipFields {
   subTitle: string
   subDescription: string
   videoLink: string
+  hideVideo: boolean
+  // CTA button fields
+  buttonLabel: string
+  navigationType: string | null
+  navigationTarget: string | null
+  navigationTargetName: string | null // Store the name for display
 }
 
 interface LangData<T> {
@@ -91,9 +102,13 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             subDescriptionOne: "",
             subTitleTwo: "",
             subDescriptionTwo: "",
-            concern: [],  
+            concern: [],
             image: "",
-            share: false
+            share: false,
+            buttonLabel: "",
+            navigationType: null,
+            navigationTarget: null,
+            navigationTargetName: null
           },
           fr: {
             title: "",
@@ -101,9 +116,13 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             subDescriptionOne: "",
             subTitleTwo: "",
             subDescriptionTwo: "",
-            concern: [],  
+            concern: [],
             image: "",
-            share: false
+            share: false,
+            buttonLabel: "",
+            navigationType: null,
+            navigationTarget: null,
+            navigationTargetName: null
           }
         },
         shopPromotionData: {
@@ -152,14 +171,24 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
             title: "",
             subTitle: "",
             subDescription: "",
-            videoLink: ""
+            videoLink: "",
+            hideVideo: false,
+            buttonLabel: "",
+            navigationType: null,
+            navigationTarget: null,
+            navigationTargetName: null
           },
             fr: {
             concern: [],
             title: "",
             subTitle: "",
             subDescription: "",
-            videoLink: ""
+            videoLink: "",
+            hideVideo: false,
+            buttonLabel: "",
+            navigationType: null,
+            navigationTarget: null,
+            navigationTargetName: null
           }
         }
       },
@@ -205,7 +234,11 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 subDescriptionTwo: "",
                 concern: [], // updated
                 image: "",
-                share: false
+                share: false,
+                buttonLabel: "",
+                navigationType: null,
+                navigationTarget: null,
+                navigationTargetName: null
               },
               fr: {
                 title: "",
@@ -215,7 +248,11 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 subDescriptionTwo: "",
                 concern: [], // updated
                 image: "",
-                share: false
+                share: false,
+                buttonLabel: "",
+                navigationType: null,
+                navigationTarget: null,
+                navigationTargetName: null
               }
             },
             shopPromotionData: {
@@ -262,14 +299,24 @@ export const useDailyTipStore = create<DailyTipStoreState>()(
                 title: "",
                 subTitle: "",
                 subDescription: "",
-                videoLink: ""
+                videoLink: "",
+                hideVideo: false,
+                buttonLabel: "",
+                navigationType: null,
+                navigationTarget: null,
+                navigationTargetName: null
               },
               fr: {
                 concern: [],
                 title: "",
                 subTitle: "",
                 subDescription: "",
-                videoLink: ""
+                videoLink: "",
+                hideVideo: false,
+                buttonLabel: "",
+                navigationType: null,
+                navigationTarget: null,
+                navigationTargetName: null
               }
             }
           }

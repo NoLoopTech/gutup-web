@@ -29,6 +29,11 @@ import { useTranslation } from "@/query/hooks/useTranslation"
 import { useDailyTipStore } from "@/stores/useDailyTipStore"
 import { Textarea } from "@/components/ui/textarea"
 import { useUpdateDailyTipStore } from "@/stores/useUpdateDailyTipStore"
+import { Checkbox } from "@/components/ui/checkbox"
+import NavigationSearch from "@/components/DailyTips/NavigationSearch"
+import { NavigationSearchResult } from "@/types/dailyTipTypes"
+import { useSession } from "next-auth/react"
+import { Label } from "@/components/ui/label"
 
 interface Option {
   value: string
@@ -90,6 +95,9 @@ export default function EditVideoTipTab({
     setUpdatedField,
     resetUpdatedStore
   } = useUpdateDailyTipStore()
+
+  const { data: session } = useSession()
+  const token = session?.apiToken
 
   const hasVideoTipDataUpdates =
     Object.keys(updatedTranslations.videoTipData.en).length > 0 ||
@@ -200,6 +208,71 @@ export default function EditVideoTipTab({
     setUpdatedField("videoTipData", oppositeLang, "concern", mapped)
   }
 
+  const handleNavigationSelect = (result: NavigationSearchResult | null) => {
+    if (result) {
+      setTranslationField(
+        "videoTipData",
+        activeLang,
+        "navigationType",
+        result.type
+      )
+      // For store type, store the keyword (name); for recipe/food, store the ID
+      setTranslationField(
+        "videoTipData",
+        activeLang,
+        "navigationTarget",
+        result.type === "store" ? result.name : String(result.id)
+      )
+      setTranslationField(
+        "videoTipData",
+        activeLang,
+        "navigationTargetName",
+        result.name
+      )
+      setUpdatedField("videoTipData", activeLang, "navigationType", result.type)
+      setUpdatedField(
+        "videoTipData",
+        activeLang,
+        "navigationTarget",
+        result.type === "store" ? result.name : String(result.id)
+      )
+    } else {
+      setTranslationField("videoTipData", activeLang, "navigationType", null)
+      setTranslationField("videoTipData", activeLang, "navigationTarget", null)
+      setTranslationField(
+        "videoTipData",
+        activeLang,
+        "navigationTargetName",
+        null
+      )
+      setUpdatedField("videoTipData", activeLang, "navigationType", null)
+      setUpdatedField("videoTipData", activeLang, "navigationTarget", null)
+    }
+  }
+
+  const handleButtonLabelChange = async (value: string) => {
+    setTranslationField("videoTipData", activeLang, "buttonLabel", value)
+    setUpdatedField("videoTipData", activeLang, "buttonLabel", value)
+
+    // Auto-translate if typing in English
+    if (activeLang === "en" && value.trim()) {
+      try {
+        const translated = await translateText(value)
+        setTranslationField("videoTipData", "fr", "buttonLabel", translated)
+        setUpdatedField("videoTipData", "fr", "buttonLabel", translated)
+      } catch (error) {
+        console.log("Error translating button label", error)
+      }
+    }
+  }
+
+  const handleHideVideoToggle = (checked: boolean) => {
+    setTranslationField("videoTipData", "en", "hideVideo", checked)
+    setTranslationField("videoTipData", "fr", "hideVideo", checked)
+    setUpdatedField("videoTipData", "en", "hideVideo", checked)
+    setUpdatedField("videoTipData", "fr", "hideVideo", checked)
+  }
+
   const triggerRef = useRef<HTMLButtonElement | null>(null)
   const [menuWidth, setMenuWidth] = useState<number | undefined>(undefined)
   useEffect(() => {
@@ -267,9 +340,9 @@ export default function EditVideoTipTab({
                           {[...concerns[activeLang]]
                             .sort((a, b) => a.label.localeCompare(b.label))
                             .map(item => {
-                              const isSelected = (field.value as string[]).includes(
-                                item.value
-                              )
+                              const isSelected = (
+                                field.value as string[]
+                              ).includes(item.value)
                               return (
                                 <DropdownMenuItem
                                   key={item.value}
@@ -387,6 +460,68 @@ export default function EditVideoTipTab({
                 </FormItem>
               )}
             />
+          </div>
+
+          <Separator />
+
+          {/* Hide Video Toggle */}
+          <div className="flex items-center gap-2 py-4">
+            <Checkbox
+              id="hide-video-checkbox"
+              checked={
+                translationsData.videoTipData[activeLang].hideVideo || false
+              }
+              onCheckedChange={handleHideVideoToggle}
+            />
+            <Label htmlFor="hide-video-checkbox" className="cursor-pointer">
+              Hide Video (Show only text content)
+            </Label>
+          </div>
+
+          <Separator />
+
+          {/* CTA Button Section */}
+          <div className="space-y-4 py-4">
+            <h3 className="text-md font-semibold text-black">
+              CTA Button (Optional)
+            </h3>
+
+            <div className="space-y-4">
+              <div>
+                <Label className="block mb-2">
+                  Button Label ({activeLang === "en" ? "English" : "French"})
+                </Label>
+                <Input
+                  type="text"
+                  placeholder="e.g., Where to buy lentils"
+                  value={
+                    translationsData.videoTipData[activeLang].buttonLabel || ""
+                  }
+                  onChange={e => handleButtonLabelChange(e.target.value)}
+                  maxLength={100}
+                />
+                <p className="text-xs text-gray-500 mt-1">Max 100 characters</p>
+              </div>
+
+              {translationsData.videoTipData[activeLang].buttonLabel && (
+                <NavigationSearch
+                  token={token}
+                  value={{
+                    type: translationsData.videoTipData[activeLang]
+                      .navigationType,
+                    target:
+                      translationsData.videoTipData[activeLang]
+                        .navigationTarget,
+                    name: translationsData.videoTipData[activeLang]
+                      .navigationTargetName
+                  }}
+                  onSelect={handleNavigationSelect}
+                  placeholder="Search recipes or foods"
+                  label="Navigation Target"
+                  language={activeLang}
+                />
+              )}
+            </div>
           </div>
 
           <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">

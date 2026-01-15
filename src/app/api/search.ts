@@ -1,6 +1,14 @@
 import axiosInstance from "@/query/axios.instance"
 import { NavigationSearchResponse } from "@/types/dailyTipTypes"
 
+// Backend response item format
+interface BackendNavigationItem {
+  id: number
+  type: "recipe" | "food" | "store"
+  nameEN: string
+  nameFR: string
+}
+
 /**
  * Search for navigation targets (recipes, foods, stores)
  * @param token - Authentication token
@@ -12,17 +20,51 @@ export const searchNavigation = async (
   query: string
 ): Promise<NavigationSearchResponse> => {
   try {
-    const response = await axiosInstance.get<NavigationSearchResponse>(
-      `/search/navigation`,
+    // Backend endpoint: /daily-tips/navigation/search?q=keyword
+    const response = await axiosInstance.get<BackendNavigationItem[]>(
+      `/daily-tips/navigation/search`,
       {
-        params: { query },
+        params: { q: query },
         headers: { Authorization: `Bearer ${token}` }
       }
     )
-    return response.data
+
+    // Transform flat array to grouped format expected by frontend
+    const items = response.data || []
+    const recipes = items
+      .filter(item => item.type === "recipe")
+      .map(item => ({
+        type: "recipe" as const,
+        id: item.id,
+        name: item.nameEN,
+        nameFR: item.nameFR
+      }))
+    const foods = items
+      .filter(item => item.type === "food")
+      .map(item => ({
+        type: "food" as const,
+        id: item.id,
+        name: item.nameEN,
+        nameFR: item.nameFR
+      }))
+    const stores = items
+      .filter(item => item.type === "store")
+      .map(item => ({
+        type: "store" as const,
+        id: item.id,
+        name: item.nameEN,
+        nameFR: item.nameFR
+      }))
+
+    return {
+      recipes,
+      foods,
+      stores,
+      total: items.length
+    }
   } catch (error: any) {
     // If the endpoint doesn't exist yet, return empty results
-    if (error?.status === 404) {
+    if (error?.response?.status === 404) {
       return {
         recipes: [],
         foods: [],

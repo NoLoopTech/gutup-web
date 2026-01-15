@@ -306,7 +306,17 @@ export default function DailyTipsPage({
           subDescTwoFR:
             currentTranslations.basicLayoutData.fr.subDescriptionTwo,
           share: currentTranslations.basicLayoutData.en.share,
-          image: uploadedImageUrl || ""
+          image: uploadedImageUrl ?? "",
+          ...(currentTranslations.basicLayoutData.en.buttonLabel && {
+            ctaButton: {
+              buttonLabel: currentTranslations.basicLayoutData.en.buttonLabel,
+              buttonLabelFR: currentTranslations.basicLayoutData.fr.buttonLabel,
+              navigationType:
+                currentTranslations.basicLayoutData.en.navigationType,
+              navigationTarget:
+                currentTranslations.basicLayoutData.en.navigationTarget
+            }
+          })
         },
         shopPromote: {
           name: currentTranslations.shopPromotionData.en.shopName,
@@ -332,7 +342,18 @@ export default function DailyTipsPage({
           subTitleFR: currentTranslations.videoTipData.fr.subTitle,
           subDesc: currentTranslations.videoTipData.en.subDescription,
           subDescFR: currentTranslations.videoTipData.fr.subDescription,
-          videoUrl: currentTranslations.videoTipData.en.videoLink
+          videoUrl: currentTranslations.videoTipData.en.videoLink,
+          hideVideo: currentTranslations.videoTipData.en.hideVideo || false,
+          ...(currentTranslations.videoTipData.en.buttonLabel && {
+            ctaButton: {
+              buttonLabel: currentTranslations.videoTipData.en.buttonLabel,
+              buttonLabelFR: currentTranslations.videoTipData.fr.buttonLabel,
+              navigationType:
+                currentTranslations.videoTipData.en.navigationType,
+              navigationTarget:
+                currentTranslations.videoTipData.en.navigationTarget
+            }
+          })
         }
       }
 
@@ -493,6 +514,15 @@ export default function DailyTipsPage({
         if ("share" in basicData.en)
           basicForm.share = basicData.en.share as boolean
         if (uploadedImageUrl) basicForm.image = uploadedImageUrl
+        // Add CTA button if buttonLabel exists
+        if ("buttonLabel" in basicData.en && basicData.en.buttonLabel) {
+          basicForm.ctaButton = {
+            buttonLabel: basicData.en.buttonLabel as string,
+            buttonLabelFR: (basicData.fr.buttonLabel as string) || "",
+            navigationType: (basicData.en.navigationType as string) || "",
+            navigationTarget: (basicData.en.navigationTarget as string) || ""
+          }
+        }
         if (Object.keys(basicForm).length > 0) {
           requestBody.basicForm = basicForm
         }
@@ -574,6 +604,17 @@ export default function DailyTipsPage({
           videoForm.subDescFR = videoData.fr.subDescription as string
         if ("videoLink" in videoData.en)
           videoForm.videoUrl = videoData.en.videoLink as string
+        if ("hideVideo" in videoData.en)
+          videoForm.hideVideo = videoData.en.hideVideo as boolean
+        // Add CTA button if buttonLabel exists
+        if ("buttonLabel" in videoData.en && videoData.en.buttonLabel) {
+          videoForm.ctaButton = {
+            buttonLabel: videoData.en.buttonLabel as string,
+            buttonLabelFR: (videoData.fr.buttonLabel as string) || "",
+            navigationType: (videoData.en.navigationType as string) || "",
+            navigationTarget: (videoData.en.navigationTarget as string) || ""
+          }
+        }
         if (Object.keys(videoForm).length > 0) {
           requestBody.videoForm = videoForm
         }

@@ -32,6 +32,10 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { Check } from "lucide-react"
+import NavigationSearch from "@/components/DailyTips/NavigationSearch"
+import { NavigationSearchResult } from "@/types/dailyTipTypes"
+import { useSession } from "next-auth/react"
+import { Label } from "@/components/ui/label"
 
 interface Option {
   value: string
@@ -106,6 +110,9 @@ export default function EditBasicLayoutTab({
     setUpdatedField,
     resetUpdatedStore
   } = useUpdateDailyTipStore()
+
+  const { data: session } = useSession()
+  const token = session?.apiToken
 
   const hasBasicLayoutDataUpdates =
     Object.keys(updatedTranslations.basicLayoutData.en).length > 0 ||
@@ -248,6 +255,74 @@ export default function EditBasicLayoutTab({
         console.error("Firebase upload error:", error)
       } finally {
         setIsTranslating(false)
+      }
+    }
+  }
+
+  const handleNavigationSelect = (result: NavigationSearchResult | null) => {
+    if (result) {
+      setTranslationField(
+        "basicLayoutData",
+        activeLang,
+        "navigationType",
+        result.type
+      )
+      // For store type, store the keyword (name); for recipe/food, store the ID
+      setTranslationField(
+        "basicLayoutData",
+        activeLang,
+        "navigationTarget",
+        result.type === "store" ? result.name : String(result.id)
+      )
+      setTranslationField(
+        "basicLayoutData",
+        activeLang,
+        "navigationTargetName",
+        result.name
+      )
+      setUpdatedField(
+        "basicLayoutData",
+        activeLang,
+        "navigationType",
+        result.type
+      )
+      setUpdatedField(
+        "basicLayoutData",
+        activeLang,
+        "navigationTarget",
+        result.type === "store" ? result.name : String(result.id)
+      )
+    } else {
+      setTranslationField("basicLayoutData", activeLang, "navigationType", null)
+      setTranslationField(
+        "basicLayoutData",
+        activeLang,
+        "navigationTarget",
+        null
+      )
+      setTranslationField(
+        "basicLayoutData",
+        activeLang,
+        "navigationTargetName",
+        null
+      )
+      setUpdatedField("basicLayoutData", activeLang, "navigationType", null)
+      setUpdatedField("basicLayoutData", activeLang, "navigationTarget", null)
+    }
+  }
+
+  const handleButtonLabelChange = async (value: string) => {
+    setTranslationField("basicLayoutData", activeLang, "buttonLabel", value)
+    setUpdatedField("basicLayoutData", activeLang, "buttonLabel", value)
+
+    // Auto-translate if typing in English
+    if (activeLang === "en" && value.trim()) {
+      try {
+        const translated = await translateText(value)
+        setTranslationField("basicLayoutData", "fr", "buttonLabel", translated)
+        setUpdatedField("basicLayoutData", "fr", "buttonLabel", translated)
+      } catch (error) {
+        console.log("Error translating button label", error)
       }
     }
   }
@@ -555,6 +630,55 @@ export default function EditBasicLayoutTab({
                 </FormItem>
               )}
             />
+
+            <Separator />
+
+            {/* CTA Button Section */}
+            <div className="space-y-4 py-4">
+              <h3 className="text-md font-semibold text-black">
+                CTA Button (Optional)
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <Label className="block mb-2">
+                    Button Label ({activeLang === "en" ? "English" : "French"})
+                  </Label>
+                  <Input
+                    type="text"
+                    placeholder="e.g., Where to buy lentils"
+                    value={
+                      translationsData.basicLayoutData[activeLang]
+                        .buttonLabel || ""
+                    }
+                    onChange={e => handleButtonLabelChange(e.target.value)}
+                    maxLength={100}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Max 100 characters
+                  </p>
+                </div>
+
+                {translationsData.basicLayoutData[activeLang].buttonLabel && (
+                  <NavigationSearch
+                    token={token}
+                    value={{
+                      type: translationsData.basicLayoutData[activeLang]
+                        .navigationType,
+                      target:
+                        translationsData.basicLayoutData[activeLang]
+                          .navigationTarget,
+                      name: translationsData.basicLayoutData[activeLang]
+                        .navigationTargetName
+                    }}
+                    onSelect={handleNavigationSelect}
+                    placeholder="Search recipes or foods"
+                    label="Navigation Target"
+                    language={activeLang}
+                  />
+                )}
+              </div>
+            </div>
 
             <Separator />
 

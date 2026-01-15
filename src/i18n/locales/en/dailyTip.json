@@ -58,6 +58,11 @@
   "publishDate": "Publish Date",
   "imagesSubContentText": "SVG, PNG, JPG or GIF (MAX. 800x400px",
   "imagesContentText": "Click to upload or drag and drop",
+  "buttonLabel": "Button Label",
+  "navigationType": "Select Navigation Type",
+  "hideVideo": "Hide Video",
+  "enterButtonLabel": "Enter button label eg: Where to buy lentils",
+  "searchNavigationType": "Search your page",
 
   "required": "Required",
   "titleMustBeAtLeast2Characters": "Title must be at least 2 characters",

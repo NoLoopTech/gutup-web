@@ -21,6 +21,11 @@
   "subDescriptionTwo": "Sous-description deux",
   "uploadImages": "Télécharger des images",
   "share": "Partagez-le avec un ami",
+  "buttonLabel": "Libellé du bouton",
+  "navigationType": "Sélectionner le type de navigation",
+  "hideVideo": "Masquer la vidéo",
+  "enterButtonLabel": "Entrez le libellé du bouton, par exemple : Où acheter des lentilles",
+  "searchNavigationType": "Rechercher dans votre page",
 
   "selectImagesForYourFoodItem": "Sélectionnez une image pour votre conseil quotidien",
   "save": "Enregistrer",

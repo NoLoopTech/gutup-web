@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState, useRef } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Resolver, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
+import type { Resolver } from "react-hook-form"
 import { z } from "zod"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -17,7 +18,10 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
-import { type translationsTypes } from "@/types/dailyTipTypes"
+import {
+  type translationsTypes,
+  type NavigationSearchResult
+} from "@/types/dailyTipTypes"
 import { useTranslation } from "@/query/hooks/useTranslation"
 import { useDailyTipStore } from "@/stores/useDailyTipStore"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -31,6 +35,9 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { Check } from "lucide-react"
+import NavigationSearch from "@/components/DailyTips/NavigationSearch"
+import { useSession } from "next-auth/react"
+import { Label } from "@/components/ui/label"
 
 interface Option {
   value: string
@@ -99,6 +106,8 @@ export default function BasicLayoutTab({
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const triggerRef = useRef<HTMLButtonElement | null>(null)
   const [menuWidth, setMenuWidth] = useState<number | undefined>(undefined)
+  const { data: session } = useSession()
+  const token = session?.apiToken
 
   // Validation schema including inputs & textareas
   const FormSchema = z.object({
@@ -144,19 +153,24 @@ export default function BasicLayoutTab({
       })
   })
 
-  const handleInputChange = (fieldName: FieldNames, value: string) => {
+  const handleInputChange = async (
+    fieldName: FieldNames,
+    value: string
+  ): Promise<void> => {
     form.setValue(fieldName, value)
 
-    form.trigger(fieldName).then(isValid => {
-      if (isValid) {
-        form.clearErrors(fieldName)
-      }
-    })
+    const isValid = await form.trigger(fieldName)
+    if (isValid) {
+      form.clearErrors(fieldName)
+    }
 
     setTranslationField("basicLayoutData", activeLang, fieldName, value)
   }
 
-  const handleInputBlur = async (fieldName: FieldNames, value: string) => {
+  const handleInputBlur = async (
+    fieldName: FieldNames,
+    value: string
+  ): Promise<void> => {
     if (activeLang === "en" && value.trim()) {
       try {
         const translated = await translateText(value)
@@ -185,7 +199,7 @@ export default function BasicLayoutTab({
 
   // handle change concerns function (multi-select)
   const handleConcernsToggle = (value: string) => {
-    const current = (form.getValues("concern") as string[]) || []
+    const current = form.getValues("concern") || []
     let next: string[]
     if (current.includes(value)) {
       next = current.filter(v => v !== value)
@@ -229,6 +243,58 @@ export default function BasicLayoutTab({
         console.error("Firebase upload error:", error)
       } finally {
         setIsTranslating(false)
+      }
+    }
+  }
+
+  const handleNavigationSelect = (result: NavigationSearchResult | null) => {
+    if (result) {
+      setTranslationField(
+        "basicLayoutData",
+        activeLang,
+        "navigationType",
+        result.type
+      )
+      // For store type, store the keyword (name/slug); for recipe/food, store the ID
+      setTranslationField(
+        "basicLayoutData",
+        activeLang,
+        "navigationTarget",
+        result.type === "store" ? result.name : String(result.id)
+      )
+      setTranslationField(
+        "basicLayoutData",
+        activeLang,
+        "navigationTargetName",
+        result.name
+      )
+    } else {
+      setTranslationField("basicLayoutData", activeLang, "navigationType", null)
+      setTranslationField(
+        "basicLayoutData",
+        activeLang,
+        "navigationTarget",
+        null
+      )
+      setTranslationField(
+        "basicLayoutData",
+        activeLang,
+        "navigationTargetName",
+        null
+      )
+    }
+  }
+
+  const handleButtonLabelChange = async (value: string) => {
+    setTranslationField("basicLayoutData", activeLang, "buttonLabel", value)
+
+    // Auto-translate if typing in English
+    if (activeLang === "en" && value.trim()) {
+      try {
+        const translated = await translateText(value)
+        setTranslationField("basicLayoutData", "fr", "buttonLabel", translated)
+      } catch (error) {
+        console.log("Error translating button label", error)
       }
     }
   }
@@ -520,7 +586,7 @@ export default function BasicLayoutTab({
               </h2>
             </div>
             {/* Image Uploader */}
-            <div className="pb-8 w-full">
+            <div className="w-full">
               <FormField
                 control={form.control}
                 name="image"
@@ -529,7 +595,7 @@ export default function BasicLayoutTab({
                     <FormControl>
                       <ImageUploader
                         title={translations.selectImagesForYourFoodItem}
-                        previewUrls={previewUrls ? previewUrls : []}
+                        previewUrls={previewUrls ?? []}
                         onChange={handleImageSelect}
                         uploadText={translations.imagesContentText}
                         uploadSubText={translations.imagesSubContentText}
@@ -538,6 +604,41 @@ export default function BasicLayoutTab({
                     <FormMessage />
                   </FormItem>
                 )}
+              />
+            </div>
+
+            {/* Button Label and Navigation Search - side by side below Upload Images */}
+            <div className="grid grid-cols-2 gap-4 mt-4 pb-16">
+              <div>
+                <Label className="block mb-2">{translations.buttonLabel}</Label>
+                <Input
+                  type="text"
+                  placeholder="e.g., Where to buy lentils"
+                  value={
+                    translationsData.basicLayoutData[activeLang].buttonLabel ||
+                    ""
+                  }
+                  onChange={async e => {
+                    await handleButtonLabelChange(e.target.value)
+                  }}
+                  maxLength={100}
+                />
+              </div>
+              <NavigationSearch
+                token={token}
+                value={{
+                  type: translationsData.basicLayoutData[activeLang]
+                    .navigationType,
+                  target:
+                    translationsData.basicLayoutData[activeLang]
+                      .navigationTarget,
+                  name: translationsData.basicLayoutData[activeLang]
+                    .navigationTargetName
+                }}
+                onSelect={handleNavigationSelect}
+                placeholder="Search recipes or foods"
+                label={translations.navigationType}
+                language={activeLang}
               />
             </div>
           </div>

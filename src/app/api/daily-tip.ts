@@ -1,5 +1,5 @@
 import axiosInstance from "@/query/axios.instance"
-import { AddDailyTipTypes, EditDailyTipTypes } from "@/types/dailyTipTypes"
+import type { AddDailyTipTypes, EditDailyTipTypes } from "@/types/dailyTipTypes"
 
 // get all Recipes
 export const getAllDailyTips = async (token: string): Promise<any> => {

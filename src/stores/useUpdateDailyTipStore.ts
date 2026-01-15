@@ -22,6 +22,11 @@ interface BasicLayoutFields {
   image?: string
   share?: boolean
   publishDate?: string // Added for publish date support
+  // CTA button fields
+  buttonLabel?: string
+  navigationType?: string | null
+  navigationTarget?: string | null
+  navigationTargetName?: string | null
 }
 
 interface ShopPromotionFields {
@@ -50,6 +55,12 @@ interface VideoTipFields {
   subTitle?: string
   subDescription?: string
   videoLink?: string
+  hideVideo?: boolean
+  // CTA button fields
+  buttonLabel?: string
+  navigationType?: string | null
+  navigationTarget?: string | null
+  navigationTargetName?: string | null
 }
 
 interface LangData<T> {

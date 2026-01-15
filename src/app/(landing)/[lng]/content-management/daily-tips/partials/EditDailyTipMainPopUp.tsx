@@ -179,6 +179,46 @@ export default function EditDailyTipMainPopUp({
             data.basicForm.image
           )
 
+          // Populate CTA button data if it exists
+          if (data.basicForm.ctaButton) {
+            setTranslationField(
+              "basicLayoutData",
+              "en",
+              "buttonLabel",
+              data.basicForm.ctaButton.buttonLabel
+            )
+            setTranslationField(
+              "basicLayoutData",
+              "fr",
+              "buttonLabel",
+              data.basicForm.ctaButton.buttonLabelFR
+            )
+            setTranslationField(
+              "basicLayoutData",
+              "en",
+              "navigationType",
+              data.basicForm.ctaButton.navigationType
+            )
+            setTranslationField(
+              "basicLayoutData",
+              "fr",
+              "navigationType",
+              data.basicForm.ctaButton.navigationType
+            )
+            setTranslationField(
+              "basicLayoutData",
+              "en",
+              "navigationTarget",
+              data.basicForm.ctaButton.navigationTarget
+            )
+            setTranslationField(
+              "basicLayoutData",
+              "fr",
+              "navigationTarget",
+              data.basicForm.ctaButton.navigationTarget
+            )
+          }
+
           setTranslationField(
             "basicLayoutData",
             "en",
@@ -253,6 +293,62 @@ export default function EditDailyTipMainPopUp({
             "videoLink",
             data.videoForm.videoUrl
           )
+
+          // Populate hideVideo if it exists
+          if (data.videoForm.hideVideo !== undefined) {
+            setTranslationField(
+              "videoTipData",
+              "en",
+              "hideVideo",
+              data.videoForm.hideVideo
+            )
+            setTranslationField(
+              "videoTipData",
+              "fr",
+              "hideVideo",
+              data.videoForm.hideVideo
+            )
+          }
+
+          // Populate CTA button data if it exists
+          if (data.videoForm.ctaButton) {
+            setTranslationField(
+              "videoTipData",
+              "en",
+              "buttonLabel",
+              data.videoForm.ctaButton.buttonLabel
+            )
+            setTranslationField(
+              "videoTipData",
+              "fr",
+              "buttonLabel",
+              data.videoForm.ctaButton.buttonLabelFR
+            )
+            setTranslationField(
+              "videoTipData",
+              "en",
+              "navigationType",
+              data.videoForm.ctaButton.navigationType
+            )
+            setTranslationField(
+              "videoTipData",
+              "fr",
+              "navigationType",
+              data.videoForm.ctaButton.navigationType
+            )
+            setTranslationField(
+              "videoTipData",
+              "en",
+              "navigationTarget",
+              data.videoForm.ctaButton.navigationTarget
+            )
+            setTranslationField(
+              "videoTipData",
+              "fr",
+              "navigationTarget",
+              data.videoForm.ctaButton.navigationTarget
+            )
+          }
 
           setTranslationField(
             "videoTipData",
@@ -525,7 +621,7 @@ export default function EditDailyTipMainPopUp({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
+      <DialogContent className="max-w-5xl h-[85vh] p-6 rounded-xl overflow-hidden">
         <div
           className="overflow-y-auto p-2 h-full"
           style={{
@@ -537,7 +633,9 @@ export default function EditDailyTipMainPopUp({
 
           <Tabs
             value={activeLang}
-            onValueChange={val => setActiveLang(val as "en" | "fr")}
+            onValueChange={val => {
+              setActiveLang(val as "en" | "fr")
+            }}
             className="w-full"
           >
             <div className="flex flex-col gap-4 justify-between items-start mt-4 mb-6 sm:flex-row sm:items-center">
