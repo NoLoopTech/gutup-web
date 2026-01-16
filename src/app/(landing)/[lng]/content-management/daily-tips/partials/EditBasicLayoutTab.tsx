@@ -633,62 +633,13 @@ export default function EditBasicLayoutTab({
 
             <Separator />
 
-            {/* CTA Button Section */}
-            <div className="space-y-4 py-4">
-              <h3 className="text-md font-semibold text-black">
-                CTA Button (Optional)
-              </h3>
-
-              <div className="space-y-4">
-                <div>
-                  <Label className="block mb-2">
-                    Button Label ({activeLang === "en" ? "English" : "French"})
-                  </Label>
-                  <Input
-                    type="text"
-                    placeholder="e.g., Where to buy lentils"
-                    value={
-                      translationsData.basicLayoutData[activeLang]
-                        .buttonLabel || ""
-                    }
-                    onChange={e => handleButtonLabelChange(e.target.value)}
-                    maxLength={100}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Max 100 characters
-                  </p>
-                </div>
-
-                {translationsData.basicLayoutData[activeLang].buttonLabel && (
-                  <NavigationSearch
-                    token={token}
-                    value={{
-                      type: translationsData.basicLayoutData[activeLang]
-                        .navigationType,
-                      target:
-                        translationsData.basicLayoutData[activeLang]
-                          .navigationTarget,
-                      name: translationsData.basicLayoutData[activeLang]
-                        .navigationTargetName
-                    }}
-                    onSelect={handleNavigationSelect}
-                    placeholder="Search recipes or foods"
-                    label="Navigation Target"
-                    language={activeLang}
-                  />
-                )}
-              </div>
-            </div>
-
-            <Separator />
-
             <div className="flex justify-between items-center mt-4 mb-4">
               <h2 className="text-lg font-bold text-black">
                 {translations.uploadImages}
               </h2>
             </div>
             {/* Image Uploader */}
-            <div className="pb-8 w-full">
+            <div className="w-full">
               <FormField
                 control={form.control}
                 name="image"
@@ -706,6 +657,41 @@ export default function EditBasicLayoutTab({
                     <FormMessage />
                   </FormItem>
                 )}
+              />
+            </div>
+
+            {/* Button Label and Navigation Search - side by side below Upload Images */}
+            <div className="grid grid-cols-2 gap-4 mt-4 pb-16">
+              <div>
+                <Label className="block mb-2">{translations.buttonLabel}</Label>
+                <Input
+                  type="text"
+                  placeholder="e.g., Where to buy lentils"
+                  value={
+                    translationsData.basicLayoutData[activeLang].buttonLabel ||
+                    ""
+                  }
+                  onChange={async e => {
+                    await handleButtonLabelChange(e.target.value)
+                  }}
+                  maxLength={100}
+                />
+              </div>
+              <NavigationSearch
+                token={token}
+                value={{
+                  type: translationsData.basicLayoutData[activeLang]
+                    .navigationType,
+                  target:
+                    translationsData.basicLayoutData[activeLang]
+                      .navigationTarget,
+                  name: translationsData.basicLayoutData[activeLang]
+                    .navigationTargetName
+                }}
+                onSelect={handleNavigationSelect}
+                placeholder="Search recipes or foods"
+                label={translations.navigationType}
+                language={activeLang}
               />
             </div>
           </div>

@@ -9,6 +9,26 @@ import TipIconImg from "@/../public/assets/dailytip/Tip.png"
 import videoPlaceholderImg from "@/../public/assets/dailytip/video-placeholder.png"
 import landscapePlaceholderImg from "@/../public/assets/dailytip/landscape-placeholder.png"
 import shareIconImg from "@/../public/assets/dailytip/share.png"
+import localFont from "next/font/local"
+
+const deliciousHandrawn = localFont({
+  src: "../../../public/assets/dailytip/fonts/DeliciousHandrawn-Regular.ttf",
+  display: "swap"
+})
+
+const raleway = localFont({
+  src: [
+    {
+      path: "../../../public/assets/dailytip/fonts/raleway.regular.ttf",
+      weight: "400"
+    },
+    {
+      path: "../../../public/assets/dailytip/fonts/raleway.bold.ttf",
+      weight: "700"
+    }
+  ],
+  display: "swap"
+})
 
 // Color constants matching mobile theme
 const COLORS = {
@@ -67,9 +87,8 @@ const CtaButton = ({
 }): JSX.Element => (
   <button
     onClick={onClick}
-    className="px-4 py-1.5 bg-white rounded-[10px] border-[1.5px] border-black shadow-sm hover:shadow-md transition-shadow"
+    className={`${raleway.className} px-4 py-1.5 bg-white rounded-[10px] border-[1.5px] border-black shadow-sm hover:shadow-md transition-shadow`}
     style={{
-      fontFamily: "'Raleway', sans-serif",
       fontSize: "9px",
       fontWeight: 700,
       color: COLORS.primary
@@ -144,12 +163,11 @@ export function BasicLayoutPreview({
           className="flex-1 w-full overflow-y-auto overflow-x-hidden px-2"
           style={{ maxHeight: "230px" }}
         >
-          {/* Main Title */}
+          {/* Main Title - Delicious Handrawn 19.74px */}
           <h2
-            className="text-center mb-1"
+            className={`${deliciousHandrawn.className} text-center mb-1`}
             style={{
-              fontFamily: "'Delicious Handrawn', cursive",
-              fontSize: "14px",
+              fontSize: "19.74px",
               fontWeight: 400,
               color: COLORS.primary,
               lineHeight: 1.2
@@ -160,18 +178,20 @@ export function BasicLayoutPreview({
 
           {/* First Section with Tip Icon */}
           <div className="mb-2">
-            <div className="flex items-start gap-1 mb-0.5">
+            <div
+              className={`${deliciousHandrawn.className} flex items-start gap-1 mb-0.5`}
+            >
               <Image
                 src={TipIconImg}
                 alt="Tip"
-                width={8}
-                height={12}
+                width={10}
+                height={14}
                 className="mt-0.5 flex-shrink-0"
               />
+              {/* Subtitle - Delicious Handrawn 14.81px */}
               <span
                 style={{
-                  fontFamily: "'Delicious Handrawn', cursive",
-                  fontSize: "11px",
+                  fontSize: "14.81px",
                   fontWeight: 400,
                   color: COLORS.subtitleGray
                 }}
@@ -179,10 +199,11 @@ export function BasicLayoutPreview({
                 {subTitleOne || "Sub Title One"}
               </span>
             </div>
+            {/* Description - Raleway 11.52px */}
             <p
+              className={raleway.className}
               style={{
-                fontFamily: "'Raleway', sans-serif",
-                fontSize: "9px",
+                fontSize: "11.52px",
                 fontWeight: 400,
                 color: COLORS.primary,
                 lineHeight: 1.4,
@@ -201,14 +222,15 @@ export function BasicLayoutPreview({
               <Image
                 src={TipIconImg}
                 alt="Tip"
-                width={8}
-                height={12}
+                width={10}
+                height={14}
                 className="mt-0.5 flex-shrink-0"
               />
+              {/* Subtitle - Delicious Handrawn 14.81px */}
               <span
+                className={deliciousHandrawn.className}
                 style={{
-                  fontFamily: "'Delicious Handrawn', cursive",
-                  fontSize: "11px",
+                  fontSize: "14.81px",
                   fontWeight: 400,
                   color: COLORS.subtitleGray
                 }}
@@ -216,10 +238,11 @@ export function BasicLayoutPreview({
                 {subTitleTwo || "Sub Title Two"}
               </span>
             </div>
+            {/* Description - Raleway 11.52px */}
             <p
+              className={raleway.className}
               style={{
-                fontFamily: "'Raleway', sans-serif",
-                fontSize: "9px",
+                fontSize: "11.52px",
                 fontWeight: 400,
                 color: COLORS.primary,
                 lineHeight: 1.4,
@@ -260,9 +283,8 @@ export function BasicLayoutPreview({
           {share && (
             <div className="flex justify-center mb-2">
               <button
-                className="px-3 py-1 bg-white rounded-[10px] border-[1.5px] border-black shadow-sm flex items-center gap-1"
+                className={`${raleway.className} px-3 py-1 bg-white rounded-[10px] border-[1.5px] border-black shadow-sm flex items-center gap-1`}
                 style={{
-                  fontFamily: "'Raleway', sans-serif",
                   fontSize: "8px",
                   fontWeight: 700,
                   color: COLORS.primary
@@ -281,20 +303,18 @@ export function BasicLayoutPreview({
           )}
         </div>
 
-        {/* Footer Area - CTA Button (only show if buttonLabel exists) */}
-        {buttonLabel && (
-          <div className="w-full flex justify-center items-center py-2 mt-auto">
-            <CtaButton label={buttonLabel} />
-          </div>
-        )}
+        {/* Footer Area - CTA Button (always show with placeholder) */}
+        <div className="w-full flex justify-center items-center py-2 mt-auto">
+          <CtaButton label={buttonLabel || "Add Button"} />
+        </div>
       </div>
 
-      {/* Like/Dislike Buttons - staggered diagonal like mobile */}
+      {/* Like/Dislike Buttons - positioned at bottom right of content area */}
       <button
         className="absolute z-30 p-1"
         style={{
-          right: "45px",
-          bottom: "8px"
+          right: "28px",
+          bottom: "48px"
         }}
       >
         <LikeIcon size={16} />
@@ -302,8 +322,8 @@ export function BasicLayoutPreview({
       <button
         className="absolute z-30 p-1"
         style={{
-          right: "20px",
-          bottom: "-4px"
+          right: "8px",
+          bottom: "36px"
         }}
       >
         <DislikeIcon size={16} />
@@ -353,12 +373,11 @@ export function VideoTipPreview({
           className="flex-1 w-full overflow-y-auto overflow-x-hidden px-2"
           style={{ maxHeight: "230px" }}
         >
-          {/* Main Title */}
+          {/* Main Title - Delicious Handrawn 19.74px */}
           <h2
-            className="text-center mb-1"
+            className={`${deliciousHandrawn.className} text-center mb-1`}
             style={{
-              fontFamily: "'Delicious Handrawn', cursive",
-              fontSize: "14px",
+              fontSize: "19.74px",
               fontWeight: 400,
               color: COLORS.primary,
               lineHeight: 1.2
@@ -367,12 +386,11 @@ export function VideoTipPreview({
             {title || "Your Title"}
           </h2>
 
-          {/* Subtitle */}
+          {/* Subtitle - Delicious Handrawn 14.81px */}
           <p
-            className="text-center mb-1"
+            className={`${deliciousHandrawn.className} text-center mb-1`}
             style={{
-              fontFamily: "'Delicious Handrawn', cursive",
-              fontSize: "11px",
+              fontSize: "14.81px",
               fontWeight: 400,
               color: COLORS.subtitleGray
             }}
@@ -380,12 +398,12 @@ export function VideoTipPreview({
             {subTitle || "Add your subtitle"}
           </p>
 
-          {/* Description */}
+          {/* Description - Raleway 11.52px */}
           <div className="mb-2">
             <p
+              className={raleway.className}
               style={{
-                fontFamily: "'Raleway', sans-serif",
-                fontSize: "9px",
+                fontSize: "11.52px",
                 fontWeight: 400,
                 color: COLORS.primary,
                 lineHeight: 1.4,
@@ -398,9 +416,9 @@ export function VideoTipPreview({
             </p>
             {!subDescription && (
               <p
+                className={raleway.className}
                 style={{
-                  fontFamily: "'Raleway', sans-serif",
-                  fontSize: "9px",
+                  fontSize: "11.52px",
                   fontWeight: 400,
                   color: "#9CA3AF",
                   lineHeight: 1.4,
@@ -434,26 +452,18 @@ export function VideoTipPreview({
                 </div>
               ) : (
                 <div
-                  className="w-full rounded-lg overflow-hidden relative"
-                  style={{ height: "70px" }}
+                  className="w-full rounded-lg overflow-hidden relative bg-[#9CA3AF] flex flex-col items-center justify-center"
+                  style={{ height: "80px" }}
                 >
-                  <Image
-                    src={videoPlaceholderImg}
-                    alt="Video placeholder"
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-8 h-8 bg-white/80 rounded-full flex items-center justify-center shadow-md">
-                      <div className="w-0 h-0 border-l-[10px] border-l-gray-700 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent ml-1" />
-                    </div>
+                  {/* Play button circle */}
+                  <div className="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-md">
+                    <div className="w-0 h-0 border-l-[12px] border-l-gray-500 border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1" />
                   </div>
                   <p
-                    className="absolute bottom-1 left-0 right-0 text-center"
+                    className={` ${raleway.className} mt-2 text-center`}
                     style={{
-                      fontFamily: "'Raleway', sans-serif",
-                      fontSize: "7px",
-                      color: "#666"
+                      fontSize: "8px",
+                      color: "#fff"
                     }}
                   >
                     Your video here
@@ -464,20 +474,18 @@ export function VideoTipPreview({
           )}
         </div>
 
-        {/* Footer Area - only show if buttonLabel exists */}
-        {buttonLabel && (
-          <div className="w-full flex justify-center items-center py-2 mt-auto">
-            <CtaButton label={buttonLabel} />
-          </div>
-        )}
+        {/* Footer Area - CTA Button (always show with placeholder) */}
+        <div className="w-full flex justify-center items-center py-2 mt-auto">
+          <CtaButton label={buttonLabel || "Add Button"} />
+        </div>
       </div>
 
-      {/* Like/Dislike Buttons - staggered diagonal like mobile */}
+      {/* Like/Dislike Buttons - positioned at bottom right of content area */}
       <button
         className="absolute z-30 p-1"
         style={{
-          right: "45px",
-          bottom: "8px"
+          right: "28px",
+          bottom: "48px"
         }}
       >
         <LikeIcon size={16} />
@@ -485,8 +493,8 @@ export function VideoTipPreview({
       <button
         className="absolute z-30 p-1"
         style={{
-          right: "20px",
-          bottom: "-4px"
+          right: "8px",
+          bottom: "36px"
         }}
       >
         <DislikeIcon size={16} />
@@ -525,12 +533,12 @@ export function ShopPromotionPreview({
           className="flex-1 w-full overflow-y-auto overflow-x-hidden px-2"
           style={{ maxHeight: "230px" }}
         >
-          {/* Shop Name - Main Title */}
+          {/* Shop Name - Main Title - Delicious Handrawn 19.74px */}
           <h2
             className="text-center mb-1"
             style={{
               fontFamily: "'Delicious Handrawn', cursive",
-              fontSize: "14px",
+              fontSize: "19.74px",
               fontWeight: 400,
               color: COLORS.primary,
               lineHeight: 1.2
@@ -539,12 +547,12 @@ export function ShopPromotionPreview({
             {shopName || "Shop Name"}
           </h2>
 
-          {/* Shop Location */}
+          {/* Shop Location - Subtitle - Delicious Handrawn 14.81px */}
           <p
             className="text-center mb-2 flex items-center justify-center gap-1"
             style={{
               fontFamily: "'Delicious Handrawn', cursive",
-              fontSize: "11px",
+              fontSize: "14.81px",
               fontWeight: 400,
               color: COLORS.subtitleGray
             }}
@@ -553,12 +561,12 @@ export function ShopPromotionPreview({
             {shopLocation || "Shop Location"}
           </p>
 
-          {/* Description */}
+          {/* Description - Raleway 11.52px */}
           <div className="mb-2">
             <p
+              className={raleway.className}
               style={{
-                fontFamily: "'Raleway', sans-serif",
-                fontSize: "9px",
+                fontSize: "11.52px",
                 fontWeight: 400,
                 color: COLORS.primary,
                 lineHeight: 1.4,
@@ -571,9 +579,9 @@ export function ShopPromotionPreview({
             </p>
             {!subDescription && (
               <p
+                className={raleway.className}
                 style={{
-                  fontFamily: "'Raleway', sans-serif",
-                  fontSize: "9px",
+                  fontSize: "11.52px",
                   fontWeight: 400,
                   color: "#9CA3AF",
                   lineHeight: 1.4,
@@ -602,20 +610,18 @@ export function ShopPromotionPreview({
           )}
         </div>
 
-        {/* Footer Area - only show if buttonLabel exists */}
-        {buttonLabel && (
-          <div className="w-full flex justify-center items-center py-2 mt-auto">
-            <CtaButton label={buttonLabel} />
-          </div>
-        )}
+        {/* Footer Area - CTA Button (always show with placeholder) */}
+        <div className="w-full flex justify-center items-center py-2 mt-auto">
+          <CtaButton label={buttonLabel || "Add Button"} />
+        </div>
       </div>
 
-      {/* Like/Dislike Buttons - staggered diagonal like mobile */}
+      {/* Like/Dislike Buttons - positioned at bottom right of content area */}
       <button
         className="absolute z-30 p-1"
         style={{
-          right: "45px",
-          bottom: "8px"
+          right: "28px",
+          bottom: "48px"
         }}
       >
         <LikeIcon size={16} />
@@ -623,8 +629,8 @@ export function ShopPromotionPreview({
       <button
         className="absolute z-30 p-1"
         style={{
-          right: "20px",
-          bottom: "-4px"
+          right: "8px",
+          bottom: "36px"
         }}
       >
         <DislikeIcon size={16} />

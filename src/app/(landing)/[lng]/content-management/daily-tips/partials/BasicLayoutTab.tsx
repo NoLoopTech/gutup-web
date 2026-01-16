@@ -147,7 +147,7 @@ export default function BasicLayoutTab({
     image: z.string().nonempty(translations.required),
     share: z
       .boolean({ required_error: translations.required })
-      .default(false)
+      .default(true)
       .refine(val => typeof val === "boolean", {
         message: translations.required
       })

@@ -48,22 +48,22 @@ export default function EditDailyTipPopUp({
   editDailyTip: () => void
   isLoading: boolean
 }): JSX.Element {
-  const { activeTab, setActiveTab, activeLang } = useDailyTipStore()
-  const { translationsData, setUpdatedField } = useUpdateDailyTipStore()
+  const { activeTab, setActiveTab, activeLang, translationsData: mainStoreData } = useDailyTipStore()
+  const { translationsData: updateStoreData, setUpdatedField } = useUpdateDailyTipStore()
 
-  // Get publishDate from the correct section based on activeTab
+  // Get publishDate from the correct section based on activeTab (check update store first, then main store)
   let publishDate: Date | null = null
   let publishDateRaw: string | undefined
   if (activeTab === "basicForm") {
-    publishDateRaw = translationsData.basicLayoutData?.en?.publishDate
+    publishDateRaw = updateStoreData.basicLayoutData?.en?.publishDate || mainStoreData.basicLayoutData?.en?.publishDate
   } else if (activeTab === "shopPromote") {
     publishDateRaw = (
-      translationsData.shopPromotionData?.en as { publishDate?: string }
-    )?.publishDate
+      updateStoreData.shopPromotionData?.en as { publishDate?: string }
+    )?.publishDate || (mainStoreData.shopPromotionData?.en as { publishDate?: string })?.publishDate
   } else if (activeTab === "videoForm") {
     publishDateRaw = (
-      translationsData.videoTipData?.en as { publishDate?: string }
-    )?.publishDate
+      updateStoreData.videoTipData?.en as { publishDate?: string }
+    )?.publishDate || (mainStoreData.videoTipData?.en as { publishDate?: string })?.publishDate
   }
   publishDate = asDate(publishDateRaw)
   const handlePublishDateChange = (date: Date | null): void => {
@@ -89,10 +89,10 @@ export default function EditDailyTipPopUp({
     }
   }
 
-  // Prepare preview data based on active tab from Update store
+  // Prepare preview data based on active tab from Main store (which has the populated data)
   const getPreviewData = (): any => {
     if (activeTab === "basicForm") {
-      const data = translationsData.basicLayoutData[activeLang]
+      const data = mainStoreData.basicLayoutData[activeLang]
       return {
         title: data.title ?? "",
         subTitleOne: data.subTitleOne ?? "",
@@ -107,7 +107,7 @@ export default function EditDailyTipPopUp({
     }
 
     if (activeTab === "videoForm") {
-      const data = translationsData.videoTipData[activeLang]
+      const data = mainStoreData.videoTipData[activeLang]
       return {
         title: data.title ?? "",
         subTitle: data.subTitle ?? "",
@@ -120,7 +120,7 @@ export default function EditDailyTipPopUp({
     }
 
     if (activeTab === "shopPromote") {
-      const data = translationsData.shopPromotionData[activeLang]
+      const data = mainStoreData.shopPromotionData[activeLang]
       return {
         title: data.shopName ?? "",
         shopName: data.shopName ?? "",
@@ -208,7 +208,7 @@ export default function EditDailyTipPopUp({
 
       {/* Right side - Preview (only for basicForm and videoForm) */}
       {(activeTab === "basicForm" || activeTab === "videoForm") && (
-        <div className="w-[220px] shrink-0 pt-6">
+        <div className="w-[300px] shrink-0 pt-6">
           <DailyTipPreview type={activeTab} data={getPreviewData()} />
         </div>
       )}

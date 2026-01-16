@@ -160,7 +160,7 @@ export default function AddDailyTipPopUp({
 
       {/* Right side - Preview (only for basicForm and videoForm) */}
       {(activeTab === "basicForm" || activeTab === "videoForm") && (
-        <div className="w-[220px] shrink-0 pt-6">
+        <div className="w-[300px] shrink-0 pt-6">
           <DailyTipPreview type={activeTab} data={getPreviewData()} />
         </div>
       )}
