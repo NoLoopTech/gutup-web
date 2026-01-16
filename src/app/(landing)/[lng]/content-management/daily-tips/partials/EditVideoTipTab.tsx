@@ -462,66 +462,54 @@ export default function EditVideoTipTab({
             />
           </div>
 
-          <Separator />
-
-          {/* Hide Video Toggle */}
-          <div className="flex items-center gap-2 py-4">
-            <Checkbox
-              id="hide-video-checkbox"
-              checked={
-                translationsData.videoTipData[activeLang].hideVideo || false
-              }
-              onCheckedChange={handleHideVideoToggle}
-            />
-            <Label htmlFor="hide-video-checkbox" className="cursor-pointer">
-              Hide Video (Show only text content)
-            </Label>
-          </div>
-
-          <Separator />
-
-          {/* CTA Button Section */}
-          <div className="space-y-4 py-4">
-            <h3 className="text-md font-semibold text-black">
-              CTA Button (Optional)
-            </h3>
-
-            <div className="space-y-4">
-              <div>
-                <Label className="block mb-2">
-                  Button Label ({activeLang === "en" ? "English" : "French"})
-                </Label>
-                <Input
-                  type="text"
-                  placeholder="e.g., Where to buy lentils"
-                  value={
-                    translationsData.videoTipData[activeLang].buttonLabel || ""
-                  }
-                  onChange={e => handleButtonLabelChange(e.target.value)}
-                  maxLength={100}
-                />
-                <p className="text-xs text-gray-500 mt-1">Max 100 characters</p>
-              </div>
-
-              {translationsData.videoTipData[activeLang].buttonLabel && (
-                <NavigationSearch
-                  token={token}
-                  value={{
-                    type: translationsData.videoTipData[activeLang]
-                      .navigationType,
-                    target:
-                      translationsData.videoTipData[activeLang]
-                        .navigationTarget,
-                    name: translationsData.videoTipData[activeLang]
-                      .navigationTargetName
-                  }}
-                  onSelect={handleNavigationSelect}
-                  placeholder="Search recipes or foods"
-                  label="Navigation Target"
-                  language={activeLang}
-                />
-              )}
+          {translationsData.videoTipData[activeLang].videoLink && (
+            <div className="flex items-center justify-end gap-2 mt-2 mb-4">
+              <Checkbox
+                id="hide-video-checkbox"
+                checked={
+                  translationsData.videoTipData[activeLang].hideVideo || false
+                }
+                onCheckedChange={handleHideVideoToggle}
+              />
+              <Label
+                htmlFor="hide-video-checkbox"
+                className="cursor-pointer text-sm"
+              >
+                {translations.hideVideo}
+              </Label>
             </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4 mt-4 pb-16">
+            <div>
+              <Label className="block mb-2">{translations.buttonLabel}</Label>
+              <Input
+                type="text"
+                placeholder="Enter button label eg: Where to buy lentils"
+                value={
+                  translationsData.videoTipData[activeLang].buttonLabel || ""
+                }
+                onChange={async e => {
+                  await handleButtonLabelChange(e.target.value)
+                }}
+                maxLength={100}
+              />
+            </div>
+
+            <NavigationSearch
+              token={token}
+              value={{
+                type: translationsData.videoTipData[activeLang].navigationType,
+                target:
+                  translationsData.videoTipData[activeLang].navigationTarget,
+                name: translationsData.videoTipData[activeLang]
+                  .navigationTargetName
+              }}
+              onSelect={handleNavigationSelect}
+              placeholder="Search your page"
+              label={translations.navigationType}
+              language={activeLang}
+            />
           </div>
 
           <div className="flex fixed bottom-0 left-0 z-50 justify-between px-8 py-2 w-full bg-white border-t border-gray-200">

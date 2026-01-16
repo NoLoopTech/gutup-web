@@ -6,7 +6,6 @@ import Image from "next/image"
 import bBackgroundImg from "@/../public/assets/dailytip/bBackground.png"
 import CloseIconImg from "@/../public/assets/dailytip/close.png"
 import TipIconImg from "@/../public/assets/dailytip/Tip.png"
-import videoPlaceholderImg from "@/../public/assets/dailytip/video-placeholder.png"
 import landscapePlaceholderImg from "@/../public/assets/dailytip/landscape-placeholder.png"
 import shareIconImg from "@/../public/assets/dailytip/share.png"
 import localFont from "next/font/local"
@@ -77,7 +76,7 @@ const DislikeIcon = ({
   </svg>
 )
 
-// CTA Button component matching mobile CtaButton.tsx
+// CTA Button component matching mobile CtaButton.tsx - more rectangular with rounded corners
 const CtaButton = ({
   label,
   onClick
@@ -87,14 +86,30 @@ const CtaButton = ({
 }): JSX.Element => (
   <button
     onClick={onClick}
-    className={`${raleway.className} px-4 py-1.5 bg-white rounded-[10px] border-[1.5px] border-black shadow-sm hover:shadow-md transition-shadow`}
+    className={`${raleway.className} px-6 py-2 bg-white rounded-lg border-2 border-black shadow-sm hover:shadow-md transition-shadow`}
     style={{
-      fontSize: "9px",
-      fontWeight: 700,
-      color: COLORS.primary
+      fontSize: "10px",
+      fontWeight: 600,
+      color: COLORS.primary,
+      minWidth: "120px"
     }}
   >
     {label}
+  </button>
+)
+
+// Share Button - square with rounded edges
+const ShareButton = (): JSX.Element => (
+  <button
+    className={`${raleway.className} px-4 py-2 bg-white rounded-lg border-2 border-black shadow-sm flex items-center justify-center gap-2`}
+    style={{
+      fontSize: "9px",
+      fontWeight: 600,
+      color: COLORS.primary
+    }}
+  >
+    Share it with a friend
+    <Image src={shareIconImg} alt="Share" width={12} height={12} />
   </button>
 )
 
@@ -120,16 +135,6 @@ interface VideoTipPreviewProps {
   concern: string[]
 }
 
-interface ShopPromotionPreviewProps {
-  title: string
-  shopName: string
-  shopLocation: string
-  subDescription: string
-  image: string
-  buttonLabel?: string
-  concern: string[]
-}
-
 // Basic Layout Preview - matches mobile TipContent
 export function BasicLayoutPreview({
   title,
@@ -142,7 +147,7 @@ export function BasicLayoutPreview({
   buttonLabel
 }: BasicLayoutPreviewProps): JSX.Element {
   return (
-    <div className="relative w-full h-[340px] rounded-xl overflow-hidden">
+    <div className="relative w-full h-[400px] rounded-xl overflow-hidden">
       {/* Background Image - full coverage */}
       <Image
         src={bBackgroundImg}
@@ -153,19 +158,18 @@ export function BasicLayoutPreview({
 
       {/* Close Button - top right */}
       <button className="absolute top-3 right-2 z-30 p-1">
-        <Image src={CloseIconImg} alt="Close" width={12} height={12} />
+        <Image src={CloseIconImg} alt="Close" width={14} height={14} />
       </button>
 
       {/* Content Container - centered */}
-      <div className="absolute inset-0 z-20 flex flex-col items-center pt-6 px-4 overflow-hidden">
+      <div className="absolute inset-0 z-20 flex flex-col items-center pt-8 px-4 overflow-hidden">
         {/* Scrollable Content Area */}
         <div
-          className="flex-1 w-full overflow-y-auto overflow-x-hidden px-2"
-          style={{ maxHeight: "230px" }}
+          className="flex-1 w-full overflow-y-auto overflow-x-hidden px-3"
+          style={{ maxHeight: "270px" }}
         >
-          {/* Main Title - Delicious Handrawn 19.74px */}
           <h2
-            className={`${deliciousHandrawn.className} text-center mb-1`}
+            className={`${deliciousHandrawn.className} text-center mb-2`}
             style={{
               fontSize: "19.74px",
               fontWeight: 400,
@@ -176,55 +180,14 @@ export function BasicLayoutPreview({
             {title || "Your Title"}
           </h2>
 
-          {/* First Section with Tip Icon */}
-          <div className="mb-2">
-            <div
-              className={`${deliciousHandrawn.className} flex items-start gap-1 mb-0.5`}
-            >
+          <div className="mb-3">
+            <div className="flex items-center justify-center gap-1 mb-1">
               <Image
                 src={TipIconImg}
                 alt="Tip"
-                width={10}
-                height={14}
-                className="mt-0.5 flex-shrink-0"
-              />
-              {/* Subtitle - Delicious Handrawn 14.81px */}
-              <span
-                style={{
-                  fontSize: "14.81px",
-                  fontWeight: 400,
-                  color: COLORS.subtitleGray
-                }}
-              >
-                {subTitleOne || "Sub Title One"}
-              </span>
-            </div>
-            {/* Description - Raleway 11.52px */}
-            <p
-              className={raleway.className}
-              style={{
-                fontSize: "11.52px",
-                fontWeight: 400,
-                color: COLORS.primary,
-                lineHeight: 1.4,
-                wordWrap: "break-word",
-                overflowWrap: "break-word",
-                whiteSpace: "pre-wrap"
-              }}
-            >
-              {subDescriptionOne || "Your daily tip description one here."}
-            </p>
-          </div>
-
-          {/* Second Section with Tip Icon */}
-          <div className="mb-2">
-            <div className="flex items-start gap-1 mb-0.5">
-              <Image
-                src={TipIconImg}
-                alt="Tip"
-                width={10}
-                height={14}
-                className="mt-0.5 flex-shrink-0"
+                width={12}
+                height={16}
+                className="flex-shrink-0"
               />
               {/* Subtitle - Delicious Handrawn 14.81px */}
               <span
@@ -235,17 +198,50 @@ export function BasicLayoutPreview({
                   color: COLORS.subtitleGray
                 }}
               >
-                {subTitleTwo || "Sub Title Two"}
+                {subTitleOne || "Tip"}
               </span>
             </div>
-            {/* Description - Raleway 11.52px */}
+            {/* Description - Raleway 11.52px - centered */}
             <p
-              className={raleway.className}
+              className={`${raleway.className} text-center`}
               style={{
                 fontSize: "11.52px",
                 fontWeight: 400,
                 color: COLORS.primary,
-                lineHeight: 1.4,
+                lineHeight: 1.5,
+                wordWrap: "break-word",
+                overflowWrap: "break-word",
+                whiteSpace: "pre-wrap"
+              }}
+            >
+              {subDescriptionOne || "Your daily tip description one here."}
+            </p>
+          </div>
+
+          {/* Second Section - centered */}
+          <div className="mb-3">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              {/* Subtitle - Delicious Handrawn 14.81px */}
+              <span
+                className={deliciousHandrawn.className}
+                style={{
+                  fontSize: "14.81px",
+                  fontWeight: 400,
+                  color: COLORS.subtitleGray,
+                  fontStyle: "italic"
+                }}
+              >
+                {subTitleTwo || "Why?"}
+              </span>
+            </div>
+            {/* Description - Raleway 11.52px - centered */}
+            <p
+              className={`${raleway.className} text-center`}
+              style={{
+                fontSize: "11.52px",
+                fontWeight: 400,
+                color: COLORS.primary,
+                lineHeight: 1.5,
                 wordWrap: "break-word",
                 overflowWrap: "break-word",
                 whiteSpace: "pre-wrap"
@@ -255,19 +251,19 @@ export function BasicLayoutPreview({
             </p>
           </div>
 
-          {/* Main Image or Placeholder */}
-          <div className="flex justify-center mb-2">
+          {/* Main Image or Placeholder - larger and centered */}
+          <div className="flex justify-center mb-3">
             {image ? (
               <img
                 src={image}
                 alt={title || "Daily tip image"}
-                className="w-[45%] h-auto object-cover rounded-lg"
-                style={{ maxHeight: "55px" }}
+                className="w-[60%] h-auto object-cover rounded-xl"
+                style={{ maxHeight: "80px" }}
               />
             ) : (
               <div
-                className="w-[45%] rounded-lg overflow-hidden relative bg-gray-100 flex items-center justify-center"
-                style={{ height: "45px" }}
+                className="w-[60%] rounded-xl overflow-hidden relative bg-gray-200 flex items-center justify-center"
+                style={{ height: "70px" }}
               >
                 <Image
                   src={landscapePlaceholderImg}
@@ -279,55 +275,35 @@ export function BasicLayoutPreview({
             )}
           </div>
 
-          {/* Share with friend - styled like CTA button */}
+          {/* Share with friend - square with rounded edges */}
           {share && (
             <div className="flex justify-center mb-2">
-              <button
-                className={`${raleway.className} px-3 py-1 bg-white rounded-[10px] border-[1.5px] border-black shadow-sm flex items-center gap-1`}
-                style={{
-                  fontSize: "8px",
-                  fontWeight: 700,
-                  color: COLORS.primary
-                }}
-              >
-                Share it with a friend
-                <Image
-                  src={shareIconImg}
-                  alt="Share"
-                  width={10}
-                  height={10}
-                  className="ml-0.5"
-                />
-              </button>
+              <ShareButton />
             </div>
           )}
         </div>
 
         {/* Footer Area - CTA Button (always show with placeholder) */}
-        <div className="w-full flex justify-center items-center py-2 mt-auto">
+        <div className="w-full flex justify-center items-center py-3 mt-auto">
           <CtaButton label={buttonLabel || "Add Button"} />
         </div>
       </div>
 
-      {/* Like/Dislike Buttons - positioned at bottom right of content area */}
-      <button
-        className="absolute z-30 p-1"
+      {/* Like/Dislike Buttons - positioned near bottom right, just icons */}
+      <div
+        className="absolute z-30 flex flex-row items-center gap-0"
         style={{
-          right: "28px",
-          bottom: "48px"
+          right: "15px",
+          bottom: "68px"
         }}
       >
-        <LikeIcon size={16} />
-      </button>
-      <button
-        className="absolute z-30 p-1"
-        style={{
-          right: "8px",
-          bottom: "36px"
-        }}
-      >
-        <DislikeIcon size={16} />
-      </button>
+        <button className="p-0.5">
+          <LikeIcon size={16} />
+        </button>
+        <button className="p-0.5">
+          <DislikeIcon size={16} />
+        </button>
+      </div>
     </div>
   )
 }
@@ -352,7 +328,7 @@ export function VideoTipPreview({
   const videoId = videoLink ? getYouTubeId(videoLink) : null
 
   return (
-    <div className="relative w-full h-[340px] rounded-xl overflow-hidden">
+    <div className="relative w-full h-[400px] rounded-xl overflow-hidden">
       {/* Background Image */}
       <Image
         src={bBackgroundImg}
@@ -363,17 +339,17 @@ export function VideoTipPreview({
 
       {/* Close Button */}
       <button className="absolute top-3 right-2 z-30 p-1">
-        <Image src={CloseIconImg} alt="Close" width={12} height={12} />
+        <Image src={CloseIconImg} alt="Close" width={14} height={14} />
       </button>
 
       {/* Content Container */}
-      <div className="absolute inset-0 z-20 flex flex-col items-center pt-6 px-4 overflow-hidden">
+      <div className="absolute inset-0 z-20 flex flex-col items-center pt-8 px-4 overflow-hidden">
         {/* Scrollable Content */}
         <div
-          className="flex-1 w-full overflow-y-auto overflow-x-hidden px-2"
-          style={{ maxHeight: "230px" }}
+          className="flex-1 w-full overflow-y-auto overflow-x-hidden px-3"
+          style={{ maxHeight: "270px" }}
         >
-          {/* Main Title - Delicious Handrawn 19.74px */}
+          {/* Main Title - Delicious Handrawn 19.74px - centered */}
           <h2
             className={`${deliciousHandrawn.className} text-center mb-1`}
             style={{
@@ -386,9 +362,9 @@ export function VideoTipPreview({
             {title || "Your Title"}
           </h2>
 
-          {/* Subtitle - Delicious Handrawn 14.81px */}
+          {/* Subtitle - Delicious Handrawn 14.81px - centered */}
           <p
-            className={`${deliciousHandrawn.className} text-center mb-1`}
+            className={`${deliciousHandrawn.className} text-center mb-2`}
             style={{
               fontSize: "14.81px",
               fontWeight: 400,
@@ -398,15 +374,15 @@ export function VideoTipPreview({
             {subTitle || "Add your subtitle"}
           </p>
 
-          {/* Description - Raleway 11.52px */}
-          <div className="mb-2">
+          {/* Description - Raleway 11.52px - centered */}
+          <div className="mb-3">
             <p
-              className={raleway.className}
+              className={`${raleway.className} text-center`}
               style={{
                 fontSize: "11.52px",
                 fontWeight: 400,
                 color: COLORS.primary,
-                lineHeight: 1.4,
+                lineHeight: 1.5,
                 wordWrap: "break-word",
                 overflowWrap: "break-word",
                 whiteSpace: "pre-wrap"
@@ -416,12 +392,12 @@ export function VideoTipPreview({
             </p>
             {!subDescription && (
               <p
-                className={raleway.className}
+                className={`${raleway.className} text-center`}
                 style={{
                   fontSize: "11.52px",
                   fontWeight: 400,
                   color: "#9CA3AF",
-                  lineHeight: 1.4,
+                  lineHeight: 1.5,
                   marginTop: "4px",
                   wordWrap: "break-word",
                   overflowWrap: "break-word",
@@ -429,17 +405,16 @@ export function VideoTipPreview({
                 }}
               >
                 Lorem ipsum dolor sit amet consectetur adipiscing elit Ut et
-                massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
-                sapien.
+                massa mi. Aliquam in hendrerit urna. Pellentesque
               </p>
             )}
           </div>
 
-          {/* Video Embed or Placeholder */}
+          {/* Video Embed or Placeholder - larger */}
           {!hideVideo && (
-            <div className="flex justify-center mb-2">
+            <div className="flex justify-center mb-3">
               {videoId ? (
-                <div className="w-full aspect-video rounded-lg overflow-hidden">
+                <div className="w-full aspect-video rounded-xl overflow-hidden">
                   <iframe
                     width="100%"
                     height="100%"
@@ -452,17 +427,17 @@ export function VideoTipPreview({
                 </div>
               ) : (
                 <div
-                  className="w-full rounded-lg overflow-hidden relative bg-[#9CA3AF] flex flex-col items-center justify-center"
-                  style={{ height: "80px" }}
+                  className="w-full rounded-xl overflow-hidden relative bg-[#9CA3AF] flex flex-col items-center justify-center"
+                  style={{ height: "100px" }}
                 >
                   {/* Play button circle */}
-                  <div className="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-md">
-                    <div className="w-0 h-0 border-l-[12px] border-l-gray-500 border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1" />
+                  <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-md">
+                    <div className="w-0 h-0 border-l-[14px] border-l-gray-500 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent ml-1" />
                   </div>
                   <p
-                    className={` ${raleway.className} mt-2 text-center`}
+                    className={`${raleway.className} mt-2 text-center`}
                     style={{
-                      fontSize: "8px",
+                      fontSize: "9px",
                       color: "#fff"
                     }}
                   >
@@ -475,166 +450,26 @@ export function VideoTipPreview({
         </div>
 
         {/* Footer Area - CTA Button (always show with placeholder) */}
-        <div className="w-full flex justify-center items-center py-2 mt-auto">
+        <div className="w-full flex justify-center items-center py-3 mt-auto">
           <CtaButton label={buttonLabel || "Add Button"} />
         </div>
       </div>
 
-      {/* Like/Dislike Buttons - positioned at bottom right of content area */}
-      <button
-        className="absolute z-30 p-1"
+      {/* Like/Dislike Buttons - positioned near bottom right, just icons */}
+      <div
+        className="absolute z-30 flex flex-row items-center gap-0"
         style={{
-          right: "28px",
-          bottom: "48px"
+          right: "15px",
+          bottom: "68px"
         }}
       >
-        <LikeIcon size={16} />
-      </button>
-      <button
-        className="absolute z-30 p-1"
-        style={{
-          right: "8px",
-          bottom: "36px"
-        }}
-      >
-        <DislikeIcon size={16} />
-      </button>
-    </div>
-  )
-}
-
-// Shop Promotion Preview - matches mobile ShopContent
-export function ShopPromotionPreview({
-  shopName,
-  shopLocation,
-  subDescription,
-  image,
-  buttonLabel
-}: ShopPromotionPreviewProps): JSX.Element {
-  return (
-    <div className="relative w-full h-[340px] rounded-xl overflow-hidden">
-      {/* Background Image */}
-      <Image
-        src={bBackgroundImg}
-        alt="Background"
-        fill
-        className="object-fill"
-      />
-
-      {/* Close Button */}
-      <button className="absolute top-3 right-2 z-30 p-1">
-        <Image src={CloseIconImg} alt="Close" width={12} height={12} />
-      </button>
-
-      {/* Content Container */}
-      <div className="absolute inset-0 z-20 flex flex-col items-center pt-6 px-4 overflow-hidden">
-        {/* Scrollable Content */}
-        <div
-          className="flex-1 w-full overflow-y-auto overflow-x-hidden px-2"
-          style={{ maxHeight: "230px" }}
-        >
-          {/* Shop Name - Main Title - Delicious Handrawn 19.74px */}
-          <h2
-            className="text-center mb-1"
-            style={{
-              fontFamily: "'Delicious Handrawn', cursive",
-              fontSize: "19.74px",
-              fontWeight: 400,
-              color: COLORS.primary,
-              lineHeight: 1.2
-            }}
-          >
-            {shopName || "Shop Name"}
-          </h2>
-
-          {/* Shop Location - Subtitle - Delicious Handrawn 14.81px */}
-          <p
-            className="text-center mb-2 flex items-center justify-center gap-1"
-            style={{
-              fontFamily: "'Delicious Handrawn', cursive",
-              fontSize: "14.81px",
-              fontWeight: 400,
-              color: COLORS.subtitleGray
-            }}
-          >
-            <span>📍</span>
-            {shopLocation || "Shop Location"}
-          </p>
-
-          {/* Description - Raleway 11.52px */}
-          <div className="mb-2">
-            <p
-              className={raleway.className}
-              style={{
-                fontSize: "11.52px",
-                fontWeight: 400,
-                color: COLORS.primary,
-                lineHeight: 1.4,
-                wordWrap: "break-word",
-                overflowWrap: "break-word",
-                whiteSpace: "pre-wrap"
-              }}
-            >
-              {subDescription || "Enter your shop description here."}
-            </p>
-            {!subDescription && (
-              <p
-                className={raleway.className}
-                style={{
-                  fontSize: "11.52px",
-                  fontWeight: 400,
-                  color: "#9CA3AF",
-                  lineHeight: 1.4,
-                  marginTop: "4px",
-                  wordWrap: "break-word",
-                  overflowWrap: "break-word",
-                  whiteSpace: "pre-wrap"
-                }}
-              >
-                Lorem ipsum dolor sit amet consectetur adipiscing elit Ut et
-                massa mi. Aliquam in hendrerit urna.
-              </p>
-            )}
-          </div>
-
-          {/* Shop Image */}
-          {image && (
-            <div className="flex justify-center mb-2">
-              <img
-                src={image}
-                alt={shopName || "Shop image"}
-                className="w-[45%] h-auto object-cover rounded-lg"
-                style={{ maxHeight: "55px" }}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Footer Area - CTA Button (always show with placeholder) */}
-        <div className="w-full flex justify-center items-center py-2 mt-auto">
-          <CtaButton label={buttonLabel || "Add Button"} />
-        </div>
+        <button className="p-0.5">
+          <LikeIcon size={16} />
+        </button>
+        <button className="p-0.5">
+          <DislikeIcon size={16} />
+        </button>
       </div>
-
-      {/* Like/Dislike Buttons - positioned at bottom right of content area */}
-      <button
-        className="absolute z-30 p-1"
-        style={{
-          right: "28px",
-          bottom: "48px"
-        }}
-      >
-        <LikeIcon size={16} />
-      </button>
-      <button
-        className="absolute z-30 p-1"
-        style={{
-          right: "8px",
-          bottom: "36px"
-        }}
-      >
-        <DislikeIcon size={16} />
-      </button>
     </div>
   )
 }
@@ -653,7 +488,6 @@ export default function DailyTipPreview({
     <div className="sticky top-4">
       {type === "basicForm" && <BasicLayoutPreview {...data} />}
       {type === "videoForm" && <VideoTipPreview {...data} />}
-      {type === "shopPromote" && <ShopPromotionPreview {...data} />}
     </div>
   )
 }

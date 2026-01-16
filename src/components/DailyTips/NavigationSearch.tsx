@@ -3,9 +3,9 @@
 import React, { useState, useRef, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Search, Loader2 } from "lucide-react"
+import { ChevronDown, Loader2 } from "lucide-react"
 import { useNavigationSearch } from "@/query/hooks/useNavigationSearch"
-import { NavigationSearchResult } from "@/types/dailyTipTypes"
+import type { NavigationSearchResult } from "@/types/dailyTipTypes"
 
 interface NavigationSearchProps {
   token: string
@@ -68,7 +68,10 @@ export default function NavigationSearch({
     setSearchQuery("")
   }
 
-  const hasResults = results.recipes.length > 0 || results.foods.length > 0 || results.stores.length > 0
+  const hasResults =
+    results.recipes.length > 0 ||
+    results.foods.length > 0 ||
+    results.stores.length > 0
   const hasSelection = value?.type && value?.target
 
   // Get badge color based on type - matches design with border-radius
@@ -124,7 +127,7 @@ export default function NavigationSearch({
           {loading ? (
             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
           ) : (
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           )}
         </div>
       ) : (
@@ -136,7 +139,11 @@ export default function NavigationSearch({
             className="pr-10 cursor-pointer"
             onClick={handleClear}
           />
-          <div className={`absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full flex items-center justify-center text-xs font-semibold ${getTypeBadgeClass(value.type || "")}`}>
+          <div
+            className={`absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full flex items-center justify-center text-xs font-semibold ${getTypeBadgeClass(
+              value.type || ""
+            )}`}
+          >
             {getTypeLabel(value.type || "")}
           </div>
         </div>
@@ -144,7 +151,7 @@ export default function NavigationSearch({
 
       {/* Search Results Dropdown */}
       {showResults && searchQuery.length >= 2 && !hasSelection && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-80 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg">
           {loading ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
@@ -154,96 +161,99 @@ export default function NavigationSearch({
             <div className="p-4">
               {/* Available results heading */}
               <h4
-                className="text-sm font-semibold mb-3"
+                className="text-sm font-semibold mb-3 sticky top-0 bg-white"
                 style={{ fontFamily: "'Raleway', sans-serif", color: "#000" }}
               >
                 Available results
               </h4>
 
-              {/* Recipes */}
-              {results.recipes.length > 0 &&
-                results.recipes.map(recipe => (
-                  <button
-                    key={`recipe-${recipe.id}`}
-                    type="button"
-                    onClick={() => {
-                      handleSelectResult(recipe)
-                    }}
-                    className="w-full flex items-center justify-between py-2 hover:bg-gray-50 rounded-md transition-colors"
-                  >
-                    <span
-                      className="text-sm truncate"
-                      style={{
-                        fontFamily: "'Raleway', sans-serif",
-                        fontWeight: 500,
-                        color: "#6BB6F4"
+              {/* Scrollable results container */}
+              <div className="max-h-60 overflow-y-auto">
+                {/* Recipes */}
+                {results.recipes.length > 0 &&
+                  results.recipes.map(recipe => (
+                    <button
+                      key={`recipe-${recipe.id}`}
+                      type="button"
+                      onClick={() => {
+                        handleSelectResult(recipe)
                       }}
+                      className="w-full flex items-center justify-between py-2 hover:bg-gray-50 rounded-md transition-colors"
                     >
-                      {language === "fr" && recipe.nameFR
-                        ? recipe.nameFR
-                        : recipe.name}
-                    </span>
-                    <span className="text-xs px-3 py-1 rounded border border-gray-300 text-gray-500">
-                      Recipe
-                    </span>
-                  </button>
-                ))}
+                      <span
+                        className="text-sm truncate"
+                        style={{
+                          fontFamily: "'Raleway', sans-serif",
+                          fontWeight: 500,
+                          color: "#6BB6F4"
+                        }}
+                      >
+                        {language === "fr" && recipe.nameFR
+                          ? recipe.nameFR
+                          : recipe.name}
+                      </span>
+                      <span className="text-xs px-3 py-1 rounded border border-gray-300 text-gray-500">
+                        Recipe
+                      </span>
+                    </button>
+                  ))}
 
-              {/* Foods */}
-              {results.foods.length > 0 &&
-                results.foods.map(food => (
-                  <button
-                    key={`food-${food.id}`}
-                    type="button"
-                    onClick={() => {
-                      handleSelectResult(food)
-                    }}
-                    className="w-full flex items-center justify-between py-2 hover:bg-gray-50 rounded-md transition-colors"
-                  >
-                    <span
-                      className="text-sm truncate"
-                      style={{
-                        fontFamily: "'Raleway', sans-serif",
-                        fontWeight: 500,
-                        color: "#6BB6F4"
+                {/* Foods */}
+                {results.foods.length > 0 &&
+                  results.foods.map(food => (
+                    <button
+                      key={`food-${food.id}`}
+                      type="button"
+                      onClick={() => {
+                        handleSelectResult(food)
                       }}
+                      className="w-full flex items-center justify-between py-2 hover:bg-gray-50 rounded-md transition-colors"
                     >
-                      {language === "fr" && food.nameFR
-                        ? food.nameFR
-                        : food.name}
-                    </span>
-                    <span className="text-xs px-3 py-1 rounded border border-gray-300 text-gray-500">
-                      Food
-                    </span>
-                  </button>
-                ))}
+                      <span
+                        className="text-sm truncate"
+                        style={{
+                          fontFamily: "'Raleway', sans-serif",
+                          fontWeight: 500,
+                          color: "#6BB6F4"
+                        }}
+                      >
+                        {language === "fr" && food.nameFR
+                          ? food.nameFR
+                          : food.name}
+                      </span>
+                      <span className="text-xs px-3 py-1 rounded border border-gray-300 text-gray-500">
+                        Food
+                      </span>
+                    </button>
+                  ))}
 
-              {/* Stores */}
-              {results.stores.length > 0 &&
-                results.stores.map(store => (
-                  <button
-                    key={`store-${store.id}`}
-                    type="button"
-                    onClick={() => {
-                      handleSelectResult(store)
-                    }}
-                    className="w-full flex items-center justify-between py-2 hover:bg-gray-50 rounded-md transition-colors"
-                  >
-                    <span
-                      className="text-sm truncate"
-                      style={{
-                        fontFamily: "'Raleway', sans-serif",
-                        fontWeight: 500,
-                        color: "#6BB6F4"
+                {/* Stores */}
+                {results.stores.length > 0 &&
+                  results.stores.map(store => (
+                    <button
+                      key={`store-${store.id}`}
+                      type="button"
+                      onClick={() => {
+                        handleSelectResult(store)
                       }}
+                      className="w-full flex items-center justify-between py-2 hover:bg-gray-50 rounded-md transition-colors"
                     >
-                      {store.name}
-                    </span>
-                    <span className="text-xs px-3 py-1 rounded border border-gray-300 text-gray-500">
-                      Shop
-                    </span>
-                  </button>
-                ))}
+                      <span
+                        className="text-sm truncate"
+                        style={{
+                          fontFamily: "'Raleway', sans-serif",
+                          fontWeight: 500,
+                          color: "#6BB6F4"
+                        }}
+                      >
+                        {store.name}
+                      </span>
+                      <span className="text-xs px-3 py-1 rounded border border-gray-300 text-gray-500">
+                        Shop
+                      </span>
+                    </button>
+                  ))}
+              </div>
             </div>
           ) : (
             <div className="p-4 text-center text-sm text-muted-foreground">
