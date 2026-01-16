@@ -58,6 +58,9 @@ export interface translationsTypes {
   publishDate: string
   imagesContentText: string
   imagesSubContentText: string
+  buttonLabel: string
+  hideVideo: string
+  navigationType: string
 
   required: string
   titleMustBeAtLeast2Characters: string
@@ -141,6 +144,9 @@ export const defaultTranslations: translationsTypes = {
   publishDate: "",
   imagesContentText: "",
   imagesSubContentText: "",
+  buttonLabel: "",
+  hideVideo: "",
+  navigationType: "",
 
   required: "",
   titleMustBeAtLeast2Characters: "",
@@ -164,6 +170,23 @@ export const defaultTranslations: translationsTypes = {
   subTitlMustBeAtLeast2Characters: ""
 }
 
+export enum NavigationType {
+  RECIPE = "recipe",
+  FOOD = "food",
+  STORE = "store"
+}
+
+export interface DailyTipCta {
+  id?: number
+  buttonLabel: string
+  buttonLabelFR: string
+  navigationType: NavigationType | string
+  navigationTarget: string
+  dailyTipsId?: number
+  createdAt?: Date
+  updatedAt?: Date
+}
+
 export interface BasicForm {
   id?: number
   subTitleOne?: string
@@ -176,6 +199,7 @@ export interface BasicForm {
   subDescTwoFR?: string
   share?: boolean
   image?: string
+  ctaButton?: DailyTipCta | null
 }
 
 export interface ShopPromoteFood {
@@ -217,6 +241,8 @@ export interface VideoForm {
   subDescFR?: string
   videoUrl?: string
   publishDate?: string
+  hideVideo?: boolean
+  ctaButton?: DailyTipCta | null
 }
 
 export interface AddDailyTipTypes {
@@ -282,4 +308,21 @@ export interface VideoTipFields {
   subDescFR?: string
   videoUrl?: string
   publishDate?: string
+  hideVideo?: boolean
+  ctaButton?: DailyTipCta | null
+}
+
+export interface NavigationSearchResult {
+  type: "recipe" | "food" | "store"
+  id: number
+  name: string
+  nameFR?: string
+  slug?: string
+}
+
+export interface NavigationSearchResponse {
+  recipes: NavigationSearchResult[]
+  foods: NavigationSearchResult[]
+  stores: NavigationSearchResult[]
+  total: number
 }

@@ -53,7 +53,7 @@ export default function AddDailyTipMainPopUp({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[80vh] p-6 rounded-xl overflow-hidden">
+      <DialogContent className="max-w-5xl h-[85vh] p-6 rounded-xl overflow-hidden">
         <div
           className="overflow-y-auto p-2 h-full"
           style={{

@@ -12,6 +12,10 @@ module.exports = {
   },
   theme: {
     extend: {
+      fontFamily: {
+        handwritten: ["'Delicious Handrawn'", "cursive"],
+        raleway: ["Raleway", "sans-serif"]
+      },
       colors: {
         White: "##FFFFFF",
         Black: "#000000",
